@@ -1,0 +1,13 @@
+# 雨夜书屋音频引擎Python依赖包
+# Rainy Study Audio Engine Python Dependencies
+
+# 音频处理库
+pydub>=0.25.1
+
+# 数值计算库
+numpy>=1.21.0
+
+# 可选的额外依赖 (根据需要启用)
+# scipy>=1.7.0  # 高级信号处理
+# librosa>=0.9.0  # 音频分析
+# soundfile>=0.12.0  # 音频文件读写
