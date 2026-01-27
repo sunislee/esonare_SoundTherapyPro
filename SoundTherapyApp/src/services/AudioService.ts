@@ -410,18 +410,25 @@ class AudioService {
   }
 
   public updateAmbientVolume(volume: number) {
-    this.ambientVolume = Math.max(0, Math.min(1, volume));
+    // Defensive check: if volume < 0.01, set to 0. Otherwise use 0.001 as safety floor.
+    let finalVolume = volume < 0.01 ? 0 : Math.max(0.001, volume);
+    this.ambientVolume = finalVolume;
+    
     if (this.ambientSound) {
-      this.ambientSound.setVolume(this.ambientVolume);
+      try {
+        this.ambientSound.setVolume(this.ambientVolume);
+      } catch (e) {
+        // Fallback for native failure at 0
+        if (this.ambientVolume === 0) {
+          this.ambientSound.setVolume(0.0001);
+        }
+      }
     }
     
     // Save preference
     if (this.ambientName) {
       AsyncStorage.setItem(`@ambient_volume_${this.ambientName}`, String(this.ambientVolume)).catch(() => {});
     }
-
-    // 阻断冲突：移除自动 Ducking 逻辑，避免氛围音调节干扰主音量
-    // this.updateDucking(this.ambientVolume > 0.5);
   }
 
   public async getStoredVolume(name: string): Promise<number> {
@@ -502,9 +509,16 @@ class AudioService {
    * 设置主场景音量
    */
   public setMainVolume(volume: number) {
-    this.mainVolume = Math.max(0, Math.min(1, volume));
+    // Defensive check: if volume < 0.01, set to 0. Otherwise use 0.001 as safety floor.
+    let finalVolume = volume < 0.01 ? 0 : Math.max(0.001, volume);
+    this.mainVolume = finalVolume;
     // 如果使用了 Superpowered，设置轨道 0 (主轨道)
-    this.setTrackVolume(0, this.linearToDb(this.mainVolume)).catch(() => {});
+    this.setTrackVolume(0, this.linearToDb(this.mainVolume)).catch(async () => {
+      // Fallback for native failure at 0
+      if (this.mainVolume === 0) {
+        await this.setTrackVolume(0, this.linearToDb(0.0001));
+      }
+    });
   }
 
   /**
@@ -1145,14 +1159,18 @@ class AudioService {
 
   public async setVolume(value: number): Promise<void> {
     this.clearActiveFade();
-    // 强制锁定：禁止任何外部指令将音量设为 0（除非是故意静音，但此处根据要求强制 1.0）
-    const safeVolume = value <= 0 ? 1.0 : value;
-    this.volume = safeVolume;
+    // Defensive check: if value < 0.01, set to 0. Otherwise use 0.001 as safety floor.
+    let finalVolume = value < 0.01 ? 0 : Math.max(0.001, value);
+    this.volume = finalVolume;
     this.emitVolume();
     try {
-      await TrackPlayer.setVolume(safeVolume);
-      console.log('🔊 [AudioService] TrackPlayer 音量已同步并锁定:', safeVolume);
+      await TrackPlayer.setVolume(this.volume);
+      console.log('🔊 [AudioService] TrackPlayer 音量已同步:', this.volume);
     } catch (e) {
+      // Fallback for native failure at 0
+      if (this.volume === 0) {
+        await TrackPlayer.setVolume(0.0001);
+      }
     }
   }
 

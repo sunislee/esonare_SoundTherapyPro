@@ -36,57 +36,55 @@ type MixPreset = {
   ambientType: AmbientType;
 };
 
-const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, width, activeColor = '#4a90e2' }: any) => {
-  const startX = useRef(0);
-  const startValue = useRef(0);
+const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor = '#4a90e2' }: any) => {
+  const [width, setWidth] = useState(0);
+  const isDragging = useRef(false);
 
   return (
     <View 
       style={{ width: '100%', height: 40, justifyContent: 'center' }}
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width;
+        setWidth(w);
+      }}
     >
-        {/* Visual Track & Thumb */}
-        <View style={{height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.1)', width: '100%', position: 'absolute'}} pointerEvents="none"/>
-        <View style={{height: 4, borderRadius: 2, backgroundColor: activeColor, width: `${value * 100}%`, position: 'absolute'}} pointerEvents="none"/>
-        <View style={{
-          width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff',
-          position: 'absolute', left: `${value * 100}%`, marginLeft: -12,
-          shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3
-        }} pointerEvents="none"/>
-
-        {/* Touch Overlay: Handles gestures exclusively */}
-        <View
-            style={StyleSheet.absoluteFill}
-            onStartShouldSetResponder={() => true}
-            onMoveShouldSetResponder={() => true}
-            onResponderTerminationRequest={() => false} // CRITICAL: Prevent BottomSheet from stealing touch
-            onResponderGrant={(e) => {
-               if (width > 0) {
-                 // Jump to tap position
-                 const tapValue = Math.max(0, Math.min(1, e.nativeEvent.locationX / width));
-                 onValueChange(tapValue);
-                 
-                 // Record initial state for dragging
-                 startX.current = e.nativeEvent.pageX;
-                 startValue.current = tapValue;
-               }
-            }}
-            onResponderMove={(e) => {
-               if (width > 0) {
-                 // Calculate delta using PAGE coordinates (stable)
-                 const dx = e.nativeEvent.pageX - startX.current;
-                 const newVal = Math.max(0, Math.min(1, startValue.current + dx / width));
-                 onValueChange(newVal);
-               }
-            }}
-            onResponderRelease={(e) => {
-               if (width > 0) {
-                 // Final calculation to be safe
-                 const dx = e.nativeEvent.pageX - startX.current;
-                 const newVal = Math.max(0, Math.min(1, startValue.current + dx / width));
-                 onSlidingComplete(newVal);
-               }
-            }}
-        />
+      <PanGestureHandler
+        onGestureEvent={(e) => {
+          if (width > 0) {
+            const newVal = e.nativeEvent.x / width;
+            const safeValue = Math.max(0.001, Math.min(0.999, newVal));
+            onValueChange(safeValue);
+          }
+        }}
+        onHandlerStateChange={(e) => {
+          if (e.nativeEvent.state === State.BEGAN) {
+            isDragging.current = true;
+            const newVal = e.nativeEvent.x / width;
+            const safeValue = Math.max(0.001, Math.min(0.999, newVal));
+            onValueChange(safeValue);
+          }
+          if (e.nativeEvent.state === State.END || e.nativeEvent.state === State.CANCELLED) {
+            isDragging.current = false;
+            const newVal = e.nativeEvent.x / width;
+            const safeValue = Math.max(0.001, Math.min(0.999, newVal));
+            onSlidingComplete(safeValue);
+          }
+        }}
+        activeOffsetX={[-10, 10]} // Help distinguish from ScrollView scroll
+      >
+        <Animated.View style={StyleSheet.absoluteFill}>
+          <View style={{ width: '100%', height: 40, justifyContent: 'center' }}>
+            {/* Visual Track & Thumb */}
+            <View style={{height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)', width: '100%', position: 'absolute'}} pointerEvents="none"/>
+            <View style={{height: 6, borderRadius: 3, backgroundColor: activeColor, width: `${value * 100}%`, position: 'absolute'}} pointerEvents="none"/>
+            <View style={{
+              width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff',
+              position: 'absolute', left: `${value * 100}%`, marginLeft: -10,
+              shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5
+            }} pointerEvents="none"/>
+          </View>
+        </Animated.View>
+      </PanGestureHandler>
     </View>
   );
 };
@@ -114,7 +112,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 }) => {
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [sliderWidth, setSliderWidth] = useState(0);
 
   const translateY = useRef(new Animated.Value(screenHeight)).current;
   const [mainVolume, setMainVolume] = useState(1.0);
@@ -217,6 +214,9 @@ export const AmbientPickerSheet: React.FC<Props> = ({
         speed: 12,
       }).start();
     } else {
+      // Force pop up for debug if needed - set to 0 to keep open
+      // toValue: 0, 
+      
       // Close animation
       Animated.timing(translateY, {
         toValue: screenHeight,
@@ -302,12 +302,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
           </View>
         </View>
         
-        <View 
-            style={styles.sliderContainer}
-            onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
-          >
+        <View style={styles.sliderContainer}>
             <SimpleJsSlider
-              width={sliderWidth}
               value={mainVolume}
               activeColor="#fff"
               onValueChange={(v: number) => handleVolumeChange('main', v)}
@@ -346,12 +342,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
           </View>
         </TouchableOpacity>
         
-        <View 
-            style={styles.sliderContainer}
-            onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
-          >
+        <View style={styles.sliderContainer}>
             <SimpleJsSlider
-              width={sliderWidth}
               value={volume}
               activeColor={isSelected ? '#fff' : 'rgba(255,255,255,0.3)'}
               onValueChange={(v: number) => handleVolumeChange(type, v)}
@@ -473,28 +465,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
           {renderItem('rain', '治愈雨声', rainVolume)}
           {renderItem('fire', '壁炉篝火', fireVolume)}
 
-          <View style={{ marginTop: 8, marginBottom: 4 }}>
-            <Text style={styles.headerTitle}>交互音效</Text>
-            <View style={styles.fxRow}>
-              {/* 交互音效区 */} 
-              <TouchableOpacity 
-                style={styles.interactiveButton} 
-                onPress={() => AudioService.playInteractive('interactive_apple')} 
-              > 
-                <Text style={styles.interactiveIcon}>🍎</Text> 
-                <Text style={styles.interactiveText}>苹果脆响</Text> 
-              </TouchableOpacity> 
-    
-              <TouchableOpacity 
-                style={styles.interactiveButton} 
-                onPress={() => AudioService.playInteractive('interactive_match')} 
-              > 
-                <Text style={styles.interactiveIcon}>🔥</Text> 
-                <Text style={styles.interactiveText}>划火柴</Text> 
-              </TouchableOpacity>
-            </View>
-          </View>
-
           <View style={{ marginTop: 0, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <Text style={styles.headerTitle}>我的最爱混音</Text>
@@ -561,6 +531,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 16,
     elevation: 24,
+    overflow: 'hidden',
   },
   backButton: {
     position: 'absolute',
@@ -648,28 +619,5 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     marginTop: 8,
-  },
-  fxRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  interactiveButton: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  interactiveIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  interactiveText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
   },
 });

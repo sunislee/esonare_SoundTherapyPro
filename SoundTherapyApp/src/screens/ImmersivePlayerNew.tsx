@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, SafeAreaView, Animated, Platform } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAudio } from '../context/AudioContext';
@@ -6,6 +6,7 @@ import { SCENES, Scene } from '../constants/scenes';
 import AudioService from '../services/AudioService'; 
 import { RootStackParamList } from '../navigation/MainNavigator';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { AmbientPickerSheet } from '../components/AmbientPickerSheet';
 
 type ImmersivePlayerRouteProp = RouteProp<RootStackParamList, 'ImmersivePlayer'>;
 
@@ -14,6 +15,8 @@ const ImmersivePlayerNew = () => {
   const route = useRoute<ImmersivePlayerRouteProp>();
   const { currentScene, isPlaying, togglePlayback } = useAudio();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
+  const [currentAmbient, setCurrentAmbient] = useState<'none' | 'rain' | 'fire'>('none');
 
   // 处理传入的 sceneId
   useEffect(() => {
@@ -46,6 +49,21 @@ const ImmersivePlayerNew = () => {
   const handleToggle = async () => {
     if (currentScene) {
       await togglePlayback(currentScene);
+    }
+  };
+
+  const toggleAmbientSheet = () => {
+    console.log('Ambient Button Clicked!');
+    setAmbientSheetVisible(!ambientSheetVisible);
+  };
+
+  const handleAmbientSelect = (type: 'none' | 'rain' | 'fire') => {
+    setCurrentAmbient(type);
+    if (type === 'none') {
+      AudioService.setAmbient(null);
+    } else {
+      const soundId = type === 'rain' ? 'healing_rain' : 'life_fire_pure';
+      AudioService.setAmbient(soundId);
     }
   };
 
@@ -90,6 +108,15 @@ const ImmersivePlayerNew = () => {
               </TouchableOpacity>
               <Text style={styles.title}>{currentScene?.title || '沉浸播放器'}</Text>
               <Text style={styles.subTitle}>{currentScene?.category || '请选择场景'}</Text>
+
+              {/* Ambient Trigger Button */}
+              <TouchableOpacity 
+                style={styles.ambientTrigger}
+                onPress={toggleAmbientSheet}
+              >
+                <Icon name="options-outline" size={24} color="#fff" />
+                <Text style={styles.ambientTriggerText}>氛围点缀</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.controlCenter}>
@@ -124,6 +151,17 @@ const ImmersivePlayerNew = () => {
           </SafeAreaView>
         </ImageBackground>
       </Animated.View>
+
+      <AmbientPickerSheet
+        visible={ambientSheetVisible}
+        currentAmbient={currentAmbient}
+        currentSceneId={currentScene?.id || ''}
+        onClose={() => setAmbientSheetVisible(false)}
+        onSelect={handleAmbientSelect}
+        onRestoreMix={(mix) => {
+          handleAmbientSelect(mix.ambientType as any);
+        }}
+      />
     </View>
   );
 };
@@ -173,6 +211,23 @@ const styles = StyleSheet.create({
   sideButtonText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   footer: { marginBottom: 50 },
   statusText: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
+  ambientTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  ambientTriggerText: {
+    color: '#fff',
+    fontSize: 14,
+    marginLeft: 8,
+    fontWeight: '500',
+  },
 });
 
 export default ImmersivePlayerNew;

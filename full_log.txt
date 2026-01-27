@@ -1,0 +1,1231 @@
+--------- beginning of main
+01-19 18:48:36.389  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:36.424  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30847790) status 0 for display-0.
+01-19 18:48:36.424  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:36.437  3278  4248 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-19 18:48:36.440  3278  4248 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-19 18:48:36.440  3278  4248 D InetDiagMessage: Destroyed live tcp sockets for uids={10282} in 6ms
+01-19 18:48:36.440  3278  4248 D ActionExecute: frozen uid = 10282 reason=check binder
+--------- beginning of system
+01-19 18:48:36.442  3278  4248 D ExternalInterface: setUidState, uid = 10282 allow = false
+01-19 18:48:36.442  3278  4248 D MiSensorServiceImpl: PowerKeeperSensor stop iUid:10282 but app has Controlled
+01-19 18:48:36.444 21673 21673 I adbd    : in ShellService: am start -n com.soundtherapyapp/.MainActivity
+01-19 18:48:36.469  3278 11065 I SecurityManagerService: isVirtualDisplayActive caller=com.android.shell~2000, target=com.soundtherapyapp~10424~0
+01-19 18:48:36.469  3278 11065 I SecurityManagerService: find uiagent virtual display id=0
+01-19 18:48:36.469  3278 11065 I SecurityManagerService: no uiagent display, return
+01-19 18:48:36.469  3278 11065 I SecurityManagerService: isVirtualDisplayActive, should not intercept
+01-19 18:48:36.469  3278 11065 W ActivityTaskManager: callingPackage for (uid=2000, pid=16999) has no WPC
+01-19 18:48:36.470 10434 10756 I PermissionManagerProvider: call method : 14 Binder.getCallingUid() 10208 Binder.getCallingUid() 10434
+01-19 18:48:36.470  3278 11065 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@5f3f9e7 does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+01-19 18:48:36.470  3278 11065 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES
+01-19 18:48:36.470  3278 11065 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE
+01-19 18:48:36.470  3278 11065 I AnimInterruptController: FIS notify Foresee interrupt start:6232
+01-19 18:48:36.470  3278 11065 I AnimInterruptController: remove FO timeout
+01-19 18:48:36.470  3278 11065 I ActivityStarterImpl: isKeyguardEditor: false, newTransition: TransitionRecord{d8eddb3 id=6233 type=OPEN flags=0x0}
+01-19 18:48:36.470  3278 11065 D WindowManager: Collecting in transition 6233: ActivityRecord{148053872 u0 com.soundtherapyapp/.MainActivity init visibleRequested:false
+01-19 18:48:36.470  3278 11065 I ActivityStarterImpl: boost warm start activity for com.soundtherapyapp
+01-19 18:48:36.470  3278 11065 D MiuiFreeformServiceImpl: addLaunchFreeformActivityOptionIfNeed skip due to not find sourceTask: null sourceFfas: null sourceFreeFormActivity: null
+01-19 18:48:36.471  3278 11065 D Transition: setReady 6233 wc=Display{#0 state=ON size=1440x3200 ROTATION_0} ready=true
+01-19 18:48:36.471  3278 11065 D Transition: setReady 6233 wc=Display{#0 state=ON size=1440x3200 ROTATION_0} ready=true
+01-19 18:48:36.471  3278 11065 D MiuiFreeFormManagerService: onStartActivityInner as = Task{b8d0961 #1994 type=standard A=10424:com.soundtherapyapp} op = null
+01-19 18:48:36.471  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:36.471  3278 11065 D TransitionImpl: abort TransitionRecord{d8eddb3 id=6233 type=OPEN flags=0x0 c=[
+01-19 18:48:36.471  3278 11065 D TransitionImpl:    ChangeInfo{83d5b6e container=ActivityRecord{148053872 u0 com.soundtherapyapp/.MainActivity t-1} flags=0x0}
+01-19 18:48:36.471  3278 11065 D TransitionImpl: ]
+01-19 18:48:36.471  3278 11065 D TransitionImpl: } from = 0 Caller: com.android.server.wm.Transition.abort:2101 com.android.server.wm.Transition.abort:2092 com.android.server.wm.ActivityStarter.handleStartResult:2109 com.android.server.wm.ActivityStarter.startActivityUnchecked:1945 com.android.server.wm.ActivityStarter.executeRequest:1747 
+01-19 18:48:36.471  3278 11065 I AnimInterruptController: FIS reset Foresee interrupt status
+01-19 18:48:36.471  3278 11065 I AnimInterruptController: FIS reset Foresee interrupt status
+01-19 18:48:36.471  3278 11065 D miuiBarFollowAnimation:  BarFollowAnimation core services Flag is effective！
+01-19 18:48:36.471  3278 11065 D miuiElementAnimation:  ElementAnimation core services Flag is effective！
+01-19 18:48:36.472  5321  9651 D KeyguardService: setOccluded(false)
+01-19 18:48:36.472  5321  9651 D KeyguardViewMediator: setOccluded(false)
+01-19 18:48:36.472  5321  9651 D KeyguardViewMediator: setOccluded false
+01-19 18:48:36.472  5321  5321 D KeyguardViewMediator: handleSetOccluded(false)
+01-19 18:48:36.472  5321  5321 D KeyguardViewMediator: isOccluded=false,mPowerGestureIntercepted=false
+01-19 18:48:36.472  5321  5321 D KeyguardViewMediator: KeyguardViewMediator queue processing message: SET_OCCLUDED
+01-19 18:48:36.472  3278 11065 I ActivityTaskManager: START u0 {flg=0x10000000 xflg=0x5 cmp=com.soundtherapyapp/.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 from pid 16999 callingPackage com.android.shell (BAL_ALLOW_PERMISSION) result code=3
+01-19 18:48:36.475 13528 16816 I ContentCatcher: SettingTrigger : unregister status observer com.soundtherapyapp.MainActivity
+01-19 18:48:36.475  3278 11065 I SensorService: 	>>> actuating h/w activate handle=0xb enabled=0
+01-19 18:48:36.475  1811  1811 I sensors-hal: activate:108, android.sensor.accelerometer/11 en=0
+01-19 18:48:36.475  3278  3431 D SsruManagerImpl: MiSsru Sensor not init!!!!
+01-19 18:48:36.475  1811  1811 I sensors-hal: send_sync_sensor_request:471, send sync request
+01-19 18:48:36.475  1811  1811 I sensors-hal: send_sync_sensor_request:500, wait for notification of response
+01-19 18:48:36.476 13528 16816 I ContentCatcher: SettingTrigger : unregisterUIAgentListener com.soundtherapyapp.MainActivity, uid:10424
+01-19 18:48:36.476  3278  6006 I DataHub : unregisterUIAgentListener packageName: com.soundtherapyapp~10424
+01-19 18:48:36.476  3278  6006 I RemoteCallbackList: unregister success, remove callback for com.soundtherapyapp~10424
+01-19 18:48:36.476  5321  5646 D WindowManagerShell: onActivityRestartAttempt: topActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}, wasVisible=true
+01-19 18:48:36.477  1811 16823 I sensors-hal: qsh_conn_resp_cb:825, resp_value = 0 for accel 
+01-19 18:48:36.477  1811  1811 I sensors-hal: send_sync_sensor_request:506, takes 1 ms to receive the response with 0
+01-19 18:48:36.477  1811  1811 I sensors-hal: ~qsh_qmi:68, ~qsh_qmi
+01-19 18:48:36.477  1811  1811 I sensors-hal: activate:119, android.sensor.accelerometer/11 en=0 completed
+01-19 18:48:36.478 13528 13528 W unknown:ReactInstanceManager: Instance detached from instance manager
+01-19 18:48:36.478 13528 13528 D Activity: Activity = ActivityInfo{36391c0 com.soundtherapyapp.MainActivity}, Resume onConfigurationChanged = {1.0 460mcc11mnc [zh_CN] ldltr sw384dp w384dp h853dp 600dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1440, 3200) mAppBounds=Rect(0, 0 - 1440, 3200) mMaxBounds=Rect(0, 0 - 1440, 3200) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false embeddingScale=1.0} s.2 fontWeightAdjustment=0/d/o themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/o}
+01-19 18:48:36.479  3278  3823 D AppLock_AccessControlImpl: activityResume packageName: com.soundtherapyapp userId: 0 enabled: true
+01-19 18:48:36.479  3278  3823 D AppLock_AccessControlImpl: activityResume lockMode: 1
+01-19 18:48:36.479 13528 13528 D SecurityManager: checkAccessControl flag1
+01-19 18:48:36.479 13528 16816 I ContentCatcher: SettingTrigger : register screen QA status observer com.soundtherapyapp.MainActivity
+01-19 18:48:36.480 13528 16816 I ContentCatcher: SettingTrigger : register global collect status observer com.soundtherapyapp.MainActivity
+01-19 18:48:36.480 13528 16816 I ContentCatcher: SettingTrigger : registerUIAgentListener com.soundtherapyapp.MainActivity, uid:10424
+01-19 18:48:36.480  3278  5488 I DataHub : registerUIAgentListener packageName: com.soundtherapyapp~10424, client:miui.security.IUIAgentInteractionClient$Stub$Proxy@b67c07a
+01-19 18:48:36.480  3278  5488 I RemoteCallbackList: register success, put callback for com.soundtherapyapp~10424
+01-19 18:48:36.480  3278  3431 D SsruManagerImpl: MiSsru Sensor not init!!!!
+01-19 18:48:36.480  1811  1811 I sensors-hal: batch:141, android.sensor.accelerometer/11, period=66667000, max_latency=0
+01-19 18:48:36.480  1811  1811 I sensors-hal: set_config:56, sample_period_ns is adjusted to 66667000 based on min/max delay_ns
+01-19 18:48:36.480  1811  1811 I sensors-hal: batch:150, android.sensor.accelerometer/11, period=66667000, max_latency=0 request completed
+01-19 18:48:36.481  3278  3823 I SensorService: 	>>> actuating h/w activate handle=0xb enabled=1
+01-19 18:48:36.481  1811  1811 I sensors-hal: activate:108, android.sensor.accelerometer/11 en=1
+01-19 18:48:36.481  1811  1811 I sensors-hal: acquire_qsh_interface:123, acquire_qsh_interface with sensor_id 90 , conn_type 2 
+01-19 18:48:36.483  1811  1811 I sensors-hal: qsh_qmi:41, qsh_qmi
+01-19 18:48:36.483  1811  1811 I sensors-hal: send_sensor_config_request:566, resampler is used, set resampler config
+01-19 18:48:36.483  1811  1811 I sensors-hal: send_sync_sensor_request:471, send sync request
+01-19 18:48:36.483  1811  1811 I sensors-hal: send_sync_sensor_request:500, wait for notification of response
+01-19 18:48:36.485  1811 17003 I sensors-hal: qsh_conn_resp_cb:825, resp_value = 0 for accel 
+01-19 18:48:36.485  1811  1811 I sensors-hal: send_sync_sensor_request:506, takes 2 ms to receive the response with 0
+01-19 18:48:36.485  1811  1811 I sensors-hal: activate:119, android.sensor.accelerometer/11 en=1 completed
+01-19 18:48:36.492 13528 13528 I Choreographer: first vsync insert message into MessageQueue Head
+01-19 18:48:36.492 13528 13528 D VRI[MainActivity]: getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+01-19 18:48:36.494  3278  5488 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{7e149b7 u0 com.soundtherapyapp/com.soundtherapyapp.MainActivity} 0
+01-19 18:48:36.495  3278  5488 D BarFollowAnimation: isAppTaskBarOnTop win:Window{7e149b7 u0 com.soundtherapyapp/com.soundtherapyapp.MainActivity} (mCurrentTopTask:Task{b8d0961 #1994 type=standard A=10424:com.soundtherapyapp} : true); (mAssociatedTask:Task{b8d0961 #1994 type=standard A=10424:com.soundtherapyapp} : true); (mHomeTask:Task{68ecabd #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+01-19 18:48:36.495  3278  5488 D MiuiRefreshRatePolicy: reset
+01-19 18:48:36.495 13528 16808 I soundtherapyapp: DynamicFPS DF top: com.soundtherapyapp : 0.000000
+01-19 18:48:36.495 13528 16808 I soundtherapyapp: DF com.soundtherapyapp Support DynamicFPS.
+01-19 18:48:36.489  2033  2033 W binder:2033_4: type=1400 audit(0.0:3112590): avc:  denied  { search } for  name="mcd" dev="dm-56" ino=1126 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+01-19 18:48:36.499 21396 23230 D JavaheapMonitor: Java heap used=10M max=256M, proc: com.miui.analytics
+01-19 18:48:36.500 21396 23230 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:36.500  3278  3403 W ProcessStats: Tracking association SourceState{4ca9419 com.android.quicksearchbox/10135 BFgs #645390} whose proc state 4 is better than process ProcessState{9becca1 com.xiaomi.barrage/1000 pkg=com.xiaomi.barrage} proc state 5 (5 skipped)
+01-19 18:48:36.506  2033  2033 D MI-SF   : isTpIdleScene ,mAverageFrameRate is 0, 0 
+01-19 18:48:36.506  2033  2033 D MI-SF   : modeGroup0 mIsSupportAutomodeForMaxFpsSetting is 0(0), getCurrentBrightness() = 201(388), mIsKeepAutoMode 0 isAutoModeAllowed() 1
+01-19 18:48:36.506  2033  2033 D RefreshRateSelector: fixedMode_group: 0, isFindModeGroup 0
+01-19 18:48:36.506  2033  2033 D RefreshRateSelector: find max refresh rate:120, mode Group:0
+01-19 18:48:36.507  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:36.578  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:36.589  3278  4132 D MiuiWifiCommonBase: band: 4, compensate: 0
+01-19 18:48:36.594  5271  6317 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+01-19 18:48:36.630  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:36.631  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14115.0,R:5197.0,G:5248.0,B:1024.0, lux: 9.1, clone:11044
+01-19 18:48:36.931 16206 16219 I viders.calendar: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+01-19 18:48:36.932 16206 17009 D JavaheapMonitor: Java heap used=1M max=256M, proc: com.android.providers.calendar
+01-19 18:48:36.932 16206 17009 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:37.034  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:37.034  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14071.0,R:5189.0,G:5238.0,B:1016.0, lux: 9.0, clone:11044
+01-19 18:48:37.231  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:37.231  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14111.0,R:5198.0,G:5238.0,B:1012.0, lux: 9.0, clone:11044
+01-19 18:48:37.290  1841  1841 I vendor.qti.hardware.servicetrackeraidl-service: bindService is called for service : com.xiaomi.aon/.AonAttentionService and for client system
+01-19 18:48:37.290  1841  1841 I vendor.qti.hardware.servicetrackeraidl-service: total connections for service : com.xiaomi.aon/.AonAttentionServiceare :1
+01-19 18:48:37.291  1841  1841 I vendor.qti.hardware.servicetrackeraidl-service: total connections for client : systemare :26
+01-19 18:48:37.296 15025 15564 D JavaheapMonitor: Java heap used=2M max=256M, proc: com.miui.thirdappassistant:persistent
+01-19 18:48:37.297 15025 15564 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:37.351  3278  4130 I MiuiNetworkPolicy: bandwidth: 3 KB/s, Max bandwidth: 200 KB/s
+01-19 18:48:37.435  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:37.436  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14071.0,R:5181.0,G:5232.0,B:1011.0, lux: 9.0, clone:11044
+01-19 18:48:37.437 10211 10670 D JavaheapMonitor: Java heap used=11M max=256M, proc: com.miui.powerkeeper
+01-19 18:48:37.437 10211 10670 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:37.631  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:37.632  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14115.0,R:5201.0,G:5241.0,B:1024.0, lux: 9.0, clone:11044
+01-19 18:48:37.835  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:37.835  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14117.0,R:5207.0,G:5255.0,B:1018.0, lux: 9.1, clone:11044
+01-19 18:48:38.031  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:38.031  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14094.0,R:5190.0,G:5229.0,B:1013.0, lux: 8.9, clone:11044
+01-19 18:48:38.231  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:38.231  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14133.0,R:5219.0,G:5251.0,B:1018.0, lux: 9.1, clone:11044
+01-19 18:48:38.289  3278  3278 W system_server: Long monitor contention with owner PowerManagerService (3462) at android.os.PowerSaveState com.android.server.power.batterysaver.BatterySaverPolicy.getBatterySaverPolicy(int)(BatterySaverPolicy.java:973) waiters=0 in void com.android.server.power.PowerManagerService.startUidChangesInternal() for 997ms
+01-19 18:48:38.296  3278  3278 D ActivityManager: Logging bindService for com.xiaomi.aon, stopped=false, firstLaunch=false
+01-19 18:48:38.297  3278  3278 W Looper  : Slow dispatch took 1008ms main app=system_server main=true group=FOREGROUND h=com.android.server.attention.AttentionManagerService$AttentionHandler c=com.android.server.attention.AttentionManagerService$$ExternalSyntheticLambda1@50a99a3 m=0
+01-19 18:48:38.304 23354 23354 I AonAttentionService: onCreate:  com.xiaomi.aon.AonAttentionService@fcce655
+01-19 18:48:38.305 23354 23354 I AONAdapter: AONAdapter instance has exist
+01-19 18:48:38.308 23354 27636 I AonAttentionService: getScreenLocked:false
+01-19 18:48:38.308 23354 27636 I AonAttentionService: onCheckAttention start, vername: 5.0.89, vercode: 89, isScreenLocked: false
+01-19 18:48:38.308 23354 27636 I AONAdapter: AON use statistic: <2026-01-17, 3>
+01-19 18:48:38.309 23354 27636 I AONAdapter: AON use statistic: <2026-01-18, 95>
+01-19 18:48:38.309 23354 27636 I AONAdapter: AON use statistic: <2026-01-19, 88>
+01-19 18:48:38.309 23354 27636 I AONAdapter: ======>registerListener type: 4, algo_type: 0.0, timeout: 18000, client: com.xiaomi.aon.AonAttentionService$AttentionClient$1@54292d1
+01-19 18:48:38.309 23354 27636 I AONAdapter: registerListener enable face
+01-19 18:48:38.310 23354 27636 D AONFaceEnpuV2: AonEventRegister type: 4
+01-19 18:48:38.310 23354 27636 I AONFaceEnpuV2: AonEventRegister, start FaceEventManager
+01-19 18:48:38.310 23354 27636 D AONFaceEnpuV2: FaceEventManager SM reference[0 0 1 0], mAONPolicy: POLICY_SIGNAL_MODE
+01-19 18:48:38.310 23354 27636 I AONFaceEnpuV2: FaceEventManager change status from FS_NONE to FS_EXIST_ROIEYE
+01-19 18:48:38.310 23354 27636 D AONFaceEnpuV2: FaceEnpuAONTrigger ...
+01-19 18:48:38.310 23354 27636 I AONFaceEnpuV2: AonEventRegister, done
+01-19 18:48:38.310 23354 23885 I AONFaceEnpuV2: handle register/unregister event run
+01-19 18:48:38.310 23354 23885 I AONFaceEnpuV2: run register
+01-19 18:48:38.310 23354 23885 D AONFaceEnpuV2: [IAlwaysOn] Service init completed
+01-19 18:48:38.317  1811  3932 I sensors-hal: handle_sns_std_sensor_event:67, light_event: ts=882167556912667, lux: 8.2, powermode=1 
+01-19 18:48:38.317  1871 12336 W vendor.qti.camera.provider-service_64: AIBinder_linkToDeath is being called with a non-null cookie and no onUnlink callback set. This might not be intended. AIBinder_DeathRecipient_setOnUnlinked should be called first.
+01-19 18:48:38.318 23354 23885 I AONFaceEnpuV2: postHandleEventLogic registerClient result status: 0
+01-19 18:48:38.318  1857  1857 D SRE     : sensorCallback mDisplayId = 0 dataCallback value=<   8.2350,   0.0000,   0.0000>, time=882167556912667, sensortype=5
+01-19 18:48:38.318  1857  1857 D IGCDither: sensorCallback mDisplayId = 0 dataCallback value=<   8.2350,   0.0000,   0.0000>, time=882167556912667, sensor=5
+01-19 18:48:38.330  1857  1857 D TRUETONE: sensorCallback Cct value=<5268.0000>  mLastCCT 5700.000000 mTargetCCT 5700.000000
+01-19 18:48:38.353  3278  6655 I NetworkAccelerateSwitchService: EVENT_RSSI_POLL. mRssiPoll=true
+01-19 18:48:38.353  3278  6655 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed rssi:46
+01-19 18:48:38.353  3278  6655 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed mWifiFastFade:false mWifiFastFadeAdjustThreshold:false
+01-19 18:48:38.353  3278  6655 I NetworkAccelerateSwitchService: getAverageWifiRssi:47
+01-19 18:48:38.354  3278  6655 D NetworkAccelerateSwitchService: checkIntervalModeChange mMovementState:false mIntervalMode:0 mIsBadLinkLayerQoE:false mBadLinkLayerQoETimes = 0
+01-19 18:48:38.369  3278  3823 W ActivityManagerServiceImpl: Sending non-protected broadcast com.modemenhance.ACTION_MODEMWIFI_RSSI_POLL from system 5271:com.android.phone/1001 pkg com.android.phone. Callers=
+01-19 18:48:38.372  3278  3419 D BroadcastQueue: Logging broadcast for com.android.phone, stopped=false, firstLaunch=false
+01-19 18:48:38.374  5271  5271 D SlaveWifiManager: getWifiSlaveConnectionInfo
+01-19 18:48:38.432  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:38.432  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14098.0,R:5197.0,G:5238.0,B:1009.0, lux: 9.0, clone:11044
+01-19 18:48:38.451  7247  7272 D QLM-Service: check_headroom_zone: Timer EVT, Temp: 32013
+01-19 18:48:38.631  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:38.631  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14062.0,R:5185.0,G:5232.0,B:1013.0, lux: 9.0, clone:11044
+01-19 18:48:38.645 10301 11710 D JavaheapMonitor: Java heap used=23M max=256M, proc: com.miui.securitycenter.remote
+01-19 18:48:38.645 10301 11710 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:38.770  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:38.771  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:38.771  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:38.769  2033  2033 W binder:2033_5: type=1400 audit(0.0:3112591): avc:  denied  { search } for  name="mcd" dev="dm-56" ino=1126 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+01-19 18:48:38.779  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:38.773  2033  2033 W binder:2033_5: type=1400 audit(0.0:3112592): avc:  denied  { search } for  name="mcd" dev="dm-56" ino=1126 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+01-19 18:48:38.773  2033  2033 W binder:2033_5: type=1400 audit(0.0:3112593): avc:  denied  { search } for  name="mcd" dev="dm-56" ino=1126 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+01-19 18:48:38.783  2033  2033 D MI-SF   : isTpIdleScene ,mAverageFrameRate is 0, 0 
+01-19 18:48:38.783  2033  2033 D MI-SF   : modeGroup0 mIsSupportAutomodeForMaxFpsSetting is 0(0), getCurrentBrightness() = 201(388), mIsKeepAutoMode 0 isAutoModeAllowed() 1
+01-19 18:48:38.783  2033  2033 D RefreshRateSelector: fixedMode_group: 0, isFindModeGroup 0
+01-19 18:48:38.783  2033  2033 D RefreshRateSelector: find max refresh rate:120, mode Group:0
+01-19 18:48:38.781  2033  2033 W binder:2033_5: type=1400 audit(0.0:3112594): avc:  denied  { search } for  name="mcd" dev="dm-56" ino=1126 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+01-19 18:48:38.786  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:38.786  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:38.787  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:38.806  1692  1692 I zygote  : Delayed USAP Pool refill. New USAPs: 1
+01-19 18:48:38.808  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30844fb0) status 0 for display-0.
+01-19 18:48:38.809  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:38.831  1692  1692 D Zygote  : Forked child process 17014
+01-19 18:48:38.862  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:38.882 21492 21690 D JavaheapMonitor: Java heap used=5M max=256M, proc: com.android.bluetooth
+01-19 18:48:38.882 21492 21690 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:38.904  3278  4439 I SmartPower: com.mobiletools.systemhelper/10100(13845): background->idle(3075ms) R(broadcast end Intent { flg=0x10 xflg=0x4 cmp=com.mobiletools.systemhelper/.control.GetSignalInfoReceiver }) adj=905.
+01-19 18:48:39.032  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:11144.2,R:3967.1,G:4085.6,B:730.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:39.032  2596  4119 D libsensor-boledalgo: brightness:214,R:1.0,G:13296.8,B:12588.6,EVENT C:14056.0,R:5187.0,G:5231.0,B:1018.0, lux: 8.9, clone:11044
+01-19 18:48:39.186  3278  4130 D MiuiNetworkPolicy: updateLimit mLimitEnabled=false,enabled=true,mNetworkPriorityMode=1,mThermalForceMode=0
+01-19 18:48:39.190  3278  4130 I MiuiNetworkPolicy: getEnableLimitTimeout when thermal mode is:0
+01-19 18:48:39.289  3278  3462 I MiInputDispatcher: set display0 dim state 1
+01-19 18:48:39.291  5321  5818 D JavaheapMonitor: Java heap used=57M max=256M, proc: com.android.systemui
+01-19 18:48:39.292  5321  5818 V JavaheapMonitor: Check java heap usage finished! Next check delay: 180000
+01-19 18:48:39.293  3278  3462 I SceneDetector: mNeedCheckAonFlare:false, mNeedCheckProximitySensor:false
+01-19 18:48:39.294  3278  3462 D DisplayPowerControllerImpl: updateBrightnessChangeStatus: animating: true, displayState: 2, slowChange: false, appliedDimming: false, currentBrightness: 0.012202227, currentSdrBrightness: 0.012202227, targetBrightness: 8.54597E-4, targetSdrBrightness: 8.54597E-4, previousDisplayPolicy: 3, currentDisplayPolicy: 2
+01-19 18:48:39.294  3278  3462 D RampRateController[0]: updateBrightnessRate: screenBrightnessFloat: brightness rate changing from [auto_brightness_rate] to [dim_rate], rate: 0.027035495
+01-19 18:48:39.294  3278  3462 D RampRateController[0]: updateBrightnessRate: sdrScreenBrightnessFloat: brightness rate changing from [auto_brightness_rate] to [dim_rate], rate: 0.027035495
+01-19 18:48:39.296  3278  3462 D BrightnessDataProcessor: actualBrightness: 8.54597E-4originalBrightness: 8.54597E-4
+01-19 18:48:39.296  3278  3462 I DisplayPowerController[0]: Brightness [8.54597E-4] reason changing to: 'automatic [ dim ]', previous reason: 'automatic'.
+01-19 18:48:39.296  3278  3462 I DisplayPowerController[0]: BrightnessEvent: brt=8.54597E-4 (14.0%), nits= 2.0, lux=5.6616235, reason=automatic [ dim ], strat=InvalidBrightnessStrategy, state=ON, stateReason=KEY, policy=DIM, flags=, initBrt=0.012202227, rcmdBrt=0.012202227, preBrt=0.030492384, preLux=26.185528, wasShortTermModelActive=true, autoBrightness=true (default), unclampedBrt=0.012202227, hbmMax=0.12587112, hbmMode=off, thrmMax=1.0, rbcStrength=50, powerFactor=1.0, physDisp=内置屏幕(local:4630946338122044307), logicalId=0, slowChange=false, rampSpeed=0.3010011
+01-19 18:48:39.307  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 198 (1.201162 percent)
+01-19 18:48:39.308  2033  4624 D MI-SF   : callback LOCKFPS value 1
+01-19 18:48:39.308  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.308  2033  4624 D MI-SF   : isIdleTimerSkip is 1,mSetIdleForceFlag = 0
+01-19 18:48:39.315  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.315  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.315  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 194 (1.178978 percent)
+01-19 18:48:39.315  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.320  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.320  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.320  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.320  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.324  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 191 (1.157203 percent)
+01-19 18:48:39.325  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.325  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:39.326  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.326  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.326  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:39.329  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:39.330  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.330  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.332  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 187 (1.135831 percent)
+01-19 18:48:39.332  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.333  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.333  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.337  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.337  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.340  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 184 (1.114854 percent)
+01-19 18:48:39.340  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.341  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.341  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.347  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.347  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.349  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 180 (1.094263 percent)
+01-19 18:48:39.349  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.349  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:39.349  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.349  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.353  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.353  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.357  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 177 (1.074089 percent)
+01-19 18:48:39.357  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.358  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.358  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.358  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30845480) status 0 for display-0.
+01-19 18:48:39.359  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:39.363  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.363  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.365  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 174 (1.054254 percent)
+01-19 18:48:39.365  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.366  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.366  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.372  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.372  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.374  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 171 (1.034770 percent)
+01-19 18:48:39.374  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.374  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.374  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.379  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.379  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.382  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 167 (1.015672 percent)
+01-19 18:48:39.383  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.384  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.384  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.389  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.389  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.390  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 164 (0.996899 percent)
+01-19 18:48:39.391  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.392  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.392  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.397  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.397  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.399  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 161 (0.978491 percent)
+01-19 18:48:39.399  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.399  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.399  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.407  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 158 (0.960420 percent)
+01-19 18:48:39.409  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.416  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 155 (0.942682 percent)
+01-19 18:48:39.416  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.416  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.417  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.422  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.422  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.422  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.422  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.423  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 153 (0.925272 percent)
+01-19 18:48:39.424  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.426  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.426  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.426  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.426  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.427  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.427  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.430  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.430  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.431  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:9870.3,R:3443.3,G:3571.9,B:643.9,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:39.431  2596  4119 D libsensor-boledalgo: brightness:184,R:1.0,G:13148.0,B:12448.6,EVENT C:12454.0,R:4592.0,G:4657.0,B:899.0, lux: 8.5, clone:10923
+01-19 18:48:39.432  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 150 (0.908184 percent)
+01-19 18:48:39.432  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.432  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.432  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.436  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.437  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.440  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 147 (0.891420 percent)
+01-19 18:48:39.440  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.441  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.441  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.447  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.447  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.449  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 144 (0.874957 percent)
+01-19 18:48:39.449  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.450  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.450  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.455  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.455  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.457  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 142 (0.858793 percent)
+01-19 18:48:39.457  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.458  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.458  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.463  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.463  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.465  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 139 (0.842928 percent)
+01-19 18:48:39.466  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.466  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.467  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.472  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.472  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.474  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 137 (0.827355 percent)
+01-19 18:48:39.474  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.475  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.475  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.480  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.480  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.482  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 134 (0.812087 percent)
+01-19 18:48:39.482  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.483  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.483  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.487  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.487  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.490  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 132 (0.797089 percent)
+01-19 18:48:39.490  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.491  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.491  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.496  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.496  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.499  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 129 (0.782368 percent)
+01-19 18:48:39.499  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.500  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.500  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.506  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.506  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.507  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 127 (0.767918 percent)
+01-19 18:48:39.507  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.508  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.508  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.513  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.513  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.515  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 124 (0.753735 percent)
+01-19 18:48:39.516  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.516  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.516  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.521  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.521  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.524  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 122 (0.739814 percent)
+01-19 18:48:39.524  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.525  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.525  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.530  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.530  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.532  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 120 (0.726145 percent)
+01-19 18:48:39.533  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.533  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:39.533  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.533  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.534  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:39.538  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.538  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.540  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 118 (0.712734 percent)
+01-19 18:48:39.540  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.541  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.541  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.546  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.546  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.549  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 116 (0.699570 percent)
+01-19 18:48:39.549  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.549  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:39.549  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.549  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.554  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.554  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.557  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 113 (0.686649 percent)
+01-19 18:48:39.557  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.558  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.558  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.558  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30844fb0) status 0 for display-0.
+01-19 18:48:39.559  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:39.563  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.563  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.565  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 111 (0.673967 percent)
+01-19 18:48:39.566  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.566  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.566  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.571  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.572  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.573  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 109 (0.661520 percent)
+01-19 18:48:39.574  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.574  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.574  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.579  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.579  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.582  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 107 (0.649302 percent)
+01-19 18:48:39.582  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.582  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.583  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.587  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.587  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.590  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 105 (0.637309 percent)
+01-19 18:48:39.591  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.591  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.591  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.597  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.597  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.599  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 103 (0.625538 percent)
+01-19 18:48:39.599  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.600  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.600  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.606  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.606  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.607  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 102 (0.613984 percent)
+01-19 18:48:39.607  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.613  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.613  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.613  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.613  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.615  3278  4132 D MiuiWifiCommonBase: band: 4, compensate: 0
+01-19 18:48:39.616  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 100 (0.602644 percent)
+01-19 18:48:39.617  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.617  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.617  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.620  5271  6317 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+01-19 18:48:39.621  7696  7780 D JavaheapMonitor: Java heap used=8M max=256M, proc: com.xiaomi.cameramind
+01-19 18:48:39.621  7696  7780 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:39.623  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.623  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.624  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 98 (0.591514 percent)
+01-19 18:48:39.624  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.624  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.624  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.627  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:39.628  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:39.628  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:39.628  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.628  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.625  2033  2033 W binder:2033_4: type=1400 audit(0.0:3112595): avc:  denied  { search } for  name="mcd" dev="dm-56" ino=1126 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+01-19 18:48:39.625  2033  2033 W binder:2033_4: type=1400 audit(0.0:3112596): avc:  denied  { search } for  name="mcd" dev="dm-56" ino=1126 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+01-19 18:48:39.631  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:6620.7,R:2394.5,G:2469.0,B:411.6,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:39.631  2596  4119 D libsensor-boledalgo: brightness:129,R:1.0,G:12879.5,B:12195.8,EVENT C:9487.0,R:3503.0,G:3586.0,B:702.0, lux: 8.6, clone:10704
+01-19 18:48:39.632  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 96 (0.580589 percent)
+01-19 18:48:39.632  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.633  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.633  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.635  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:39.638  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.638  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.641  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 94 (0.569866 percent)
+01-19 18:48:39.641  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.641  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.642  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.643  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-19 18:48:39.647  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.647  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.649  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 93 (0.559341 percent)
+01-19 18:48:39.649  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.650  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.650  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.656  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.656  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.657  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 91 (0.549010 percent)
+01-19 18:48:39.658  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.658  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.658  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.664  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.664  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.665  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 89 (0.538870 percent)
+01-19 18:48:39.665  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.666  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.666  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.671  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.671  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.674  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 88 (0.528917 percent)
+01-19 18:48:39.674  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.674  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.674  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.679  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.679  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.682  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 86 (0.519148 percent)
+01-19 18:48:39.682  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.682  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.682  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.689  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.689  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.690  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 84 (0.509560 percent)
+01-19 18:48:39.691  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.697  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.697  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.697  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.697  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.699  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 83 (0.500148 percent)
+01-19 18:48:39.699  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.700  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.700  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.705  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.705  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.707  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 81 (0.490911 percent)
+01-19 18:48:39.707  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.708  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.708  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.714  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.714  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.716  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 80 (0.481843 percent)
+01-19 18:48:39.717  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.717  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.718  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.724  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 78 (0.472944 percent)
+01-19 18:48:39.726  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.732  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 77 (0.464208 percent)
+01-19 18:48:39.733  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.734  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.734  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.738  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.738  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.738  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.738  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.740  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 76 (0.455634 percent)
+01-19 18:48:39.741  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.741  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.741  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.741  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.741  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.742  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:39.742  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.742  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.742  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:39.745  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.745  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.749  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 74 (0.447219 percent)
+01-19 18:48:39.749  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.749  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.749  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.754  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.755  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.757  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 73 (0.438959 percent)
+01-19 18:48:39.757  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.758  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:39.758  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.758  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.763  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.763  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.765  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 72 (0.430851 percent)
+01-19 18:48:39.766  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.766  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.766  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.766  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30845480) status 0 for display-0.
+01-19 18:48:39.766  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:39.771  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.771  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.774  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 70 (0.422893 percent)
+01-19 18:48:39.774  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.774  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.774  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.779  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.779  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.782  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 69 (0.415082 percent)
+01-19 18:48:39.783  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.783  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.783  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.791  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 68 (0.407415 percent)
+01-19 18:48:39.793  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.799  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 67 (0.399890 percent)
+01-19 18:48:39.800  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.801  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.801  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.806  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.806  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.806  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.806  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.807  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 65 (0.392504 percent)
+01-19 18:48:39.807  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.810  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.810  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.810  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.810  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.811  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.811  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.813  9080  9418 D JavaheapMonitor: Java heap used=6M max=512M, proc: com.android.providers.media.module
+01-19 18:48:39.813  9080  9418 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:39.814  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.814  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.816  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 64 (0.385255 percent)
+01-19 18:48:39.816  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.817  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.817  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.821  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.821  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.824  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 63 (0.378139 percent)
+01-19 18:48:39.824  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.824  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.825  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.829  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.829  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.831  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:4510.8,R:1628.0,G:1710.2,B:270.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:39.831  2596  4119 D libsensor-boledalgo: brightness:84,R:1.0,G:12663.9,B:11992.9,EVENT C:7604.0,R:2824.0,G:2899.0,B:559.0, lux: 9.2, clone:10528
+01-19 18:48:39.832  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 62 (0.371154 percent)
+01-19 18:48:39.832  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.833  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.833  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.838  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.838  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.841  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 61 (0.364299 percent)
+01-19 18:48:39.841  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.842  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.842  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.848  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.848  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.849  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 60 (0.357570 percent)
+01-19 18:48:39.849  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.850  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.850  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.855  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.855  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.857  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 58 (0.350965 percent)
+01-19 18:48:39.857  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.858  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.858  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.863  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.863  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.865  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 57 (0.344483 percent)
+01-19 18:48:39.866  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.866  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.866  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.873  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.873  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.874  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 56 (0.338120 percent)
+01-19 18:48:39.874  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.875  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.876  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.881  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.881  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.882  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 55 (0.331875 percent)
+01-19 18:48:39.882  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.887  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.887  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:39.887  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.887  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:39.890  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 54 (0.325744 percent)
+01-19 18:48:39.891  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.891  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.892  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.897  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.897  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.899  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 53 (0.319728 percent)
+01-19 18:48:39.899  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.899  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.900  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.905  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.905  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.907  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 52 (0.313822 percent)
+01-19 18:48:39.907  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.908  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.908  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.913  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.913  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.916  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 51 (0.308026 percent)
+01-19 18:48:39.916  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.917  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.917  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.923  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.923  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.924  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 51 (0.302336 percent)
+01-19 18:48:39.924  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.925  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.925  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.929  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.929  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.932  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 50 (0.296752 percent)
+01-19 18:48:39.932  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.933  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.933  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.938  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.938  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.939  9955 20932 D JavaheapMonitor: Java heap used=17M max=512M, proc: com.sohu.inputmethod.sogou.xiaomi
+01-19 18:48:39.940  9955 20932 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:39.940  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 49 (0.291271 percent)
+01-19 18:48:39.940  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.941  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.941  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.945  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.945  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.949  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 48 (0.285891 percent)
+01-19 18:48:39.949  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.949  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.949  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:39.950  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.950  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:39.954  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.954  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.957  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 47 (0.280610 percent)
+01-19 18:48:39.957  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.958  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.958  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.963  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.963  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.963  1834  7521 E PERFHAL-CLIENT: PERFHAL-CLIENT: perf_lock_acq_rel() 496: opcode=1149239296 isMvOpcode=0
+01-19 18:48:39.965  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 46 (0.275427 percent)
+01-19 18:48:39.966  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.966  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:39.966  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.966  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.971  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.972  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.974  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 45 (0.270340 percent)
+01-19 18:48:39.974  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.975  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.975  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.975  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30844fb0) status 0 for display-0.
+01-19 18:48:39.975  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:39.979  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.979  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.982  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 44 (0.265346 percent)
+01-19 18:48:39.982  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.983  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.983  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.988  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.988  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.990  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 44 (0.260445 percent)
+01-19 18:48:39.991  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:39.991  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:39.991  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:39.997  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:39.997  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:39.999  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 43 (0.255635 percent)
+01-19 18:48:40.000  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.000  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.000  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.007  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.007  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.007  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 42 (0.250913 percent)
+01-19 18:48:40.008  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.013  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.013  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.013  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.013  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.016  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 41 (0.246278 percent)
+01-19 18:48:40.016  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.017  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.017  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.021  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.021  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.024  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 41 (0.241729 percent)
+01-19 18:48:40.024  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.024  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.024  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.028  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.028  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.031  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:2755.7,R:1246.3,G:1137.3,B:160.6,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:40.031  2596  4119 D libsensor-boledalgo: brightness:51,R:1.0,G:12508.1,B:11846.2,EVENT C:6187.0,R:2304.0,G:2375.0,B:457.0, lux: 11.5, clone:10401
+01-19 18:48:40.032  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 40 (0.237264 percent)
+01-19 18:48:40.033  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.033  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.033  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.038  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.038  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.040  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 39 (0.232882 percent)
+01-19 18:48:40.041  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.041  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.041  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.047  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.047  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.049  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 38 (0.228580 percent)
+01-19 18:48:40.049  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.050  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.050  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.055  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.055  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.057  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 38 (0.224359 percent)
+01-19 18:48:40.058  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.058  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.058  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.059  9689 21608 D JavaheapMonitor: Java heap used=11M max=256M, proc: com.xiaomi.metoknlp
+01-19 18:48:40.059  9689 21608 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:40.063  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.063  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.066  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 37 (0.220215 percent)
+01-19 18:48:40.066  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.066  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.066  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.071  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.071  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.074  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 36 (0.216147 percent)
+01-19 18:48:40.074  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.075  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.075  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.081  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.081  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.082  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 36 (0.212155 percent)
+01-19 18:48:40.083  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.083  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.084  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.090  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.090  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.090  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 35 (0.208237 percent)
+01-19 18:48:40.091  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.097  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.097  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.097  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.097  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.099  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 34 (0.204391 percent)
+01-19 18:48:40.100  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.100  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.100  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.106  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.106  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.108  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 34 (0.200616 percent)
+01-19 18:48:40.108  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.108  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.108  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.114  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.114  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.116  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 33 (0.196910 percent)
+01-19 18:48:40.116  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.116  1857  2445 D DisplayEffect: HandleDCGamma Enable DC GC lut
+01-19 18:48:40.116  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.116  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.117  1828  3099 I MiStcImpl: Dispatching command: 6 GC
+01-19 18:48:40.117  1828  3099 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.117  1828  3099 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.124  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 33 (0.193273 percent)
+01-19 18:48:40.126  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.128  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.129  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.133  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 32 (0.189704 percent)
+01-19 18:48:40.134  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.134  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.134  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.138  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.138  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.138  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.138  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.139  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.139  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.139  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.139  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.140  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 32 (0.186200 percent)
+01-19 18:48:40.141  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.141  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.142  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.146  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.146  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.149  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 31 (0.182761 percent)
+01-19 18:48:40.150  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:40.150  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.150  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.150  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.150  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.150  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.150  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:40.155  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.155  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.157  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 30 (0.179385 percent)
+01-19 18:48:40.158  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.158  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.158  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.158  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.158  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.163  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.163  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.166  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 30 (0.176072 percent)
+01-19 18:48:40.167  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.167  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.167  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:40.167  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.167  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.167  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.172  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.172  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.174  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 29 (0.172820 percent)
+01-19 18:48:40.175  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.175  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.175  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.175  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.175  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.175  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30845480) status 0 for display-0.
+01-19 18:48:40.176  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:40.181  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.181  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.183  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 29 (0.169628 percent)
+01-19 18:48:40.184  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.184  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.184  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.184  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.184  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.191  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.191  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.192  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 28 (0.166495 percent)
+01-19 18:48:40.193  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.200  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.200  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.200  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.200  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.202  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.202  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.203  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.203  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.206  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.206  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.206  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 28 (0.163420 percent)
+01-19 18:48:40.206  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.207  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.207  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.207  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.207  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.211  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.211  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.211  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 27 (0.160401 percent)
+01-19 18:48:40.211  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.211  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.211  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.211  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.212  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.222  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.223  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.223  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 27 (0.157438 percent)
+01-19 18:48:40.223  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.224  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.224  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.224  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.224  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.230  3278  4248 D ActionExecute: frozen uid = 10145 reason=check binder
+01-19 18:48:40.231  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.231  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.231  3278  4248 D ActionExecute: setPkgData uid = 10145 time=0
+01-19 18:48:40.231  3278  4248 D ExternalInterface: setUidState, uid = 10145 allow = false
+01-19 18:48:40.231  3278  4248 D MiSensorServiceImpl: PowerKeeperSensor stop iUid:10145 but app has Controlled
+01-19 18:48:40.231  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 26 (0.154530 percent)
+01-19 18:48:40.231  3278  4248 D ActionExecute: setPkgData uid = 10145 time=3000
+01-19 18:48:40.231  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.232  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:1952.7,R:821.0,G:780.9,B:117.5,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:40.232  2596  4119 D libsensor-boledalgo: brightness:31,R:1.0,G:12570.6,B:11841.7,EVENT C:5086.0,R:1912.0,G:1950.0,B:375.0, lux: 9.9, clone:10398
+01-19 18:48:40.232  2596  4119 I libsensor-boledalgo: ##### the value of lux: 9.237779, cct: 5268.000000
+01-19 18:48:40.232  2596  4119 I libsensor-qshcalapi: value of set_lux: 9.237779, set r: 5268.000000
+01-19 18:48:40.232  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.232  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.232  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.232  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.234  1811  3932 I sensors-hal: handle_sns_std_sensor_event:67, light_event: ts=882169472966000, lux: 8.2, powermode=1 
+01-19 18:48:40.235  1857  1857 D SRE     : sensorCallback mDisplayId = 0 dataCallback value=<   8.2350,   0.0000,   0.0000>, time=882169472966000, sensortype=5
+01-19 18:48:40.235  1857  1857 D IGCDither: sensorCallback mDisplayId = 0 dataCallback value=<   8.2350,   0.0000,   0.0000>, time=882169472966000, sensor=5
+01-19 18:48:40.235  1811  3932 I sensors-hal: handle_sns_std_sensor_event:67, light_event: ts=882169473923813, lux: 9.2, powermode=1 
+01-19 18:48:40.235  1857  1857 D TRUETONE: sensorCallback Cct value=<5268.0000>  mLastCCT 5700.000000 mTargetCCT 5700.000000
+01-19 18:48:40.235  1857  1857 D SRE     : sensorCallback mDisplayId = 0 dataCallback value=<   9.2475,   0.0000,   0.0000>, time=882169473923813, sensortype=5
+01-19 18:48:40.235  1857  1857 D IGCDither: sensorCallback mDisplayId = 0 dataCallback value=<   9.2475,   0.0000,   0.0000>, time=882169473923813, sensor=5
+01-19 18:48:40.240  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.240  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.240  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 26 (0.151676 percent)
+01-19 18:48:40.240  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.241  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.241  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.241  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.241  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.243  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 25 (0.148875 percent)
+01-19 18:48:40.244  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.247  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.247  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.247  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.247  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.247  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.247  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.254  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.254  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.254  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 25 (0.146125 percent)
+01-19 18:48:40.254  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.255  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.255  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.255  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.255  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.263  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.263  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.263  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 24 (0.143426 percent)
+01-19 18:48:40.263  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.264  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.264  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.264  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.264  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.271  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.271  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.271  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 24 (0.140777 percent)
+01-19 18:48:40.271  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.272  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.272  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.272  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.272  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.279  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.279  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.279  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 24 (0.138176 percent)
+01-19 18:48:40.280  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.280  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.280  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.280  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.280  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.288  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.288  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.289  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 23 (0.135624 percent)
+01-19 18:48:40.290  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.290  1828  2805 I SDM     : QServiceBackend::notifyCallback: calling qservice command 5
+01-19 18:48:40.290  1828  2805 I SDM     : SDMServices::notifyCallback: sdmclient qservice command 5
+01-19 18:48:40.290  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.290  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.297  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.297  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.297  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 23 (0.133119 percent)
+01-19 18:48:40.298  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.298  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.298  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.304  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.304  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.304  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 22 (0.130660 percent)
+01-19 18:48:40.305  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.305  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.305  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.307  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 22 (0.128247 percent)
+01-19 18:48:40.308  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.313  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.313  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.316  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 22 (0.125878 percent)
+01-19 18:48:40.316  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.316  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.317  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.321  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.321  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.324  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 21 (0.123553 percent)
+01-19 18:48:40.325  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.325  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.325  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.330  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.330  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.332  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 21 (0.121271 percent)
+01-19 18:48:40.333  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.334  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.334  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.339  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.339  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.341  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 20 (0.119031 percent)
+01-19 18:48:40.341  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.342  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.342  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.346  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.346  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.349  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 20 (0.116832 percent)
+01-19 18:48:40.349  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.349  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.350  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.352  3278  4130 I MiuiNetworkPolicy: bandwidth: 0 KB/s, Max bandwidth: 200 KB/s
+01-19 18:48:40.354  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.354  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.357  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 20 (0.114674 percent)
+01-19 18:48:40.358  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.358  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.358  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:40.359  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.359  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:40.364  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.364  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.366  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 19 (0.112556 percent)
+01-19 18:48:40.367  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.367  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.368  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.373  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.373  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.374  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 19 (0.110477 percent)
+01-19 18:48:40.374  1828  2639 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+01-19 18:48:40.375  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.375  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.375  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.380  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.380  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.382  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 19 (0.108437 percent)
+01-19 18:48:40.384  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.384  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.384  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30846f50) status 0 for display-0.
+01-19 18:48:40.384  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.384  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:40.390  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.390  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.390  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 18 (0.106434 percent)
+01-19 18:48:40.392  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.397  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.397  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.397  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.397  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.399  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 18 (0.104468 percent)
+01-19 18:48:40.399  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.399  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.400  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.404  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.404  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.407  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 18 (0.102538 percent)
+01-19 18:48:40.407  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.407  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.407  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.407  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.407  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.408  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.408  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.413  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.413  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.416  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 17 (0.100645 percent)
+01-19 18:48:40.417  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.417  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.417  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.424  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 17 (0.098786 percent)
+01-19 18:48:40.425  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.431  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.431  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.433  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 17 (0.096961 percent)
+01-19 18:48:40.434  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.434  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.434  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.439  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.439  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.441  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 17 (0.095170 percent)
+01-19 18:48:40.441  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.445  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.445  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.445  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.445  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.446  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.446  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.450  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.450  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.451  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 16 (0.093412 percent)
+01-19 18:48:40.451  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.451  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.451  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.457  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 16 (0.091687 percent)
+01-19 18:48:40.458  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.466  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.466  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.466  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 16 (0.089993 percent)
+01-19 18:48:40.467  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.472  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.472  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.472  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.472  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.474  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 15 (0.088331 percent)
+01-19 18:48:40.475  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.476  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.476  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.477  3278  3462 D BrightnessDataProcessor: actualBrightness: 8.54597E-4originalBrightness: 8.54597E-4
+01-19 18:48:40.481  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.482  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.482  1828  3097 D SDM     : DisplayBuiltIn::SetPanelBrightness: Setting brightness to level 15 (0.085460 percent)
+01-19 18:48:40.482  1857  2445 D DisplayFeatureHal: getParam Node Expert, case Enable, value 0
+01-19 18:48:40.486  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.486  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.486  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.486  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.490  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 20
+01-19 18:48:40.490  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 21
+01-19 18:48:40.490  1828  3090 I SDM     : HWPeripheralDRM::SetPanelFeature: Set Panel feature property 7
+01-19 18:48:40.490  1828  3090 W SDM     : DRMPanelFeatureMgr::CachePanelFeature: Property is set twice obj_id 205, prop_id 8
+01-19 18:48:40.491  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 21-266
+01-19 18:48:40.491  1828  2639 I SDM     : DRMPanelFeatureMgr::ApplyDirtyFeature: Commited panel feature [enabled]: 8-265
+01-19 18:48:40.493 12372 12624 D JavaheapMonitor: Java heap used=11M max=256M, proc: com.xiaomi.joyose
+01-19 18:48:40.493 12372 12624 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:40.571  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:40.582  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:1108.5,R:378.0,G:469.4,B:59.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:40.582  2596  4119 D libsensor-boledalgo: brightness:15,R:1.0,G:12840.1,B:11841.7,EVENT C:4063.0,R:1549.0,G:1554.0,B:309.0, lux: 8.2, clone:10398
+01-19 18:48:40.650  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 1
+01-19 18:48:40.651  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:40.676  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x308467c0) status 0 for display-0.
+01-19 18:48:40.676  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:40.733  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:40.781  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:1108.5,R:378.0,G:469.4,B:59.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:40.781  2596  4119 D libsensor-boledalgo: brightness:15,R:1.0,G:12840.1,B:11841.7,EVENT C:4047.0,R:1546.0,G:1554.0,B:311.0, lux: 8.2, clone:10398
+01-19 18:48:40.790 17111 21555 D JavaheapMonitor: Java heap used=5M max=256M, proc: android:ui
+01-19 18:48:40.790 17111 21555 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:40.898  3278  4769 I NetworkBoostStatusManager: handle: 107
+01-19 18:48:40.901  5271  6317 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+01-19 18:48:40.903  3278  4769 D SLM-SRV-SLAService: isModemSingnalStrengthStatus = 0
+01-19 18:48:40.948 10016 21655 D JavaheapMonitor: Java heap used=8M max=256M, proc: com.miui.contentcatcher
+01-19 18:48:40.948 10016 21655 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-19 18:48:40.981  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:1108.5,R:378.0,G:469.4,B:59.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:40.981  2596  4119 D libsensor-boledalgo: brightness:15,R:1.0,G:12840.1,B:11841.7,EVENT C:4064.0,R:1553.0,G:1555.0,B:306.0, lux: 8.2, clone:10398
+01-19 18:48:41.122  3278  6352 D SLM-SRV-SLAService: checktemp temperature = 29987 temperature_average = 29823 isPerformanceMode = false thermal_enable_slm = true
+01-19 18:48:41.181  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:1108.5,R:378.0,G:469.4,B:59.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:41.181  2596  4119 D libsensor-boledalgo: brightness:15,R:1.0,G:12840.1,B:11841.7,EVENT C:5010.0,R:1872.0,G:1911.0,B:397.0, lux: 11.3, clone:10398
+01-19 18:48:41.316  2033  2033 D MI-SF   : isTpIdleScene ,mAverageFrameRate is 0, 0 
+01-19 18:48:41.320  1828  3093 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+01-19 18:48:41.321  1828  3097 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+01-19 18:48:41.333  1828  3091 I SDM     : DemuraTnCaptureIntfImpl::ProcessCapturePanelData: Screen capture status = 0
+01-19 18:48:41.357  3278  6655 I NetworkAccelerateSwitchService: EVENT_RSSI_POLL. mRssiPoll=true
+01-19 18:48:41.357  3278  6655 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed rssi:48
+01-19 18:48:41.357  3278  6655 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed mWifiFastFade:false mWifiFastFadeAdjustThreshold:false
+01-19 18:48:41.357  3278  6655 I NetworkAccelerateSwitchService: getAverageWifiRssi:47
+01-19 18:48:41.357  3278  6655 D NetworkAccelerateSwitchService: checkIntervalModeChange mMovementState:false mIntervalMode:0 mIsBadLinkLayerQoE:false mBadLinkLayerQoETimes = 0
+01-19 18:48:41.380  2596  4119 I libsensor-boledalgo: Write:the value of channelCali C:1108.5,R:378.0,G:469.4,B:59.7,scales [0.768425,0.771258,0.754871,0.816696]
+01-19 18:48:41.380  2596  4119 D libsensor-boledalgo: brightness:15,R:1.0,G:12840.1,B:11841.7,EVENT C:4047.0,R:1546.0,G:1554.0,B:311.0, lux: 8.2, clone:10398
+01-19 18:48:41.390  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:41.424  3278  5488 W ActivityManagerServiceImpl: Sending non-protected broadcast com.modemenhance.ACTION_MODEMWIFI_RSSI_POLL from system 5271:com.android.phone/1001 pkg com.android.phone. Callers=
+01-19 18:48:41.425  1828  4133 I SDM     : NotifyCWBStatus: Notify the client about buffer (0x30843430) status 0 for display-0.
+01-19 18:48:41.425  1828  4133 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+01-19 18:48:41.427  3278  3419 D BroadcastQueue: Logging broadcast for com.android.phone, stopped=false, firstLaunch=false
+01-19 18:48:41.428  5271  5271 D SlaveWifiManager: getWifiSlaveConnectionInfo
+01-19 18:48:41.449  3278  4248 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-19 18:48:41.451  3278  4248 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-19 18:48:41.451  3278  4248 D InetDiagMessage: Destroyed live tcp sockets for uids={10282} in 6ms
+01-19 18:48:41.451  3278  4248 D ActionExecute: frozen uid = 10282 reason=check binder
+01-19 18:48:41.452  3278  4248 D ExternalInterface: setUidState, uid = 10282 allow = false
+01-19 18:48:41.452  3278  4248 D MiSensorServiceImpl: PowerKeeperSensor stop iUid:10282 but app has Controlled
+01-19 18:48:41.473  1828  2639 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+01-19 18:48:41.497 21673 21673 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
