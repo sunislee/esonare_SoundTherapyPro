@@ -1,0 +1,12 @@
+{
+  "name": "esonare_SoundTherapyPro",
+  "version": "1.0.0",
+  "description": "Sound Therapy App for OpenHarmony",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@ohos/hvigor": "5.0.0",
+    "@ohos/hvigor-ohos-plugin": "5.0.0",
+    "typescript": "4.9.5"
+  }
+}

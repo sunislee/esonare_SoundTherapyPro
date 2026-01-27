@@ -1,0 +1,75 @@
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Text, Animated, StatusBar, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DownloadService } from '../services/DownloadService';
+import AudioService from '../services/AudioService';
+import EngineControl from '../constants/EngineControl';
+
+export const LandingScreen = ({ navigation }: any) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+
+    // --- [暗号对齐 + 用户引导] 启动逻辑 ---
+    const checkAndBoot = async () => {
+      const startTime = Date.now();
+      const MIN_DISPLAY_TIME = 3000;
+
+      try {
+        // 1. 先查“暗号”：资源是否就绪
+        const isReady = await DownloadService.isResourceReady();
+        
+        // 2. 再查“身份”：检查是否已经有用户名
+        const userName = await AsyncStorage.getItem('USER_NAME');
+        const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
+        
+        console.log('--- [Boot] Status:', { isReady, userName, hasSkipped });
+
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
+
+        setTimeout(async () => {
+          if (!isReady) {
+            // 情况 A: 资源未就绪，去下载页
+            navigation.replace('ResourceDownload');
+          } else if (!userName && hasSkipped !== 'true') {
+            // 情况 B: 资源好了但没名字，也没点过跳过，去填名页
+            navigation.replace('NameEntry');
+          } else {
+            // 情况 C: 资源和身份都好了，进入主页
+            EngineControl.allow();
+            try { await AudioService.setupPlayer(); } catch (e) {}
+            navigation.replace('MainTabs');
+          }
+        }, remainingTime);
+
+      } catch (e) {
+        console.error('Landing Error:', e);
+        navigation.replace('ResourceDownload');
+      }
+    };
+    checkAndBoot();
+  }, [navigation, fadeAnim]);
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        <Text style={{ fontSize: 100, marginBottom: 20 }}>🧘‍♂️</Text>
+        <Text style={styles.brandName}>ESONARE</Text>
+        <Text style={styles.loadingText}>正在进入心灵空间...</Text>
+        <ActivityIndicator size="small" color="#6C5DD3" style={{ marginTop: 40 }} />
+      </Animated.View>
+    </View>
+  );
+};
+
+export default LandingScreen;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' },
+  content: { alignItems: 'center' },
+  brandName: { color: '#FFFFFF', fontSize: 32, fontWeight: 'bold', letterSpacing: 8 },
+  loadingText: { color: '#94A3B8', fontSize: 16, marginTop: 20, letterSpacing: 2 },
+});

@@ -1,0 +1,1247 @@
+--------- beginning of main
+01-13 14:40:32.583 21673 21673 I adbd    : in ShellService: am start -n com.soundtherapyapp/.MainActivity
+--------- beginning of system
+01-13 14:40:32.645  3278  5559 I SecurityManagerService: isVirtualDisplayActive caller=com.android.shell~2000, target=com.soundtherapyapp~10405~0
+01-13 14:40:32.645  3278  5559 I SecurityManagerService: find uiagent virtual display id=0
+01-13 14:40:32.645  3278  5559 I SecurityManagerService: no uiagent display, return
+01-13 14:40:32.645  3278  5559 I SecurityManagerService: isVirtualDisplayActive, should not intercept
+01-13 14:40:32.645 10434 10756 I PermissionManagerProvider: call method : 14 Binder.getCallingUid() 10208 Binder.getCallingUid() 10434
+01-13 14:40:32.645  3278  5559 W ActivityTaskManager: callingPackage for (uid=2000, pid=9539) has no WPC
+01-13 14:40:32.646  3278  5559 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@e587e61a does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+01-13 14:40:32.646  3278  5559 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES
+01-13 14:40:32.646  3278  5559 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE
+01-13 14:40:32.646  3278  5559 I AnimInterruptController: FIS notify Foresee interrupt start:2518
+01-13 14:40:32.646  3278  5559 I AnimInterruptController: remove FO timeout
+01-13 14:40:32.646  3278  5559 I ActivityStarterImpl: isKeyguardEditor: false, newTransition: TransitionRecord{aba79e2 id=2519 type=OPEN flags=0x0}
+01-13 14:40:32.646  3278  5559 D WindowManager: Collecting in transition 2519: ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity init visibleRequested:false
+01-13 14:40:32.646  3278  5559 I ActivityStarterImpl: boost cold start activity for com.soundtherapyapp
+01-13 14:40:32.646  3278  5559 D MiuiFreeformServiceImpl: addLaunchFreeformActivityOptionIfNeed skip due to not find sourceTask: null sourceFfas: null sourceFreeFormActivity: null
+01-13 14:40:32.647  3278  5559 D ActivityTaskManager: Temporarily retain top process state for launching app
+01-13 14:40:32.647  3278  5559 D PerfMTKStubImpl: initBoostParamByDevice
+01-13 14:40:32.647  3278  5559 I ATMSImpl: cacheTasksForDefaultDisplay size=2 topId=782
+01-13 14:40:32.648  3278  5559 D BarFollowAnimation: onTaskAppearedForCaptionBar Task{1b84ca9 #786 type=standard}
+01-13 14:40:32.649  5321  5646 D OneHandedController: stopOneHanded state is 0
+01-13 14:40:32.649  3278  5559 D WindowManager: Collecting in transition 2519: Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} init visibleRequested:false
+01-13 14:40:32.649  3278  5559 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.649  3278  5559 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.649  3278  5559 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE
+01-13 14:40:32.650  3278  5559 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.650  3278  5559 D MiuiFreeFormManagerService: onStartActivityInner as = Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} op = null
+01-13 14:40:32.650  3278  5559 D TaskStubImpl: setToBackByHome false for Task#786
+01-13 14:40:32.650  3278  4605 D BarFollowAnimation:  CreateBarRunnable  mTask = Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} mSurfaceControl = Surface(name=Task=786#49545)/@0xcae0830 currentPid = 3278 currentThread name = BarFollowAnimation Thread currentThread id = 435
+01-13 14:40:32.650  3278  5559 I ActivityTaskManager: moveTaskToFront: Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} caller trace:com.android.server.wm.TaskDisplayArea.onTaskMoved:461 com.android.server.wm.Task.updateTaskMovement:1758 com.android.server.wm.TaskDisplayArea.positionChildTaskAt:425 com.android.server.wm.TaskDisplayArea.positionChildAt:386 com.android.server.wm.Task.moveToFront:6230 com.android.server.wm.Task.moveToFront:6200 com.android.server.wm.ActivityStarter.startActivityInner:2432 com.android.server.wm.ActivityStarter.startActivityUnchecked:1935 com.android.server.wm.ActivityStarter.executeRequest:1747 com.android.server.wm.ActivityStarter.execute:979 
+01-13 14:40:32.650  3278  5559 D As.ActivityMmReduceLoadHelper: onTaskMovedToFront: mTopActivityPackageName: com.soundtherapyapp mTopActivityClassName: com.soundtherapyapp.MainActivity
+01-13 14:40:32.650  3278  5559 D As.ActivityMmReduceLoadHelper: onTaskMovedToFront End
+01-13 14:40:32.650  3278  3381 D AS.ReduceMmLoadingHelper: ReduceMmLoadingListener, onActivityMmReduceLoad isReduceLoad = false
+01-13 14:40:32.650  3278  3381 D As.ActivityMmReduceLoadHelper: onCheckIfActivtyReduceLoad topAppName is not in foreground. Done
+01-13 14:40:32.650  3278  5559 D ActivityTaskManager: Task#startActivityLocked isThisOrHasChildTask=true newTask=true
+01-13 14:40:32.650  3278  5559 I WindowManager: Disable startingWindow, because the display is not ready. this = com.android.server.wm.ActivityRecordImpl@56d633a
+01-13 14:40:32.650  3278  5559 I WindowManager: Disable startingWindow, because the display is not ready. this = ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786}
+01-13 14:40:32.650  3278  5559 D WindowManager: Collecting in transition 2519: ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786} init visibleRequested:false
+01-13 14:40:32.650  3278  5559 I AnimInterruptController: mark Foresee interrupt start 2518
+01-13 14:40:32.650  3278  5559 I AnimInterruptController: remove FO timeout
+01-13 14:40:32.651  1834  2080 E PERFHAL-RESOURCEQS: PERFHAL-RESOURCEQS: AddAndApply() 136: Resource value ffffffff is not supported
+01-13 14:40:32.651  3278  5559 I ActivityTaskManager: START u0 {flg=0x10000000 xflg=0x5 cmp=com.soundtherapyapp/.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 from pid 9539 callingPackage com.android.shell (BAL_ALLOW_PERMISSION) result code=0
+01-13 14:40:32.651  3278  5559 I Perf[AppStartScene]: onSceneChangeNotify:Bundle[{uid=10405, name=com.soundtherapyapp.MainActivity, type=1, preStartProc=false, begin=true, state=0, processName=com.soundtherapyapp, packageName=com.soundtherapyapp, appSwitch=true}]
+01-13 14:40:32.654  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: sendEvents() 231: Start hint for app com.soundtherapyapp/com.soundtherapyapp.MainActivity/1, hintID : 4099, hintID hex : 1003 value: -1
+01-13 14:40:32.654  1819  1927 I ANDR-PWR-OPT: PowerAppClassifier: getAppType() 59: checking app [com.soundtherapyapp] is type 1
+01-13 14:40:32.654  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: isGame() 348: com.soundtherapyapp is Game = 1
+01-13 14:40:32.657  5321  5646 D ShellSplitScreen: logExit: no-op, mLoggerSessionId is null
+01-13 14:40:32.657  3278  3403 D MiuiEmbeddingWindow: blacklistedAppRunningOnPhone: package=com.soundtherapyappisNotProjeciton=true isHavingJeppackDisabledConfig=false isRunningOnPhone=true isAppleConnection=false
+01-13 14:40:32.657  3278  3403 D MiuiEmbeddingWindow: MiuiEmbeddingWindowService: updateApplicationInfo for com.soundtherapyapp, blacklistedAppRunningOnPhone updated: clear
+01-13 14:40:32.657  5321  5646 I SoScStageCoordinator: Transition requested:TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=786 effectiveUid=10405 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.soundtherapyapp/.MainActivity } baseActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} topActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} origActivity=null realActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} numActivities=1 lastActiveTime=348881890 supportsSplitScreenMultiWindow=true mSoScDisplayMode=-1 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=200 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@4465175} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 161 - 0, 0) topActivityInfo=ActivityInfo{440850a com.soundtherapyapp.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isTopActivityNoDisplay=false isSleeping=true locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(372, 930 - 1068, 2370) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false topActivityInMiuiSizeCompat=false isLetterboxEducationEnabled= false isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 0 - 1440, 3200) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} isImmersive=false mTopActivityRequestOrientation=-2 mStatusBarParent=null mNavBarParent=null mBehindAppLockPkg=null mOriginatingUid=0 isEmbedded=false shouldBeVisible=true isCreatedByOrganizer=false mIsCastMode=false mTopActivityMediaSize=null mTopActivityRecordName=ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786} mTopActivityOrientation=-2 topActivityMainWindowFrame=null}, pipChange = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 2519 } isSoScActive:false triggerTask:TaskInfo{userId=0 taskId=786 effectiveUid=10405 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.soundtherapyapp/.MainActivity } baseActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} topActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} origActivity=null realActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} numActivities=1 lastActiveTime=348881890 supportsSplitScreenMultiWindow=true mSoScDisplayMode=-1 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=200 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@4465175} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 161 - 0, 0) topActivityInfo=ActivityInfo{440850a com.soundtherapyapp.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isTopActivityNoDisplay=false isSleeping=true locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(372, 930 - 1068, 2370) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=
+01-13 14:40:32.655  4984  5145 I DynamicDDSService: handleMessage(ACTIVITY_INVOKE{appInfo=com.soundtherapyapp isFullScreen=}true)
+01-13 14:40:32.657  4984  5145 W DynamicDDSService: send appNames via QMI[com.soundtherapyapp]
+01-13 14:40:32.657  3278  5559 D WindowManager: Set transition=TransitionRecord{aba79e2 id=2519 type=OPEN flags=0x0 c=[
+01-13 14:40:32.657  3278  5559 D WindowManager:    ChangeInfo{a1ead48 container=Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} flags=0x0}
+01-13 14:40:32.657  3278  5559 D WindowManager:    ChangeInfo{58be7e1 container=Display{#0 state=OFF size=1440x3200 ROTATION_0} flags=0x0}
+01-13 14:40:32.657  3278  5559 D WindowManager:    ChangeInfo{63e7906 container=DefaultTaskDisplayArea@148137897 flags=0x0}
+01-13 14:40:32.657  3278  5559 D WindowManager:    ChangeInfo{21d8bc7 container=ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786} flags=0x0}
+01-13 14:40:32.657  3278  5559 D WindowManager: ]
+01-13 14:40:32.657  3278  5559 D WindowManager: }, ready=false, SyncId=2519 info=used=false, override=false, defer=0, states=Display{#0 state=OFF size=1440x3200 ROTATION_0}:false reason=com.android.server.wm.Transition.applyReady:1263 com.android.server.wm.Transition.start:889 com.android.server.wm.WindowOrganizerController.startTransition:525 com.android.server.wm.WindowOrganizerController.startTransition:408 android.window.IWindowOrganizerController$Stub.onTransact:294 com.android.server.wm.WindowOrganizerController.onTransact:265 android.os.Binder.execTransactInternal:1433 android.os.Binder.execTransact:1372 
+01-13 14:40:32.657  3278  5559 D SystemPerformanceHinter: startSession#HighPerfSession-d0-Transition
+01-13 14:40:32.657  3278  3403 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@e587e61a does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+01-13 14:40:32.658  3278  3403 I Perf[AppStartScene]: onSceneChangeNotify:Bundle[{hostingRecordName={com.soundtherapyapp/com.soundtherapyapp.MainActivity}, hostingRecordType=top-activity, uid=10405, type=0, state=1, processName=com.soundtherapyapp, packageName=com.soundtherapyapp}]
+01-13 14:40:32.658  3278  3403 D IorapForwardingService: onIntentStarted!! packageName com.soundtherapyapp; uid:10405
+01-13 14:40:32.658  3278  3403 I ActivityManager: Posting procStart msg for 0:com.soundtherapyapp/u0a405
+01-13 14:40:32.659  3278  4441 I DisplayModeDirectorImpl: setSmartDisplayUpRefreshRatePolicy [0.0,120.0]
+01-13 14:40:32.659  2033  6014 D MI-SF   : updateScene: module = 268 (Animation), value = 1, pkg = perf_interaction, Vrr = 1, mSetTpIdleFlag = 0
+01-13 14:40:32.659  2033  6014 D MI-SF   : isIdleTimerSkip is 1,mSetIdleForceFlag = 1
+01-13 14:40:32.659  2033  6014 D MI-SF   : updateScene mSetAnimationFlag status 1, vsync 120
+01-13 14:40:32.661  2520  2827 W cnd     : AIBinder_linkToDeath is being called with a non-null cookie and no onUnlink callback set. This might not be intended. AIBinder_DeathRecipient_setOnUnlinked should be called first.
+01-13 14:40:32.661  3278  3420 I Perf[AppStartScene]: onSceneChangeNotify:Bundle[{hostingRecordName={com.soundtherapyapp/com.soundtherapyapp.MainActivity}, hostingRecordType=top-activity, pid=8264, uid=10405, type=0, state=2, processName=com.soundtherapyapp, packageName=com.soundtherapyapp}]
+01-13 14:40:32.661  4686  4686 D RecentsModel: onTaskDescriptionChanged =  taskId = 786
+01-13 14:40:32.661  3278  4445 I AnimationScenario: Big data animation scenario state changed to: true, type is 524
+01-13 14:40:32.660 29090  2374 D RelayAppLocalHelper: onTaskDisplayChanged taskId:786,newDisplayId:0
+01-13 14:40:32.661  3278  3420 D IorapForwardingService: onProcessStart!! pid:8264 processname:com.soundtherapyapp
+01-13 14:40:32.661  3278  3403 D DisplayModeDirectorImpl: use smart display refresh rate policy
+01-13 14:40:32.661  3278  3403 I DisplayModeDirectorImpl: updateRefreshRateResultIfNeeded after:baseModeId=1 allowGroupSwitching=false primary=physical: (0.0 Infinity) render:  (0.0 120.0) appRequest=physical: (0.0 Infinity) render:  (0.0 120.0) idleScreenRefreshRateConfig=null mNormalModeSkipOveride: false
+01-13 14:40:32.662  3278  3420 I ActivityManager: Start proc 8264:com.soundtherapyapp/u0a405 for top-activity {com.soundtherapyapp/com.soundtherapyapp.MainActivity} caller=com.android.shell
+01-13 14:40:32.662  3278  3420 I ActivityManager: ProcessObserver broadcast disabled
+01-13 14:40:32.662  5321  5646 D OneHandedController: stopOneHanded state is 0
+01-13 14:40:32.662  2033  2033 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+01-13 14:40:32.662  5321  5646 D OneHandedController: stopOneHanded state is 0
+01-13 14:40:32.662  2520  2520 I BpBinder: onLastStrongRef automatically unlinking death recipients: vendor.qti.hardware.data.qmiaidlservice.ISendRequestCallback
+01-13 14:40:32.662  4984 26573 I QmiHwInterface/SendRequestAidlCallback: <- RCV:OnResponseEvent{status=0, error message = }
+01-13 14:40:32.662  5321  5321 D ShadeDarkIconDispatcher: current token StatusBarToken(displayId=0, statusBarIndex=1, rawDisplayId=16777216)
+01-13 14:40:32.662  5321  5321 D ShadeDarkIconDispatcher: receiver delegate onDarkChanged
+01-13 14:40:32.663  4984  5145 I DynamicDDSService: Aidl sendRequest has success response 
+01-13 14:40:32.663 29090  2374 D RelayAppLocalHelper: notifyTaskStackChanged:
+01-13 14:40:32.663  8264  8264 E Zygote  : process_name_ptr:8264 com.soundtherapyapp
+01-13 14:40:32.663  8264  8264 E Zygote  : SetMemoryProtected process_name_ptr:8264 com.soundtherapyapp
+01-13 14:40:32.663  4686 30128 D EventBus: No subscribers registered for event class com.miui.home.recents.messages.RecentTasksChangedEvent
+01-13 14:40:32.664  4686 30128 D EventBus: No subscribers registered for event class org.greenrobot.eventbus.NoSubscriberEvent
+01-13 14:40:32.664  4686  6972 I MiBridge: requestThreadLevelPro ret: 503878
+01-13 14:40:32.664  2517  2625 W MiuiBooster: "MiuiBoosterService requestThreadPriority: 10142, 2, 500, 503878"
+01-13 14:40:32.664  4686  6972 D Launcher.Boost: setDynamicVIPTaskIfNeeded::tid = 118 duration = 500
+01-13 14:40:32.664  4686  6972 E ActivityManagerWrapper: get all recent tasks force including -1 userId =0
+01-13 14:40:32.664  5321  5321 D ShadeDarkIconDispatcher: receiver delegate onDarkChangedWithContrast
+01-13 14:40:32.664  5321  5321 D ShadeDarkIconDispatcher: receiver delegate onLightDarkTintChanged
+01-13 14:40:32.666  5321  5321 D KeyguardEditorHelper: onTopActivityMayChanged, topActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}; mState=IDEL
+01-13 14:40:32.666 29090  2374 E SystemUtils: appIsTopAndXSpace: package com.soundtherapyapp, result false
+01-13 14:40:32.667 29090  5447 D ExecutorUtils: Task[RALH-notifyTaskStackChanged,224038566] running ON mirror-thread-5
+01-13 14:40:32.667 29090  5447 D RelayAppLocalHelper: mIsLastAppHideIcon=true
+01-13 14:40:32.666  4686  6972 E ActivityManagerWrapper: getRecentTasksForceIncludingTaskIdIfValid: getRecentTasks: size=1
+01-13 14:40:32.666  4686  6972 E ActivityManagerWrapper:  mainTaskId=786   userId=0   windowMode=1   isExcludedFromRecents=false   baseIntent=Intent { act=null flag=268435456 cmp=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} }
+01-13 14:40:32.668 29090  5447 I MultiUserUtils: myUserId: 0
+01-13 14:40:32.668  4686  6972 D RecentsTaskLoader: reloadTasksData [TaskKey{id=786, stackId=0, baseIntent=Intent { flg=0x10000000 cmp=com.soundtherapyapp/.MainActivity }, userId=0, lastActiveTime=348881890, windowingMode=1, isThumbnailBlur=false, isAccessLocked=false, isScreening=false, topActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}, mHashCode=24339278}, title=SoundTherapyApp, titleDescription=SoundTherapyApp, bounds=null, isLaunchTarget=false, isStackTask=true, isSystemApp=false, isDockable=true, baseActivity=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}, isLocked=false, mNeedHide=false, hasMultipleTasks=false, cti1Key=, cti2Key=] 
+01-13 14:40:32.669  4686  6972 W IconCustomizer: Density abnormal: context density=586 systemDensity=600
+01-13 14:40:32.669  4686  6972 W IconCustomizer: Density abnormal: context density=586 systemDensity=600
+01-13 14:40:32.670  8264  8264 I soundtherapyapp: Late-enabling -Xcheck:jni
+01-13 14:40:32.670  4686  6972 D TaskSnapshotCompatVV: getIsInvalidateFromTaskSnapshot, return, mTaskSnapshot=null, mTaskSnapshotClazz=null
+01-13 14:40:32.671  3278  4927 I SmartPower: com.milink.crossdeviceservice/10177(32154): idle->background(40262ms) R(content provider start ContentProviderRecord{16203da u0 com.milink.service/com.xiaomi.dist.handoff.AppMetaContentProvider}) adj=0.
+01-13 14:40:32.672 32154 32218 I ho_AppMetaProvider: call method getAppId
+01-13 14:40:32.672 32154 32218 I ho_AppMetaProvider: call package is com.soundtherapyapp
+01-13 14:40:32.673 29090  5447 D RelayAppLocalHelper: publish:com.soundtherapyapp,RelayTopicMessage {version=3,isRelay=false,relayType=0,appId=2036506291,processId=0,supportSubScreen=false,supportHandoff=false,isRelayValidForPc=false, unregisterRelay=false}
+01-13 14:40:32.673 29090  5447 D LyraUtils: seq no=103
+01-13 14:40:32.673 29090  5466 D ExecutorUtils: Task[publishRelayTopics,23691495] running ON pool-4-thread-1
+01-13 14:40:32.673 29090  5466 D LyraManager: publishRelayTopics start
+01-13 14:40:32.674 11745 11799 I lyra-msg-jni: Java_com_xiaomi_continuity_messagecenter_MessageCenterNative_nativeUnPublish:344 
+01-13 14:40:32.674 11745 11799 I lyra-msg-jni: JniMessageCenter::UnPublish:196 topic_name=topic.name:relay
+01-13 14:40:32.674 11745 11799 I lyra-unified-api: UnifiedImpl::UnPublish:1791 topic_name=topic.name:relay
+01-13 14:40:32.674 11745 11799 I lyra-msg-mgr: MessageCenterManagerImpl::UnPublish:261 topic_name=topic.name:relay
+01-13 14:40:32.674 11745 11799 I lyra-miwear-msg: MiwearMessage::UnPublish:173 topic_name=topic.name:relay
+01-13 14:40:32.674 11745 12403 I lyra-miwear-msg: MiwearMessageActuatorControl::UnPublish:92 
+01-13 14:40:32.674 11745 12403 I lyra-miwear-msg: MiwearMessageActuatorControl::UnPublish:93 message_queue_map_.size=0
+01-13 14:40:32.674 29090  5466 I message-center-PublisherManager: use v3 publish interface
+01-13 14:40:32.674 11745 12403 I lyra-miwear-msg: MiwearMessageActuatorControl::UnPublish:113 message_queue_map_.size=0
+01-13 14:40:32.674 11745 12385 I lyra-msg-act: ActuatorControl::UnPublish:172 
+01-13 14:40:32.674 11745 12385 I lyra-msg-act: ActuatorControl::UnPublish:175 message_queue_map_.size=0
+01-13 14:40:32.675 11745 12385 I lyra-msg-act: ActuatorControl::UnPublish:195 message_queue_map_.size=0
+01-13 14:40:32.675 11745 12385 I lyra-msg-chl: MessageCenterSend::UnPublish:760 topic_name=topic.name:relay
+01-13 14:40:32.675 11745 12385 I lyra-msg-chl: MessageCenterSend::UnPublish:770 
+01-13 14:40:32.675 11745  5470 I lyra-msg-jni: Java_com_xiaomi_continuity_messagecenter_MessageCenterNative_nativePublishV3:337 
+01-13 14:40:32.675 29090  5466 D LyraManager: publishRelayTopics end
+01-13 14:40:32.675 11745  5470 I lyra-msg-jni: JniMessageCenter::PublishV3:137 
+01-13 14:40:32.675 11745  5470 I lyra-msg-jni: JniMessageCenterMessageDataV2::JavaToNative:46 
+01-13 14:40:32.675 11745  5470 I lyra-unified-api: UnifiedImpl::Publish:1785 topic_name=topic.name:relay
+01-13 14:40:32.675 11745  5470 I lyra-unified-msg: UnifiedPublisher::Publish:53 [start] id: 576, topic_name: topic.name:relay
+01-13 14:40:32.675 11745  5470 I lyra-msg-mgr: MessageCenterManagerImpl::Publish:137 topic_name=topic.name:relay, data_types=0, send_type=0 base_data={hash=103, len=1}, extend_data={hash=706257206, len=10}
+01-13 14:40:32.675 11745  5470 I lyra-miwear-msg: MiwearMessage::Publish:150 topic_name=topic.name:relay
+01-13 14:40:32.675 11745 12385 I lyra-msg-mgr: MessageCenterManagerImpl::GetAndUpdateSeqNum:300 seq_num=10
+01-13 14:40:32.675 11745 12403 I lyra-miwear-msg: MiwearMessageImpl::Publish:77 topic_name=topic.name:relay, type=0, base_data=1, extend_data=10
+01-13 14:40:32.675 11745 12403 E lyra-miwear-msg: MiwearMessageImpl::Publish:87 invalid params, can't use a static topic name
+01-13 14:40:32.675 11745 12385 I lyra-msg-mgr: MessageCenterManagerImpl::GetAndUpdateSeqNum:310 topic_seq_num_map_[topic.name:relay]=11
+01-13 14:40:32.675 11745 12385 I lyra-msg-act: ActuatorControl::Publish:153 
+01-13 14:40:32.675 11745  5470 I lyra-msg-jni: JniMessageCenter::PublishV3:183 jni_publish_result_map_.size=4
+01-13 14:40:32.676 11745 12502 I lyra-msg-act: ActuatorControl::ActuatorControlProcess:360 received event
+01-13 14:40:32.676 11745 12502 I lyra-msg-act: ActuatorControl::ActuatorControlProcess:284 monitor queueMap :1
+01-13 14:40:32.676 11745 12502 I lyra-msg-act: ActuatorControl::ActuatorControlProcess:303 topic_name=topic.name:relay, filter size=0, send types=0, message_list size=0, base_data length=1, extend_data length=10, message_list_len=11
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::FindDynamicTopicName:954 topic_name=topic.name:relay is not in dynamic config
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::SendMessageCenterMessage:197 message_list.size=1, device_list_filter.size=0, dev_info_list.size=1
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::SendMessageCenterMessage:216 device_info={"device_type":1,"device_id":"9A9E312D","device_name":"E69D8EE7BBA7E69E97E79A845869616F6D692031325320556C747261","medium_types":130,"trusted_types":1}
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::ConnectSendMessage:410 
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::ConnectSendMessage:420 device:9A9E312D send types:0, online medium types:130, match types:128
+01-13 14:40:32.676 11745 12502 I lyra-msg-proto: MessageProtocolParser::MessageInfoToData:197 
+01-13 14:40:32.676 11745 12502 I lyra-msg-proto: MessageProtocolParser::MessageInfoToData:258 static_dynamic=1, topic_name=topic.name:relay, topic_id=3, seq=10, flag=26, base length=1, extend length=10, extend limit=2048, is_extend_data:1, base hash={hash=103, len=1}, data hash={hash=706257206, len=10}
+01-13 14:40:32.676 11745 12502 I lyra-msg-proto: MessageProtocolParser::TopicFormatProtocolToByteBuffer:466 is_extend_data=1
+01-13 14:40:32.676 11745 12502 I lyra-msg-proxy: NetworkPayloadProxy::RequestNetworkSend:61 
+01-13 14:40:32.676 11745 12502 I lyra-identity-auth: DeviceGroupManagerImpl::IsTrustedDevice:103 device_id 9A9E312D's trusted type:1 1
+01-13 14:40:32.676 11745 12502 I lyra-net-auth: AuthServiceImpl::IsSharedTrusted:122 local_uid=0B****DA, shared_uid=
+01-13 14:40:32.676 11745 12502 I lyra-net-payload: PayloadManagerImpl::RequestSend:82 sync task : 0, device_id 9A9E312D, medium_type 128, module_id 1, posted_from: RequestSend@payload_manager_adapter.cpp:63
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::ConnectSendMessage:441 all_failed=0, has_error_code=0
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::SendMessageCenterMessage:231 WLAN decision_code=0
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::SendMessageCenterMessage:254 SendMessageCenterMessage all_failed:0
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::OnSendResult:643 onSendResult code=0, msg=success
+01-13 14:40:32.676 11745 12361 I lyra-net-payload: ConnectionClassic::RequestSend:126 device_id 9A9E312D, medium_type 128, module_id 1
+01-13 14:40:32.676 11745 12502 I lyra-msg-chl: MessageCenterSend::OnSendResult:653 OnSendSuccess : code=0
+01-13 14:40:32.676 11745 12502 I lyra-msg-jni: JniPublishResultCallback::OnSendSuccess:53 OnSendSuccess arrive_code=1
+01-13 14:40:32.676 11745 12361 I lyra-net-payload: ConnectionClassic::FindConnectionId:440 find connection DC7FA23A for medium_type 128
+01-13 14:40:32.676 11745 12502 I lyra-msg-jni: JniPublishResultCallback::CheckJni:91 
+01-13 14:40:32.676 11745 12361 I lyra-net-payload: ConnectionClassic::TrySend:327 device 9A9E312D, connection DC7FA23A, medium_type 128
+01-13 14:40:32.676 11745 12361 I lyra-conn-mgr: ConnectionManager::SendPayload:472 conn_id=DC7FA23A, options={restrict=1 rfcomm_class=3 tr_class=0}, data.len=22
+01-13 14:40:32.676 11745 12502 I lyra-msg-jni: JniMessageCenter::RemovePublishResultCallBack:202 
+01-13 14:40:32.676 11745 12502 I lyra-msg-jni: JniMessageCenter::RemovePublishResultCallBack:204 jni_publish_result_map_.size=4
+01-13 14:40:32.676 11745 12502 I lyra-msg-jni: JniMessageCenter::RemovePublishResultCallBack:207 
+01-13 14:40:32.676 11745 12502 I lyra-msg-jni: JniPublishResultCallback::~JniPublishResultCallback:45 
+01-13 14:40:32.676 29090 32381 I message-center-PublisherManager: sdk onSendSuccess
+01-13 14:40:32.676 11745 12502 I lyra-unified-msg: UnifiedPublisher::OnResultCanRemoved:97 [finish] id: 576
+01-13 14:40:32.676 29090 32381 I message-center-PublisherManager: default by onSendSuccess
+01-13 14:40:32.676 11745 12330 I lyra-conn-logi: LogiConnHandler::DoLogiSendPayloadFrame:421 logi_conn_id=DC7FA23A, phys_conn_id=7CDBC5AF, data_size=22, conn_state=2
+01-13 14:40:32.676 29090 32381 D LyraManager: onSendSuccess arriveCode:1
+01-13 14:40:32.676 11745 12502 I lyra-msg-act: ActuatorControl::ActuatorControlProcess:284 monitor queueMap :1
+01-13 14:40:32.676 11745 12502 I lyra-msg-act: ActuatorControl::ActuatorControlProcess:343 message_queue_map erase, topic=topic.name:relay
+01-13 14:40:32.676 11745 12502 I lyra-msg-act: ActuatorControl::ActuatorControlProcess:284 monitor queueMap :0
+01-13 14:40:32.676 11745 12330 I lyra-conn-phys: PhysConnHandler::SendPayload:135 phys_conn_id=7CDBC5AF, device_id=9A9E312D, medium_type=100, options={type=4(payload), timeout=0, restrict=1/3}, data={hash=877728153, len=51}
+01-13 14:40:32.678 11745 12349 I lyra-mpt: MiplayTransportSession::CreateKcpSession:198 session=13716 rtt=115 srtt=118 rto=578 cwnd=204 incr=280957 srh=196 nsend=365 nresend=5 nfastresend=0 nsent=364 maxxmit=2
+01-13 14:40:32.684  8264  8264 I soundtherapyapp: Using CollectorTypeCC GC.
+01-13 14:40:32.687 21673 21684 I adbd    : jdwp connection from 8264
+01-13 14:40:32.689  8264  8264 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+01-13 14:40:32.693  3278 11065 D MiuiForceVkService: shouldUseVk, pkg=com.soundtherapyapp useVk 0
+01-13 14:40:32.693  8264  8264 I ActivityThread: Current dynamic renderEngine type=0
+01-13 14:40:32.697  3278 11065 I Perf[AppStartScene]: onSceneChangeNotify:Bundle[{applicationThread=android.os.BinderProxy@b5d1d63, hostingRecordName={com.soundtherapyapp/com.soundtherapyapp.MainActivity}, hostingRecordType=top-activity, pid=8264, uid=10405, type=0, state=3, processName=com.soundtherapyapp, packageName=com.soundtherapyapp, applicationThreadExt=android.os.BinderProxy@32bdd60}]
+01-13 14:40:32.697  3278 11065 W Perf[AndroidRuntimePolicy]: App is not launched from home.
+01-13 14:40:32.698  3278 11065 I SmartPower: com.soundtherapyapp/10405(8264): died->background(32205ms) R(process start ) adj=-10000.
+01-13 14:40:32.699  3278 11065 D CompatibilityInfo: mCompatibilityFlags - 0
+01-13 14:40:32.699  3278 11065 D CompatibilityInfo: applicationDensity - 600
+01-13 14:40:32.699  3278 11065 D CompatibilityInfo: applicationScale - 1.0
+01-13 14:40:32.701  3278  3401 D Aurogon :  uid = 10405 switch to FG
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: Foreground UID status:
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 1002 is in foreground: true
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 6102 is in foreground: false
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10128 is in foreground: false
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10135 is in foreground: false
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10136 is in foreground: true
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10140 is in foreground: false
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10142 is in foreground: false
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10145 is in foreground: false
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10193 is in foreground: false
+01-13 14:40:32.703  9171 19075 D ForegroundUtils: UID: 10224 is in foreground: true
+01-13 14:40:32.703   399   487 D VA_ActivityUtils: getTopActivity packageName:ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}
+01-13 14:40:32.703   399   487 D VA_AppStateWatcher: currentPkgName:com.soundtherapyapp, lastPkgName:com.soundtherapyapp
+01-13 14:40:32.703   399   487 E VA_AppStateWatcher: handleMessage: return!
+01-13 14:40:32.704  9372  9748 V OsAgent : broadcastSystemEvent - 7
+01-13 14:40:32.705 26170 26170 D AppLifecycleObserver: onReceive: com.soundtherapyapp FOREGROUND
+01-13 14:40:32.705 26170 26170 D PkgUtils: getApplicationInfo packageName:com.soundtherapyapp, flags:128 applicationInfo:ApplicationInfo{f9d501f com.soundtherapyapp} needSecondSpace:false
+01-13 14:40:32.707  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10405, uidState = 19
+01-13 14:40:32.707 16169 16169 D HidDeviceService: handleMessage(): msg.what=8
+01-13 14:40:32.707 16169 16169 D HidDeviceService: unregisterAppUid(): uid=10405
+01-13 14:40:32.707 16169 16169 D HidDeviceService: unregisterAppUid(): caller UID doesn't match user UID
+01-13 14:40:32.710  8264  9561 D MiuiDownscaleImpl: set override inverted scale : 1.0
+01-13 14:40:32.711  8264  8264 I RENDER_TURBO: onActivityThreadCreate not in white list, pkg=com.soundtherapyapp, type=miro
+01-13 14:40:32.712 11745 12330 I lyra-conn-phys: PhysConnHandler::SendPayload:186 finish, phys_conn_id=7CDBC5AF, data={hash=877728153, len=51}, code=0, msg=success
+01-13 14:40:32.712 11745 12330 I lyra-conn-mgr: ConnectionManager::SendPayload:508 finish, conn_id=DC7FA23A, code=0, msg=success priority=0
+01-13 14:40:32.712 11745 12361 I lyra-net-payload: ConnectionClassic::TrySend:336 device 9A9E312D, connection DC7FA23A, medium_type 128 send success
+01-13 14:40:32.712 11745 12361 I lyra-net-payload: ConnectionClassic::Unkeep:137 connection_id DC7FA23A, module_id 1
+01-13 14:40:32.712 11745 12361 I lyra-net-payload: ConnectionClassic::TryDisconnect:382 wlan client, connection DC7FA23A keep long.
+01-13 14:40:32.713 11745 12349 I lyra-mpt: MiplayTransportSession::CreateKcpSession:198 session=13716 [QOS] reason=2, srtt=107, min/avg/max=34/34/34, windows=0/0, block_tm=0, throughput=2597888
+01-13 14:40:32.716  5321  5321 D DynamicIslandTopActivityController: fullscreen: com.soundtherapyapp
+01-13 14:40:32.716  5321  5321 D DynamicIslandController: onTopActivityChanged: ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}
+01-13 14:40:32.716  5321  5321 D DynamicIslandWindowViewController: handleDynamicIsland: action_top_activity_changed
+01-13 14:40:32.716  5321  5321 D DynamicIslandWindowViewController: onTopActivityChange: topActivity ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}, inSmallWindow false, isSupportPip false, isFocus false fullScreenPkg com.soundtherapyapp
+01-13 14:40:32.716  5321  5321 D DynamicIslandWindowViewController: openAppFromIsland: null, null, null false
+01-13 14:40:32.716  5321  5321 D DynamicIslandSafeguardsController: cancelDelayEnterApp com.soundtherapyapp com.xiaomi.aicr
+01-13 14:40:32.716  5321  5321 D DynamicIslandSafeguardsController: cancelDelayEnterMiniWindow com.soundtherapyapp com.soundtherapyapp null
+01-13 14:40:32.716  5321  5321 D DynamicIslandSafeguardsController: cancelDelayExitApp com.soundtherapyapp com.xiaomi.bluetooth
+01-13 14:40:32.716  5321  5321 D DynamicIslandSafeguardsController: cancelDelayExitMiniWindow com.soundtherapyapp null
+01-13 14:40:32.716  5321  5321 D DynamicIslandWindowViewController: lastTopActivityIsSmallWindow false
+01-13 14:40:32.716  5321  5321 D DynamicIslandSafeguardsController: delayExitApp com.soundtherapyapp
+01-13 14:40:32.716  5321  5321 D DynamicIslandSafeguardsController: cancelDelayExitApp com.soundtherapyapp com.soundtherapyapp
+01-13 14:40:32.721  3278  4431 E HyperSentinel: ->pid:8264,processName:"usap64",Rss Memory Size Change 105112kb -> 146740kb
+01-13 14:40:32.724  8264  8264 D ActivityThread: setEmbeddedParam packageName=com.soundtherapyapp processName=com.soundtherapyapp isEmbedded=false isIsolated=false
+01-13 14:40:32.837  8264  8264 D nativeloader: Configuring clns-10 for other apk /data/app/~~HN6_s6y8UKC3VQk7qcBTig==/com.soundtherapyapp-L8a1lSwXgt0FI37w3TAEYg==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~HN6_s6y8UKC3VQk7qcBTig==/com.soundtherapyapp-L8a1lSwXgt0FI37w3TAEYg==/lib/arm64:/data/app/~~HN6_s6y8UKC3VQk7qcBTig==/com.soundtherapyapp-L8a1lSwXgt0FI37w3TAEYg==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.soundtherapyapp
+01-13 14:40:32.839  3278  4431 E HyperSentinel: ->pid:8264,processName:"com.soundtherapyapp",Rss Memory Size Change 146740kb -> 194424kb
+01-13 14:40:32.840  8264  8264 I soundtherapyapp: AssetManager2(0xb400007828eb9df8) locale list changing from [] to [zh-CN]
+01-13 14:40:32.841  8264  8264 D HWUI    : [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+01-13 14:40:32.841  8264  8264 D HWUI    : [HWUI] EnhanceVkPipelineCache is enabled
+01-13 14:40:32.841  8264  8264 V GraphicsEnvironment: Currently set values for:
+01-13 14:40:32.841  8264  8264 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+01-13 14:40:32.841  8264  8264 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+01-13 14:40:32.841  8264  8264 V GraphicsEnvironment: com.soundtherapyapp is not listed in per-application setting
+01-13 14:40:32.841  8264  8264 V GraphicsEnvironment: ANGLE allowlist from config: 
+01-13 14:40:32.841  8264  8264 V GraphicsEnvironment: com.soundtherapyapp is not listed in ANGLE allowlist or settings, returning default
+01-13 14:40:32.841  8264  8264 V GraphicsEnvironment: Updatable production driver is not supported on the device.
+01-13 14:40:32.841  8264  9566 D MiuiMonitorThread: Shared singleton Thread for stability monitor start
+01-13 14:40:32.845  8264  8264 D ResMonitorStub: The current process type is: third_party_app, process name is: com.soundtherapyapp
+01-13 14:40:32.845  8264  8264 I MiuiAppAdaptationStubsControl: Feature Flag of ThirdAppOpt is turned off
+01-13 14:40:32.854  8264  9573 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+01-13 14:40:32.854  8264  9566 I Perf    : Connecting to perf service.
+01-13 14:40:32.857  8264  9566 I ActivityThread: TrafficStats init done
+01-13 14:40:32.858  8264  9566 I ForceDarkHelperStubImpl: initialize for com.soundtherapyapp , ForceDarkOrigin
+01-13 14:40:32.860  8264  9566 D nativeloader: Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+01-13 14:40:32.860  8264  9566 D HWUI    : JNI_OnLoad success
+01-13 14:40:32.860  8264  9566 I MiuiForceDarkConfig: setConfig density:3.750000, mainRule:0, secondaryRule:0, tertiaryRule:0
+01-13 14:40:32.865  8264  9566 I ActivityThread: Miui Feature Init done
+01-13 14:40:32.865  5321  5321 D DynamicIslandSafeguardsController: delayExitApp: com.soundtherapyapp com.soundtherapyapp count = 0
+01-13 14:40:32.866  8264  8264 W SoLoader: Initializing SoLoader: 0
+01-13 14:40:32.866  8264  8264 W SoLoader: SoLoader initialized: 0
+01-13 14:40:32.868  3278 11065 W MiuiBoosterUtils: enable_miuibooster_launch : false
+01-13 14:40:32.868  3278 11065 I WindowManager: Intercept rotation change because interrupt Animation
+01-13 14:40:32.868  3278 11065 I WindowManager: Intercept rotation change because interrupt Animation
+01-13 14:40:32.868  3278 11065 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.868  3278 11065 I SmartPower: com.soundtherapyapp/10405(8264): background->invisible(171ms) R(become foreground) adj=0.
+01-13 14:40:32.868  3278 11065 D GreezeManager: triggerL ignore uid = 10405
+01-13 14:40:32.869  3278 11065 I ATMSImpl: cacheTasksForDefaultDisplay size=3 topId=786
+01-13 14:40:32.869  3278 11065 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} shouldbeVisible:false isVisible:false isOnTop:false windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.869  3278 11065 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.869  3278 11065 D Transition: setReady 2519 wc=Display{#0 state=OFF size=1440x3200 ROTATION_0} ready=true
+01-13 14:40:32.869  3278 11065 D WindowManager: Set transition=TransitionRecord{aba79e2 id=2519 type=OPEN flags=0x0 c=[
+01-13 14:40:32.869  3278 11065 D WindowManager:    ChangeInfo{a1ead48 container=Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} flags=0x0}
+01-13 14:40:32.869  3278 11065 D WindowManager:    ChangeInfo{58be7e1 container=Display{#0 state=OFF size=1440x3200 ROTATION_0} flags=0x0}
+01-13 14:40:32.869  3278 11065 D WindowManager:    ChangeInfo{63e7906 container=DefaultTaskDisplayArea@148137897 flags=0x0}
+01-13 14:40:32.869  3278 11065 D WindowManager:    ChangeInfo{21d8bc7 container=ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786} flags=0x0}
+01-13 14:40:32.869  3278 11065 D WindowManager: ]
+01-13 14:40:32.869  3278 11065 D WindowManager: }, ready=true, SyncId=2519 info=used=true, override=false, defer=0, states=Display{#0 state=OFF size=1440x3200 ROTATION_0}:true reason=com.android.server.wm.Transition.applyReady:1263 com.android.server.wm.Transition.setReady:1245 com.android.server.wm.TransitionController.setReady:1157 com.android.server.wm.TransitionController.setReady:1162 com.android.server.wm.DisplayContent.executeAppTransition:6208 com.android.server.wm.RootWindowContainer.executeAppTransitionForAllDisplay:2613 com.android.server.wm.ActivityRecord.completeResumeLocked:7196 com.android.server.wm.ActivityTaskSupervisor.realStartActivityLocked:977 
+01-13 14:40:32.869  3278 11065 D ActivityTrigger: ActivityTrigger activityPauseTrigger 
+01-13 14:40:32.869  3278  3404 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.869  3278  3404 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.869  3278  3404 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.870  3278  3404 I BLASTSyncEngine: SyncGroup 2519:  Unfinished container:ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786}
+01-13 14:40:32.870  3278  3404 I BLASTSyncEngine: isActivitySyncFinished isSyncFinished false ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786}
+01-13 14:40:32.870  8264  8264 I ActivityThread: currentPkg not in xmlPackages
+01-13 14:40:32.870  8264  8264 W libc    : Access denied finding property "vendor.boostfwk.frameprefetcher"
+01-13 14:40:32.871  8264  8264 D FramePredict: FramePredict init: true
+01-13 14:40:32.872  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: sendEvents() 231: Start hint for app com.soundtherapyapp/com.soundtherapyapp.MainActivity/1, hintID : 4100, hintID hex : 1004 value: -1
+01-13 14:40:32.873  1819  1927 I ANDR-PWR-OPT: PowerAppClassifier: getAppType() 59: checking app [com.soundtherapyapp] is type 1
+01-13 14:40:32.873  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: isGame() 348: com.soundtherapyapp is Game = 1
+01-13 14:40:32.875  3278  4257 D EventReceiver: foregroundChange uid  uid=10405 pkg=com.soundtherapyapp
+01-13 14:40:32.876  3278  4257 D BluetoothAdapter: getActiveDevices(A2DP)
+01-13 14:40:32.876  5321  5646 I MultiTaskingTaskInfo: MultiTaskingBaseTaskInfo::update::mTaskBounds = Rect(0, 0 - 1440, 3200), mTaskId = 782
+01-13 14:40:32.877  5321  5646 D MultiTaskingTransitionsHelper: skip updateBaseAnimParam taskId: 782 pendingTransitions: [android.os.BinderProxy@c8930ac] readyDuringSync: [] tracks: [Track #0 readyTransitions: []Track #1 readyTransitions: []Track #2 readyTransitions: []]
+01-13 14:40:32.877  5321  5646 I MultiTaskingTaskRepository: onTaskInfoChanged::taskId = 782, windowingMode = 1, mMultiWindowTaskIdsInZOrder = [5, 4], mFullscreenTaskIdsInZOrder = [782], mFreeformTaskIdsInZOrder = [], mTasks: 782, 8, 7, 6, 5, 4, 3, 1, 
+01-13 14:40:32.877 10211 10281 D PowerKeeper.Audio: onForegroundInfoChanged mSubScreenUid=-1
+01-13 14:40:32.877  5321  5704 I MultiTaskingTaskInfo: getCoverLayerController:: null, com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskInfo.lambda$updateCoverLayerController$2:1 com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskInfo.$r8$lambda$-YpCdQQtg0ANF5ZGkXQR8pi1iBs:1 
+01-13 14:40:32.877  8264  8264 D HWUI    : [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+01-13 14:40:32.877  8264  8264 D HWUI    : [HWUI] EnhanceVkPipelineCache is enabled
+01-13 14:40:32.877  8264  8264 D soundtherapyapp: blurUtils, initBackgroundBlurMinInterval processName(com.soundtherapyapp), inWhiteLists(0)
+01-13 14:40:32.878 10211 19908 D PerfEngineController: ForegroundInfo{mForegroundPackageName='com.soundtherapyapp', mForegroundUid=10405, mForegroundPid=8264, mForegroundDisplayId=0, mLastForegroundPackageName='com.xiaomi.bluetooth', mLastForegroundUid=1002, mLastForegroundPid=3999, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.soundtherapyapp', mMultiWindowForegroundUid=10405, mFlags=1}
+01-13 14:40:32.878 18289 18331 I AICall_MemoryTrim: binder:18289_2 onAppBackground()
+01-13 14:40:32.878  8264  9566 I ActivityThread: HardwareRenderer preload  done
+01-13 14:40:32.878 16169 16339 I BluetoothAdapterService: getActiveDevices: A2dp device: null
+01-13 14:40:32.879  3278  4257 D BluetoothAdapter: getActiveDevices(HEADSET)
+01-13 14:40:32.880 16169 16692 I BluetoothAdapterService: getActiveDevices: CallAudio device: null
+01-13 14:40:32.880  8264  8264 I soundtherapyapp: AssetManager2(0xb400007828eb4fd8) locale list changing from [] to [zh-CN]
+01-13 14:40:32.880  8264  9588 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+01-13 14:40:32.880  3278  4257 D BluetoothAdapter: getActiveDevices(LE_AUDIO)
+01-13 14:40:32.881 16169 16342 I BluetoothAdapterService: getActiveDevices: LeAudio devices: Lead[null] - member_1[null]
+01-13 14:40:32.882  8264  9588 W libc    : Access denied finding property "vendor.mivk.log.debug"
+01-13 14:40:32.882  8264  9588 D vulkan  : searching for layers in '/data/app/~~HN6_s6y8UKC3VQk7qcBTig==/com.soundtherapyapp-L8a1lSwXgt0FI37w3TAEYg==/lib/arm64'
+01-13 14:40:32.882  8264  9588 D vulkan  : searching for layers in '/data/app/~~HN6_s6y8UKC3VQk7qcBTig==/com.soundtherapyapp-L8a1lSwXgt0FI37w3TAEYg==/base.apk!/lib/arm64-v8a'
+01-13 14:40:32.883 16169 16169 D HidDeviceService: handleMessage(): msg.what=8
+01-13 14:40:32.883  1963  2404 D AudioFlingerImpl: setGameParameters keyvalue: bluetoothlowlatencystatus=false;foregroundUid=10405
+01-13 14:40:32.883  1963  2404 D DeviceHalAidl: [default] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=10405"
+01-13 14:40:32.884  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10405, uidState = 2
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: Foreground UID status:
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 1002 is in foreground: true
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 6102 is in foreground: false
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10128 is in foreground: false
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10135 is in foreground: false
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10136 is in foreground: true
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10140 is in foreground: false
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10142 is in foreground: false
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10145 is in foreground: false
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10193 is in foreground: false
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10224 is in foreground: true
+01-13 14:40:32.884  9171 19075 D ForegroundUtils: UID: 10405 is in foreground: true
+01-13 14:40:32.884  1816 21305 I AHAL_ModulePrimary_MI: setVendorParameters: parameter count 2, async: 0
+01-13 14:40:32.885  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters parameters id = bluetoothlowlatencystatus val false
+01-13 14:40:32.885  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters parameters id = foregroundUid val 10405
+01-13 14:40:32.885  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters: enter miam_setParameters_v2 ret = -2
+01-13 14:40:32.885  1816 21305 D AHAL_ModulePrimary_QTI: setVendorParameters: parameter count 2, async: 0
+01-13 14:40:32.885  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters enter
+01-13 14:40:32.885  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters Exit
+01-13 14:40:32.885  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters enter
+01-13 14:40:32.885  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters Exit
+01-13 14:40:32.885  1963  2404 D DeviceHalAidl: [usb] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=10405"
+01-13 14:40:32.885  9372  9748 V OsAgent : broadcastSystemEvent - 7
+01-13 14:40:32.885  1963  2404 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.885  1963  2404 D DeviceHalAidl: [r_submix] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=10405"
+01-13 14:40:32.885  1816  3195 D AHAL_ModuleRemoteSubmix: setVendorParameters: parameter count 2, async: 0
+01-13 14:40:32.886  1816  3195 D AHAL_ModuleRemoteSubmix: setVendorParameters parameters id = bluetoothlowlatencystatus val false
+01-13 14:40:32.886  1816  3195 D AHAL_ModuleRemoteSubmix: setVendorParameters parameters id = foregroundUid val 10405
+01-13 14:40:32.886  1963  2404 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.886  1963  2404 D DeviceHalAidl: [bluetooth] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=10405"
+01-13 14:40:32.886  1963  2404 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.886  8264  9560 D AppScoutStateMachine: 8264-ScoutStateMachinecreated
+01-13 14:40:32.886  3278  4257 I AudioGameEffect: foreground change to com.soundtherapyapp, last foreground is com.xiaomi.bluetooth
+01-13 14:40:32.886  3278  4257 I AudioGameEffect: get enable packages from setting: null
+01-13 14:40:32.886  3278  4257 I AudioGameEffect: get enable packages from setting: null
+01-13 14:40:32.887  3278  4257 D MiuiIntegratedMemorySwap: uid:10405, packageName: com.soundtherapyapp
+01-13 14:40:32.887 10301 10787 D L0      : myUserId = 0	currentUserId0
+01-13 14:40:32.887 16169 16692 D BluetoothLatencyMode: ForegroundInfo{mForegroundPackageName='com.soundtherapyapp', mForegroundUid=10405, mForegroundPid=8264, mForegroundDisplayId=0, mLastForegroundPackageName='com.xiaomi.bluetooth', mLastForegroundUid=1002, mLastForegroundPid=3999, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.soundtherapyapp', mMultiWindowForegroundUid=10405, mFlags=1}
+01-13 14:40:32.887 10211 19863 D DFS-AppUsageTracker: Fg changed, new=com.soundtherapyapp, but charging.
+01-13 14:40:32.887 29090 11746 D RelayAppLocalHelper: onForegroundInfoChanged: ForegroundInfo{mForegroundPackageName='com.soundtherapyapp', mForegroundUid=10405, mForegroundPid=8264, mForegroundDisplayId=0, mLastForegroundPackageName='com.xiaomi.bluetooth', mLastForegroundUid=1002, mLastForegroundPid=3999, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.soundtherapyapp', mMultiWindowForegroundUid=10405, mFlags=1}
+01-13 14:40:32.887  3278  6008 D AS.AudioService: mSupportFakeHfpApp{com.ss.android.ugc.aweme=0, com.microsoft.teams=0, com.baidu.BaiduMap=0, com.systec.umeeting=0, com.cisco.webex.meetings=0, com.tencent.mobileqq=0, com.skype.raider=0, com.instagram.android=0, com.ss.android.lark.kami=0, com.zhiliaoapp.musically=0, com.skype.rover=0, com.smile.gifmaker=0, com.ss.android.lark.saxmsa667=0, com.tencent.wemeet.app=0, com.mediatek.engineermode=0, com.ss.android.ugc.aweme.lite=0, com.alibaba.android.rimet=0, com.autonavi.minimap=0, com.whatsapp=0, com.immomo.momo=0, com.facebook.katana=0, com.taobao.idlefish=0, com.tencent.lolm=0, com.tencent.mf.uam=0, com.xingin.xhs=0, com.cisco.wx2.android=0, com.tencent.tmgp.sgame=0, com.tencent.tmgp.pubgmhd=0, com.ss.android.lark=0, im.yixin=0} packageName com.android.bluetooth appVersion 36 mSupportFakeHfpApp.get(packageName) null
+01-13 14:40:32.887 12372  4091 I GID     : PKG: com.soundtherapyapp IG ? false
+01-13 14:40:32.887 12372  4091 I GST     : forePkg: com.soundtherapyapp, preForePkg: com.xiaomi.bluetooth
+01-13 14:40:32.887 16169 16692 D BluetoothLatencyMode: isWiredAudioHeadset.type: 1
+01-13 14:40:32.887 16169 16692 D BluetoothLatencyMode: isWiredAudioHeadset.type: 2
+01-13 14:40:32.887 16169 16692 D BluetoothLatencyMode: isWiredAudioHeadset.type: 18
+01-13 14:40:32.887 16169 16692 D BluetoothLatencyMode: isWiredAudioHeadset.type: 14
+01-13 14:40:32.887 12372  4091 D VENUS_GAMEAI_START_GameAiStartManager: venusGameAiSupportApps is not monitor packageName=com.soundtherapyapp
+01-13 14:40:32.888 12372  4091 I GID     : PKG: com.xiaomi.bluetooth IG ? false
+01-13 14:40:32.888  3278  4257 I NetworkBoostStatusManager: onForegroundInfoChanged uid:10405, onLastForegroundInfoChanged uid:1002, isColdStart:true, mIgnoreUid:-1
+01-13 14:40:32.888  3278  4257 I SLM-SRV-SLAToast: foreground uid:10405, isColdStart:true, isLinkTurboEnable:false
+01-13 14:40:32.888  3278  4257 D NetworkSDKService: handleMultiAppsDualWifi isSet = false isEverOpened = false
+01-13 14:40:32.888 10301 10783 I ProcessMonitor: onForegroundInfoChanged: ForegroundInfo{mForegroundPackageName='com.soundtherapyapp', mForegroundUid=10405, mForegroundPid=8264, mForegroundDisplayId=0, mLastForegroundPackageName='com.xiaomi.bluetooth', mLastForegroundUid=1002, mLastForegroundPid=3999, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.soundtherapyapp', mMultiWindowForegroundUid=10405, mFlags=1}
+01-13 14:40:32.888 12372  4091 I GID     : PKG: com.xiaomi.bluetooth IG ? false
+01-13 14:40:32.888  3278  4248 D ActionExecute: delayFreeze true reason= tobg uid=1002
+01-13 14:40:32.888 12372  4091 I GID     : PKG: com.soundtherapyapp IG ? false
+01-13 14:40:32.888 30162 32133 I Browser : -------=-=-===onForegroundInfoChanged from com.xiaomi.bluetooth to com.soundtherapyapp
+01-13 14:40:32.889 12372  4091 I GID     : PKG: com.soundtherapyapp IG ? false
+01-13 14:40:32.889 30162 32133 D FloatingDialogManager: onForegroundInfoChanged:  foregroundPackageName:com.soundtherapyapp mLastForegroundPackageName:com.xiaomi.bluetooth
+01-13 14:40:32.889  3278  3416 I QuickScannerController: onForegroundInfoChanged. packageName:com.soundtherapyapp
+01-13 14:40:32.889 10301 10783 I GameBoosterService: screen locked!
+01-13 14:40:32.889 10301 10783 I VideoBoxUtils: isSupportVideoBox: true
+01-13 14:40:32.889 10301 10783 I VideoToolBoxService: vtb is closed!!!
+01-13 14:40:32.889 10301 12168 E SuggestManager: openApp name = com.soundtherapyapp
+01-13 14:40:32.889 10301 12168 I NewAutoTaskManager: app use - delay = 9223372036854775807, doRemove = false, doPost = false
+01-13 14:40:32.890 10301 10783 I AppPredictPrivacyLaunchManager: getLauncherHomeAppList size: 47
+01-13 14:40:32.890 10301 10783 I AppPredictService: difTIme = 32431
+01-13 14:40:32.890  3278  4130 I MiuiNetworkPolicyTrafficLimit: updateWhiteListUidForMobileTraffic uid=10405,add=true
+01-13 14:40:32.891  3278  4130 D MiuiNetworkPolicyTrafficLimit: updateWhiteListUidForMobileTraffic rst=true
+01-13 14:40:32.888  4686  5661 D RecentsImpl: onForegroundChanged, foregroundPackageName=com.soundtherapyapp
+01-13 14:40:32.891 29090 11746 E RecentAppsManager: com.soundtherapyapp can't be added to recent list!!
+01-13 14:40:32.891 10301 12313 E b       : insert result = 69888
+01-13 14:40:32.891 29090 11746 D RelayAppLocalHelper: notifyTaskStackChanged:
+01-13 14:40:32.891  5271  6063 E CountableHandler: Pending message count is over 200, drop message.msg.what = 10007 handler = Handler (com.android.phone.statistics.utils.ModemHydraStat$ModemHydraHandler) {eb04c79}
+01-13 14:40:32.891 10301 10783 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:2013 android.content.ContextWrapper.startService:871 C1.b.f:40 C1.b$c.onForegroundInfoChanged:22 com.miui.gamebooster.mutiwindow.b$a.onForegroundInfoChanged:174 
+01-13 14:40:32.891  5271  6055 D NetworkMetricsController: processUidChangeEvent :activity is:ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}
+01-13 14:40:32.891  5271  6055 D NetworkMetricsController: processUidChangeEvent :mCurApptype is NONE tempAppType is NONE
+01-13 14:40:32.892  3278  6008 D ActivityManager: Logging startService for com.miui.securitycenter, stopped=false, firstLaunch=false, intent=Intent { act=action_anti_fraud_auto_scan_single_app xflg=0x4 cmp=com.miui.securitycenter/com.miui.antivirus.service.GuardService (has extras) }, r.app=ProcessRecord{69c24c9 10301:com.miui.securitycenter.remote/1000}
+01-13 14:40:32.893 29090 11746 E SystemUtils: appIsTopAndXSpace: package com.soundtherapyapp, result false
+01-13 14:40:32.894  1847  1847 I qspmHal : enter getGpuProf at: -1240093058
+01-13 14:40:32.894  1847  1847 I qspmHal : PID 8264 from GFX matched.
+01-13 14:40:32.894  1847  1847 I qspmHal : gpuProfName:com.soundtherapyapp-gpu - gpu prof_info.path:/data/vendor/gaming/com.soundtherapyapp-gpu
+01-13 14:40:32.894  1847  1847 E qspmHal : GPU profile file NOT found !!
+01-13 14:40:32.895  8264  9588 I AdrenoVK-0: ===== BEGIN DUMP OF OVERRIDDEN SETTINGS =====
+01-13 14:40:32.895  8264  9588 I AdrenoVK-0: ===== END DUMP OF OVERRIDDEN SETTINGS =====
+01-13 14:40:32.896  8264  8264 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+01-13 14:40:32.896  8264  8264 I soundtherapyapp: AssetManager2(0xb400007828ebe5d8) locale list changing from [] to [zh-CN]
+01-13 14:40:32.897  8264  9588 D qdgralloc: Fetching IMapper5 from QtiMapper5
+01-13 14:40:32.898  3278  5559 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.899  4686  4686 D RecentsModel: onTaskDescriptionChanged =  taskId = 786
+01-13 14:40:32.902  8264  9605 I soundtherapyapp: AssetManager2(0xb400007828ec9e38) locale list changing from [] to [zh-CN]
+01-13 14:40:32.904  8264  9605 D nativeloader: Configuring clns-11 for other apk /system_ext/app/miuisystem/miuisystem.apk. target_sdk_version=35, uses_libraries=ALL, library_path=/product/app/ContentCatcherOS3/lib/arm64:/product/app/ContentCatcherOS3/ContentCatcherOS3.apk!/lib/arm64-v8a:/system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk!/lib/arm64-v8a:/system_ext/app/miuisystem/miuisystem.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+01-13 14:40:32.904  8264  9605 D nativeloader: Extending system_exposed_libraries: libbinauralrenderer_wrapper.qti.so:libhoaeffects.qti.so:libmisys_jni.xiaomi.so:libpag.hyperos.so:libffavc.hyperos.so:libxiaomi_modemdumpsdx55_jni.modem.so:libxiaomi_modemdump_jni.modem.so:libmodemsmartengine_jni.modem.so:libupdateprof.qti.so:libthermalclient.qti.so:libdiag_system.qti.so:libqape.qti.so:libqesdk_ndk_platform.qti.so:liblistenjni.qti.so
+01-13 14:40:32.904  8264  9588 I SnapAlloc: Graphics lib is available
+01-13 14:40:32.905  8264  8264 E TransactionExecutor: Failed to execute the transaction: tId:-1634484087 ClientTransaction{
+01-13 14:40:32.905  8264  8264 E TransactionExecutor: tId:-1634484087   transactionItems=[
+01-13 14:40:32.905  8264  8264 E TransactionExecutor: tId:-1634484087     LaunchActivityItem{activityToken=android.os.BinderProxy@821027a,intent=Intent { flg=0x10000000 xflg=0x5 cmp=com.soundtherapyapp/.MainActivity },ident=156561779,info=ActivityInfo{4115a0b com.soundtherapyapp.MainActivity},curConfig={1.0 460mcc11mnc [zh_CN] ldltr sw384dp w384dp h853dp 600dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1440, 3200) mAppBounds=Rect(0, 0 - 1440, 3200) mMaxBounds=Rect(0, 0 - 1440, 3200) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false embeddingScale=1.0} s.683 fontWeightAdjustment=0/d/o themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/o},overrideConfig={1.0 460mcc11mnc [zh_CN] ldltr sw384dp w384dp h853dp 600dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1440, 3200) mAppBounds=Rect(0, 0 - 1440, 3200) mMaxBounds=Rect(0, 0 - 1440, 3200) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false embeddingScale=1.0} s.2 fontWeightAdjustment=0/d/o themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/o},deviceId=0,referrer=com.android.shell,procState=19,state=null,persistentState=null,pendingResults=null,pendingNewIntents=null,sceneTransitionInfo=null,profilerInfo=null,assistToken=android.os.BinderProxy@33fb0fc,shareableActivityToken=android.os.BinderProxy@8f35385,activityWindowInfo=ActivityWindowInfo{isEmbedded=false, taskBounds=Rect(0, 0 - 1440, 3200), taskFragmentBounds=Rect(0, 0 - 1440, 3200), inOwnOrganizerProcess=true}}
+01-13 14:40:32.905  8264  8264 E TransactionExecutor: tId:-1634484087     ResumeActivityItem{mActivityToken=android.os.BinderProxy@821027a,procState=-1,isForward=true,shouldSendCompatFakeFocus=false}
+01-13 14:40:32.905  8264  8264 E TransactionExecutor: tId:-1634484087     Target activity: com.soundtherapyapp.MainActivity
+01-13 14:40:32.905  8264  8264 E TransactionExecutor: tId:-1634484087   ]
+01-13 14:40:32.905  8264  8264 E TransactionExecutor: tId:-1634484087 }
+01-13 14:40:32.905  8264  8264 D AndroidRuntime: Shutting down VM
+--------- beginning of crash
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: FATAL EXCEPTION: main
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: Process: com.soundtherapyapp, PID: 8264
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: java.lang.RuntimeException: Unable to start activity ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}: java.lang.IllegalStateException: Overriding isNewArchEnabled to false is not supported anymore since React Native 0.82. Please check your MainApplication.kt file, and remove the override for `isNewArchEnabled`.
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4702)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4931)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:222)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:136)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:106)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:83)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3085)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:267)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:360)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:10088)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:616)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1113)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: Caused by: java.lang.IllegalStateException: Overriding isNewArchEnabled to false is not supported anymore since React Native 0.82. Please check your MainApplication.kt file, and remove the override for `isNewArchEnabled`.
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.defaults.DefaultReactNativeHost.getUIManagerProvider(DefaultReactNativeHost.kt:77)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactNativeHost.getBaseReactInstanceManagerBuilder(ReactNativeHost.java:114)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:95)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:67)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.kt:338)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:179)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactActivityDelegate.lambda$onCreate$0(ReactActivityDelegate.java:173)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactActivityDelegate.$r8$lambda$HPdXfLmAU1y4Wc1XbwAHziPP2WA(Unknown Source:0)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactActivityDelegate$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.systrace.Systrace.traceSection(Systrace.kt:35)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactActivityDelegate.onCreate(ReactActivityDelegate.java:132)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:61)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:9380)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:9323)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1537)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4684)
+01-13 14:40:32.906  8264  8264 E AndroidRuntime: 	... 13 more
+01-13 14:40:32.906  8264  9605 D nativeloader: Configuring clns-12 for other apk /system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk. target_sdk_version=35, uses_libraries=ALL, library_path=/product/app/ContentCatcherOS3/lib/arm64:/product/app/ContentCatcherOS3/ContentCatcherOS3.apk!/lib/arm64-v8a:/system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk!/lib/arm64-v8a:/system_ext/app/miuisystem/miuisystem.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+01-13 14:40:32.906  8264  9605 D nativeloader: Extending system_exposed_libraries: libbinauralrenderer_wrapper.qti.so:libhoaeffects.qti.so:libmisys_jni.xiaomi.so:libpag.hyperos.so:libffavc.hyperos.so:libxiaomi_modemdumpsdx55_jni.modem.so:libxiaomi_modemdump_jni.modem.so:libmodemsmartengine_jni.modem.so:libupdateprof.qti.so:libthermalclient.qti.so:libdiag_system.qti.so:libqape.qti.so:libqesdk_ndk_platform.qti.so:liblistenjni.qti.so
+01-13 14:40:32.906  8264  9605 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+01-13 14:40:32.907  8264  9605 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+01-13 14:40:32.907  8264  9605 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+01-13 14:40:32.903  8264  8264 W pool-3-thread-1: type=1400 audit(0.0:798611): avc:  denied  { search } for  name="miuilog" dev="dm-56" ino=786 scontext=u:r:untrusted_app:s0:c149,c257,c512,c768 tcontext=u:object_r:data_log_file:s0 tclass=dir permissive=0 app=com.soundtherapyapp
+01-13 14:40:32.909  8264  9588 I Adreno-UNKNOWN: Using previously loaded IMapper library.
+01-13 14:40:32.903  8264  8264 W pool-3-thread-1: type=1400 audit(0.0:798612): avc:  denied  { search } for  name="miuilog" dev="dm-56" ino=786 scontext=u:r:untrusted_app:s0:c149,c257,c512,c768 tcontext=u:object_r:data_log_file:s0 tclass=dir permissive=0 app=com.soundtherapyapp
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: QUALCOMM build          : 6cec7db601, Ie2229927e4
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Build Date              : 09/10/25
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Shader Compiler Version : E031.47.18.42
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Local Branch            : 
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Remote Branch           : refs/tags/AU_LINUX_ANDROID_LA.VENDOR.15.4.0.11.00.00.1088.743
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Remote Branch           : NONE
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Reconstruct Branch      : NOTHING
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Build Config            : S P 18.0.0 AArch64
+01-13 14:40:32.903  8264  8264 W pool-3-thread-1: type=1400 audit(0.0:798613): avc:  denied  { search } for  name="miuilog" dev="dm-56" ino=786 scontext=u:r:untrusted_app:s0:c149,c257,c512,c768 tcontext=u:object_r:data_log_file:s0 tclass=dir permissive=0 app=com.soundtherapyapp
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Driver Version          : 0800.56.1
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: PFP                     : 0x01500077
+01-13 14:40:32.903  8264  8264 W pool-3-thread-1: type=1400 audit(0.0:798614): avc:  denied  { search } for  name="miuilog" dev="dm-56" ino=786 scontext=u:r:untrusted_app:s0:c149,c257,c512,c768 tcontext=u:object_r:data_log_file:s0 tclass=dir permissive=0 app=com.soundtherapyapp
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: ME                      : 0x01500014
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Application Name    : android framework
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Process Name        : com.soundtherapyapp
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Application Version : 0x00000000
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Engine Name         : android framework
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Engine Version      : 0x00000000
+01-13 14:40:32.910  8264  9588 I AdrenoVK-0: Api Version         : 0x00401000
+01-13 14:40:32.910  8264  9606 W FileUtils: Failed to chmod(/data/miuilog/stability/jetrace): android.system.ErrnoException: chmod failed: EACCES (Permission denied)
+01-13 14:40:32.910  8264  9605 D nativeloader: InitLlndkLibrariesProduct: libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libRS.so:libandroid_net.so:libapexsupport.so:libavf.so:libbinder_ndk.so:libc.so:libcgrouprc.so:libclang_rt.asan-aarch64-android.so:libclang_rt.asan-arm-android.so:libclang_rt.hwasan-aarch64-android.so:libcom.android.tethering.connectivity_native.so:libdl.so:libft2.so:liblog.so:libm.so:libmediandk.so:libnativewindow.so:libneuralnetworks.so:libselinux.so:libsync.so:libvendorsupport.so:libvndksupport.so:libvulkan.so
+01-13 14:40:32.910  8264  9605 D nativeloader: Configuring product-clns-13 for unbundled product apk /product/app/ContentCatcherOS3/ContentCatcherOS3.apk. target_sdk_version=35, uses_libraries=, library_path=/product/app/ContentCatcherOS3/lib/arm64:/product/app/ContentCatcherOS3/ContentCatcherOS3.apk!/lib/arm64-v8a:/system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk!/lib/arm64-v8a:/system_ext/app/miuisystem/miuisystem.apk!/lib/arm64-v8a:/product/lib64:/system/product/lib64, permitted_path=/data:/mnt/expand:/product/lib64:/system/product/lib64
+01-13 14:40:32.907  8264  8264 W pool-3-thread-1: type=1400 audit(0.0:798615): avc:  denied  { search } for  name="miuilog" dev="dm-56" ino=786 scontext=u:r:untrusted_app:s0:c149,c257,c512,c768 tcontext=u:object_r:data_log_file:s0 tclass=dir permissive=0 app=com.soundtherapyapp
+01-13 14:40:32.910  8264  9606 W RuntimeInitImpl: dump java trace fail /data/miuilog/stability/jetrace/2026-01-13-14-40-32-908_com.soundtherapyapp_8264.trace.tmp: open failed: EACCES (Permission denied)
+01-13 14:40:32.911  8264  9605 D nativeloader: InitVndkspLibrariesProduct: VNDK is deprecated with product
+01-13 14:40:32.911  8264  8264 W ScoutUtils: Failed to mkdir /data/miuilog/stability/hprof/
+01-13 14:40:32.911  9162 22873 W MQSEventManager: jeoccur
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: Process: com.soundtherapyapp, PID: 8264
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: java.lang.RuntimeException: Unable to start activity ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}: java.lang.IllegalStateException: Overriding isNewArchEnabled to false is not supported anymore since React Native 0.82. Please check your MainApplication.kt file, and remove the override for `isNewArchEnabled`.
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4702)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4931)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:222)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:136)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:106)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:83)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3085)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.os.Looper.loopOnce(Looper.java:267)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.os.Looper.loop(Looper.java:360)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.ActivityThread.main(ActivityThread.java:10088)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at java.lang.reflect.Method.invoke(Native Method)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:616)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1113)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: Caused by: java.lang.IllegalStateException: Overriding isNewArchEnabled to false is not supported anymore since React Native 0.82. Please check your MainApplication.kt file, and remove the override for `isNewArchEnabled`.
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.defaults.DefaultReactNativeHost.getUIManagerProvider(DefaultReactNativeHost.kt:77)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactNativeHost.getBaseReactInstanceManagerBuilder(ReactNativeHost.java:114)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:95)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:67)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.kt:338)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:179)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactActivityDelegate.lambda$onCreate$0(ReactActivityDelegate.java:173)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactActivityDelegate.$r8$lambda$HPdXfLmAU1y4Wc1XbwAHziPP2WA(Unknown Source:0)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactActivityDelegate$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.systrace.Systrace.traceSection(Systrace.kt:35)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactActivityDelegate.onCreate(ReactActivityDelegate.java:132)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:61)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.Activity.performCreate(Activity.java:9380)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.Activity.performCreate(Activity.java:9323)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1537)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4684)
+01-13 14:40:32.912  9162  9459 E JavaExceptionHandler: 	... 13 more
+01-13 14:40:32.912  3278  5559 I ActivityManager: note: ProcessRecord{a1555f4 8264:com.soundtherapyapp/u0a405} is being killed, reason: APP CRASH(EXCEPTION), sub-reason: UNKNOWN, message: crash
+01-13 14:40:32.912  3278  3430 W RescuePartyPlus: RescueParty Plus is disable!
+01-13 14:40:32.912  3278  5559 W ActivityTaskManager:   Force finishing activity com.soundtherapyapp/.MainActivity
+01-13 14:40:32.912  3278  5559 D Transition: setReady 2519 wc=Display{#0 state=OFF size=1440x3200 ROTATION_0} ready=false
+01-13 14:40:32.912  3278  9607 I DropBoxManagerService: add tag=data_app_crash isTagEnabled=true flags=0x2
+01-13 14:40:32.912  3278  5559 D WindowManager: Set transition=TransitionRecord{aba79e2 id=2519 type=OPEN flags=0x0 c=[
+01-13 14:40:32.912  3278  5559 D WindowManager:    ChangeInfo{a1ead48 container=Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} flags=0x0}
+01-13 14:40:32.912  3278  5559 D WindowManager:    ChangeInfo{58be7e1 container=Display{#0 state=OFF size=1440x3200 ROTATION_0} flags=0x0}
+01-13 14:40:32.912  3278  5559 D WindowManager:    ChangeInfo{63e7906 container=DefaultTaskDisplayArea@148137897 flags=0x0}
+01-13 14:40:32.912  3278  5559 D WindowManager:    ChangeInfo{21d8bc7 container=ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786} flags=0x0}
+01-13 14:40:32.912  3278  5559 D WindowManager: ]
+01-13 14:40:32.912  3278  5559 D WindowManager: }, ready=false, SyncId=2519 info=used=true, override=false, defer=0, states=Display{#0 state=OFF size=1440x3200 ROTATION_0}:false reason=com.android.server.wm.Transition.applyReady:1263 com.android.server.wm.Transition.setReady:1245 com.android.server.wm.TransitionController.requestTransitionIfNeeded:916 com.android.server.wm.DisplayContent.requestTransitionAndLegacyPrepare:6204 com.android.server.wm.Task.finishTopCrashedActivityLocked:6903 com.android.server.wm.RootWindowContainer.lambda$finishTopCrashedActivities$20:2741 com.android.server.wm.RootWindowContainer$$ExternalSyntheticLambda1.accept:0 com.android.server.wm.Task.forAllLeafTasks:4121 
+01-13 14:40:32.912  3278  5559 D WindowManager: Collecting in transition 2519: Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} init visibleRequested:false
+01-13 14:40:32.912  3278  5559 D TaskStubImpl: setToBackByHome false for Task#782
+01-13 14:40:32.912  3278  5559 I ActivityTaskManager: moveTaskToFront: Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} caller trace:com.android.server.wm.TaskDisplayArea.onTaskMoved:461 com.android.server.wm.Task.updateTaskMovement:1758 com.android.server.wm.TaskDisplayArea.positionChildTaskAt:425 com.android.server.wm.TaskDisplayArea.positionChildAt:386 com.android.server.wm.Task.moveToFront:6230 com.android.server.wm.Task.moveToFront:6200 com.android.server.wm.Task.moveToFront:6190 com.android.server.wm.Task.adjustFocusToNextFocusableTask:3477 com.android.server.wm.ActivityRecord.finishIfPossible:4187 com.android.server.wm.ActivityRecord.finishIfPossible:4098 
+01-13 14:40:32.912  3278  5559 D As.ActivityMmReduceLoadHelper: onTaskMovedToFront: mTopActivityPackageName: com.xiaomi.bluetooth mTopActivityClassName: com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity
+01-13 14:40:32.912  3278  5559 D As.ActivityMmReduceLoadHelper: onTaskMovedToFront End
+01-13 14:40:32.912  3278  3381 D AS.ReduceMmLoadingHelper: ReduceMmLoadingListener, onActivityMmReduceLoad isReduceLoad = false
+01-13 14:40:32.912  3278  3381 D As.ActivityMmReduceLoadHelper: onCheckIfActivtyReduceLoad topAppName is not in foreground. Done
+01-13 14:40:32.912  8264  9605 D ViewContentFactory: initViewContentFetcherClass
+01-13 14:40:32.912  3278  5559 I MiuiSoScManager: Ignore update sosc focusable because keyguard is showing or turning screen off.
+01-13 14:40:32.912  8264  9605 D ViewContentFactory: getInterceptorPackageInfo
+01-13 14:40:32.912  3278  5559 D MiuiFreeFormGestureController: deliverResultForFinishActivity resultTo: null resultFrom: ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786 f}} isInVideoOrGameScene: false intent: Intent { flg=0x10000000 xflg=0x5 cmp=com.soundtherapyapp/.MainActivity }
+01-13 14:40:32.912  8264  9605 D ViewContentFactory: getInitialApplication took 0ms
+01-13 14:40:32.913  3278  5559 I ActivityTaskManager: resumeTopActivity: Skip resume: some activity pausing.
+01-13 14:40:32.913  8264  9605 D ViewContentFactory: packageInfo.packageName: com.miui.contentcatcher
+01-13 14:40:32.913  3278  5559 I ActivityTaskManager: resumeTopActivity: Skip resume: some activity pausing.
+01-13 14:40:32.913  8264  9605 D ViewContentFactory: initViewContentFetcherClass took 0ms
+01-13 14:40:32.913  8264  9605 I ContentCatcher: ViewContentFetcher : ViewContentFetcher
+01-13 14:40:32.913  8264  9605 D ViewContentFactory: createInterceptor took 0ms
+01-13 14:40:32.913  8264  8264 I Process : Process is going to kill itself!
+01-13 14:40:32.913  8264  8264 I Process : java.lang.Exception
+01-13 14:40:32.913  8264  8264 I Process : 	at android.os.Process.killProcess(Process.java:1449)
+01-13 14:40:32.913  8264  8264 I Process : 	at com.android.internal.os.RuntimeInit$KillApplicationHandler.uncaughtException(RuntimeInit.java:205)
+01-13 14:40:32.913  8264  8264 I Process : 	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1071)
+01-13 14:40:32.913  8264  8264 I Process : 	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1066)
+01-13 14:40:32.913  8264  8264 I Process : 	at java.lang.Thread.dispatchUncaughtException(Thread.java:2442)
+01-13 14:40:32.913  8264  8264 I Process : Sending signal. PID: 8264 SIG: 9
+01-13 14:40:32.913  8264  8264 I libc    : kill: send 9 to pid 8264
+01-13 14:40:32.913  8264  8264 W libc    : Access denied finding property "ro.debuggable"
+01-13 14:40:32.913  8264  8264 I libc    : debug pid reuse, real pid 8264
+01-13 14:40:32.913  4984  5145 I DynamicDDSService: handleMessage(ACTIVITY_INVOKE{appInfo=com.xiaomi.bluetooth isFullScreen=}true)
+01-13 14:40:32.913  4984  5145 W DynamicDDSService: send appNames via QMI[com.xiaomi.bluetooth]
+01-13 14:40:32.913  5321  5646 D OneHandedController: stopOneHanded state is 0
+01-13 14:40:32.914  2520  2827 W cnd     : AIBinder_linkToDeath is being called with a non-null cookie and no onUnlink callback set. This might not be intended. AIBinder_DeathRecipient_setOnUnlinked should be called first.
+01-13 14:40:32.914  5321  5321 D KeyguardEditorHelper: onTopActivityMayChanged, topActivity=ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}; mState=IDEL
+01-13 14:40:32.915  4686  5661 D EventBus: No subscribers registered for event class com.miui.home.recents.messages.RecentTasksChangedEvent
+01-13 14:40:32.915  4686  5661 D EventBus: No subscribers registered for event class org.greenrobot.eventbus.NoSubscriberEvent
+01-13 14:40:32.915  4686  6972 E ActivityManagerWrapper: get all recent tasks force including -1 userId =0
+01-13 14:40:32.915  2520  2520 I BpBinder: onLastStrongRef automatically unlinking death recipients: vendor.qti.hardware.data.qmiaidlservice.ISendRequestCallback
+01-13 14:40:32.915  4984 14619 I QmiHwInterface/SendRequestAidlCallback: <- RCV:OnResponseEvent{status=0, error message = }
+01-13 14:40:32.916  4984  5145 I DynamicDDSService: Aidl sendRequest has success response 
+01-13 14:40:32.916  4686  6972 E ActivityManagerWrapper: getRecentTasksForceIncludingTaskIdIfValid: getRecentTasks: size=1
+01-13 14:40:32.916  4686  6972 E ActivityManagerWrapper:  mainTaskId=786   userId=0   windowMode=1   isExcludedFromRecents=false   baseIntent=Intent { act=null flag=268435456 cmp=ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity} }
+01-13 14:40:32.916  4686  6972 D RecentsTaskLoader: reloadTasksData [TaskKey{id=786, stackId=0, baseIntent=Intent { flg=0x10000000 cmp=com.soundtherapyapp/.MainActivity }, userId=0, lastActiveTime=348882109, windowingMode=1, isThumbnailBlur=false, isAccessLocked=false, isScreening=false, topActivity=null, mHashCode=24339278}, title=SoundTherapyApp, titleDescription=SoundTherapyApp, bounds=null, isLaunchTarget=false, isStackTask=true, isSystemApp=false, isDockable=true, baseActivity=null, isLocked=false, mNeedHide=false, hasMultipleTasks=false, cti1Key=, cti2Key=] 
+01-13 14:40:32.917  4686  6972 W IconCustomizer: Density abnormal: context density=586 systemDensity=600
+01-13 14:40:32.917  4686  6972 W IconCustomizer: Density abnormal: context density=586 systemDensity=600
+01-13 14:40:32.917  4686  6972 D TaskSnapshotCompatVV: getIsInvalidateFromTaskSnapshot, return, mTaskSnapshot=null, mTaskSnapshotClazz=null
+01-13 14:40:32.918  9162  9459 D DigestGenerator: digest=============com.soundtherapyappjava.lang.RuntimeException: Unable to start activity ComponentInfo{com.soundtherapyapp/com.soundtherapyapp.MainActivity}: java.lang.IllegalStateException: Overriding isNewArchEnabled to false is not supported anymore since React Native .XX. Please check your MainApplication.kt file, and remove the override for `isNewArchEnabled`.
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.ActivityThread$H.handleMessage(ActivityThread.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.os.Handler.dispatchMessage(Handler.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.os.Looper.loopOnce(Looper.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.os.Looper.loop(Looper.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.ActivityThread.main(ActivityThread.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at java.lang.reflect.Method.invoke(Native Method)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: Caused by: java.lang.IllegalStateException: Overriding isNewArchEnabled to false is not supported anymore since React Native .XX. Please check your MainApplication.kt file, and remove the override for `isNewArchEnabled`.
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.defaults.DefaultReactNativeHost.getUIManagerProvider(DefaultReactNativeHost.kt:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactNativeHost.getBaseReactInstanceManagerBuilder(ReactNativeHost.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.kt:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactActivityDelegate.lambda$onCreate$(ReactActivityDelegate.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactActivityDelegate.$r$lambda$HPdXfLmAUyWcXbwAHziPPWA(Unknown Source:)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactActivityDelegate$$ExternalSyntheticLambda.run(XX$$SyntheticClass:)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.systrace.Systrace.traceSection(Systrace.kt:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactActivityDelegate.onCreate(ReactActivityDelegate.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.Activity.performCreate(Activity.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.Activity.performCreate(Activity.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:XX)
+01-13 14:40:32.918  9162  9459 D DigestGenerator: at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:XX)
+01-13 14:40:32.919  9162  9459 W JavaExceptionHandler: Too noisy! skip duplicate java exception report:com.soundtherapyapp now=1768286432919 mLastReportTime=1768286389293 interval=60000
+01-13 14:40:32.919  9162  9459 W MQSEventManager: begin to storeEvent
+01-13 14:40:32.920  9162  9459 D MQSEventManager: send MSG_JUDGE_TRANSMISSION packageName com.soundtherapyapp
+01-13 14:40:32.920  9162  9459 W JavaExceptionHandler: Too noisy! skip duplicate java exception report:com.soundtherapyapp now=1768286432920 mLastReportTime=1768286389293 interval=60000
+01-13 14:40:32.920  9162  9459 W MQSEventManager: Too noisy! Bail the event:com.soundtherapyapp type:1
+01-13 14:40:32.920  9162  9460 D MQSEventManager: begin call thirdappassistant
+01-13 14:40:32.921  7406 25801 I SmartAppAssistant: ThirdAppAssistantProvider ThirdAppAssistant is queried
+01-13 14:40:32.922 16169 16169 D HidDeviceService: handleMessage(): msg.what=8
+01-13 14:40:32.922  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10092, uidState = 5
+01-13 14:40:32.923  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_SwitchStatus  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.924  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_SwitchStatus  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.924  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_SwitchStatus  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.926 16169 16169 D HidDeviceService: handleMessage(): msg.what=8
+01-13 14:40:32.926  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10168, uidState = 5
+01-13 14:40:32.926  3278  5559 I SmartPower: com.xiaomi.market/10168(21761): idle->background(29437ms) R(content provider start ContentProviderRecord{ac1a67a u0 com.xiaomi.market/.provider.MarketProvider}) adj=0.
+01-13 14:40:32.926 16169 16169 D HidDeviceService: handleMessage(): msg.what=8
+01-13 14:40:32.926 16169 16169 D HidDeviceService: handleMessage(): msg.what=8
+01-13 14:40:32.926  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10159, uidState = 5
+01-13 14:40:32.926  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10089, uidState = 5
+01-13 14:40:32.926 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.927 21761  9615 I Market-LocalAppManager: checkUpdateFromServer : start
+01-13 14:40:32.927 21761  9615 I Market-LocalAppManager: getUpdateInfoFromServer : start,isBackground=true
+01-13 14:40:32.927  3278  3379 D GnssSsruImpl: onLocationPermissionsChanged provider:network packageName:com.miui.hybrid
+01-13 14:40:32.927  3278  3379 D GnssSsruImpl: onLocationPermissionsChanged provider:passive packageName:com.miui.hybrid
+01-13 14:40:32.928 21673 21673 I adbd    : Remote process closed the socket (on MSG_PEEK)
+01-13 14:40:32.928 21761  9615 I Market-LocalAppManager: getUpdateInfoFromServer : middle
+01-13 14:40:32.928  3278 11065 I ActivityManager: Process com.soundtherapyapp (pid 8264) has died: fg  TOP 
+01-13 14:40:32.929  3278  3421 I libc    : kill: send 9 to pid -8264
+01-13 14:40:32.929  3278 11065 D MiuiDamonService: report App died, packageName = com.soundtherapyapp, pid = 8264
+01-13 14:40:32.929  3278  3421 I libc    : debug pid reuse, real pid -8264
+01-13 14:40:32.929  1692  1692 I Zygote  : Process 8264 exited due to signal 9 (Killed)
+01-13 14:40:32.929  3278  4257 E ProcessManager: error write exception log
+01-13 14:40:32.929  3278  3421 I libprocessgroup: Removed cgroup /sys/fs/cgroup/apps/uid_10405/pid_8264
+01-13 14:40:32.929 21761  9615 I Market-RetrofitRequest: callStart : https://updateinfo.market.xiaomi.com/apm/updateinfo/v2
+01-13 14:40:32.929  3278  3421 I ActivityManager: Got SIGCHLD from zygote: pid=8264, uid=10405, status=9
+01-13 14:40:32.929  1841  1841 I vendor.qti.hardware.servicetrackeraidl-service: killProcess is called for pid : 8264
+01-13 14:40:32.929  3278 11065 I ActivityManager: note: ProcessRecord{a1555f4 8264:com.soundtherapyapp/u0a405} died, saving the exit info
+01-13 14:40:32.929 21761  9615 I Market-RetrofitRequest: HeaderInterceptor : https://updateinfo.market.xiaomi.com/apm/updateinfo/v2
+01-13 14:40:32.929 16169 16169 D HidDeviceService: handleMessage(): msg.what=8
+01-13 14:40:32.929 16169 16169 D HidDeviceService: unregisterAppUid(): uid=10405
+01-13 14:40:32.929 16169 16169 D HidDeviceService: unregisterAppUid(): caller UID doesn't match user UID
+01-13 14:40:32.929  3278  3424 I ActivityManager: zygote: proc died: pid=8264 uid=10405, status=9
+01-13 14:40:32.929  3278  4130 I MiuiNetworkPolicy: removeUidState uid = 10405
+01-13 14:40:32.929 26170 12426 D MyLog   : -->log(1): [Tid:3622] [KeepAliveManager] -->onProcessDied(), pid=8264, uid=10405
+01-13 14:40:32.930  3278  4130 I MiuiNetworkPolicyTrafficLimit: updateWhiteListUidForMobileTraffic uid=10405,add=false
+01-13 14:40:32.930  3278  4130 D MiuiNetworkPolicyTrafficLimit: updateWhiteListUidForMobileTraffic rst=true
+01-13 14:40:32.930 21761  9615 I Market-Client: isSupportIsland: true
+01-13 14:40:32.930 21761  9615 I Market-Client: getNotificationFocusProtocol: OS3
+01-13 14:40:32.930  9171 19075 D ForegroundUtils: UID: 10405 deleted.
+01-13 14:40:32.930  3278  3424 I ActivityManager: Update process exit info for com.soundtherapyapp(8264/u10405)
+01-13 14:40:32.930  3278 11065 D WindowManager: Collecting in transition 2519: Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} init visibleRequested:false
+01-13 14:40:32.930  3278  4246 D ExternalInterface: setUidState, uid = 10405 allow = true
+01-13 14:40:32.930  3278 11065 I Perf[AppStartScene]: onSceneChangeNotify:Bundle[{uid=10405, name=com.soundtherapyapp.MainActivity, type=1, begin=false, state=0, processName=com.soundtherapyapp, packageName=com.soundtherapyapp}]
+01-13 14:40:32.930  3278  4246 D MiSensorServiceImpl: PowerKeeperSensor resume iUid:10405 but app has not in Controlled
+01-13 14:40:32.931 26170 26170 D AppLifecycleObserver: onReceive: com.soundtherapyapp DESTROY
+01-13 14:40:32.931  9372  9748 V OsAgent : broadcastSystemEvent - 7
+01-13 14:40:32.931  3278 11065 D WindowManager: Collecting in transition 2519: ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t786 f}} init visibleRequested:false
+01-13 14:40:32.931  3278 11065 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} shouldbeVisible:false isVisible:false isOnTop:false windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.931  3278  3403 D IorapForwardingService: AppLaunchObserver#onActivityLaunchCancelled! pid:0; uid:10405; name:com.soundtherapyapp
+01-13 14:40:32.931 26170 26170 D PkgUtils: getApplicationInfo packageName:com.soundtherapyapp, flags:128 applicationInfo:ApplicationInfo{f9d501f com.soundtherapyapp} needSecondSpace:false
+01-13 14:40:32.931  3278 11065 D BarFollowAnimation: onTaskValishedForCaptionBar Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp}
+01-13 14:40:32.931  2337  2337 D iorapd  : LbReadahead is not running
+01-13 14:40:32.931  3278 11065 I ActivityTaskManager: removetask notifyTaskRemoved Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp}, call from com.android.server.wm.Task.onParentChanged:1478 com.android.server.wm.WindowContainer.setParent:738 com.android.server.wm.WindowContainer.removeChild:944 com.android.server.wm.TaskDisplayArea.removeChildTask:369 com.android.server.wm.TaskDisplayArea.removeChild:360 com.android.server.wm.WindowContainer.removeImmediately:1009 com.android.server.wm.TaskFragment.removeImmediately:3596 com.android.server.wm.Task.removeImmediately:3604 
+01-13 14:40:32.931  3278 11065 I ActivityTaskManager: removetask notifyTaskRemoved Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp}, call from com.android.server.wm.WindowContainer.setParent:738 com.android.server.wm.WindowContainer.removeChild:944 com.android.server.wm.TaskDisplayArea.removeChildTask:369 com.android.server.wm.TaskDisplayArea.removeChild:360 com.android.server.wm.WindowContainer.removeImmediately:1009 com.android.server.wm.TaskFragment.removeImmediately:3596 com.android.server.wm.Task.removeImmediately:3604 com.android.server.wm.Task.removeIfPossible:1115 
+01-13 14:40:32.931  3278  3379 I NetworkBoostStatusManager: onUidGone uid: 10405
+01-13 14:40:32.931  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: sendEvents() 231: Start hint for app com.soundtherapyapp, hintID : 4243, hintID hex : 1093 value: 0
+01-13 14:40:32.932  3278 11065 D PerfMTKStubImpl: perfLockAcquire
+01-13 14:40:32.932  3278 11065 D PerfStubImpl: perfWarmLaunchBoost: com.xiaomi.bluetooth, -1, 1
+01-13 14:40:32.932  3278  4147 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-13 14:40:32.932  3278 11065 D WindowManager: Collecting in transition 2519: ActivityRecord{208687759 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity t782} init visibleRequested:false
+01-13 14:40:32.932  3278 11065 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.932  3278 11065 D WindowManager: Collecting in transition 2519: ActivityRecord{208687759 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity t782} init visibleRequested:true
+01-13 14:40:32.933  3999  3999 D VRI[MiuiFastConnectActivity]: visibilityChanged oldVisibility=false newVisibility=true
+01-13 14:40:32.933  3278  6352 I SLM-SRV-SLSAppLib: SLM_Ai_Mode EVENT_CHECK_GMAE_AI_MODE_STATUS
+01-13 14:40:32.933  3278  6352 I SLM-SRV-SLSAppLib: SLM_Ai_Mode checkGameAiModeStatus mGameAiModeCloudControl:true mLinkTurboAiModeSwitch:false mGameAiModeInterfaceReady:false mGameStartBattle:false powerMgrGameUid:0
+01-13 14:40:32.933  3278 11065 I WindowManager: Intercept rotation change because interrupt Animation
+01-13 14:40:32.933  3278 11065 I WindowManager: Intercept rotation change because interrupt Animation
+01-13 14:40:32.933 21761  9615 I Market-LimitSpeedManager: startLimitSpeedNow() ====== speed = 32768
+01-13 14:40:32.933  3278 11065 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+01-13 14:40:32.933  3278  4147 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-13 14:40:32.933  3278  4147 D InetDiagMessage: Destroyed live tcp sockets for uids={10405} in 3ms
+01-13 14:40:32.933  1819  1927 I ANDR-PWR-OPT: PowerAppClassifier: getAppType() 59: checking app [com.soundtherapyapp] is type 1
+01-13 14:40:32.933  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: isGame() 348: com.soundtherapyapp is Game = 1
+01-13 14:40:32.933  3278 11065 I ATMSImpl: cacheTasksForDefaultDisplay size=2 topId=782
+01-13 14:40:32.933  3278 11065 D Transition: setReady 2519 wc=Display{#0 state=OFF size=1440x3200 ROTATION_0} ready=true
+01-13 14:40:32.933  3278 11065 D WindowManager: Set transition=TransitionRecord{aba79e2 id=2519 type=OPEN flags=0x0 c=[
+01-13 14:40:32.933  3278 11065 D WindowManager:    ChangeInfo{a1ead48 container=Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} flags=0x0}
+01-13 14:40:32.933  3278 11065 D WindowManager:    ChangeInfo{58be7e1 container=Display{#0 state=OFF size=1440x3200 ROTATION_0} flags=0x0}
+01-13 14:40:32.933  3278 11065 D WindowManager:    ChangeInfo{63e7906 container=DefaultTaskDisplayArea@148137897 flags=0x0}
+01-13 14:40:32.933  3278 11065 D WindowManager:    ChangeInfo{21d8bc7 container=ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t-1 f}} flags=0x0}
+01-13 14:40:32.933  3278 11065 D WindowManager:    ChangeInfo{227cef2 container=Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} flags=0x0}
+01-13 14:40:32.933  3278 11065 D WindowManager:    ChangeInfo{d2d0943 container=ActivityRecord{208687759 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity t782} flags=0x0}
+01-13 14:40:32.933  3278 11065 D WindowManager: ]
+01-13 14:40:32.933  3278 11065 D WindowManager: }, ready=true, SyncId=2519 info=used=true, override=false, defer=0, states=Display{#0 state=OFF size=1440x3200 ROTATION_0}:true reason=com.android.server.wm.Transition.applyReady:1263 com.android.server.wm.Transition.setReady:1245 com.android.server.wm.TransitionController.setReady:1157 com.android.server.wm.TransitionController.setReady:1162 com.android.server.wm.DisplayContent.executeAppTransition:6208 com.android.server.wm.RootWindowContainer.executeAppTransitionForAllDisplay:2613 com.android.server.wm.ActivityRecord.completeResumeLocked:7196 com.android.server.wm.TaskFragment.resumeTopActivity:2013 
+01-13 14:40:32.933  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: sendEvents() 231: Start hint for app com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity/36, hintID : 4099, hintID hex : 1003 value: -1
+01-13 14:40:32.933  3278 11065 D ActivityTrigger: ActivityTrigger activityPauseTrigger 
+01-13 14:40:32.934  1819  1927 I ANDR-PWR-OPT: PowerAppClassifier: getAppType() 59: checking app [com.xiaomi.bluetooth] is type 0
+01-13 14:40:32.934  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: isGame() 348: com.xiaomi.bluetooth is Game = 0
+01-13 14:40:32.934  3278 11065 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.934  3278 11065 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.934  3278 11065 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.934  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: sendEvents() 231: Start hint for app com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity/36, hintID : 4100, hintID hex : 1004 value: -1
+01-13 14:40:32.934  1819  1927 I ANDR-PWR-OPT: PowerAppClassifier: getAppType() 59: checking app [com.xiaomi.bluetooth] is type 0
+01-13 14:40:32.934  1819  1927 I ANDR-PWR-OPT: GAMEPOWEROPT: isGame() 348: com.xiaomi.bluetooth is Game = 0
+01-13 14:40:32.934  3278  4147 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-13 14:40:32.934  3278 11065 I AnimInterruptController: FIS reset Foresee interrupt status
+01-13 14:40:32.934  3278 11065 D miuiBarFollowAnimation:  BarFollowAnimation core services Flag is effective！
+01-13 14:40:32.934  3278 11065 D miuiElementAnimation:  ElementAnimation core services Flag is effective！
+01-13 14:40:32.934  3278 11065 I Transition: calculateTargets isHomeOpen = false, isHomeLaunchApp = false
+01-13 14:40:32.934  3278 11065 D WindowManager: Final targets: []
+01-13 14:40:32.934  3278 11065 D WindowManager: Calling onTransitionReady info={id=2519 t=OPEN f=0x40 trk=0 r=[] c=[] mk=[false] noAni=[false] df=[false] rsa=[false] oa=[true] nc=[0] ho=[false] hla=[false] iSync=[-1]}, mToken=Token{1d18bc0 TransitionRecord{aba79e2 id=2519 type=OPEN flags=0x40 c=[
+01-13 14:40:32.934  3278 11065 D WindowManager:    ChangeInfo{a1ead48 container=Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp} flags=0x0}
+01-13 14:40:32.934  3278 11065 D WindowManager:    ChangeInfo{58be7e1 container=Display{#0 state=OFF size=1440x3200 ROTATION_0} flags=0x0}
+01-13 14:40:32.934  3278 11065 D WindowManager:    ChangeInfo{63e7906 container=DefaultTaskDisplayArea@148137897 flags=0x0}
+01-13 14:40:32.934  3278 11065 D WindowManager:    ChangeInfo{21d8bc7 container=ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t-1 f}} flags=0x0}
+01-13 14:40:32.934  3278 11065 D WindowManager:    ChangeInfo{227cef2 container=Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} flags=0x20}
+01-13 14:40:32.934  3278 11065 D WindowManager:    ChangeInfo{d2d0943 container=ActivityRecord{208687759 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity t782} flags=0x0}
+01-13 14:40:32.934  3278 11065 D WindowManager: ]
+01-13 14:40:32.934  3278 11065 D WindowManager: }}
+01-13 14:40:32.934  5321  5646 I MultiTaskingTaskInfo: MultiTaskingBaseTaskInfo::update::mTaskBounds = Rect(0, 0 - 1440, 3200), mTaskId = 782
+01-13 14:40:32.935  5321  5646 D MultiTaskingTransitionsHelper: skip updateBaseAnimParam taskId: 782 pendingTransitions: [android.os.BinderProxy@c8930ac] readyDuringSync: [] tracks: [Track #0 readyTransitions: []Track #1 readyTransitions: []Track #2 readyTransitions: []]
+01-13 14:40:32.935  5321  5646 I MultiTaskingTaskRepository: onTaskInfoChanged::taskId = 782, windowingMode = 1, mMultiWindowTaskIdsInZOrder = [5, 4], mFullscreenTaskIdsInZOrder = [782], mFreeformTaskIdsInZOrder = [], mTasks: 782, 8, 7, 6, 5, 4, 3, 1, 
+01-13 14:40:32.935  5321  5704 I MultiTaskingTaskInfo: getCoverLayerController:: null, com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskInfo.lambda$updateCoverLayerController$2:1 com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskInfo.$r8$lambda$-YpCdQQtg0ANF5ZGkXQR8pi1iBs:1 
+01-13 14:40:32.935  5321  5646 I ShellTransitions: onAbort: transition: android.os.BinderProxy@c8930ac
+01-13 14:40:32.935  5321  5646 D SoScUtils: monitorTransitionFinished transition:android.os.BinderProxy@c8930ac transaction: null mRequestCloseTransition:null mRequestOpenTransition:null mPairsOpenTransition:null mPairsOpenTransitionNull:null mRequestOpenTriggerTask:-1 mRequestCloseTriggerTask:-1 mOrientationTransition: null mPendingChange:null mMainStartingTask:-1 mSideStartingTask:-1
+01-13 14:40:32.935  3278  4257 D EventReceiver: foregroundChange uid  uid=1002 pkg=com.xiaomi.bluetooth
+01-13 14:40:32.935  5321  5646 I MultiTaskingTaskRepository: try to update multiTaskingTaskInfo taskInfo taskId = 782
+01-13 14:40:32.935  5321  5646 I MultiTaskingTaskInfo: MultiTaskingBaseTaskInfo::update::mTaskBounds = Rect(0, 0 - 1440, 3200), mTaskId = 782
+01-13 14:40:32.936 10082 10219 D DMS_LimitSpeedService: limit speed(32.00KB/s) success 
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: setAnimParam bounds: Rect(0, 0 - 1440, 3200) scaleX: 1.0 scaleY: 1.0
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: java.lang.Throwable
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.multitasking.common.animation.MultiTaskingAnimTarget.setAnimParam(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:35)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.multitasking.common.animation.MultiTaskingFolmeControl.updateBaseAnimParam(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:15)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskInfo.update(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:23)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskRepository.updateAllPendingBaseAnimParam(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:60)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTransitionObserver.onTransitionFinished(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:27)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.transition.Transitions.onFinish(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:170)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.transition.Transitions.processReadyQueue(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:173)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.transition.Transitions.onAbort(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:149)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.transition.Transitions.dispatchReady(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:287)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.transition.Transitions.onTransitionReady(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:246)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at com.android.wm.shell.transition.Transitions$TransitionPlayerImpl$$ExternalSyntheticLambda1.run(go/retraceme 65eef0675bf913bce2829215cbd88892b79173b491c3585387d9f76f49700d33:42)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at android.os.Handler.handleCallback(Handler.java:995)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at android.os.Looper.loopOnce(Looper.java:267)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at android.os.Looper.loop(Looper.java:360)
+01-13 14:40:32.936  5321  5646 D MultiTaskingAnimTarget: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+01-13 14:40:32.936  5321  5646 D MultiTaskingFolmeControl: updateBaseAnimParam taskId = 782 taskBounds : Rect(0, 0 - 1440, 3200)
+01-13 14:40:32.936  5321  5646 D MultiTaskingTransitionObserver: onTransitionFinished::mRunningTransitions = 0 mRemoteOpenFreeformTransitions = []
+01-13 14:40:32.936  5321  5646 D SoScUtils: monitorTransitionFinished transition:android.os.BinderProxy@c8930ac transaction: android.view.SurfaceControl$Transaction@4aee944 mRequestCloseTransition:null mRequestOpenTransition:null mPairsOpenTransition:null mPairsOpenTransitionNull:null mRequestOpenTriggerTask:-1 mRequestCloseTriggerTask:-1 mOrientationTransition: null mPendingChange:null mMainStartingTask:-1 mSideStartingTask:-1
+01-13 14:40:32.936 18289 18331 I AICall_MemoryTrim: binder:18289_2 onAppBackground()
+01-13 14:40:32.936  3278  4257 D BluetoothAdapter: getActiveDevices(A2DP)
+01-13 14:40:32.936  3278 11065 I TransitionImpl: finishTransition: updateLastSurfacePosition tf=Task{1b84ca9 #786 type=standard A=10405:com.soundtherapyapp}
+01-13 14:40:32.936  3278 11065 I TransitionImpl: finishTransition: updateLastSurfacePosition tf=Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth}
+01-13 14:40:32.936  3278 11065 D SystemPerformanceHinter: endSession#HighPerfSession-d0-Transition
+01-13 14:40:32.936  2033  2093 W VsyncModulator: setTransactionSchedule: Unexpected EarlyEnd
+01-13 14:40:32.936  3278 11065 I TransitionImpl: finishTransitionEnd, default display onTransitionFinished
+01-13 14:40:32.937 10211 10281 D PerfEngineController: ForegroundInfo{mForegroundPackageName='com.xiaomi.bluetooth', mForegroundUid=1002, mForegroundPid=3999, mForegroundDisplayId=0, mLastForegroundPackageName='com.soundtherapyapp', mLastForegroundUid=10405, mLastForegroundPid=8264, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.xiaomi.bluetooth', mMultiWindowForegroundUid=1002, mFlags=0}
+01-13 14:40:32.937 10211 19909 D PowerKeeper.Audio: onForegroundInfoChanged mSubScreenUid=-1
+01-13 14:40:32.937  3278  4605 D BarFollowAnimation: checkBarStatus mReparentToOriginParent:true hasTopFullAppTask:true mHomeTask:Task{68ecabd #1 type=home} mCurrentTopTask: Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} mAssociatedTask: null homeTaskonTop:false mLastAppBarVisible:true mLastHomeBarVisible:false isInSplitScreen:false
+01-13 14:40:32.937  3278  4605 D BarFollowAnimation:  showAppNavBar  packageName = com.android.systemui mHasHideAppSurface = false mIsKeyguardGoingAway = false mNavBarState = -1
+01-13 14:40:32.937  3278  4605 D BarFollowAnimation:  navBarVisible source = InsetsSource: {b6cd0001 mType=navigationBars mFrame=[0,3140][1440,3200] mVisible=false mFlags=SUPPRESS_SCRIM mSideHint=BOTTOM mBoundingRects=null}
+01-13 14:40:32.937  3278  3417 D ATMSImpl: Begin to report package foreground events...
+01-13 14:40:32.937  3278  4441 I DisplayModeDirectorImpl: SmartDisplayPolicyEnd
+01-13 14:40:32.937  2033  2093 D MI-SF   : updateScene: module = 268 (Animation), value = 0, pkg = perf_interaction, Vrr = 1, mSetTpIdleFlag = 0
+01-13 14:40:32.937  2033  2093 D MI-SF   : updateScene mSetAnimationFlag status 0, vsync 60
+01-13 14:40:32.937  5321  5704 I MultiTaskingTaskInfo: getCoverLayerController:: null, com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskInfo.lambda$updateCoverLayerController$2:1 com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskInfo.$r8$lambda$-YpCdQQtg0ANF5ZGkXQR8pi1iBs:1 
+01-13 14:40:32.937  5321  5646 I RemoteTransitionHandlerStubImpl: invokeAndRemoveWctCB transition is null, curWctCB: null
+01-13 14:40:32.938  3999  8859 D AppScoutStateMachine: 3999-ScoutStateMachinecreated
+01-13 14:40:32.938  3278  4445 I AnimationScenario: Big data animation scenario state changed to: false, type is 524
+01-13 14:40:32.938  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10163, uidState = 3
+01-13 14:40:32.938  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10146, uidState = 3
+01-13 14:40:32.939  3278  4147 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-13 14:40:32.939  3278  4147 D InetDiagMessage: Destroyed live tcp sockets for uids={20405} in 5ms
+01-13 14:40:32.939  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10161, uidState = 6
+01-13 14:40:32.939  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10142, uidState = 6
+01-13 14:40:32.939  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10136, uidState = 6
+01-13 14:40:32.939  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10135, uidState = 6
+01-13 14:40:32.940 16169 16692 I BluetoothAdapterService: getActiveDevices: A2dp device: null
+01-13 14:40:32.940  4686  7958 D EventBus: No subscribers registered for event class com.miui.home.recents.messages.RecentTasksChangedEvent
+01-13 14:40:32.940  4686  7958 D EventBus: No subscribers registered for event class org.greenrobot.eventbus.NoSubscriberEvent
+01-13 14:40:32.940  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10161, uidState = 5
+01-13 14:40:32.940  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10142, uidState = 5
+01-13 14:40:32.940  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10136, uidState = 5
+01-13 14:40:32.940  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10135, uidState = 5
+01-13 14:40:32.940  4686  6972 E ActivityManagerWrapper: get all recent tasks force including -1 userId =0
+01-13 14:40:32.940  3278  4257 D BluetoothAdapter: getActiveDevices(HEADSET)
+01-13 14:40:32.941 16169 16692 I BluetoothAdapterService: getActiveDevices: CallAudio device: null
+01-13 14:40:32.941  3278  4257 D BluetoothAdapter: getActiveDevices(LE_AUDIO)
+01-13 14:40:32.941 21761  9615 I Market-DownloadLimitSpeedManager: startLimitSpeed success. Total count 1
+01-13 14:40:32.941 21761  9615 I Market-RetrofitRequest: HeaderInterceptor : https://updateinfo.market.xiaomi.com/apm/updateinfo/v2
+01-13 14:40:32.942  5321  5321 D ShadeDarkIconDispatcher: current token StatusBarToken(displayId=0, statusBarIndex=0, rawDisplayId=0)
+01-13 14:40:32.942  5321  5321 D ShadeDarkIconDispatcher: receiver delegate onDarkChanged
+01-13 14:40:32.942  3278  3403 I DisplayModeDirectorImpl: updateRefreshRateResultIfNeeded after:baseModeId=1 allowGroupSwitching=false primary=physical: (0.0 Infinity) render:  (0.0 120.0) appRequest=physical: (0.0 Infinity) render:  (0.0 120.0) idleScreenRefreshRateConfig=null mNormalModeSkipOveride: false
+01-13 14:40:32.942 16169 16342 I BluetoothAdapterService: getActiveDevices: LeAudio devices: Lead[null] - member_1[null]
+01-13 14:40:32.943  1963  7984 D AudioFlingerImpl: setGameParameters keyvalue: bluetoothlowlatencystatus=false;foregroundUid=1002
+01-13 14:40:32.943  5321  5321 D ShadeDarkIconDispatcher: receiver delegate onDarkChangedWithContrast
+01-13 14:40:32.943  5321  5321 D ShadeDarkIconDispatcher: receiver delegate onLightDarkTintChanged
+01-13 14:40:32.943  1963  7984 D DeviceHalAidl: [default] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=1002"
+01-13 14:40:32.943  1816 21305 I AHAL_ModulePrimary_MI: setVendorParameters: parameter count 2, async: 0
+01-13 14:40:32.943  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters parameters id = bluetoothlowlatencystatus val false
+01-13 14:40:32.943  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters parameters id = foregroundUid val 1002
+01-13 14:40:32.943  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters: enter miam_setParameters_v2 ret = -2
+01-13 14:40:32.943  1816 21305 D AHAL_ModulePrimary_QTI: setVendorParameters: parameter count 2, async: 0
+01-13 14:40:32.943  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters enter
+01-13 14:40:32.943  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters Exit
+01-13 14:40:32.943  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters enter
+01-13 14:40:32.943  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters Exit
+01-13 14:40:32.943  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10163, uidState = 4
+01-13 14:40:32.943  1963  7984 D DeviceHalAidl: [usb] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=1002"
+01-13 14:40:32.943  3278  4130 I MiuiNetworkPolicy: updateUidState uid = 10146, uidState = 4
+01-13 14:40:32.944  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.944  1963  7984 D DeviceHalAidl: [r_submix] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=1002"
+01-13 14:40:32.944  1816 21305 D AHAL_ModuleRemoteSubmix: setVendorParameters: parameter count 2, async: 0
+01-13 14:40:32.944  1816 21305 D AHAL_ModuleRemoteSubmix: setVendorParameters parameters id = bluetoothlowlatencystatus val false
+01-13 14:40:32.944  1816 21305 D AHAL_ModuleRemoteSubmix: setVendorParameters parameters id = foregroundUid val 1002
+01-13 14:40:32.944  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.944  1963  7984 D DeviceHalAidl: [bluetooth] setParameters: parameters: "bluetoothlowlatencystatus=false;foregroundUid=1002"
+01-13 14:40:32.944  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.944  3278  4257 I AudioGameEffect: foreground change to com.xiaomi.bluetooth, last foreground is com.soundtherapyapp
+01-13 14:40:32.944  3278  4257 I AudioGameEffect: get enable packages from setting: null
+01-13 14:40:32.944  3278  4257 I AudioGameEffect: get enable packages from setting: null
+01-13 14:40:32.944 29090 11746 D RelayAppLocalHelper: onForegroundInfoChanged: ForegroundInfo{mForegroundPackageName='com.xiaomi.bluetooth', mForegroundUid=1002, mForegroundPid=3999, mForegroundDisplayId=0, mLastForegroundPackageName='com.soundtherapyapp', mLastForegroundUid=10405, mLastForegroundPid=8264, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.xiaomi.bluetooth', mMultiWindowForegroundUid=1002, mFlags=0}
+01-13 14:40:32.944 10301 10787 D L0      : myUserId = 0	currentUserId0
+01-13 14:40:32.945 16169 16342 D BluetoothLatencyMode: ForegroundInfo{mForegroundPackageName='com.xiaomi.bluetooth', mForegroundUid=1002, mForegroundPid=3999, mForegroundDisplayId=0, mLastForegroundPackageName='com.soundtherapyapp', mLastForegroundUid=10405, mLastForegroundPid=8264, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.xiaomi.bluetooth', mMultiWindowForegroundUid=1002, mFlags=0}
+01-13 14:40:32.945  3278  6273 D AS.AudioService: mSupportFakeHfpApp{com.ss.android.ugc.aweme=0, com.microsoft.teams=0, com.baidu.BaiduMap=0, com.systec.umeeting=0, com.cisco.webex.meetings=0, com.tencent.mobileqq=0, com.skype.raider=0, com.instagram.android=0, com.ss.android.lark.kami=0, com.zhiliaoapp.musically=0, com.skype.rover=0, com.smile.gifmaker=0, com.ss.android.lark.saxmsa667=0, com.tencent.wemeet.app=0, com.mediatek.engineermode=0, com.ss.android.ugc.aweme.lite=0, com.alibaba.android.rimet=0, com.autonavi.minimap=0, com.whatsapp=0, com.immomo.momo=0, com.facebook.katana=0, com.taobao.idlefish=0, com.tencent.lolm=0, com.tencent.mf.uam=0, com.xingin.xhs=0, com.cisco.wx2.android=0, com.tencent.tmgp.sgame=0, com.tencent.tmgp.pubgmhd=0, com.ss.android.lark=0, im.yixin=0} packageName com.android.bluetooth appVersion 36 mSupportFakeHfpApp.get(packageName) null
+01-13 14:40:32.945 16169 16342 D BluetoothLatencyMode: isWiredAudioHeadset.type: 1
+01-13 14:40:32.945 16169 16342 D BluetoothLatencyMode: isWiredAudioHeadset.type: 2
+01-13 14:40:32.945 16169 16342 D BluetoothLatencyMode: isWiredAudioHeadset.type: 18
+01-13 14:40:32.945  3278  4257 I NetworkBoostStatusManager: onForegroundInfoChanged uid:1002, onLastForegroundInfoChanged uid:10405, isColdStart:false, mIgnoreUid:-1
+01-13 14:40:32.945 16169 16342 D BluetoothLatencyMode: isWiredAudioHeadset.type: 14
+01-13 14:40:32.945  3278  4257 I SLM-SRV-SLAToast: foreground uid:1002, isColdStart:false, isLinkTurboEnable:false
+01-13 14:40:32.945  3278  4257 D NetworkSDKService: handleMultiAppsDualWifi isSet = false isEverOpened = false
+01-13 14:40:32.945 10211 19863 D DFS-AppUsageTracker: Fg changed, new=com.xiaomi.bluetooth, but charging.
+01-13 14:40:32.945 10301 10787 I ProcessMonitor: onForegroundInfoChanged: ForegroundInfo{mForegroundPackageName='com.xiaomi.bluetooth', mForegroundUid=1002, mForegroundPid=3999, mForegroundDisplayId=0, mLastForegroundPackageName='com.soundtherapyapp', mLastForegroundUid=10405, mLastForegroundPid=8264, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.xiaomi.bluetooth', mMultiWindowForegroundUid=1002, mFlags=0}
+01-13 14:40:32.945  4686  7957 D RecentsImpl: onForegroundChanged, foregroundPackageName=com.xiaomi.bluetooth
+01-13 14:40:32.945 10301 10787 I GameBoosterService: screen locked!
+01-13 14:40:32.945 10301 10787 I VideoBoxUtils: isSupportVideoBox: true
+01-13 14:40:32.945 10301 10787 I VideoToolBoxService: vtb is closed!!!
+01-13 14:40:32.945 29090 11746 E RecentAppsManager: com.xiaomi.bluetooth can't be added to recent list!!
+01-13 14:40:32.945 10301 12168 E SuggestManager: openApp name = com.xiaomi.bluetooth
+01-13 14:40:32.945 10301 12168 I NewAutoTaskManager: app use - delay = 9223372036854775807, doRemove = false, doPost = false
+01-13 14:40:32.945 29090 11746 D RelayAppLocalHelper: notifyTaskStackChanged:
+01-13 14:40:32.946 10301 10787 D AppPredictManager: ForegroundAppChange: com.xiaomi.bluetooth, ignore !
+01-13 14:40:32.946 10301 10787 I AppPredictService: difTIme = 55
+01-13 14:40:32.946 30162 32133 I Browser : -------=-=-===onForegroundInfoChanged from com.soundtherapyapp to com.xiaomi.bluetooth
+01-13 14:40:32.946 12372  4091 I GID     : PKG: com.xiaomi.bluetooth IG ? false
+01-13 14:40:32.946 12372  4091 I GST     : forePkg: com.xiaomi.bluetooth, preForePkg: com.soundtherapyapp
+01-13 14:40:32.946 12372  4091 D VENUS_GAMEAI_START_GameAiStartManager: venusGameAiSupportApps is not monitor packageName=com.xiaomi.bluetooth
+01-13 14:40:32.947 12372  4091 I GID     : PKG: com.soundtherapyapp IG ? false
+01-13 14:40:32.947  5271  6063 E CountableHandler: Pending message count is over 200, drop message.msg.what = 10007 handler = Handler (com.android.phone.statistics.utils.ModemHydraStat$ModemHydraHandler) {eb04c79}
+01-13 14:40:32.948 12372  4091 I GID     : PKG: com.soundtherapyapp IG ? false
+01-13 14:40:32.948 29090 11746 E SystemUtils: appIsTopAndXSpace: package com.xiaomi.bluetooth, result false
+01-13 14:40:32.948 30162 32133 D FloatingDialogManager: onForegroundInfoChanged:  foregroundPackageName:com.xiaomi.bluetooth mLastForegroundPackageName:com.soundtherapyapp
+01-13 14:40:32.948 12372  4091 I GID     : PKG: com.xiaomi.bluetooth IG ? false
+01-13 14:40:32.948  5271  6055 D NetworkMetricsController: processUidChangeEvent :activity is:ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}
+01-13 14:40:32.948  5271  6055 D NetworkMetricsController: processUidChangeEvent :mCurApptype is NONE tempAppType is NONE
+01-13 14:40:32.948 29090  5436 D ExecutorUtils: Task[RALH-notifyTaskStackChanged,148665492] running ON mirror-thread-2
+01-13 14:40:32.948 12372  4091 I GID     : PKG: com.xiaomi.bluetooth IG ? false
+01-13 14:40:32.948 29090  5436 D RelayAppLocalHelper: both hide, no need notify devices. check com.xiaomi.bluetooth
+01-13 14:40:32.948 10211 10602 D PowerKeeper.Audio: pids 0
+01-13 14:40:32.950  3278  6273 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.950  3278  6273 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.950  3278  6273 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.951  3999  3999 W libc    : Access denied finding property "vendor.gpp.create_frc_extension"
+01-13 14:40:32.951  3999  3999 W libc    : Access denied finding property "vendor.gpp.create_frc_extension"
+01-13 14:40:32.952  3999  3999 D VRI[MiuiFastConnectActivity]: vri.reportNextDraw 0 Rect(0, 0 - 1440, 3200) android.view.ViewRootImpl.performTraversals:5540 android.view.ViewRootImpl.doTraversal:4096 android.view.ViewRootImpl$TraversalRunnable.run:12456 android.view.Choreographer$CallbackRecord.run:2024 android.view.Choreographer$CallbackRecord.run:2033 
+01-13 14:40:32.952  3999  3999 D VRI[MiuiFastConnectActivity]: vri.Setup new sync=wmsSync-VRI[MiuiFastConnectActivity]#16
+01-13 14:40:32.952  3278  3416 I QuickScannerController: onForegroundInfoChanged. packageName:com.xiaomi.bluetooth
+01-13 14:40:32.964  3999  3999 D VRI[MiuiFastConnectActivity]: vri.reportDrawFinished 0 0 Rect(0, 0 - 1440, 3200)
+01-13 14:40:32.964  3278  6273 D WindowManager: wms.finishDrawingLocked: mDrawState=COMMIT_DRAW_PENDING Window{446360e u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49549)/@0xf8cf69f
+01-13 14:40:32.965  3278  3404 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.965  3278  3404 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.965  3278  3404 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.965  3278  3404 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{446360e u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49549)/@0xf8cf69f
+01-13 14:40:32.965  3999  3999 D MiuiFastConnectActivity_Plugin: onStart
+01-13 14:40:32.966  3999  3999 D Activity: Activity = ActivityInfo{220d5be com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}, Resume onConfigurationChanged = {0.97734624 460mcc11mnc [zh_CN] ldltr sw384dp w384dp h853dp 586dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1440, 3200) mAppBounds=Rect(0, 0 - 1440, 3200) mMaxBounds=Rect(0, 0 - 1440, 3200) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false embeddingScale=1.0} s.2 fontWeightAdjustment=0/d/o themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/o}
+01-13 14:40:32.966  3278  6273 D AppLock_AccessControlImpl: activityResume packageName: com.xiaomi.bluetooth userId: 0 enabled: true
+01-13 14:40:32.966  3278  6273 D AppLock_AccessControlImpl: activityResume lockMode: 1
+01-13 14:40:32.966  3999  3999 D SecurityManager: checkAccessControl flag1
+01-13 14:40:32.966  3999  3999 D MiuiFastConnectActivity_Plugin: onResume
+01-13 14:40:32.966  3999  3999 E MiuiFastConnectController_Plugin: initBroadcastReceiver
+01-13 14:40:32.966  3999  3999 D MiuiFastConnectController_Plugin: mFastConnectReceive not unregister
+01-13 14:40:32.966  3999  8048 D ActivityThread: the event that target app starts is : AppLaunchEvent{mType='441', mProcessName='com.xiaomi.bluetooth:ui', mPackageName='com.xiaomi.bluetooth', mIsMainProcess='false', mVersionCode='36', mVersionName='', mLaunchTime='2026-01-13'}
+01-13 14:40:32.966  3278  6273 I ActivityTaskManager:  ar:ActivityRecord{208687759 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity t782} prev:ActivityRecord{208687759 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity t782}, ar.launchFromActivity=null, canShowWhenLocked:false, state:PAUSED, prev.packageName=com.xiaomi.bluetooth, ar.launchedFromPackage=com.xiaomi.bluetooth, isCanstartOnKeyguard=false, isCanResumeActivity=false
+01-13 14:40:32.967  3278  6273 I ATMSImpl: cacheTasksForDefaultDisplay size=2 topId=782
+01-13 14:40:32.967  3999  8080 I ContentCatcher: SettingTrigger : register screen QA status observer com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity
+01-13 14:40:32.967  3278  6273 D As.ActivityMmReduceLoadHelper: onMultiScreenChanged is not change, Done, isMultiScreen: false
+01-13 14:40:32.967  3278  6273 I As.ActivityMmReduceLoadHelper: updateMultiScreenState, splitScreenMode: false isSmallScreen: false
+01-13 14:40:32.967  3999  8080 I ContentCatcher: SettingTrigger : register global collect status observer com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity
+01-13 14:40:32.968  9162 22873 W MQSEventManager: occur
+01-13 14:40:32.968  3999  8080 I ContentCatcher: SettingTrigger : registerUIAgentListener com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity, uid:1002
+01-13 14:40:32.968  3278  6008 I DataHub : registerUIAgentListener packageName: com.xiaomi.bluetooth~1002, client:miui.security.IUIAgentInteractionClient$Stub$Proxy@69d12d8
+01-13 14:40:32.968  3278  6008 I RemoteCallbackList: register success, put callback for com.xiaomi.bluetooth~1002
+01-13 14:40:32.968 26170 26310 D services: [XMS][observer] ActivityObserver activityResumed packageName: com.xiaomi.bluetooth
+01-13 14:40:32.968   399  9624 I VA_ActivityStateHelper: activityResumed componentName ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}
+01-13 14:40:32.968   399  9624 I VA_ActivityStateHelper: activityResumed mAiSkillPush is false
+01-13 14:40:32.968  9464  4223 I ActivityObserverUtil: activityResumed ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}
+01-13 14:40:32.968  3999  8080 I ContentCatcher: SettingTrigger : unregister status observer com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity
+01-13 14:40:32.969  9464  4223 I TopActivityMonitor: send TopActivityChangeEvent=TopActivityChangeEvent(prev=null, current=ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity},appChanged=true)
+01-13 14:40:32.969  3999  8080 I ContentCatcher: SettingTrigger : unregisterUIAgentListener com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity, uid:1002
+01-13 14:40:32.969  3278  6008 I DataHub : unregisterUIAgentListener packageName: com.xiaomi.bluetooth~1002
+01-13 14:40:32.969  3278  6008 I RemoteCallbackList: unregister success, remove callback for com.xiaomi.bluetooth~1002
+01-13 14:40:32.969  9464 21481 I travelService_ActivityObserverUtils: activityResumed ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}
+01-13 14:40:32.969 26170 12426 D AppUpdateXmsfLauncher: activityResumed intent : Intent { cmp=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity (has extras) }
+01-13 14:40:32.969  3278  6273 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.969 26763 26798 D auth    : [XMS][Auth] ActivityObserver activityResumed packageName: com.xiaomi.bluetooth
+01-13 14:40:32.969  3278  6273 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.969  3278  6273 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.969  4686  4686 D BackGestureBreakController: mAppLaunchingButNotResume= false
+01-13 14:40:32.969  4686  4686 D RecentsImpl: mActivityStateObserver com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity
+01-13 14:40:32.969  3278  6273 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{446360e u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49549)/@0xf8cf69f
+01-13 14:40:32.970  4686  4686 D BackGestureBreakController: mAppLaunchingButNotResume= false
+01-13 14:40:32.970  4686  5504 W RecentsImpl: disableTouchBySwipeStatusBar    disable=false
+01-13 14:40:32.970  4686  5504 D GestureStubView_Left: disableTouchBySwipeStatusBar    old=false   new=false
+01-13 14:40:32.970  4686  5504 D GestureStubView_Right: disableTouchBySwipeStatusBar    old=false   new=false
+01-13 14:40:32.970  4686  4686 W RecentsImpl: updateGestureWindowVisibleImpl, className=com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity
+01-13 14:40:32.970  4686  4686 D RecentsImpl: useSysUiFlagsUpdateGestureWindowVisible, keyguard showing
+01-13 14:40:32.970  4686  4686 D GestureStubView_Left: hideGestureStub
+01-13 14:40:32.970  4686  4686 D GestureStubView_Right: hideGestureStub
+01-13 14:40:32.970  4686  4686 D RecentsImpl: updateGestureWindowVisibleImpl, use SysUIFlags update gesture, return
+01-13 14:40:32.970  4686  4686 D RecentsImpl: hideNavStubView
+01-13 14:40:32.970  4686  4686 D NavStubView_Touch: setKeepHidden    old=true   new=true
+01-13 14:40:32.971 10369 11243 I AIRC_CounterTrack: collect: signal-TopActivityPerception
+01-13 14:40:32.971 10369 11243 I MMKV    : <MMKV.cpp:1170::sync> MMKV::sync, SyncFlag = 1
+01-13 14:40:32.972  3999  3999 W libc    : Access denied finding property "vendor.gpp.create_frc_extension"
+01-13 14:40:32.972  3999  3999 W libc    : Access denied finding property "vendor.gpp.create_frc_extension"
+01-13 14:40:32.972  3278  6008 D ActivityManager: Logging bindService for com.miui.analytics, stopped=false, firstLaunch=false
+01-13 14:40:32.972  1841  1841 I vendor.qti.hardware.servicetrackeraidl-service: bindService is called for service : com.miui.analytics/.onetrack.OneTrackService and for client com.xiaomi.bluetooth:ui
+01-13 14:40:32.972  1841  1841 I vendor.qti.hardware.servicetrackeraidl-service: total connections for service : com.miui.analytics/.onetrack.OneTrackServiceare :24
+01-13 14:40:32.972  1841  1841 I vendor.qti.hardware.servicetrackeraidl-service: total connections for client : com.xiaomi.bluetooth:uiare :2
+01-13 14:40:32.973  3999  3999 D VRI[MiuiFastConnectActivity]: vri.reportNextDraw 0 Rect(0, 0 - 1440, 3200) android.view.ViewRootImpl.performTraversals:5540 android.view.ViewRootImpl.doTraversal:4096 android.view.ViewRootImpl$TraversalRunnable.run:12456 android.view.Choreographer$CallbackRecord.run:2024 android.view.Choreographer$CallbackRecord.run:2033 
+01-13 14:40:32.973  3999  3999 D VRI[MiuiFastConnectActivity]: vri.Setup new sync=wmsSync-VRI[MiuiFastConnectActivity]#18
+01-13 14:40:32.975  3999  3999 D VRI[MiuiFastConnectActivity]: vri.reportDrawFinished 0 0 Rect(0, 0 - 1440, 3200)
+01-13 14:40:32.975  3278  6008 D WindowManager: wms.finishDrawingLocked: mDrawState=COMMIT_DRAW_PENDING Window{1dc45b4 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49550)/@0x7af0631
+01-13 14:40:32.975  3278  6273 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.975  3278  6273 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.975  3278  6273 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.975  3278  6273 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{446360e u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49549)/@0xf8cf69f
+01-13 14:40:32.975  3278  6273 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{1dc45b4 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49550)/@0x7af0631
+01-13 14:40:32.976  3278  3404 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.976  3278  3404 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.976  3278  3404 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.976  3278  3404 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{446360e u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49549)/@0xf8cf69f
+01-13 14:40:32.976  3278  3404 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{1dc45b4 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49550)/@0x7af0631
+01-13 14:40:32.976  3999  3999 E VRI[MiuiFastConnectActivity]: performDraw: Not drawing due to screen off
+01-13 14:40:32.976  3999  3999 D MiuiFastConnectController_Plugin: handleMessage: what : 8, msg.arg1: 1, msg.arg2: 0
+01-13 14:40:32.977 21761  9615 I Market-DownloadLimitSpeedManager: stopLimitSpeed
+01-13 14:40:32.977 21761  9615 I Market-LimitSpeedManager: stopLimitSpeedNow() =========== 
+01-13 14:40:32.977  3999  3999 D MiuiFastConnectActivity_Plugin: onStop
+01-13 14:40:32.978 10082 10219 D DMS_LimitSpeedService: exit limit speed(-1.00B/s) success 
+01-13 14:40:32.978 21761  9615 I Market-RetrofitRequest: callEnd : https://updateinfo.market.xiaomi.com/apm/updateinfo/v2
+01-13 14:40:32.978 21761  9615 I Market-LocalAppManager: getUpdateInfoFromServer : end  , responseCode : OK
+01-13 14:40:32.978 21761  9615 I Market-LocalAppManager: checkUpdateFromServer : end
+01-13 14:40:32.978 21761  9615 I Market-LocalAppManager: checkUpdateFromServer  data parser : end
+01-13 14:40:32.978 21761 21825 E Market-UpdateDesktopOperateIconManager: [OperateIconConfig] JSON : operation icon config list not exist!
+01-13 14:40:32.978 21761 21825 I Market-UpdateDesktopOperateIconManager: [OperateIconConfig] JSON: parser operateIconConfigList : null
+01-13 14:40:32.978 21761  9615 I Market-HuanjiManager: condition not satisfied, ignore
+01-13 14:40:32.978 21761  9615 I Market-DataParser: [InvalidPackageList] JSON : invalidSystemPackageList list is null
+01-13 14:40:32.978 21761  9615 I Market-LocalAppManager: checkUpdateFromServer  filter package : end
+01-13 14:40:32.978 21761  9615 I Market-LocalAppManager: checkUpdateFromServer  support64BitPackagesJsonArray : end
+01-13 14:40:32.978 21761  9615 I Market-OneTrackParams: useExpId=2089471,1978999,2000549,1700402,2075312,expId=2023001,1805848,1627499,1689162,2075312,1700402,2000549,2149131,1411227,1978999,2089471,2214498,2223943
+01-13 14:40:32.980  3999  3999 D MiuiFastConnectController_Plugin: handleMessage: what : 8, msg.arg1: 0, msg.arg2: 0
+01-13 14:40:32.980  7406  7456 I SmartAppAssistant: AppStoreHelper queryPackageInfo result=1 oldVersionName=1.0 oldVersionCode=1
+01-13 14:40:32.981 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.981  8889  8910 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_atest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.982 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.982  8889  8910 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_btest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.982 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.982  3999  8072 W mi.bluetooth:ui: Binder 0xb400007908f06620 destroyed after setInheritRt before being parceled.
+01-13 14:40:32.982  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_ctest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.983 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.983  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_EmergentProblem  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.984 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.984  3278  4930 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:32.984  3278  4930 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:32.984  3278  4930 D MiuiRefreshRatePolicy: reset
+01-13 14:40:32.984  3278  4930 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{446360e u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49549)/@0xf8cf69f
+01-13 14:40:32.984  3278  4930 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{1dc45b4 u0 com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity} in Surface(name=com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity#49550)/@0x7af0631
+01-13 14:40:32.985 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.985  3999  3999 E VRI[MiuiFastConnectActivity]: performDraw: Not drawing due to screen off
+01-13 14:40:32.985  8889  8910 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_CrashRuleMatch  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.986  3999  3999 D VRI[MiuiFastConnectActivity]: visibilityChanged oldVisibility=true newVisibility=false
+01-13 14:40:32.986  1963  7984 D AudioFlingerImpl: setGameParameters keyvalue: gamebooster=false
+01-13 14:40:32.986  1963  7984 D DeviceHalAidl: [default] setParameters: parameters: "gamebooster=false"
+01-13 14:40:32.986  1816 21305 I AHAL_ModulePrimary_MI: setVendorParameters: parameter count 1, async: 0
+01-13 14:40:32.986  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters parameters id = gamebooster val false
+01-13 14:40:32.986  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters: enter miam_setParameters_v2 ret = -2
+01-13 14:40:32.986  1816 21305 D AHAL_ModulePrimary_QTI: setVendorParameters: parameter count 1, async: 0
+01-13 14:40:32.986  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters enter
+01-13 14:40:32.986  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters Exit
+01-13 14:40:32.986  1963  7984 D DeviceHalAidl: [usb] setParameters: parameters: "gamebooster=false"
+01-13 14:40:32.986  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.986  1963  7984 D DeviceHalAidl: [r_submix] setParameters: parameters: "gamebooster=false"
+01-13 14:40:32.986  1816  1832 D AHAL_ModuleRemoteSubmix: setVendorParameters: parameter count 1, async: 0
+01-13 14:40:32.986  1816  1832 D AHAL_ModuleRemoteSubmix: setVendorParameters parameters id = gamebooster val false
+01-13 14:40:32.986  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.986  1963  7984 D DeviceHalAidl: [bluetooth] setParameters: parameters: "gamebooster=false"
+01-13 14:40:32.986  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:32.987  9464 21481 D travelService_ActivityObserverUtils: activityStopped ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}
+01-13 14:40:32.987  7406  7456 D SmartAppAssistant: RuleMatch parseCloudTraceMatchers version = 10
+01-13 14:40:32.987  2033  6014 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+01-13 14:40:32.987 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.989  7406  7456 D SmartAppAssistant: RegexMatcher Regex match suc: JE_ISE
+01-13 14:40:32.989  7406  7456 I SmartAppAssistant: TraceMatcher match je problem packageName=com.soundtherapyapp problemName=JE_ISE
+01-13 14:40:32.989  7406  7456 D SmartAppAssistant: TraceMatcher matchExceptionType RegexStr： java\.lang\.IllegalStateException
+01-13 14:40:32.989  7406  7456 I SmartAppAssistant: MatcherManager match exception type: 2
+01-13 14:40:32.990  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_SwitchStatus  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.990 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.990  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_atest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.991 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.991  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_btest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.992  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_ctest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.992  5321  5321 D DynamicIslandTopActivityController: fullscreen: com.xiaomi.bluetooth
+01-13 14:40:32.992  5321  5321 D DynamicIslandController: onTopActivityChanged: ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}
+01-13 14:40:32.992  5321  5321 D DynamicIslandWindowViewController: handleDynamicIsland: action_top_activity_changed
+01-13 14:40:32.992  5321  5321 D DynamicIslandWindowViewController: onTopActivityChange: topActivity ComponentInfo{com.xiaomi.bluetooth/com.android.bluetooth.ble.app.fastconnect.MiuiFastConnectActivity}, inSmallWindow false, isSupportPip false, isFocus true fullScreenPkg com.xiaomi.bluetooth
+01-13 14:40:32.992  5321  5321 D DynamicIslandWindowViewController: openAppFromIsland: null, null, null false
+01-13 14:40:32.992  5321  5321 D DynamicIslandSafeguardsController: cancelDelayEnterApp com.xiaomi.bluetooth com.xiaomi.aicr
+01-13 14:40:32.992  5321  5321 D DynamicIslandSafeguardsController: cancelDelayEnterMiniWindow com.xiaomi.bluetooth com.xiaomi.bluetooth null
+01-13 14:40:32.992  5321  5321 D DynamicIslandSafeguardsController: cancelDelayExitApp com.xiaomi.bluetooth com.soundtherapyapp
+01-13 14:40:32.992  5321  5321 D DynamicIslandSafeguardsController: cancelDelayExitMiniWindow com.xiaomi.bluetooth null
+01-13 14:40:32.992  5321  5321 D DynamicIslandWindowViewController: lastTopActivityIsSmallWindow false
+01-13 14:40:32.992  5321  5321 D DynamicIslandSafeguardsController: delayExitApp com.xiaomi.bluetooth
+01-13 14:40:32.992  5321  5321 D DynamicIslandSafeguardsController: cancelDelayExitApp com.xiaomi.bluetooth com.xiaomi.bluetooth
+01-13 14:40:32.992  7406  7456 D SmartAppAssistant: HistoryExceptionDatabaseHelper The same dgt already exists in the database.
+01-13 14:40:32.992  7406  7456 I SmartAppAssistant: ExceptionRiskPolicy risk hit com.soundtherapyapp exception because of reason1
+01-13 14:40:32.992  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_atest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.993  8889  8909 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_btest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.993  8889  8910 I htmlviewercloudcontrol: isStagingEnv:false param =  taa_ctest  uriMatch = 2, cluster: cn, version: 649476, traceId: 3207d9982ba3ad88be5aad14ba11fab1, regId: 3y/5YAKKsG4DaTUEqYP8xrCGGdYjHRJxuJepRV34cHdbfLdNYsnawrrMuDZmuv5e
+01-13 14:40:32.994  7406  7456 I SmartAppAssistant: ExceptionManager com.soundtherapyapp(versionName:1.0, versionCode:1) exception has been ignored
+01-13 14:40:32.994 22881 23009 D IdProviderImpl: getOAID from com.miui.analytics
+01-13 14:40:32.996  1828  1828 W SDM     : execute: No command found
+01-13 14:40:32.998  3999  8072 W mi.bluetooth:ui: Binder 0xb400007908ed8180 destroyed after setInheritRt before being parceled.
+01-13 14:40:33.000  3278  6008 D BarFollowAnimation: isAppBarAndVisibleCheck.....
+01-13 14:40:33.000  3278  6008 D BarFollowAnimation: isAppTaskBarOnTop win:Window{fe5ca0e u0 NotificationShade} (mCurrentTopTask:Task{c15f925 #782 type=standard A=1002:com.xiaomi.bluetooth} : true); (mAssociatedTask:null : false); (mHomeTask:Task{68ecabd #1 type=home} : true); mReparentToOriginParent:true mLastAppBarVisible:true mLastHomeBarVisible:false
+01-13 14:40:33.000  3278  6008 D MiuiRefreshRatePolicy: reset
+01-13 14:40:33.002  2272  2272 I CNSS    : /sys/wifi/dump_in_progress doesn't exist
+01-13 14:40:33.002  2272  2272 I CNSS    : /sys/wifi/max_chipset_log_size doesn't exist
+01-13 14:40:33.004  1828  1828 W SDM     : execute: No command found
+01-13 14:40:33.045  1963  7984 D AudioFlingerImpl: setGameParameters keyvalue: gamebooster=false
+01-13 14:40:33.045  1963  7984 D DeviceHalAidl: [default] setParameters: parameters: "gamebooster=false"
+01-13 14:40:33.046  1816 21305 I AHAL_ModulePrimary_MI: setVendorParameters: parameter count 1, async: 0
+01-13 14:40:33.046  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters parameters id = gamebooster val false
+01-13 14:40:33.046  1816 21305 D AHAL_ModulePrimary_MI: setVendorParameters: enter miam_setParameters_v2 ret = -2
+01-13 14:40:33.046  1816 21305 D AHAL_ModulePrimary_QTI: setVendorParameters: parameter count 1, async: 0
+01-13 14:40:33.046  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters enter
+01-13 14:40:33.046  1816 21305 D AHAL_HFP_QTI: hfp_set_parameters Exit
+01-13 14:40:33.046  1963  7984 D DeviceHalAidl: [usb] setParameters: parameters: "gamebooster=false"
+01-13 14:40:33.047  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:33.047  1963  7984 D DeviceHalAidl: [r_submix] setParameters: parameters: "gamebooster=false"
+01-13 14:40:33.047  1816  1832 D AHAL_ModuleRemoteSubmix: setVendorParameters: parameter count 1, async: 0
+01-13 14:40:33.047  1816  1832 D AHAL_ModuleRemoteSubmix: setVendorParameters parameters id = gamebooster val false
+01-13 14:40:33.047  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:33.047  1963  7984 D DeviceHalAidl: [bluetooth] setParameters: parameters: "gamebooster=false"
+01-13 14:40:33.048  1963  7984 E ConversionHelperAidl: Function: parseAndSetVendorParameters Line: 94 Failed 
+01-13 14:40:33.067 29090 11746 D RelayAppLocalHelper: onTaskStackChanged:
+01-13 14:40:33.069 10211 19911 I MultiScreenObserver: onTaskStackChanged, splitScreenMode: false isSmallScreen: false
+01-13 14:40:33.070 10301 10787 I SCTaskStackListener: onTaskStackChanged! inSplit = false
+01-13 14:40:33.070 10301 10787 D TheatreModeUtils: Turn off the 3D LUT Global Switch
+01-13 14:40:33.070 10301 10787 I DisplayEffectUtils: setCinemaVisionGlobalSwitch: 0
+01-13 14:40:33.072  4686  4686 D RecentsImpl: mTaskStackChangeListener, onTaskStackChanged
+01-13 14:40:33.073 10301 10787 D TheatreModeUtils: isSupportCinemaVisionWith3d: false, sSupport3DLUTV1:0
+01-13 14:40:33.073 10301 10787 E TheatreModeUtils: supportTheatreModeFeature = false, pkg: 
+01-13 14:40:33.073 10301 10787 I DisplayEffectUtils: isSupportVDS: true
+01-13 14:40:33.073 10301 10787 I DisplayEffectUtils: setScreenEffect: 0
+01-13 14:40:33.074  3278  3341 D DisplayFeatureManagerService: setScreenEffect displayId=0 mode=27 value=0 cookie=255 from pid=10301
+01-13 14:40:33.074 29090 11746 D RelayAppLocalHelper: notifyTaskStackChanged:
+01-13 14:40:33.074  1857  1857 D DisplayFeatureHal: setFeatureEnable displayId = 0, FeatureId=VIDEO_STATE modeId=0 cookie=255
+01-13 14:40:33.075  1857  1857 D DisplayFeatureHal: setWCGState current wcg state 0, setting to 0
+01-13 14:40:33.075  1857  1857 D DisplayFeatureHal: notifySFWcgState enable = 0
+01-13 14:40:33.075  4686  7958 D EventBus: No subscribers registered for event class com.miui.home.recents.messages.RecentTasksChangedEvent
+01-13 14:40:33.075  4686  7958 D EventBus: No subscribers registered for event class org.greenrobot.eventbus.NoSubscriberEvent
+01-13 14:40:33.076  4686  6972 E ActivityManagerWrapper: get all recent tasks force including -1 userId =0
+01-13 14:40:33.076  3278  4436 W ActivityManager: pid 3278 system sent binder code 31100 with flags 0 to frozen apps and got error -74
+01-13 14:40:33.077 10211 19912 I MultiScreenObserver: onTaskStackChanged, splitScreenMode: false isSmallScreen: false
+01-13 14:40:33.077 10301 10783 I SCTaskStackListener: onTaskStackChanged! inSplit = false
+01-13 14:40:33.077 10301 10783 D TheatreModeUtils: Turn off the 3D LUT Global Switch
+01-13 14:40:33.077 10301 10783 I DisplayEffectUtils: setCinemaVisionGlobalSwitch: 0
+01-13 14:40:33.078  1857  2442 D DisplayFeatureHal: HandleVideoMode enter 0
+01-13 14:40:33.079 10301 10783 D TheatreModeUtils: isSupportCinemaVisionWith3d: false, sSupport3DLUTV1:0
+01-13 14:40:33.079 10301 10783 E TheatreModeUtils: supportTheatreModeFeature = false, pkg: 
+01-13 14:40:33.079 10301 10783 I DisplayEffectUtils: isSupportVDS: true
+01-13 14:40:33.079 10301 10783 I DisplayEffectUtils: setScreenEffect: 0
+01-13 14:40:33.079  3278  3823 D DisplayFeatureManagerService: setScreenEffect displayId=0 mode=27 value=0 cookie=255 from pid=10301
+01-13 14:40:33.080  1857  1970 D DisplayFeatureHal: setFeatureEnable displayId = 0, FeatureId=VIDEO_STATE modeId=0 cookie=255
+01-13 14:40:33.080  1857  1970 D DisplayFeatureHal: setWCGState current wcg state 0, setting to 0
+01-13 14:40:33.080  1857  1970 D DisplayFeatureHal: notifySFWcgState enable = 0
+01-13 14:40:33.080  1828  3099 I MiStcImpl: Dispatching command: 3 PCC
+01-13 14:40:33.081 29090 11746 E SystemUtils: appIsTopAndXSpace: package com.xiaomi.bluetooth, result false
+01-13 14:40:33.081  3278  4436 W ActivityManager: pid 3278 system sent binder code 31100 with flags 0 to frozen apps and got error -74
+01-13 14:40:33.082  1857  2442 D DisplayFeatureHal: HandleCabcModeCustom HandleCabcModeCustom enter 0 0
+01-13 14:40:33.082  1857  2442 D DisplayFeatureHal: HandleCabcModeCustom HandleCabcModeCustom no cabc state changed
+01-13 14:40:33.082  1857  2442 D DisplayFeatureHal: HandleVideoMode enter 0
+01-13 14:40:33.082  3278  4436 W ActivityManager: pid 3278 system sent binder code 31101 with flags 0 to frozen apps and got error -74
+01-13 14:40:33.083  1828  3099 I MiStcImpl: Dispatching command: 3 PCC
+01-13 14:40:33.083  1857  2442 D DisplayFeatureHal: HandleCabcModeCustom HandleCabcModeCustom enter 0 0
+01-13 14:40:33.084  1857  2442 D DisplayFeatureHal: HandleCabcModeCustom HandleCabcModeCustom no cabc state changed
+01-13 14:40:33.084  3278  4436 W ActivityManager: pid 3278 system sent binder code 31101 with flags 0 to frozen apps and got error -74
+01-13 14:40:33.090 12372 12624 I HeavyPackageIdentify: splitMode: false, splitPackages: null, foregroundPkg: com.soundtherapyapp
+01-13 14:40:33.121 10369 21620 I AiCrEngine_PERCEPTION_.ScreenPerception.updateDataForArguments$aicr_AI_foundation_release: updateDataForArguments atomic name = top_activity
+01-13 14:40:33.122 10369 11243 I AiCrEngine_PERCEPTION_.ScreenContentRecognition.activityNameRecognition: ScreenPerception_debug 未识别特定activity！
+01-13 14:40:33.123 10369 11243 I AiCrEngine_PERCEPTION_.ScreenContentRecognition.packageNameRecognition: ScreenPerception_debug 未识别特定包名！
+01-13 14:40:33.123 10369 11316 I AiCrEngine_PERCEPTION_.ScreenPerception$updateDataForArguments$1$1.invokeSuspend: screenTypeValue null mining false
+01-13 14:40:33.142  5321  5321 D DynamicIslandSafeguardsController: delayExitApp: com.xiaomi.bluetooth com.xiaomi.bluetooth count = 0
+01-13 14:40:33.146 12372 12624 I HeavyPackageIdentify: splitMode: false, splitPackages: null, foregroundPkg: com.xiaomi.bluetooth
+01-13 14:40:33.165  2517  2627 E MiuiBooster: "Unkwnow sched policy:-1073741825!!!"
+01-13 14:40:33.251  1834  2081 E ANDR-PERF: ExtendedPerfBoost: trigger_rearm_timer() 179: setthermalbreak req empty boostparam=boost:1 cpu0:3532800 cpu6:4204800 cpumask:ff
+01-13 14:40:33.332  1834  2081 E ANDR-PERF: ExtendedPerfBoost: trigger_rearm_timer() 179: setthermalbreak req empty boostparam=boost:0
+01-13 14:40:33.370  3278  3403 W ActivityTaskManager: Activity top resumed state loss timeout for ActivityRecord{156561779 u0 com.soundtherapyapp/.MainActivity t-1 f}}
+01-13 14:40:33.393  5271  6090 D SelfStudyController: handleMessage msg.what is 1010
+01-13 14:40:33.415  3278  3419 D BroadcastQueue: Logging broadcast for com.xiaomi.xmsf, stopped=false, firstLaunch=false
+01-13 14:40:33.417  3278  3419 D BroadcastQueue: Logging broadcast for com.xiaomi.xmsf, stopped=false, firstLaunch=false
+01-13 14:40:33.419  3278  3419 D BroadcastQueue: Logging broadcast for com.xiaomi.xmsf, stopped=false, firstLaunch=false
+01-13 14:40:33.420  3278  3419 D BroadcastQueue: Logging broadcast for com.xiaomi.xmsf, stopped=false, firstLaunch=false
+01-13 14:40:33.422  3278  3419 D BroadcastQueue: Logging broadcast for com.xiaomi.xmsf, stopped=false, firstLaunch=false
+01-13 14:40:33.424  3278  3419 D BroadcastQueue: Logging broadcast for com.xiaomi.xmsf, stopped=false, firstLaunch=false
+01-13 14:40:33.448  5271  6090 D SelfStudyController: handleMessage msg.what is 1010
+01-13 14:40:33.586  3278  4130 I MiuiNetworkPolicy: bandwidth: 0 KB/s, Max bandwidth: 970 KB/s
+01-13 14:40:33.628  3278  6273 D PowerManagerService: [xiaomi_power]acquireWakeLockInternal: lock=89973638, flags=0x1, tag="NetworkStats", ws=null, uid=1000, pid=3278
+01-13 14:40:33.643  3278  6273 D PowerManagerService: [xiaomi_power]releaseWakeLockInternal: lock=89973638 [NetworkStats], flags=0x0
+01-13 14:40:33.894  5271  6061 D HighSpeedTrainModeController: msg.what = 10
+01-13 14:40:33.945  3278  4150 D NetworkMetricsTracker: handleMessage:4
+01-13 14:40:33.948  5271  6061 D HighSpeedTrainModeController: msg.what = 10
+01-13 14:40:33.960  7247  7272 D QLM-Service: check_headroom_zone: Timer EVT, Temp: 32128
+01-13 14:40:34.178  3278  4248 D GreezeManager: freezeBinder pid=20001 block=true state=-11
+01-13 14:40:34.185  3278  4248 D GreezeManager: freezeBinder pid=8560 block=true state=-11
+01-13 14:40:34.197  3278  4248 D GreezeManager: FZ uid = 10145 reason =check binder success !
+01-13 14:40:34.198  3278  4248 I PowerManagerServiceImpl: Partial wakeLock:[PARTIAL_WAKE_LOCK                 'VFS:Maintenance' ACQ=-5s26ms (uid=10145 pid=20001 pkg=com.tencent.mm)], disabled: true, procState: 10, reason: greeze
+01-13 14:40:34.199  3278  4248 D ActionExecute: frozen uid = 10145 reason=check binder
+01-13 14:40:34.199  3278  4248 D ActionExecute: setPkgData uid = 10145 time=0
+01-13 14:40:34.199  3278  4248 D ExternalInterface: setUidState, uid = 10145 allow = false
+01-13 14:40:34.212  3278  3341 D GreezeManager: THAW uid = 10145 pid = [ 8560 20001 ]  reason : Check Binder caller : 1
+01-13 14:40:34.213  3278  4246 D GreezeManager: iso uid:10145 p:{7886} :true
+01-13 14:40:34.213  3278  3341 I PowerManagerServiceImpl: Partial wakeLock:[PARTIAL_WAKE_LOCK                 'VFS:Maintenance' DISABLED (uid=10145 pid=20001 pkg=com.tencent.mm)], disabled: false, procState: 10, reason: greeze
+01-13 14:40:34.214  3278  3341 D ExternalInterface: setUidState, uid = 10145 allow = true
+01-13 14:40:34.214  3278  4248 D ActionExecute: setPkgData uid = 10145 time=3000
+01-13 14:40:34.215  3278  4246 D GreezeManager: iso uid:10145 p:{7886} :false
+01-13 14:40:34.372  5213 19648 D JavaheapMonitor: Java heap used=25M max=256M, proc: vendor.qti.frameworks.utils
+01-13 14:40:34.372  5213 19648 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:34.442 24571 26268 D JavaheapMonitor: Java heap used=6M max=256M, proc: com.xiaomi.misettings
+01-13 14:40:34.443 24571 26268 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:34.444 10211 10670 D JavaheapMonitor: Java heap used=12M max=256M, proc: com.miui.powerkeeper
+01-13 14:40:34.445 10211 10670 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:34.699  1834  2080 E PERFHAL-UTIL: PERFHAL-UTIL: change_node_val() 204: Failed to update node /proc/sys/walt/sched_per_task_boost with value 8264 0
+01-13 14:40:34.700  1834  2080 E PERFHAL-OPTSHANDLER: PERFHAL-OPTSHANDLER: sched_reset_task_boost() 4076: can't reset task 8264
+01-13 14:40:34.700  1834  2080 E PERFHAL-RESOURCEQS: PERFHAL-RESOURCEQS: RemoveAndApply() 392: Failed to reset optimization [3, 32]
+01-13 14:40:34.866  9689 21608 D JavaheapMonitor: Java heap used=7M max=256M, proc: com.xiaomi.metoknlp
+01-13 14:40:34.866  9689 21608 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:35.583  3278  4130 D MiuiNetworkPolicy: updateLimit mLimitEnabled=true,enabled=false,mNetworkPriorityMode=1,mThermalForceMode=0
+01-13 14:40:35.589  3278  4130 I MiuiNetworkPolicy: getDisableLimitTimeout when thermal mode is:0
+01-13 14:40:35.665  1692  1692 I zygote  : Delayed USAP Pool refill. New USAPs: 1
+01-13 14:40:35.676  3278  4439 I SmartPower: com.milink.crossdeviceservice/10177(32154): background->idle(3005ms) R(content provider start ContentProviderRecord{16203da u0 com.milink.service/com.xiaomi.dist.handoff.AppMetaContentProvider}) adj=0.
+01-13 14:40:35.706  1692  1692 D Zygote  : Forked child process 9637
+01-13 14:40:35.870  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-13 14:40:35.870  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-13 14:40:35.871  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-13 14:40:35.872  5321  5321 E VRI[NotificationShade]: performDraw: Not drawing due to screen off
+01-13 14:40:35.873  5321  5321 E VRI[StatusBar]: performDraw: Not drawing due to screen off
+01-13 14:40:35.874  5321  5321 E VRI[StatusBar1]: performDraw: Not drawing due to screen off
+01-13 14:40:35.883  5321  5321 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+01-13 14:40:35.883  5321  5321 E VRI[NotificationShade]: performDraw: Not drawing due to screen off
+01-13 14:40:35.897 10211 12124 I AudioEffect: getParameter: param: 5, param2: -1
+01-13 14:40:35.898  1963  7984 V EffectHandle: command(), cmdCode: 8, mHasControl: 1, mEffect: 0xb40000787d0dc2d0
+01-13 14:40:35.898  1963  7984 V EffectModule: command, DAP_offload cmdCode: 8, mEffectInterface: 0xb4000077cd1867d0
+01-13 14:40:35.900 10211 12124 D android.media.audiofx.presenter.QcomEffectPresenter: isSpatialAudioActive: false, from: com.miui.powerkeeper
+01-13 14:40:35.901 10211 12124 D MiEffectUtils: support google spatializer, getSpatialStatus: false
+01-13 14:40:35.903 10211 12124 I AudioEffect: getParameter: param: 5, param2: -1
+01-13 14:40:35.903  1963  7984 V EffectHandle: command(), cmdCode: 8, mHasControl: 1, mEffect: 0xb40000787d0dc2d0
+01-13 14:40:35.904  1963  7984 V EffectModule: command, DAP_offload cmdCode: 8, mEffectInterface: 0xb4000077cd1867d0
+01-13 14:40:35.905 10211 12124 D android.media.audiofx.presenter.QcomEffectPresenter: isSpatialAudioActive: false, from: com.miui.powerkeeper
+01-13 14:40:35.905 10211 12124 D MiEffectUtils: support google spatializer, getSpatialStatus: false
+01-13 14:40:35.910 16169 16342 I AdapterProperties: getBondedDevices: length=3
+01-13 14:40:35.910 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:58:35, type=1
+01-13 14:40:35.910 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:10:F0, type=3
+01-13 14:40:35.910 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:F8:4B, type=2
+01-13 14:40:35.911 16169 16342 I AdapterProperties: getBondedDevices: length=3
+01-13 14:40:35.911 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:58:35, type=1
+01-13 14:40:35.911 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:10:F0, type=3
+01-13 14:40:35.911 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:F8:4B, type=2
+01-13 14:40:35.912 16169 16342 I AdapterProperties: getBondedDevices: length=3
+01-13 14:40:35.912 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:58:35, type=1
+01-13 14:40:35.912 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:10:F0, type=3
+01-13 14:40:35.912 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:F8:4B, type=2
+01-13 14:40:35.926  3278  4439 I SmartPower: com.xiaomi.market/10168(21761): background->idle(3000ms) R(content provider start ContentProviderRecord{ac1a67a u0 com.xiaomi.market/.provider.MarketProvider}) adj=0.
+01-13 14:40:35.976  9643  9643 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: cpuinfo
+01-13 14:40:35.979 10211 12124 I libc    : kill: send 15 to pid 9643
+01-13 14:40:35.979 10211 12124 I libc    : debug pid reuse, real pid 9643
+01-13 14:40:35.981 10211 12124 I AudioEffect: getParameter: param: 5, param2: -1
+01-13 14:40:35.981  1963  7984 V EffectHandle: command(), cmdCode: 8, mHasControl: 1, mEffect: 0xb40000787d0dc2d0
+01-13 14:40:35.981  1963  7984 V EffectModule: command, DAP_offload cmdCode: 8, mEffectInterface: 0xb4000077cd1867d0
+01-13 14:40:35.981 10211 12124 D android.media.audiofx.presenter.QcomEffectPresenter: isSpatialAudioActive: false, from: com.miui.powerkeeper
+01-13 14:40:35.981 10211 12124 D MiEffectUtils: support google spatializer, getSpatialStatus: false
+01-13 14:40:35.982 10211 12124 I AudioEffect: getParameter: param: 5, param2: -1
+01-13 14:40:35.982  1963  7984 V EffectHandle: command(), cmdCode: 8, mHasControl: 1, mEffect: 0xb40000787d0dc2d0
+01-13 14:40:35.982  1963  7984 V EffectModule: command, DAP_offload cmdCode: 8, mEffectInterface: 0xb4000077cd1867d0
+01-13 14:40:35.982 10211 12124 D android.media.audiofx.presenter.QcomEffectPresenter: isSpatialAudioActive: false, from: com.miui.powerkeeper
+01-13 14:40:35.982 10211 12124 D MiEffectUtils: support google spatializer, getSpatialStatus: false
+01-13 14:40:35.983 16169 16342 I AdapterProperties: getBondedDevices: length=3
+01-13 14:40:35.983 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:58:35, type=1
+01-13 14:40:35.983 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:10:F0, type=3
+01-13 14:40:35.983 16169 16342 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:F8:4B, type=2
+01-13 14:40:35.983 16169 16692 I AdapterProperties: getBondedDevices: length=3
+01-13 14:40:35.983 16169 16692 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:58:35, type=1
+01-13 14:40:35.983 16169 16692 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:10:F0, type=3
+01-13 14:40:35.983 16169 16692 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:F8:4B, type=2
+01-13 14:40:35.983 16169 16692 I AdapterProperties: getBondedDevices: length=3
+01-13 14:40:35.983 16169 16692 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:58:35, type=1
+01-13 14:40:35.983 16169 16692 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:10:F0, type=3
+01-13 14:40:35.983 16169 16692 D BtGatt.GattService: getDeviceType() - device=XX:XX:XX:XX:F8:4B, type=2
+01-13 14:40:36.009  9646  9646 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: cpuinfo
+01-13 14:40:36.013 10211 12124 I libc    : kill: send 15 to pid 9646
+01-13 14:40:36.013 10211 12124 I libc    : debug pid reuse, real pid 9646
+01-13 14:40:36.097 26118 26425 D JavaheapMonitor: Java heap used=8M max=256M, proc: com.xiaomi.xmsf
+01-13 14:40:36.098 26118 26425 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:36.156  3278  9124 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+01-13 14:40:36.480 28888 29471 D JavaheapMonitor: Java heap used=6M max=256M, proc: com.miui.hybrid
+01-13 14:40:36.480 28888 29471 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:36.587  3278  4130 I MiuiNetworkPolicy: bandwidth: 0 KB/s, Max bandwidth: 970 KB/s
+01-13 14:40:36.743 32154   952 D JavaheapMonitor: Java heap used=8M max=256M, proc: com.milink.crossdeviceservice
+01-13 14:40:36.744 32154   952 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:36.815 10301 11710 D JavaheapMonitor: Java heap used=20M max=256M, proc: com.miui.securitycenter.remote
+01-13 14:40:36.815 10301 11710 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:37.027 23209 23925 D JavaheapMonitor: Java heap used=5M max=512M, proc: com.android.camera
+01-13 14:40:37.027 23209 23925 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+01-13 14:40:37.713 21673 21673 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d' '-t' '4000'
+01-13 14:40:37.717 11745 12349 I lyra-mpt: MiplayTransportSession::CreateKcpSession:198 session=13716 rtt=107 srtt=107 rto=535 cwnd=204 incr=281049 srh=196 nsend=365 nresend=5 nfastresend=0 nsent=365 maxxmit=2
