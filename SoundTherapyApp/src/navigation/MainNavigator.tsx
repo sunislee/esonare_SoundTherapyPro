@@ -7,12 +7,20 @@ import { ResourceDownloadScreen } from '../screens/ResourceDownloadScreen';
 import NameEntryScreen from '../screens/NameEntryScreen';
 import { MainTabNavigator } from './MainTabNavigator';
 import ImmersivePlayerNew from '../screens/ImmersivePlayerNew';
+import RemixSchemeManagerScreen from '../screens/RemixSchemeManagerScreen';
+import HistoryScreen from '../screens/HistoryScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import AboutScreen from '../screens/AboutScreen';
 
 export type RootStackParamList = {
   ResourceDownload: undefined;
   NameEntry: undefined;
   MainTabs: undefined;
   ImmersivePlayer: { sceneId?: string } | undefined;
+  RemixSchemeManager: undefined;
+  History: undefined;
+  Settings: undefined;
+  About: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -41,6 +49,22 @@ export function MainNavigator() {
       <Stack.Screen 
         name="ImmersivePlayer" 
         component={ImmersivePlayerNew} 
+      />
+      <Stack.Screen 
+        name="RemixSchemeManager" 
+        component={RemixSchemeManagerScreen} 
+      />
+      <Stack.Screen 
+        name="History" 
+        component={HistoryScreen} 
+      />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen} 
+      />
+      <Stack.Screen 
+        name="About" 
+        component={AboutScreen} 
       />
     </Stack.Navigator>
   );

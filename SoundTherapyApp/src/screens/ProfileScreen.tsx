@@ -24,15 +24,20 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
+import ToastUtil from '../utils/ToastUtil';
+import { SleepTimerSheet } from '../components/SleepTimerSheet';
 
-type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
+// @ts-ignore
+type ProfileScreenNavigationProp = StackNavigationProp<any, 'Profile'>;
 
 export const ProfileScreen = () => {
-  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  // @ts-ignore
+  const navigation = useNavigation<any>();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [userName, setUserName] = useState('加载中...');
   const [newName, setNewName] = useState('');
   const [isNameModalVisible, setIsNameModalVisible] = useState(false);
+  const [isTimerVisible, setIsTimerVisible] = useState(false);
   const [stats, setStats] = useState({ count: 0, duration: '0h' });
 
   useEffect(() => {
@@ -135,7 +140,8 @@ export const ProfileScreen = () => {
         style: "destructive",
         onPress: async () => {
           await AsyncStorage.multiRemove(['USER_NAME', 'USER_AVATAR', 'HAS_SET_NAME']);
-          navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
+          // @ts-ignore
+          navigation.reset({ index: 0, routes: [{ name: 'ResourceDownload' }] });
         }
       }
     ]);
@@ -150,20 +156,32 @@ export const ProfileScreen = () => {
         onPress: async () => {
           await AsyncStorage.removeItem('RESOURCE_READY_V_1.0.7');
           Alert.alert("清除成功", "缓存已清理，请重启 App。");
-          navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
+          // @ts-ignore
+          navigation.reset({ index: 0, routes: [{ name: 'ResourceDownload' }] });
         }
       }
     ]);
   };
 
-  const MenuItem = ({ icon, title, onPress, showArrow = true, color = '#ddd' }: any) => (
+  const handleComingSoon = (feature: string) => {
+    triggerHaptic('impactMedium');
+    ToastUtil.info(`${feature} 正在开发中`, '敬请期待下一版本');
+  };
+
+  const MenuItem = ({ icon, title, onPress, showArrow = true, color = '#ddd', badge }: any) => (
     <TouchableOpacity 
       style={styles.menuItem} 
       onPress={() => { triggerHaptic(); onPress?.(); }}
+      activeOpacity={0.6}
     >
       <View style={styles.menuItemLeft}>
         <Icon name={icon} size={20} color={color} style={styles.menuIcon} />
         <Text style={[styles.menuText, { color }]}>{title}</Text>
+        {badge && (
+          <View style={[styles.badge, title === '会员中心' && styles.proBadge]}>
+            <Text style={styles.badgeText}>{badge}</Text>
+          </View>
+        )}
       </View>
       {showArrow && <Icon name="chevron-right" size={18} color="#444" />}
     </TouchableOpacity>
@@ -245,25 +263,27 @@ export const ProfileScreen = () => {
         </Modal>
 
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
+          <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon('详细统计')}>
             <Text style={styles.statNumber}>{stats.count}</Text>
             <Text style={styles.statLabel}>专注次数</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statItem}>
+          <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon('详细统计')}>
             <Text style={styles.statNumber}>{stats.duration}</Text>
             <Text style={styles.statLabel}>总时长</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>资源管理</Text>
-          <MenuItem icon="heart" title="我的收藏" onPress={() => navigation.navigate('RemixSchemeManager')} />
-          <MenuItem icon="clock" title="播放历史" onPress={() => navigation.navigate('History')} />
+          <Text style={styles.sectionTitle}>核心功能</Text>
+          <MenuItem icon="zap" title="会员中心" onPress={() => handleComingSoon('会员中心')} badge="PRO" color="#FFD700" />
+          <MenuItem icon="heart" title="我的混音" onPress={() => navigation.navigate('RemixSchemeManager')} />
+          <MenuItem icon="clock" title="睡眠定时" onPress={() => setIsTimerVisible(true)} />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>偏好设置</Text>
+          <Text style={styles.sectionTitle}>资源与记录</Text>
+          <MenuItem icon="calendar" title="播放历史" onPress={() => navigation.navigate('History')} />
           <MenuItem icon="settings" title="偏好设置" onPress={() => navigation.navigate('Settings')} />
           <MenuItem icon="trash-2" title="清除缓存" onPress={handleClearCache} />
         </View>
@@ -276,6 +296,8 @@ export const ProfileScreen = () => {
 
         <Text style={styles.versionText}>Version 1.1.0 (Build 100)</Text>
       </ScrollView>
+
+      <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} />
     </SafeAreaView>
   );
 };
@@ -403,5 +425,22 @@ const styles = StyleSheet.create({
   menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
   menuIcon: { marginRight: 15, width: 20, textAlign: 'center' },
   menuText: { color: '#ddd', fontSize: 15, fontWeight: '500' },
+  badge: {
+    backgroundColor: '#6C5DD3',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  proBadge: {
+    backgroundColor: '#FFD700',
+    borderColor: '#B8860B',
+    borderWidth: 0.5,
+  },
   versionText: { color: '#333', fontSize: 12, textAlign: 'center', marginTop: 10 }
 });
