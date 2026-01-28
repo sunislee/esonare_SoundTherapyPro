@@ -17,27 +17,27 @@ export type Scene = {
   category: SceneCategory;
 };
 
-const backgrounds: { source: ImageSourcePropType; color: string }[] = [
-  {
+const backgrounds: Record<SceneCategory, { source: ImageSourcePropType; color: string }> = {
+  'Nature': {
+    source: require('../assets/images/sea_bg.jpg'),
+    color: '#0047AB',
+  },
+  'Healing': {
     source: require('../assets/images/forest_bg.jpg'),
     color: '#4a7a5a',
   },
-  {
-    source: require('../assets/images/sea_bg.jpg'),
-    color: '#4a90e2',
+  'Brainwave': {
+    source: require('../assets/images/fire_bg.jpg'),
+    color: '#1a1a2e',
   },
-  {
+  'Life': {
     source: require('../assets/images/rain_bg.jpg'),
     color: '#3b5c99',
   },
-  {
-    source: require('../assets/images/fire_bg.jpg'),
-    color: '#f5a623',
-  },
-];
+};
 
 const getCategory = (cat: string): SceneCategory => {
-  switch (cat) {
+  switch (cat.toLowerCase()) {
     case 'nature':
       return 'Nature';
     case 'healing':
@@ -53,8 +53,9 @@ const getCategory = (cat: string): SceneCategory => {
 
 export const SCENES: Scene[] = AUDIO_MANIFEST
   .filter(item => item.category !== 'interactive')
-  .map((item, index) => {
-    const bg = backgrounds[index % backgrounds.length];
+  .map((item) => {
+    const category = getCategory(item.category);
+    const bg = backgrounds[category];
     const resolvedBg = Image.resolveAssetSource(bg.source);
     return {
       id: item.id,
@@ -63,12 +64,12 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
         android: item.id,
         default: `asset:///${item.id}`,
       }) as string,
-      backgroundUrl: resolvedBg.uri, // Use resolved URI
+      backgroundUrl: resolvedBg.uri,
       primaryColor: bg.color,
       audioSource: item.id,
-      audioFile: null, // No longer using local files
+      audioFile: null,
       baseVolume: 1.0,
       backgroundSource: bg.source,
-      category: getCategory(item.category),
+      category: category,
     };
   });

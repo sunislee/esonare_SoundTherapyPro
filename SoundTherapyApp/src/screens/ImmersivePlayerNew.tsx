@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAudio } from '../context/AudioContext';
@@ -32,36 +32,36 @@ const ImmersivePlayerNew = () => {
     return catIndex >= 0 ? catIndex : 0;
   }, []);
 
-  // 过滤出每个分类的代表性场景（目前简化为每个分类取第一个）
+  // 背景渐变动画值
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [bgIndex, setBgIndex] = useState(initialPageIndex);
+
+  // 过滤出每个分类的代表性场景
   const displayScenes = useMemo(() => {
     return MAIN_CATEGORIES.map(cat => {
       return SCENES.find(s => s.category === cat) || SCENES[0];
     });
   }, []);
 
-  // 处理传入的 sceneId 并自动跳转到对应页面
-  useEffect(() => {
-    const sceneId = route.params?.sceneId;
-    if (sceneId) {
-      const targetScene = SCENES.find(s => s.id === sceneId);
-      if (targetScene) {
-        if (targetScene.id !== currentScene?.id) {
-          AudioService.switchSoundscape(targetScene);
-        }
-        // 跳转到对应的 Pager 页面
-        const catIndex = MAIN_CATEGORIES.indexOf(targetScene.category);
-        if (catIndex >= 0 && pagerRef.current) {
-          pagerRef.current.setPage(catIndex);
-        }
-      }
-    }
-  }, [route.params?.sceneId]);
-
   const handlePageSelected = (e: any) => {
     const index = e.nativeEvent.position;
+    
+    // 切换音频场景逻辑
     const targetScene = displayScenes[index];
     if (targetScene && targetScene.id !== currentScene?.id) {
       AudioService.switchSoundscape(targetScene);
+    }
+
+    // 极简单图背景切换逻辑
+    if (index !== bgIndex) {
+      setBgIndex(index);       // 立即切换数据源
+      fadeAnim.setValue(0.3);  // 初始透明度设为 0.3
+      
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
@@ -85,72 +85,116 @@ const ImmersivePlayerNew = () => {
     }
   };
 
+  const renderBackground = () => {
+    return (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
+        {/* 唯一背景图层 - 设置 0.85 透明度让底层灰透出，防止死黑 */}
+        <Animated.Image 
+          key="single-bg-layer"
+          source={displayScenes[bgIndex].backgroundSource}
+          style={[
+            StyleSheet.absoluteFill, 
+            { 
+              opacity: Animated.multiply(fadeAnim, 0.85)
+            }
+          ]}
+          resizeMode="cover"
+        />
+
+        {/* 亮度提升层: 0.1 透明度的白色遮罩 */}
+        <View 
+          style={[
+            StyleSheet.absoluteFill, 
+            { backgroundColor: 'rgba(255,255,255,0.1)' }
+          ]} 
+          pointerEvents="none"
+        />
+
+        {/* 顶层深色氛围遮罩 - 降低不透明度以提升亮度 */}
+        <View 
+          style={[
+            StyleSheet.absoluteFill, 
+            { backgroundColor: 'rgba(0,0,0,0.2)' }
+          ]} 
+          pointerEvents="none"
+        />
+      </View>
+    );
+  };
+
   const renderScenePage = (scene: Scene, index: number) => {
     return (
       <View key={scene.id} style={styles.page}>
-        <ImageBackground 
-          source={scene.backgroundUrl ? { uri: scene.backgroundUrl } : { uri: 'placeholder' }} 
-          style={[styles.absolute, { backgroundColor: scene.primaryColor || '#000' }]}
-          resizeMode="cover"
-        >
-          <SafeAreaView style={styles.overlay}>
-            <View style={styles.header}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => navigation.goBack()}
-              >
-                <Icon name="chevron-down" size={32} color="#fff" />
-              </TouchableOpacity>
-              <Text style={styles.title}>{scene.title}</Text>
-              <Text style={styles.subTitle}>{scene.category}</Text>
+        <SafeAreaView style={styles.overlay}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => navigation.goBack()}
+            >
+              <Icon name="chevron-down" size={32} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.title}>{scene.title}</Text>
+            <Text style={styles.subTitle}>{scene.category}</Text>
 
-              <TouchableOpacity 
-                style={styles.ambientTrigger}
-                onPress={toggleAmbientSheet}
-              >
-                <Icon name="options-outline" size={24} color="#fff" />
-                <Text style={styles.ambientTriggerText}>氛围点缀</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={styles.ambientTrigger}
+              onPress={toggleAmbientSheet}
+            >
+              <Icon name="options-outline" size={24} color="#fff" />
+              <Text style={styles.ambientTriggerText}>氛围点缀</Text>
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.controlCenter}>
-              <TouchableOpacity 
-                style={styles.playButton}
-                onPress={handleToggle}
-              >
-                {isPlaying && currentScene?.id === scene.id ? (
-                  <View style={styles.pauseIconContainer}>
-                    <View style={styles.pauseBar} />
-                    <View style={styles.pauseBar} />
-                  </View>
-                ) : (
-                  <View style={styles.playIcon} />
-                )}
-              </TouchableOpacity>
-            </View>
+          <View style={styles.controlCenter}>
+            <TouchableOpacity 
+              style={styles.playButton}
+              onPress={handleToggle}
+            >
+              {isPlaying && currentScene?.id === scene.id ? (
+                <View style={styles.pauseIconContainer}>
+                  <View style={styles.pauseBar} />
+                  <View style={styles.pauseBar} />
+                </View>
+              ) : (
+                <View style={styles.playIcon} />
+              )}
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.footer}>
-              <View style={styles.indicatorContainer}>
-                {MAIN_CATEGORIES.map((_, i) => (
-                  <View 
-                    key={i} 
-                    style={[
-                      styles.indicator, 
-                      index === i && styles.indicatorActive
-                    ]} 
+          <View style={styles.footer}>
+            <View style={styles.indicatorContainer}>
+              {MAIN_CATEGORIES.map((cat, i) => (
+                <View 
+                  key={i} 
+                  style={[
+                    styles.indicator, 
+                    index === i && styles.indicatorActive,
+                    index === i && styles.activeGlow
+                  ]} 
+                >
+                  <Icon 
+                    name={
+                      cat === 'Nature' ? 'moon-outline' : 
+                      cat === 'Healing' ? 'leaf-outline' : 
+                      cat === 'Brainwave' ? 'book-outline' : 'musical-notes-outline'
+                    } 
+                    size={index === i ? 18 : 14} 
+                    color={index === i ? '#fff' : 'rgba(255,255,255,0.5)'} 
                   />
-                ))}
-              </View>
-              <Text style={styles.statusText}>左右滑动切换场景：Sleep, Study, Relax, Party</Text>
+                </View>
+              ))}
             </View>
-          </SafeAreaView>
-        </ImageBackground>
+            <Text style={styles.statusText}>左右滑动切换场景：Sleep, Relax, Study, Party</Text>
+          </View>
+        </SafeAreaView>
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
+      {renderBackground()}
+
       <PagerView 
         ref={pagerRef}
         style={styles.container} 
@@ -175,14 +219,14 @@ const ImmersivePlayerNew = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: { flex: 1 },
   page: { width: SCREEN_WIDTH, flex: 1 },
   absolute: { flex: 1 },
   overlay: {
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   header: { marginTop: 60, alignItems: 'center', width: '100%' },
   backButton: {
@@ -216,9 +260,30 @@ const styles = StyleSheet.create({
   pauseIconContainer: { flexDirection: 'row', justifyContent: 'space-between', width: 24 },
   pauseBar: { width: 8, height: 32, backgroundColor: '#fff', borderRadius: 4 },
   footer: { marginBottom: 50, alignItems: 'center' },
-  indicatorContainer: { flexDirection: 'row', marginBottom: 15 },
-  indicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)', marginHorizontal: 5 },
-  indicatorActive: { backgroundColor: '#fff', width: 20 },
+  indicatorContainer: { flexDirection: 'row', marginBottom: 15, alignItems: 'center' },
+  indicator: { 
+    width: 32, 
+    height: 32, 
+    borderRadius: 16, 
+    backgroundColor: 'rgba(255,255,255,0.1)', 
+    marginHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  indicatorActive: { 
+    backgroundColor: 'rgba(255,255,255,0.2)', 
+    borderColor: 'rgba(255,255,255,0.5)',
+    transform: [{ scale: 1.1 }],
+  },
+  activeGlow: {
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 10,
+  },
   statusText: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
   ambientTrigger: {
     flexDirection: 'row',

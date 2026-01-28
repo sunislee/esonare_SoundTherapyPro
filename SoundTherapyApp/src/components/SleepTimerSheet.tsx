@@ -7,14 +7,21 @@ import {
   Animated,
   Dimensions,
   TouchableWithoutFeedback,
-  PanResponder,
+  Modal,
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/Feather';
+import Svg, { Circle } from 'react-native-svg';
 import AudioService from '../services/AudioService';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.45;
+const CIRCLE_SIZE = 120;
+const CIRCLE_RADIUS = (CIRCLE_SIZE - 10) / 2;
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
+
+// react-native-svg components need to be used with useNativeDriver: false for most props
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface SleepTimerSheetProps {
   visible: boolean;
@@ -34,12 +41,28 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  const [isAnimationFinished, setIsAnimationFinished] = useState(true);
 
   useEffect(() => {
     if (visible) {
+      setIsAnimationFinished(false);
       // Subscribe to timer updates
       const unsubscribe = AudioService.addSleepTimerListener((remaining) => {
         setRemainingTime(remaining);
+        if (remaining !== null) {
+          const initial = AudioService.getInitialSleepSeconds() || 1;
+          const progress = remaining / initial;
+          // SVG props do NOT support native driver
+          Animated.timing(progressAnim, {
+            toValue: progress,
+            duration: 1000,
+            useNativeDriver: false,
+          }).start();
+        } else {
+          progressAnim.setValue(0);
+        }
       });
 
       Animated.parallel([
@@ -68,7 +91,9 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
           duration: 250,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        setIsAnimationFinished(true);
+      });
     }
   }, [visible]);
 
@@ -97,7 +122,7 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (!visible && (translateY as any)._value === SHEET_HEIGHT) return null;
+  if (!visible && isAnimationFinished) return null;
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -118,43 +143,68 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
           
           <View style={styles.header}>
             <Text style={styles.title}>睡眠定时</Text>
-            {remainingTime !== null && (
-              <View style={styles.activeBadge}>
-                <Icon name="clock" size={12} color="#6C5DD3" />
-                <Text style={styles.activeText}>{formatRemaining(remainingTime)}</Text>
+          </View>
+
+          {remainingTime !== null ? (
+            <View style={styles.timerActiveContainer}>
+              <View style={styles.timerCircleWrapper}>
+                <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE}>
+                  <Circle
+                    cx={CIRCLE_SIZE / 2}
+                    cy={CIRCLE_SIZE / 2}
+                    r={CIRCLE_RADIUS}
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="6"
+                    fill="none"
+                  />
+                  <AnimatedCircle
+                    cx={CIRCLE_SIZE / 2}
+                    cy={CIRCLE_SIZE / 2}
+                    r={CIRCLE_RADIUS}
+                    stroke="#6C5DD3"
+                    strokeWidth="6"
+                    fill="none"
+                    strokeDasharray={`${CIRCLE_CIRCUMFERENCE} ${CIRCLE_CIRCUMFERENCE}`}
+                    strokeDashoffset={progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [CIRCLE_CIRCUMFERENCE, 0],
+                    })}
+                    strokeLinecap="round"
+                    transform={`rotate(-90 ${CIRCLE_SIZE / 2} ${CIRCLE_SIZE / 2})`}
+                  />
+                </Svg>
+                <View style={styles.timerTextContainer}>
+                  <Text style={styles.timerValue}>{formatRemaining(remainingTime)}</Text>
+                  <Text style={styles.timerLabel}>剩余</Text>
+                </View>
               </View>
-            )}
-          </View>
 
-          <View style={styles.optionsGrid}>
-            {TIMER_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                style={styles.optionButton}
-                onPress={() => handleSetTimer(opt.value)}
-              >
-                <Text style={styles.optionLabel}>{opt.label}</Text>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTimer}>
+                <Text style={styles.cancelButtonText}>停止计时</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-
-          {remainingTime !== null && (
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTimer}>
-              <Text style={styles.cancelButtonText}>取消定时</Text>
-            </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.optionsGrid}>
+              {TIMER_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={styles.optionButton}
+                  onPress={() => handleSetTimer(opt.value)}
+                >
+                  <Text style={styles.optionLabel}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
           
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>关闭</Text>
+            <Text style={styles.closeButtonText}>稍后设置</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
     </Modal>
   );
 };
-
-// Simple Modal wrapper since we need it to be on top
-import { Modal } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
@@ -185,7 +235,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     width: '100%',
     justifyContent: 'center',
   },
@@ -193,28 +243,42 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
+    letterSpacing: 1,
   },
-  activeBadge: {
-    flexDirection: 'row',
+  timerActiveContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(108, 93, 211, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 10,
+    width: '100%',
+    paddingVertical: 10,
   },
-  activeText: {
-    color: '#6C5DD3',
+  timerCircleWrapper: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  timerTextContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timerValue: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: 'bold',
+    fontVariant: ['tabular-nums'],
+  },
+  timerLabel: {
+    color: 'rgba(255,255,255,0.4)',
     fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
+    marginTop: 2,
   },
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   optionButton: {
     width: '48%',
@@ -224,7 +288,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#2a2a2c',
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   optionLabel: {
     color: '#ddd',
@@ -232,12 +296,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   cancelButton: {
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 16,
+    width: '80%',
+    paddingVertical: 14,
+    borderRadius: 25,
     alignItems: 'center',
-    marginTop: 10,
     backgroundColor: 'rgba(255, 77, 79, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 77, 79, 0.2)',
   },
   cancelButtonText: {
     color: '#FF4D4F',
