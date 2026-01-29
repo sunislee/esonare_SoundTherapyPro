@@ -9,10 +9,66 @@ import AudioService from '../services/AudioService';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AmbientPickerSheet } from '../components/AmbientPickerSheet';
+import { BlurView } from '@react-native-community/blur';
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// --- 动画按钮组件 ---
+const AnimatedIndicator = ({ 
+  isActive, 
+  iconName, 
+  onPress 
+}: { 
+  isActive: boolean, 
+  iconName: string, 
+  onPress: () => void 
+}) => {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.9,
+      friction: 7,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 7,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={onPress}
+    >
+      <Animated.View 
+        style={[
+          styles.indicator, 
+          isActive && styles.indicatorActive,
+          isActive && styles.activeGlow,
+          { transform: [{ scale }] }
+        ]}
+      >
+        <Icon 
+          name={iconName} 
+          size={isActive ? 18 : 14} 
+          color={isActive ? '#fff' : 'rgba(255,255,255,0.5)'} 
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 // 定义四大核心分类
 const MAIN_CATEGORIES = ['Nature', 'Healing', 'Brainwave', 'Life'];
@@ -152,14 +208,18 @@ const ImmersivePlayerNew = () => {
    };
 
    const handleToggle = async () => {
-     if (currentScene) {
-       await togglePlayback(currentScene);
-     }
-   };
+    if (currentScene) {
+      await togglePlayback(currentScene);
+    }
+  };
 
-   const toggleAmbientSheet = () => {
-     setAmbientSheetVisible(!ambientSheetVisible);
-   };
+  const handleIndicatorPress = (targetIndex: number) => {
+    pagerRef.current?.setPage(targetIndex);
+  };
+
+  const toggleAmbientSheet = () => {
+    setAmbientSheetVisible(!ambientSheetVisible);
+  };
 
    const handleAmbientSelect = (type: 'none' | 'rain' | 'fire') => {
      setCurrentAmbient(type);
@@ -243,32 +303,39 @@ const ImmersivePlayerNew = () => {
             </Animated.View>
           </View>
 
-          <View style={styles.footer}>
-            <View style={styles.indicatorContainer}>
-              {MAIN_CATEGORIES.map((cat, i) => (
-                <View 
-                  key={i} 
-                  style={[
-                    styles.indicator, 
-                    index === i && styles.indicatorActive,
-                    index === i && styles.activeGlow
-                  ]} 
-                >
-                  <Icon 
-                    name={
-                      cat === 'Nature' ? 'moon-outline' : 
-                      cat === 'Healing' ? 'leaf-outline' : 
-                      cat === 'Brainwave' ? 'book-outline' : 'musical-notes-outline'
-                    } 
-                    size={index === i ? 18 : 14} 
-                    color={index === i ? '#fff' : 'rgba(255,255,255,0.5)'} 
-                  />
-                </View>
-              ))}
-            </View>
-            <Text style={styles.statusText}>左右滑动切换场景：Sleep, Relax, Study, Party</Text>
-          </View>
+          {/* 底部占位，防止内容被固定的 footer 遮挡 */}
+          <View style={{ height: 160 }} />
         </SafeAreaView>
+      </View>
+    );
+  };
+
+  const renderFixedFooter = () => {
+    return (
+      <View style={styles.fixedFooterContainer}>
+        <BlurView
+          style={styles.footerBlur}
+          blurType="dark"
+          blurAmount={25}
+          reducedTransparencyFallbackColor="black"
+        />
+        <View style={styles.footerContent}>
+          <View style={styles.indicatorContainer}>
+            {MAIN_CATEGORIES.map((cat, i) => (
+              <AnimatedIndicator
+                key={i}
+                isActive={activeIndex === i}
+                iconName={
+                  cat === 'Nature' ? 'moon-outline' : 
+                  cat === 'Healing' ? 'leaf-outline' : 
+                  cat === 'Brainwave' ? 'book-outline' : 'musical-notes-outline'
+                }
+                onPress={() => handleIndicatorPress(i)}
+              />
+            ))}
+          </View>
+          <Text style={styles.statusText}>左右滑动切换场景：Sleep, Relax, Study, Party</Text>
+        </View>
       </View>
     );
   };
@@ -312,6 +379,8 @@ const ImmersivePlayerNew = () => {
       >
         {displayScenes.map((scene, index) => renderScenePage(scene, index))}
       </AnimatedPagerView>
+
+      {renderFixedFooter()}
 
       <AmbientPickerSheet
         visible={ambientSheetVisible}
@@ -523,7 +592,25 @@ const styles = StyleSheet.create({
   },
   pauseIconContainer: { flexDirection: 'row', justifyContent: 'space-between', width: 24 },
   pauseBar: { width: 8, height: 32, backgroundColor: '#fff', borderRadius: 4 },
-  footer: { marginBottom: 50, alignItems: 'center' },
+  fixedFooterContainer: { 
+    position: 'absolute',
+    bottom: 50, 
+    alignSelf: 'center',
+    width: SCREEN_WIDTH * 0.9, 
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    zIndex: 100001,
+  },
+  footerBlur: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  footerContent: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
   indicatorContainer: { flexDirection: 'row', marginBottom: 15, alignItems: 'center' },
   indicator: { 
     width: 32, 

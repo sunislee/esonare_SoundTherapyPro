@@ -12,6 +12,7 @@ import RemixSchemeManagerScreen from '../screens/RemixSchemeManagerScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
+import MixerScreen from '../screens/MixerScreen';
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   History: undefined;
   Settings: undefined;
   About: undefined;
+  Mixer: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -71,6 +73,10 @@ export function MainNavigator() {
       <Stack.Screen 
         name="About" 
         component={AboutScreen} 
+      />
+      <Stack.Screen 
+        name="Mixer" 
+        component={MixerScreen} 
       />
     </Stack.Navigator>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,13 +15,14 @@ import {
   TextInput,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
+  FlatList
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Feather';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import ToastUtil from '../utils/ToastUtil';
@@ -39,10 +40,18 @@ export const ProfileScreen = () => {
   const [isNameModalVisible, setIsNameModalVisible] = useState(false);
   const [isTimerVisible, setIsTimerVisible] = useState(false);
   const [stats, setStats] = useState({ count: 0, duration: '0h' });
+  const [savedPresets, setSavedPresets] = useState<any[]>([]);
 
   useEffect(() => {
     loadProfile();
-  }, []);
+    loadPresets();
+    
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadPresets();
+    });
+    
+    return unsubscribe;
+  }, [navigation]);
 
   const loadProfile = async () => {
     try {
@@ -58,6 +67,37 @@ export const ProfileScreen = () => {
     } catch (e) {
       console.log('Failed to load profile', e);
     }
+  };
+
+  const loadPresets = async () => {
+    try {
+      const presetsJson = await AsyncStorage.getItem('@mixer_presets');
+      if (presetsJson) {
+        setSavedPresets(JSON.parse(presetsJson));
+      }
+    } catch (e) {
+      console.log('Failed to load presets', e);
+    }
+  };
+
+  const deletePreset = async (id: string) => {
+    Alert.alert('删除预设', '确定要删除这个混音预设吗？', [
+      { text: '取消', style: 'cancel' },
+      { 
+        text: '删除', 
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const updated = savedPresets.filter(p => p.id !== id);
+            setSavedPresets(updated);
+            await AsyncStorage.setItem('@mixer_presets', JSON.stringify(updated));
+            ToastUtil.success('已删除');
+          } catch (e) {
+            ToastUtil.error('删除失败');
+          }
+        }
+      }
+    ]);
   };
 
   const triggerHaptic = (type: 'selection' | 'impactMedium' = 'selection') => {
@@ -251,10 +291,40 @@ export const ProfileScreen = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>核心功能</Text>
-          <MenuItem icon="zap" title="会员中心" onPress={() => handleComingSoon('会员中心')} badge="PRO" color="#FFD700" />
-          <MenuItem icon="heart" title="我的混音" onPress={() => navigation.navigate('RemixSchemeManager')} />
+          <MenuItem icon="zap" title="PRO 混音实验室" onPress={() => navigation.navigate('Mixer')} badge="PRO" color="#FFD700" />
+          <MenuItem icon="heart" title="我的收藏" onPress={() => navigation.navigate('RemixSchemeManager')} />
           <MenuItem icon="clock" title="睡眠定时" onPress={() => setIsTimerVisible(true)} />
         </View>
+
+        {savedPresets.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>我的混音预设</Text>
+            {savedPresets.map((preset) => (
+              <View key={preset.id} style={styles.presetItem}>
+                <View style={styles.presetInfo}>
+                  <Text style={styles.presetName}>{preset.name}</Text>
+                  <Text style={styles.presetDate}>
+                    {new Date(preset.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                <View style={styles.presetActions}>
+                  <TouchableOpacity 
+                    onPress={() => navigation.navigate('Mixer', { presetId: preset.id })}
+                    style={styles.presetBtn}
+                  >
+                    <Icon name="play" size={16} color="#D4AF37" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => deletePreset(preset.id)}
+                    style={styles.presetBtn}
+                  >
+                    <Icon name="trash-2" size={16} color="#666" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>资源与记录</Text>
@@ -411,6 +481,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     borderColor: '#B8860B',
     borderWidth: 0.5,
+  },
+  presetItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#161618',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#1e1e20',
+  },
+  presetInfo: {
+    flex: 1,
+  },
+  presetName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  presetDate: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  presetActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  presetBtn: {
+    padding: 8,
+    marginLeft: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 8,
   },
   versionText: { color: '#333', fontSize: 12, textAlign: 'center', marginTop: 10 }
 });
