@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   Image,
   Alert,
   Platform,
-  PermissionsAndroid,
   ScrollView,
   SafeAreaView,
   StatusBar,
@@ -16,15 +15,13 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
-  FlatList
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Feather';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/MainNavigator';
 import ToastUtil from '../utils/ToastUtil';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 
@@ -52,6 +49,11 @@ export const ProfileScreen = () => {
     
     return unsubscribe;
   }, [navigation]);
+
+  const handleOpenMixer = (presetId?: string) => {
+    navigation.navigate('Mixer', { presetId });
+    triggerHaptic('impactMedium');
+  };
 
   const loadProfile = async () => {
     try {
@@ -291,7 +293,7 @@ export const ProfileScreen = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>核心功能</Text>
-          <MenuItem icon="zap" title="PRO 混音实验室" onPress={() => navigation.navigate('Mixer')} badge="PRO" color="#FFD700" />
+          <MenuItem icon="zap" title="PRO 混音实验室" onPress={() => handleOpenMixer()} badge="PRO" color="#FFD700" />
           <MenuItem icon="heart" title="我的收藏" onPress={() => navigation.navigate('RemixSchemeManager')} />
           <MenuItem icon="clock" title="睡眠定时" onPress={() => setIsTimerVisible(true)} />
         </View>
@@ -309,7 +311,7 @@ export const ProfileScreen = () => {
                 </View>
                 <View style={styles.presetActions}>
                   <TouchableOpacity 
-                    onPress={() => navigation.navigate('Mixer', { presetId: preset.id })}
+                    onPress={() => handleOpenMixer(preset.id)}
                     style={styles.presetBtn}
                   >
                     <Icon name="play" size={16} color="#D4AF37" />

@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Animated,
   Dimensions,
-  StatusBar,
   Alert,
   TextInput,
+  SafeAreaView,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,10 +17,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Feather';
 import Slider from '@react-native-community/slider';
 import Video from 'react-native-video';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL } from '../constants/audioAssets';
 import ToastUtil from '../utils/ToastUtil';
 import { BlurView } from '@react-native-community/blur';
+
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GOLD = '#D4AF37';
@@ -43,11 +43,36 @@ interface SavedPreset {
   createdAt: number;
 }
 
-const MixerScreen = () => {
-  const navigation = useNavigation();
+export const MixerScreen = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { presetId } = route.params || {};
+  const presetId = route.params?.presetId;
+
+  // 强制隐藏底部 TabBar
+  useEffect(() => {
+    const parent = navigation.getParent();
+    if (parent) {
+      parent.setOptions({
+        tabBarStyle: { display: 'none' }
+      });
+    }
+    return () => {
+      if (parent) {
+        parent.setOptions({
+          tabBarStyle: { 
+            display: 'flex',
+            backgroundColor: '#1C1E2D',
+            borderTopWidth: 0,
+            elevation: 0,
+            height: 64,
+            paddingBottom: 10,
+            position: 'absolute',
+          }
+        });
+      }
+    };
+  }, [navigation]);
 
   const [tracks, setTracks] = useState<TrackState[]>(
     AUDIO_MANIFEST.map(asset => ({
@@ -59,6 +84,7 @@ const MixerScreen = () => {
     }))
   );
 
+  // 初始加载预设
   useEffect(() => {
     if (presetId) {
       loadPresetFromId(presetId);
@@ -72,6 +98,7 @@ const MixerScreen = () => {
         const presets: SavedPreset[] = JSON.parse(presetsJson);
         const preset = presets.find(p => p.id === id);
         if (preset) {
+          setCurrentSceneName(preset.name);
           setTracks(prev => prev.map(t => {
             const savedTrack = preset.tracks.find(st => st.id === t.id);
             if (savedTrack) {
@@ -87,27 +114,12 @@ const MixerScreen = () => {
     }
   };
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [presetName, setPresetName] = useState('');
-  const [showSaveModal, setShowSaveModal] = useState(false);
   const [sleepTimer, setSleepTimer] = useState<number | null>(null); // minutes
   const [timeLeft, setTimeLeft] = useState<number | null>(null); // seconds
   const timerRef = useRef<any>(null);
-  const saveBtnScale = useRef(new Animated.Value(1)).current;
-
-  const handleSavePressIn = () => {
-    Animated.spring(saveBtnScale, {
-      toValue: 0.95,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handleSavePressOut = () => {
-    Animated.spring(saveBtnScale, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
-  };
+  const [presetName, setPresetName] = useState('');
+  const [currentSceneName, setCurrentSceneName] = useState('PRO 混音实验室');
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   // 睡眠定时器逻辑
   useEffect(() => {
@@ -268,68 +280,50 @@ const MixerScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Icon name="chevron-left" size={28} color="#fff" />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerSubtitle}>Nature 氛围点缀</Text>
-          <Text style={styles.headerTitle}>PRO 混音实验室</Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.timerSection}>
-          <View style={styles.sectionHeader}>
-            <Icon name="clock" size={20} color={GOLD} />
-            <Text style={styles.sectionTitle}>睡眠定时器</Text>
-          </View>
-          <View style={styles.timerOptions}>
-            {[15, 30, 60, 90].map(mins => (
-              <TouchableOpacity 
-                key={mins}
-                onPress={() => {
-                  setSleepTimer(mins);
-                  setTimeLeft(mins * 60);
-                }}
-                style={[styles.timerChip, sleepTimer === mins && styles.timerChipActive]}
-              >
-                <Text style={[styles.timerText, sleepTimer === mins && styles.timerTextActive]}>
-                  {mins}m
-                </Text>
-              </TouchableOpacity>
-            ))}
-            {timeLeft !== null && (
-              <Text style={styles.countdownText}>{formatTime(timeLeft)}</Text>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.saveBtnWrapper}>
-          <Animated.View style={{ transform: [{ scale: saveBtnScale }] }}>
-            <TouchableOpacity 
-              activeOpacity={1}
-              onPressIn={handleSavePressIn}
-              onPressOut={handleSavePressOut}
-              onPress={() => setShowSaveModal(true)} 
-              style={styles.mainSaveBtn}
-            >
-              <Icon name="save" size={20} color={BG_DARK} />
-              <Text style={styles.mainSaveBtnText}>保存当前混音配置</Text>
+    <View style={{ 
+      flex: 1, 
+      backgroundColor: '#121212', 
+      paddingTop: Platform.OS === 'ios' ? 50 : 30, 
+    }}> 
+      <ScrollView bounces={false} style={{ flex: 1 }}> 
+         {/* 顶部 Header：强制给高度，不要让它浮动 */} 
+         <View style={{ height: 60, justifyContent: 'center', paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' }}> 
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 15 }}>
+              <Icon name="chevron-left" size={28} color="#fff" />
             </TouchableOpacity>
-          </Animated.View>
-        </View>
+            <Text style={{ color: '#fff', fontSize: 18 }}>氛围点缀</Text> 
+         </View> 
+  
+         {/* 场景名：强制 margin，绝对不准用 negative margin */} 
+         <View style={{ marginTop: 40, paddingHorizontal: 20 }}> 
+            <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#fff' }}> 
+               {currentSceneName} 
+            </Text> 
+         </View> 
 
-        <View style={styles.tracksGrid}>
-          {tracks.map(renderTrackCard)}
-        </View>
-      </ScrollView>
+         {/* 保存按钮：强制 marginTop，绝对不准重叠 */} 
+         <TouchableOpacity 
+           onPress={() => setShowSaveModal(true)}
+           style={{ 
+             marginTop: 30, 
+             marginHorizontal: 20, 
+             height: 54, 
+             backgroundColor: '#D4AF37', 
+             borderRadius: 12, 
+             alignItems: 'center', 
+             justifyContent: 'center' 
+           }}
+         > 
+            <Text style={{ color: '#000', fontWeight: 'bold' }}>点击保存当前混音</Text> 
+         </TouchableOpacity> 
+
+         {/* 混音列表区 */} 
+         <View style={{ marginTop: 30, paddingHorizontal: 20, paddingBottom: 50 }}> 
+            <View style={styles.tracksGrid}>
+              {tracks.map(renderTrackCard)}
+            </View>
+         </View> 
+      </ScrollView> 
 
       {showSaveModal && (
         <View style={styles.modalOverlay}>
@@ -339,7 +333,7 @@ const MixerScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="输入预设名称"
-              placeholderTextColor="rgba(255,255,255,0.3)"
+              placeholderTextColor="#555"
               value={presetName}
               onChangeText={setPresetName}
               autoFocus
@@ -366,113 +360,6 @@ const MixerScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BG_DARK,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    height: 80,
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerSubtitle: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-  backBtn: { padding: 5 },
-  saveBtnWrapper: {
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  mainSaveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GOLD,
-    paddingVertical: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-    elevation: 4,
-    shadowColor: GOLD,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  mainSaveBtnText: {
-    color: BG_DARK,
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  timerSection: {
-    marginBottom: 20,
-    backgroundColor: CARD_BG,
-    borderRadius: 20,
-    padding: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 10,
-  },
-  timerOptions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  timerChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    marginRight: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  timerChipActive: {
-    borderColor: GOLD,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-  },
-  timerText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-  },
-  timerTextActive: {
-    color: GOLD,
-    fontWeight: 'bold',
-  },
-  countdownText: {
-    color: GOLD,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 'auto',
-  },
   tracksGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -550,12 +437,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: '#1E1E1E',
     borderRadius: 12,
-    padding: 12,
+    padding: 15,
     color: '#fff',
     fontSize: 16,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#333',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -581,5 +470,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-export default MixerScreen;

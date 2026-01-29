@@ -412,22 +412,32 @@ class AudioService {
   public updateAmbientVolume(volume: number) {
     // Defensive check: if volume < 0.01, set to 0. Otherwise use 0.001 as safety floor.
     let finalVolume = volume < 0.01 ? 0 : Math.max(0.001, volume);
-    this.ambientVolume = finalVolume;
     
-    if (this.ambientSound) {
-      try {
-        this.ambientSound.setVolume(this.ambientVolume);
-      } catch (e) {
-        // Fallback for native failure at 0
-        if (this.ambientVolume === 0) {
-          this.ambientSound.setVolume(0.0001);
-        }
-      }
+    // 如果音量变化极小（小于 0.005），跳过处理，防止 UI 频繁重绘导致的闪烁
+    if (Math.abs(this.ambientVolume - finalVolume) < 0.005 && finalVolume !== 0) {
+      return;
     }
     
-    // Save preference
+    this.ambientVolume = finalVolume;
+    
+    // 异步执行原生音量设置，不阻塞 JS 线程
+    if (this.ambientSound) {
+      setTimeout(() => {
+        try {
+          this.ambientSound?.setVolume(this.ambientVolume);
+        } catch (e) {
+          if (this.ambientVolume === 0) {
+            this.ambientSound?.setVolume(0.0001);
+          }
+        }
+      }, 0);
+    }
+    
+    // 异步保存偏好，避免 I/O 阻塞
     if (this.ambientName) {
-      AsyncStorage.setItem(`@ambient_volume_${this.ambientName}`, String(this.ambientVolume)).catch(() => {});
+      const name = this.ambientName;
+      const vol = this.ambientVolume;
+      AsyncStorage.setItem(`@ambient_volume_${name}`, String(vol)).catch(() => {});
     }
   }
 
@@ -511,14 +521,23 @@ class AudioService {
   public setMainVolume(volume: number) {
     // Defensive check: if volume < 0.01, set to 0. Otherwise use 0.001 as safety floor.
     let finalVolume = volume < 0.01 ? 0 : Math.max(0.001, volume);
+    
+    // 节流处理：音量变化极小时跳过，减少原生模块调用频率
+    if (Math.abs(this.mainVolume - finalVolume) < 0.005 && finalVolume !== 0) {
+      return;
+    }
+    
     this.mainVolume = finalVolume;
-    // 如果使用了 Superpowered，设置轨道 0 (主轨道)
-    this.setTrackVolume(0, this.linearToDb(this.mainVolume)).catch(async () => {
-      // Fallback for native failure at 0
-      if (this.mainVolume === 0) {
-        await this.setTrackVolume(0, this.linearToDb(0.0001));
-      }
-    });
+    
+    // 异步调用原生模块，防止阻塞 JS 线程
+    const dbValue = this.linearToDb(this.mainVolume);
+    setTimeout(() => {
+      this.setTrackVolume(0, dbValue).catch(async () => {
+        if (this.mainVolume === 0) {
+          await this.setTrackVolume(0, this.linearToDb(0.0001));
+        }
+      });
+    }, 0);
   }
 
   /**

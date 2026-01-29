@@ -886,7 +886,19 @@ PODS:
   - React-Mapbuffer (0.73.0):
     - glog
     - React-debug
-  - react-native-safe-area-context (4.8.2):
+  - react-native-blur (4.4.1):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - react-native-image-picker (8.2.1):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - react-native-pager-view (6.2.3):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - react-native-safe-area-context (4.14.1):
     - React-Core
   - react-native-slider (5.1.2):
     - glog
@@ -895,7 +907,12 @@ PODS:
   - react-native-track-player (4.0.1):
     - React-Core
     - SwiftAudioEx (= 1.0.0)
-  - react-native-worklets-core (1.6.2):
+  - react-native-video (6.19.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+    - react-native-video/Video (= 6.19.0)
+  - react-native-video/Video (6.19.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
@@ -1068,6 +1085,8 @@ PODS:
     - React-perflogger (= 0.73.0)
   - RNCAsyncStorage (2.2.0):
     - React-Core
+  - RNFS (2.20.0):
+    - React-Core
   - RNGestureHandler (2.20.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
@@ -1076,18 +1095,39 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - RNReanimated (3.6.2):
+  - RNReanimated (3.16.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
     - ReactCommon/turbomodule/core
-  - RNScreens (3.29.0):
+    - RNReanimated/reanimated (= 3.16.0)
+    - RNReanimated/worklets (= 3.16.0)
+  - RNReanimated/reanimated (3.16.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
+    - ReactCommon/turbomodule/core
+    - RNReanimated/reanimated/apple (= 3.16.0)
+  - RNReanimated/reanimated/apple (3.16.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+    - ReactCommon/turbomodule/core
+  - RNReanimated/worklets (3.16.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+    - ReactCommon/turbomodule/core
+  - RNScreens (3.37.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+    - React-RCTImage
   - RNSound (0.13.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - RNSVG (14.1.0):
     - React-Core
   - RNVectorIcons (10.3.0):
     - glog
@@ -1128,10 +1168,13 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector-modern`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
+  - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
+  - react-native-image-picker (from `../node_modules/react-native-image-picker`)
+  - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-track-player (from `../node_modules/react-native-track-player`)
-  - react-native-worklets-core (from `../node_modules/react-native-worklets-core`)
+  - react-native-video (from `../node_modules/react-native-video`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -1153,11 +1196,13 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSound (from `../node_modules/react-native-sound`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -1224,14 +1269,20 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
+  react-native-blur:
+    :path: "../node_modules/@react-native-community/blur"
+  react-native-image-picker:
+    :path: "../node_modules/react-native-image-picker"
+  react-native-pager-view:
+    :path: "../node_modules/react-native-pager-view"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   react-native-track-player:
     :path: "../node_modules/react-native-track-player"
-  react-native-worklets-core:
-    :path: "../node_modules/react-native-worklets-core"
+  react-native-video:
+    :path: "../node_modules/react-native-video"
   React-nativeconfig:
     :path: "../node_modules/react-native/ReactCommon"
   React-NativeModulesApple:
@@ -1274,6 +1325,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNReactNativeHapticFeedback:
@@ -1284,6 +1337,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNSound:
     :path: "../node_modules/react-native-sound"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
   Yoga:
@@ -1319,10 +1374,13 @@ SPEC CHECKSUMS:
   React-jsinspector: 9f6fb9ed9f03a0fb961ab8dc2e0e0ee0dc729e77
   React-logger: 42ab166ad561dcbc09452a93cc339359b5f6bc50
   React-Mapbuffer: 0e82a445929fa5f27e1d6f31e90c6a461d15cbef
-  react-native-safe-area-context: bf9d9d58f0f6726d4a6257088044c2595017579d
+  react-native-blur: 74ee853d7978e54ab21397d9b005ea59d3875008
+  react-native-image-picker: 030a52ca31f78ab25d01cf2a2898edc82332433c
+  react-native-pager-view: ec6c5642b9594e6a974ff0e44ed5baa705abc404
+  react-native-safe-area-context: 758e894ca5a9bd1868d2a9cfbca7326a2b6bf9dc
   react-native-slider: b7f72e543e0ada9fca620823c8ca40b6407f339d
   react-native-track-player: 5c2e08a38dd7e69c0f0ad6b382ac3257637d4a0b
-  react-native-worklets-core: d913d6e59baf7c2ce3182c65d85383110a869f99
+  react-native-video: c337da291dc8ab4cc19f2da5f5f678537aded5d1
   React-nativeconfig: a063483672b8add47a4875b0281e202908ff6747
   React-NativeModulesApple: c68bb78c2de1522f8bc41a23e404d8d4cbd5de30
   React-perflogger: b61e5db8e5167f5e70366e820766c492847c082e
@@ -1344,11 +1402,13 @@ SPEC CHECKSUMS:
   React-utils: 93c6c62491c0c2f83646e660287b77fc210105ce
   ReactCommon: b2d9a4d3c5a82ac14a0054ccdba9e6858fef873b
   RNCAsyncStorage: b44e8a4e798c3e1f56bffccd0f591f674fb9198f
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: 84c022d481dd2ca0d3965358fd93639ec8d101f5
   RNReactNativeHapticFeedback: ba030ba3a1ae31a0606f20ab1dcf62285e853b88
-  RNReanimated: bf3c208f24e385cdd879f8da087c07f5683dfca8
-  RNScreens: 8d1521c6e375a79dbd4525efaf21704cc64ac0cf
+  RNReanimated: b212e30a302d6d08837b185f1d94584851687e2d
+  RNScreens: b12996ef8ef492d56d126400e8aef6e613c13ef6
   RNSound: 97dffe6c3e4231f81fe54be2f2f681806ee97f6a
+  RNSVG: 6d5ed33b6635ed6d6ecb50744dcf127580c39ed5
   RNVectorIcons: 87d954b745b517a6676a853c0eb43679d96c74ef
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SwiftAudioEx: 6f511018b7a0fdfd14ed1bb4081f953588245cc0

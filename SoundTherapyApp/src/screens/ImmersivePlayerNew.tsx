@@ -382,17 +382,6 @@ const ImmersivePlayerNew = () => {
 
       {renderFixedFooter()}
 
-      <AmbientPickerSheet
-        visible={ambientSheetVisible}
-        currentAmbient={currentAmbient}
-        currentSceneId={currentScene?.id || ''}
-        onClose={() => setAmbientSheetVisible(false)}
-        onSelect={handleAmbientSelect}
-        onRestoreMix={(mix) => {
-          handleAmbientSelect(mix.ambientType as any);
-        }}
-      />
-
       {/* 正式大标题：保持 zIndex: 99999 活命层级 */}
       <View style={{ 
         position: 'absolute', 
@@ -494,6 +483,17 @@ const ImmersivePlayerNew = () => {
           <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
         </TouchableOpacity>
       </View>
+
+      <AmbientPickerSheet
+        visible={ambientSheetVisible}
+        currentAmbient={currentAmbient}
+        currentSceneId={currentScene?.id || ''}
+        onClose={() => setAmbientSheetVisible(false)}
+        onSelect={handleAmbientSelect}
+        onRestoreMix={(mix) => {
+          handleAmbientSelect(mix.ambientType as any);
+        }}
+      />
     </View>
   );
 };

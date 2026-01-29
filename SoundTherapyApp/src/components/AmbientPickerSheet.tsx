@@ -11,85 +11,59 @@ import {
   Alert,
   Platform,
   BackHandler,
-  NativeModules,
 } from 'react-native';
 
-const { NativeAudioModule } = NativeModules;
-import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AudioService from '../services/AudioService';
-import { Typography } from '../theme/Typography';
 import ToastUtil from '../utils/ToastUtil';
-import { useFocusEffect } from '@react-navigation/native';
 
-type MixPreset = {
-  id: string;
-  name: string;
-  sceneId: string;
-  mainVolume: number;
-  rainVolume: number;
-  fireVolume: number;
-  ambientType: AmbientType;
-};
-
-const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor = '#4a90e2' }: any) => {
+// ----------------------------------------------------------------
+// 内部组件：强制实色滑动条
+// ----------------------------------------------------------------
+const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor = '#D4AF37' }: any) => {
   const [width, setWidth] = useState(0);
-  const isDragging = useRef(false);
-
   return (
     <View 
-      style={{ width: '100%', height: 40, justifyContent: 'center' }}
-      onLayout={(e) => {
-        const w = e.nativeEvent.layout.width;
-        setWidth(w);
-      }}
+      style={{ width: '100%', height: 44, justifyContent: 'center' }}
+      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
     >
       <PanGestureHandler
         onGestureEvent={(e) => {
           if (width > 0) {
             const newVal = e.nativeEvent.x / width;
-            const safeValue = Math.max(0.001, Math.min(0.999, newVal));
-            onValueChange(safeValue);
+            onValueChange(Math.max(0, Math.min(1, newVal)));
           }
         }}
         onHandlerStateChange={(e) => {
-          if (e.nativeEvent.state === State.BEGAN) {
-            isDragging.current = true;
-            const newVal = e.nativeEvent.x / width;
-            const safeValue = Math.max(0.001, Math.min(0.999, newVal));
-            onValueChange(safeValue);
-          }
           if (e.nativeEvent.state === State.END || e.nativeEvent.state === State.CANCELLED) {
-            isDragging.current = false;
             const newVal = e.nativeEvent.x / width;
-            const safeValue = Math.max(0.001, Math.min(0.999, newVal));
-            onSlidingComplete(safeValue);
+            onSlidingComplete(Math.max(0, Math.min(1, newVal)));
           }
         }}
-        activeOffsetX={[-10, 10]} // Help distinguish from ScrollView scroll
       >
-        <Animated.View style={StyleSheet.absoluteFill}>
-          <View style={{ width: '100%', height: 40, justifyContent: 'center' }}>
-            {/* Visual Track & Thumb */}
-            <View style={{height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)', width: '100%', position: 'absolute'}} pointerEvents="none"/>
-            <View style={{height: 6, borderRadius: 3, backgroundColor: activeColor, width: `${value * 100}%`, position: 'absolute'}} pointerEvents="none"/>
-            <View style={{
-              width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff',
-              position: 'absolute', left: `${value * 100}%`, marginLeft: -10,
-              shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5
-            }} pointerEvents="none"/>
-          </View>
-        </Animated.View>
+        <View style={{ width: '100%', height: 44, justifyContent: 'center' }}>
+          <View style={{height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)', width: '100%', position: 'absolute'}} />
+          <View style={{height: 6, borderRadius: 3, backgroundColor: activeColor, width: `${value * 100}%`, position: 'absolute'}} />
+          <View style={{
+            width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff',
+            position: 'absolute', left: `${value * 100}%`, marginLeft: -12,
+            elevation: 4, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.3, shadowRadius: 3
+          }} />
+        </View>
       </PanGestureHandler>
     </View>
   );
 };
 
+// ----------------------------------------------------------------
+// 主组件：氛围点缀控制弹窗 (暴力不透明“物理封印”版)
+// ----------------------------------------------------------------
 type AmbientType = 'none' | 'rain' | 'fire';
+type MixPreset = { id: string; name: string; sceneId: string; mainVolume: number; rainVolume: number; fireVolume: number; ambientType: AmbientType; };
 
 type Props = {
   visible: boolean;
@@ -99,8 +73,6 @@ type Props = {
   onSelect: (type: AmbientType) => void;
   onRestoreMix: (mix: MixPreset) => void;
 };
-
-const SNAP_THRESHOLD = 50;
 
 export const AmbientPickerSheet: React.FC<Props> = ({
   visible,
@@ -112,397 +84,193 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 }) => {
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  
+  // 1. 物理封印高度：视觉精修，改为屏幕高度的 90%
+  const sheetHeight = screenHeight * 0.9;
+  
+  // 2. 修正动画范围：归位到 0
+  const hiddenValue = sheetHeight;
+  const visibleValue = 0; 
+  const translateY = useRef(new Animated.Value(hiddenValue)).current;
 
-  const translateY = useRef(new Animated.Value(screenHeight)).current;
   const [mainVolume, setMainVolume] = useState(1.0);
   const [rainVolume, setRainVolume] = useState(0.3);
   const [fireVolume, setFireVolume] = useState(0.3);
-  
-  // Mix Presets
-  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [mixName, setMixName] = useState('');
   const [savedMixes, setSavedMixes] = useState<MixPreset[]>([]);
 
-  const loadMixes = useCallback(() => {
-    AsyncStorage.getItem('@mix_presets')
-      .then(json => {
-        if (json) {
-          setSavedMixes(JSON.parse(json));
-        } else {
-          setSavedMixes([]);
-        }
-      })
-      .catch(err => console.error('Failed to load mixes:', err));
+  const loadMixes = useCallback(async () => {
+    try {
+      const json = await AsyncStorage.getItem('@mix_presets');
+      if (json) setSavedMixes(JSON.parse(json));
+    } catch (e) { console.error(e); }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadMixes();
-    }, [loadMixes])
-  );
-
   useEffect(() => {
     if (visible) {
       loadMixes();
-    }
-  }, [visible, loadMixes]);
-
-  const [isEditing, setIsEditing] = useState(false);
-
-  const saveMix = async (name: string) => {
-    const finalName = name.trim() || mixName.trim();
-    if (!finalName) {
-      ToastUtil.error('请输入方案名称');
-      return;
-    }
-    
-    const newMix: MixPreset = {
-      id: Date.now().toString(),
-      name: finalName,
-      sceneId: currentSceneId,
-      mainVolume: AudioService.getVolume(),
-      rainVolume: rainVolume,
-      fireVolume: fireVolume,
-      ambientType: currentAmbient,
-    };
-    
-    const newMixes = [newMix, ...savedMixes];
-    setSavedMixes(newMixes);
-    await AsyncStorage.setItem('@mix_presets', JSON.stringify(newMixes));
-    
-    Alert.alert('保存成功', `已保存为：${finalName}`);
-    setIsEditing(false);
-    setMixName('');
-  };
-
-  const startEditing = () => {
-    const now = new Date();
-    const timeStr = `${now.getMonth() + 1}月${now.getDate()}日 混音`;
-    setMixName(timeStr);
-    setIsEditing(true);
-  };
-
-  const handleDeleteMix = async (id: string) => {
-    const newMixes = savedMixes.filter(m => m.id !== id);
-    setSavedMixes(newMixes);
-    await AsyncStorage.setItem('@mix_presets', JSON.stringify(newMixes));
-  };
-
-  useEffect(() => {
-    if (visible) {
-      const onBackPress = () => {
-        onClose();
-        return true;
-      };
-      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => subscription.remove();
-    }
-  }, [visible, onClose]);
-
-  useEffect(() => {
-    if (visible) {
-      // Load stored volumes
       setMainVolume(AudioService.getVolume());
       AudioService.getStoredVolume('healing_rain').then(setRainVolume);
       AudioService.getStoredVolume('life_fire_pure').then(setFireVolume);
-
-      // Open animation
+      
+      // 暴力冲顶动画：目标值为 -50
       Animated.spring(translateY, {
-        toValue: 0,
+        toValue: visibleValue,
         useNativeDriver: true,
-        bounciness: 6,
-        speed: 12,
+        tension: 65,
+        friction: 11,
       }).start();
     } else {
-      // Force pop up for debug if needed - set to 0 to keep open
-      // toValue: 0, 
-      
-      // Close animation
       Animated.timing(translateY, {
-        toValue: screenHeight,
+        toValue: hiddenValue,
         duration: 250,
         useNativeDriver: true,
       }).start();
     }
-  }, [visible, screenHeight, translateY]);
+  }, [visible, hiddenValue, visibleValue, loadMixes]);
 
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationY: translateY } }],
-    { useNativeDriver: true }
-  );
-
-  const onHandlerStateChange = (event: PanGestureHandlerStateChangeEvent) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
-      const { translationY, velocityY } = event.nativeEvent;
-      const isClosing = translationY > SNAP_THRESHOLD || velocityY > 500;
-
-      if (isClosing) {
-        onClose();
-      } else {
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          bounciness: 6,
-          speed: 12,
-        }).start();
-      }
-    }
+  const saveMix = async () => {
+    const name = mixName.trim() || `${new Date().getMonth() + 1}月${new Date().getDate()}日 混音`;
+    const newMix = { id: Date.now().toString(), name, sceneId: currentSceneId, mainVolume, rainVolume, fireVolume, ambientType: currentAmbient };
+    const updated = [newMix, ...savedMixes];
+    setSavedMixes(updated);
+    await AsyncStorage.setItem('@mix_presets', JSON.stringify(updated));
+    setIsEditing(false);
+    setMixName('');
+    Alert.alert('成功', '方案已保存');
   };
 
-  const triggerHaptic = () => {
-    const options = {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    };
-    ReactNativeHapticFeedback.trigger('impactLight', options);
-  };
-
-  const handleVolumeChange = (type: 'main' | 'rain' | 'fire', value: number) => {
-    if (type === 'main') {
-      setMainVolume(value);
-      AudioService.setVolume(value); 
-    } else if (type === 'rain') {
-      setRainVolume(value);
-      if (currentAmbient === 'rain') {
-        AudioService.updateAmbientVolume(value);
-      }
-    } else {
-      setFireVolume(value);
-      if (currentAmbient === 'fire') {
-        AudioService.updateAmbientVolume(value);
-      }
-    }
-  };
-
-  const handleSlidingComplete = (type: 'main' | 'rain' | 'fire', value: number) => {
-    if (type === 'main') {
-      // Already handled
-    } else if (type === 'rain') {
-      if (currentAmbient === 'rain') {
-        AudioService.updateAmbientVolume(value);
-      } else {
-        AsyncStorage.setItem('@ambient_volume_healing_rain', String(value)).catch(() => {});
-      }
-    } else {
-      if (currentAmbient === 'fire') {
-        AudioService.updateAmbientVolume(value);
-      } else {
-        AsyncStorage.setItem('@ambient_volume_life_fire_pure', String(value)).catch(() => {});
-      }
-    }
-  };
-
-  const renderMainVolume = () => {
-    return (
-      <View style={[styles.itemContainer, { borderColor: 'rgba(255,255,255,0.15)', backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-        <View style={styles.headerRow}>
-          <View style={styles.itemInfo}>
-            <Text style={[styles.itemTitle, styles.itemTitleActive]}>🔊 场景主音量</Text>
-            <Text style={styles.itemDesc}>控制当前场景的基础音量</Text>
-          </View>
-        </View>
-        
-        <View style={styles.sliderContainer}>
-            <SimpleJsSlider
-              value={mainVolume}
-              activeColor="#fff"
-              onValueChange={(v: number) => handleVolumeChange('main', v)}
-              onSlidingComplete={(v: number) => handleSlidingComplete('main', v)}
-            />
-          </View>
-      </View>
-    );
-  };
-
-  const renderItem = (type: 'rain' | 'fire', title: string, volume: number) => {
-    const isSelected = currentAmbient === type;
-    
-    return (
-      <View style={[styles.itemContainer, isSelected && styles.itemSelected]}>
-        <TouchableOpacity
-          style={styles.headerRow}
-          activeOpacity={0.7}
-          onPress={() => {
-            triggerHaptic();
-            if (isSelected) {
-              onSelect('none');
-            } else {
-              onSelect(type);
-            }
-          }}
-        >
-          <View style={styles.itemInfo}>
-            <Text style={[styles.itemTitle, isSelected && styles.itemTitleActive]}>{title}</Text>
-            <Text style={styles.itemDesc}>
-              {isSelected ? '点击关闭' : '点击开启'}
-            </Text>
-          </View>
-          <View style={[styles.radioButton, isSelected && styles.radioButtonSelected]}>
-            {isSelected && <View style={styles.radioButtonInner} />}
-          </View>
-        </TouchableOpacity>
-        
-        <View style={styles.sliderContainer}>
-            <SimpleJsSlider
-              value={volume}
-              activeColor={isSelected ? '#fff' : 'rgba(255,255,255,0.3)'}
-              onValueChange={(v: number) => handleVolumeChange(type, v)}
-              onSlidingComplete={(v: number) => handleSlidingComplete(type, v)}
-            />
-          </View>
-      </View>
-    );
+  const handleVolumeChange = (type: any, val: number) => {
+    if (type === 'main') { setMainVolume(val); AudioService.setVolume(val); }
+    else if (type === 'rain') { setRainVolume(val); if (currentAmbient === 'rain') AudioService.updateAmbientVolume(val); }
+    else { setFireVolume(val); if (currentAmbient === 'fire') AudioService.updateAmbientVolume(val); }
   };
 
   if (!visible) return null;
 
-  const backdropOpacity = translateY.interpolate({
-    inputRange: [0, screenHeight],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
   return (
-    <View style={styles.overlay} pointerEvents="box-none">
-      <Animated.View style={[styles.backdropContainer, { opacity: backdropOpacity }]}>
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-      </Animated.View>
+    <View style={styles.overlay}>
+      {/* 遮罩背景：多层背景涂黑，物理封死底色，恢复 rgba(0,0,0,0.8) */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.8)' }]} />
+      <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
 
-      <Animated.View
+      {/* 纯实色弹窗主体：强制不透明渲染，开启暴力不透明模式 */}
+      <Animated.View 
+        renderToHardwareTextureAndroid={false} // 强制关闭硬件加速离屏渲染
+        needsOffscreenAlphaCompositing={false} // 强制安卓系统关闭离屏透明合成
         style={[
-          styles.sheet,
-          { transform: [{ translateY: Animated.diffClamp(translateY, 0, screenHeight) }] },
+          styles.sheet, 
+          { 
+            height: sheetHeight,
+            transform: [{ translateY }],
+            backgroundColor: '#121212', // 再次硬编码确保背景不透
+            opacity: 1                  // 强制不透明
+          }
         ]}
       >
-        {/* iOS 返回按钮同步自 ImmersivePlayerScreen */}
-        <TouchableOpacity 
-          style={[
-            styles.backButton, 
-            Platform.select({
-              ios: { 
-                paddingTop: insets.top + 10,
-                backgroundColor: 'transparent',
-                elevation: 10,
-                zIndex: 9999,
-              },
-              android: { top: 25 }
-            })
-          ]}
-          onPress={onClose}
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-        >
-          <Icon name="chevron-back" size={30} color="#FFFFFF" style={{ opacity: 1, zIndex: 10000 }} />
-        </TouchableOpacity>
+        {/* 【关键】底层钢板：绝对定位的黑漆，焊死在屏幕上 */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
 
-        <PanGestureHandler
-          onGestureEvent={onGestureEvent}
-          onHandlerStateChange={onHandlerStateChange}
-        >
-          <Animated.View style={[
-            styles.handleContainer,
-            Platform.OS === 'ios' && { paddingTop: insets.top + 40 }
-          ]}>
+        {/* 顶部物理遮蔽：实色块，缩减高度 */}
+        <View style={{ 
+          height: insets.top + 20, 
+          backgroundColor: '#121212', 
+          width: '100%',
+          justifyContent: 'flex-end',
+          paddingBottom: 5
+        }}>
+          {/* 拖动手柄 */}
+          <View style={styles.handleContainer}>
             <View style={styles.handle} />
-            <Text style={styles.headerTitle}>氛围点缀</Text>
-          </Animated.View>
-        </PanGestureHandler>
+          </View>
+        </View>
+        
+        {/* 标题栏 */}
+        <View style={styles.navHeader}>
+          <TouchableOpacity style={styles.backButton} onPress={onClose}>
+            <Icon name="chevron-down" size={32} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitleText}>氛围点缀控制</Text>
+          <View style={{ width: 50 }} /> 
+        </View>
 
-        <ScrollView style={{flex: 1}} contentContainerStyle={styles.content}>
-          {isEditing ? (
-            <View style={{
-              height: 50, 
-              width: '90%', 
-              backgroundColor: 'rgba(255,255,255,0.1)', 
-              borderRadius: 16, 
-              flexDirection: 'row',
-              alignItems: 'center', 
-              marginVertical: 20,
-              paddingHorizontal: 16,
-              alignSelf: 'center'
-            }}>
-              <TextInput
-                style={{
-                  flex: 1,
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 16,
-                  height: '100%'
-                }}
-                value={mixName}
-                onChangeText={setMixName}
-                autoFocus={true}
-                selectionColor="#4a90e2"
-                onSubmitEditing={() => saveMix(mixName)}
-                returnKeyType="done"
-              />
-              <TouchableOpacity onPress={() => saveMix(mixName)} style={{marginLeft: 10, padding: 5}}>
-                <Text style={{color: '#4a90e2', fontSize: 18, fontWeight: 'bold'}}>✅</Text>
+        <ScrollView 
+          style={{ flex: 1, backgroundColor: '#121212' }} 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          {/* 保存按钮 */}
+          <View style={styles.saveSection}>
+            {isEditing ? (
+              <View style={styles.inputBox}>
+                <TextInput 
+                  style={styles.textInput} 
+                  value={mixName} 
+                  onChangeText={setMixName} 
+                  placeholder="输入名称..."
+                  placeholderTextColor="#555"
+                  autoFocus
+                />
+                <TouchableOpacity onPress={saveMix}>
+                  <Icon name="checkmark-circle" size={32} color="#D4AF37" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditing(true)}>
+                <Icon name="save-outline" size={20} color="#000" />
+                <Text style={styles.saveButtonText}>保存当前混音方案</Text>
               </TouchableOpacity>
+            )}
+          </View>
+
+          {/* 音量控制组 */}
+          <Text style={styles.groupLabel}>场景主音量</Text>
+          <View style={styles.volumeCard}>
+            <SimpleJsSlider value={mainVolume} onValueChange={(v:any)=>handleVolumeChange('main',v)} onSlidingComplete={()=>{}} activeColor="#fff" />
+          </View>
+
+          <Text style={styles.groupLabel}>环境音效叠加</Text>
+          {['rain', 'fire'].map((type: any) => (
+            <View key={type} style={[styles.volumeCard, currentAmbient === type && styles.activeCard]}>
+              <TouchableOpacity style={styles.cardHeader} onPress={() => {
+                ReactNativeHapticFeedback.trigger('impactLight');
+                onSelect(currentAmbient === type ? 'none' : type);
+              }}>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                   <Icon name={type === 'rain' ? "rainy-outline" : "flame-outline"} size={20} color={currentAmbient === type ? "#D4AF37" : "#666"} />
+                   <Text style={[styles.cardTitle, currentAmbient === type && {color: '#fff', fontWeight: 'bold'}]}>
+                     {type === 'rain' ? '  治愈雨声' : '  壁炉篝火'}
+                   </Text>
+                </View>
+                <Icon name={currentAmbient === type ? "radio-button-on" : "radio-button-off"} size={22} color={currentAmbient === type ? "#D4AF37" : "#444"} />
+              </TouchableOpacity>
+              <SimpleJsSlider 
+                value={type === 'rain' ? rainVolume : fireVolume} 
+                onValueChange={(v:any)=>handleVolumeChange(type,v)} 
+                onSlidingComplete={()=>{}}
+                activeColor={currentAmbient === type ? "#D4AF37" : "#333"}
+              />
             </View>
-          ) : (
-            <TouchableOpacity 
-              style={{
-                height: 50, 
-                width: '90%', 
-                backgroundColor: 'rgba(255,255,255,0.1)', 
-                borderRadius: 12, 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                marginVertical: 20,
-                alignSelf: 'center'
-              }} 
-              onPress={startEditing} 
-            > 
-              <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>点击保存当前混音</Text> 
-            </TouchableOpacity>
-          )}
+          ))}
 
-          {renderMainVolume()}
-          {renderItem('rain', '治愈雨声', rainVolume)}
-          {renderItem('fire', '壁炉篝火', fireVolume)}
-
-          <View style={{ marginTop: 0, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={styles.headerTitle}>我的最爱混音</Text>
-            </View>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+          {/* 我的最爱列表 */}
+          <View style={styles.presetSection}>
+            <Text style={styles.groupLabel}>我的最爱</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop: 10}}>
               {savedMixes.map(mix => (
-                <TouchableOpacity
-                  key={mix.id}
-                  style={{ 
-                    backgroundColor: 'rgba(255,255,255,0.08)', 
-                    borderRadius: 12, 
-                    padding: 12, 
-                    marginRight: 12,
-                    minWidth: 100
-                  }}
-                  onPress={() => {
-                    onRestoreMix(mix);
-                    if (mix.mainVolume !== undefined) setMainVolume(mix.mainVolume);
-                    if (mix.rainVolume !== undefined) setRainVolume(mix.rainVolume);
-                    if (mix.fireVolume !== undefined) setFireVolume(mix.fireVolume);
-                    ToastUtil.success(`已应用：${mix.name}`);
-                  }}
-                  onLongPress={() => {
-                    Alert.alert('删除方案', `确定要删除 "${mix.name}" 吗？`, [
-                      { text: '取消', style: 'cancel' },
-                      { text: '删除', style: 'destructive', onPress: () => handleDeleteMix(mix.id) }
-                    ]);
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14, marginBottom: 4 }}>{mix.name}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
-                    主音量 {Math.round(mix.mainVolume * 100)}%
-                  </Text>
+                <TouchableOpacity key={mix.id} style={styles.presetItem} onPress={() => {
+                  onRestoreMix(mix);
+                  setMainVolume(mix.mainVolume); setRainVolume(mix.rainVolume); setFireVolume(mix.fireVolume);
+                  ToastUtil.success(`已应用: ${mix.name}`);
+                }}>
+                  <Text style={{color: '#fff', fontWeight: 'bold'}} numberOfLines={1}>{mix.name}</Text>
+                  <Text style={{color: '#555', fontSize: 11, marginTop: 4}}>主音量 {Math.round(mix.mainVolume*100)}%</Text>
                 </TouchableOpacity>
               ))}
               {savedMixes.length === 0 && (
-                <Text style={{ color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>暂无保存的方案</Text>
+                <Text style={{color: '#333', fontSize: 13, marginTop: 10, fontStyle: 'italic'}}>暂无保存方案</Text>
               )}
             </ScrollView>
           </View>
@@ -513,111 +281,55 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 1000, elevation: 1000, justifyContent: 'flex-end' },
-  backdropContainer: { ...StyleSheet.absoluteFillObject },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
+  overlay: { 
+    ...StyleSheet.absoluteFillObject, 
+    zIndex: 99999, 
+    elevation: 99999 
+  },
   sheet: {
-    backgroundColor: 'rgba(20, 23, 30, 0.98)',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-    bottom: 0,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 24,
-    overflow: 'hidden',
+    position: 'absolute', 
+    left: 0, 
+    right: 0, 
+    bottom: 0, 
+    backgroundColor: '#121212', 
+    borderTopLeftRadius: 30, 
+    borderTopRightRadius: 30,
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: -10 }, 
+    shadowOpacity: 0.5, 
+    shadowRadius: 15,
+    overflow: 'hidden', // 确保底层钢板不溢出圆角
   },
-  backButton: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    padding: 10,
-    paddingHorizontal: 20,
-    zIndex: 9999,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-    width: '100%',
-  },
-  handle: {
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontFamily: Typography.fontFamily,
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-    letterSpacing: 1,
-  },
-  content: {
-    paddingHorizontal: 24,
-    paddingBottom: 100,
-  },
-  itemContainer: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  itemSelected: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderColor: 'rgba(74, 144, 226, 0.3)',
-  },
-  headerRow: {
-    flexDirection: 'row',
+  handleContainer: { alignItems: 'center', paddingVertical: 5 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#333' },
+  navHeader: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    paddingHorizontal: 15, 
+    height: 50, 
+    backgroundColor: '#121212'
   },
-  itemInfo: {
-    flex: 1,
+  backButton: { padding: 5 },
+  headerTitleText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 }, // 缩减底部边距
+  saveSection: { marginVertical: 10 },
+  saveButton: {
+    backgroundColor: '#D4AF37', height: 52, borderRadius: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center'
   },
-  itemTitle: {
-    fontFamily: Typography.fontFamily,
-    fontSize: 17,
-    color: 'rgba(255,255,255,0.6)',
+  saveButtonText: { color: '#000', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
+  inputBox: {
+    backgroundColor: '#1a1a1a', height: 52, borderRadius: 16,
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15,
+    borderWidth: 1, borderColor: '#333'
   },
-  itemTitleActive: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  itemDesc: {
-    fontFamily: Typography.fontFamily,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 2,
-  },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  radioButtonSelected: {
-    borderColor: '#fff',
-  },
-  radioButtonInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#fff',
-  },
-  sliderContainer: {
-    marginTop: 8,
-  },
+  textInput: { flex: 1, color: '#fff', fontSize: 16 },
+  groupLabel: { color: '#444', fontSize: 12, fontWeight: 'bold', marginTop: 25, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  volumeCard: { backgroundColor: '#181818', borderRadius: 24, padding: 18, marginBottom: 15 },
+  activeCard: { backgroundColor: '#1c1c1c', borderWidth: 1, borderColor: '#D4AF3733' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  cardTitle: { color: '#777', fontSize: 16 },
+  presetSection: { marginTop: 30, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },
+  presetItem: { backgroundColor: '#181818', padding: 16, borderRadius: 18, marginRight: 12, minWidth: 120, borderWidth: 1, borderColor: '#222' }
 });
