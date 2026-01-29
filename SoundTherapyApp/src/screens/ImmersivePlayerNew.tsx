@@ -45,6 +45,40 @@ const ImmersivePlayerNew = () => {
   const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
   const [currentAmbient, setCurrentAmbient] = useState<'none' | 'rain' | 'fire'>('none');
 
+  // --- Cross-fade 背景逻辑 ---
+  const [bgImages, setBgImages] = useState({
+    current: selectedScene?.backgroundSource || SCENES[0].backgroundSource,
+    next: null as any,
+  });
+  const bgFadeAnim = useRef(new Animated.Value(1)).current; // 1 = 显示 current, 0 = 显示 next
+  const lastSceneId = useRef(selectedScene?.id);
+
+  // 监听场景切换，触发 Cross-fade
+  useEffect(() => {
+    const target = selectedScene || currentScene;
+    if (target && target.id !== lastSceneId.current) {
+      // 触发动画
+      setBgImages(prev => ({ ...prev, next: target.backgroundSource }));
+      
+      // 开启 300ms 过渡
+      Animated.timing(bgFadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        // 动画结束，交换角色
+        setBgImages({
+          current: target.backgroundSource,
+          next: null,
+        });
+        bgFadeAnim.setValue(1);
+      });
+      
+      lastSceneId.current = target.id;
+    }
+  }, [selectedScene, currentScene]);
+  // -----------------------
+
   // 2. 过滤出每个分类的代表性场景 (优先使用选中的场景)
   const displayScenes = useMemo(() => {
     return MAIN_CATEGORIES.map(cat => {
@@ -111,27 +145,32 @@ const ImmersivePlayerNew = () => {
   const renderBackground = () => {
     return (
       <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
-        {/* 多层背景淡入淡出逻辑 */}
-        {displayScenes.map((scene, index) => {
-          // 为每一层背景计算插值透明度
-          const opacity = scrollProgress.interpolate({
-            inputRange: [index - 1, index, index + 1],
-            outputRange: [0, 0.85, 0], // 当前页面 0.85 透明度，左右页面 0
-            extrapolate: 'clamp',
-          });
+        {/* 背景 1: 当前背景 */}
+        <Animated.Image 
+          source={bgImages.current}
+          style={[
+            StyleSheet.absoluteFill,
+            { opacity: bgFadeAnim }
+          ]}
+          resizeMode="cover"
+        />
 
-          return (
-            <Animated.Image 
-              key={`bg-layer-${scene.id}`}
-              source={scene.backgroundSource}
-              style={[
-                StyleSheet.absoluteFill, 
-                { opacity }
-              ]}
-              resizeMode="cover"
-            />
-          );
-        })}
+        {/* 背景 2: 下一个背景 (淡入) */}
+        {bgImages.next && (
+          <Animated.Image 
+            source={bgImages.next}
+            style={[
+              StyleSheet.absoluteFill,
+              { 
+                opacity: bgFadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 0]
+                }) 
+              }
+            ]}
+            resizeMode="cover"
+          />
+        )}
 
         {/* 亮度提升层: 0.1 透明度的白色遮罩 */}
         <View 
@@ -260,8 +299,9 @@ const ImmersivePlayerNew = () => {
       }}> 
         {MAIN_CATEGORIES.map((category, index) => {
           const activeScene = displayScenes[index];
+          // 标题滑动渐变：200ms 对应的滑动区间大约是 0.5 左右
           const opacity = scrollProgress.interpolate({
-            inputRange: [index - 0.6, index, index + 0.6],
+            inputRange: [index - 0.5, index, index + 0.5],
             outputRange: [0, 1, 0],
             extrapolate: 'clamp',
           });
@@ -275,9 +315,10 @@ const ImmersivePlayerNew = () => {
                 opacity 
               }}
             >
+              {/* 主标题：24px 加粗 */}
               <Text style={{ 
                 color: 'white', 
-                fontSize: 28, 
+                fontSize: 24, 
                 fontWeight: 'bold',
                 letterSpacing: 2,
                 textShadowColor: 'rgba(0,0,0,0.5)', 
@@ -286,11 +327,13 @@ const ImmersivePlayerNew = () => {
               }}> 
                 {category} 
               </Text> 
+              {/* 副标题：16px, 0.75 透明度 */}
               <Text style={{ 
                 color: 'white', 
                 fontSize: 16, 
-                marginTop: 4,
-                opacity: 0.8,
+                marginTop: 6,
+                opacity: 0.75,
+                fontWeight: '500',
                 textShadowColor: 'rgba(0,0,0,0.5)', 
                 textShadowOffset: {width: 0, height: 2}, 
                 textShadowRadius: 4 
