@@ -81,8 +81,8 @@ android {
         applicationId "com.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 104
-        versionName "1.0.4"
+        versionCode 105
+        versionName "1.0.5"
         resConfigs "en", "zh" // 强制只保留英文和中文，过滤掉无效语言 cb, fb
         // ndk {
         //     abiFilters "arm64-v8a", "x86_64"

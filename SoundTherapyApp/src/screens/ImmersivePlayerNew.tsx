@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -16,6 +16,9 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // 定义四大核心分类
 const MAIN_CATEGORIES = ['Nature', 'Healing', 'Brainwave', 'Life'];
+
+// 默认兜底场景
+const DEFAULT_SCENE = SCENES[0];
 
 type ImmersivePlayerRouteProp = RouteProp<RootStackParamList, 'ImmersivePlayer'>;
 
@@ -45,39 +48,63 @@ const ImmersivePlayerNew = () => {
   const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
   const [currentAmbient, setCurrentAmbient] = useState<'none' | 'rain' | 'fire'>('none');
 
-  // --- Cross-fade 背景逻辑 ---
-  const [bgImages, setBgImages] = useState({
-    current: selectedScene?.backgroundSource || SCENES[0].backgroundSource,
-    next: null as any,
-  });
-  const bgFadeAnim = useRef(new Animated.Value(1)).current; // 1 = 显示 current, 0 = 显示 next
-  const lastSceneId = useRef(selectedScene?.id);
+  // 播放按钮缩放动画
+  const playBtnScale = useRef(new Animated.Value(1)).current;
 
-  // 监听场景切换，触发 Cross-fade
-  useEffect(() => {
+  const handlePressIn = () => {
+    Animated.timing(playBtnScale, {
+      toValue: 0.92,
+      duration: 150,
+      easing: Easing.out(Easing.back(1.5)),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(playBtnScale, {
+      toValue: 1,
+      duration: 200,
+      easing: Easing.out(Easing.back(1.5)),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // --- 索引与背景逻辑 (实时映射 + 边界保护) ---
+  // 根据当前场景或选定场景确定初始页面索引
+  const initialPageIndex = useMemo(() => {
     const target = selectedScene || currentScene;
-    if (target && target.id !== lastSceneId.current) {
-      // 触发动画
-      setBgImages(prev => ({ ...prev, next: target.backgroundSource }));
-      
-      // 开启 300ms 过渡
-      Animated.timing(bgFadeAnim, {
-        toValue: 0,
-        duration: 300,
+    if (!target) return 0;
+    const catIndex = MAIN_CATEGORIES.indexOf(target.category);
+    return catIndex >= 0 ? catIndex : 0;
+  }, [selectedScene]);
+
+  const [activeIndex, setActiveIndex] = useState(initialPageIndex);
+  const [prevIndex, setPrevIndex] = useState(initialPageIndex);
+  
+  // 底层背景透明度动画
+  const bottomBgOpacity = useRef(new Animated.Value(1)).current;
+
+  // 监听索引变化，同步记录上一个索引作为垫底
+  useEffect(() => {
+    // 1. 开始切换时，让底层图片稍微变暗，腾出视觉空间给顶层淡入
+    Animated.timing(bottomBgOpacity, {
+      toValue: 0.6,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    const timer = setTimeout(() => {
+      // 2. 800ms 后，顶层淡入肯定结束了，此时更新底层索引并恢复透明度
+      setPrevIndex(activeIndex);
+      Animated.timing(bottomBgOpacity, {
+        toValue: 1,
+        duration: 100,
         useNativeDriver: true,
-      }).start(() => {
-        // 动画结束，交换角色
-        setBgImages({
-          current: target.backgroundSource,
-          next: null,
-        });
-        bgFadeAnim.setValue(1);
-      });
-      
-      lastSceneId.current = target.id;
-    }
-  }, [selectedScene, currentScene]);
-  // -----------------------
+      }).start();
+    }, 800); // 延长冻结时间到 800ms
+
+    return () => clearTimeout(timer);
+  }, [activeIndex]);
 
   // 2. 过滤出每个分类的代表性场景 (优先使用选中的场景)
   const displayScenes = useMemo(() => {
@@ -87,111 +114,101 @@ const ImmersivePlayerNew = () => {
         return selectedScene;
       }
       // 否则寻找该分类下的第一个场景
-      return SCENES.find(s => s.category === cat) || SCENES[0];
+      return SCENES.find(s => s.category === cat) || DEFAULT_SCENE;
     });
   }, [selectedScene]);
 
-  // 根据当前场景或选定场景确定初始页面索引
-  const initialPageIndex = useMemo(() => {
-    const target = selectedScene || currentScene;
-    if (!target) return 0;
-    const catIndex = MAIN_CATEGORIES.indexOf(target.category);
-    return catIndex >= 0 ? catIndex : 0;
-  }, [selectedScene]); // 移除 currentScene 依赖，防止播放过程中意外跳页
-
-  // 3. 页面进入时，如果传入了场景且当前未播放该场景，自动切换
-  useEffect(() => {
-    if (selectedScene && selectedScene.id !== currentScene?.id) {
-      AudioService.switchSoundscape(selectedScene);
-    }
-  }, [selectedScene]);
-
-  // 挂载时根据初始页面设置动画值，防止首屏背景透明
+  // 挂载时设置初始索引
   useEffect(() => {
     position.setValue(initialPageIndex);
     scrollOffset.setValue(0);
   }, []);
 
-  const handlePageSelected = (e: any) => {
-    const index = e.nativeEvent.position;
-    
-    // 切换音频场景逻辑
-    const targetScene = displayScenes[index];
-    if (targetScene && targetScene.id !== currentScene?.id) {
-      AudioService.switchSoundscape(targetScene);
-    }
-  };
+   // 3. 页面进入时，如果传入了场景且当前未播放该场景，自动切换
+   useEffect(() => {
+     if (selectedScene && selectedScene.id !== currentScene?.id) {
+       AudioService.switchSoundscape(selectedScene);
+     }
+   }, [selectedScene]);
 
-  const handleToggle = async () => {
-    if (currentScene) {
-      await togglePlayback(currentScene);
-    }
-  };
+   const getSafeIndex = (index: number) => Math.max(0, Math.min(index, displayScenes.length - 1));
 
-  const toggleAmbientSheet = () => {
-    setAmbientSheetVisible(!ambientSheetVisible);
-  };
+   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleAmbientSelect = (type: 'none' | 'rain' | 'fire') => {
-    setCurrentAmbient(type);
-    if (type === 'none') {
-      AudioService.setAmbient(null);
-    } else {
-      const soundId = type === 'rain' ? 'healing_rain' : 'life_fire_pure';
-      AudioService.setAmbient(soundId);
-    }
-  };
+   const handlePageSelected = (e: any) => {
+     const rawIndex = e.nativeEvent.position;
+     const index = getSafeIndex(rawIndex);
+     
+     // setActiveIndex(index);
+     
+     if (debounceTimer.current) clearTimeout(debounceTimer.current);
+     debounceTimer.current = setTimeout(() => {
+        const safeIdx = Math.max(0, Math.min(index, displayScenes.length - 1));
+        const targetScene = displayScenes[safeIdx] || DEFAULT_SCENE;
+        if (targetScene && targetScene.id !== currentScene?.id) {
+         AudioService.switchSoundscape(targetScene);
+       }
+     }, 150);
+   };
 
-  const renderBackground = () => {
-    return (
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
-        {/* 背景 1: 当前背景 */}
-        <Animated.Image 
-          source={bgImages.current}
-          style={[
-            StyleSheet.absoluteFill,
-            { opacity: bgFadeAnim }
-          ]}
-          resizeMode="cover"
-        />
+   const handleToggle = async () => {
+     if (currentScene) {
+       await togglePlayback(currentScene);
+     }
+   };
 
-        {/* 背景 2: 下一个背景 (淡入) */}
-        {bgImages.next && (
-          <Animated.Image 
-            source={bgImages.next}
-            style={[
-              StyleSheet.absoluteFill,
-              { 
-                opacity: bgFadeAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 0]
-                }) 
-              }
-            ]}
-            resizeMode="cover"
-          />
-        )}
+   const toggleAmbientSheet = () => {
+     setAmbientSheetVisible(!ambientSheetVisible);
+   };
 
-        {/* 亮度提升层: 0.1 透明度的白色遮罩 */}
-        <View 
-          style={[
-            StyleSheet.absoluteFill, 
-            { backgroundColor: 'rgba(255,255,255,0.1)' }
-          ]} 
-          pointerEvents="none"
-        />
+   const handleAmbientSelect = (type: 'none' | 'rain' | 'fire') => {
+     setCurrentAmbient(type);
+     if (type === 'none') {
+       AudioService.setAmbient(null);
+     } else {
+       const soundId = type === 'rain' ? 'healing_rain' : 'life_fire_pure';
+       AudioService.setAmbient(soundId);
+     }
+   };
 
-        {/* 顶层深色氛围遮罩 - 降低不透明度以提升亮度 */}
-        <View 
-          style={[
-            StyleSheet.absoluteFill, 
-            { backgroundColor: 'rgba(0,0,0,0.2)' }
-          ]} 
-          pointerEvents="none"
-        />
-      </View>
-    );
-  };
+   const renderBackground = () => {
+     const safeActiveIdx = Math.max(0, Math.min(activeIndex, displayScenes.length - 1));
+     const safePrevIdx = Math.max(0, Math.min(prevIndex, displayScenes.length - 1));
+     
+     const activeScene = displayScenes[safeActiveIdx] || DEFAULT_SCENE;
+     const prevScene = displayScenes[safePrevIdx] || DEFAULT_SCENE;
+
+     return (
+       <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
+         {/* 底层垫底图：带缓慢淡出效果 */}
+         <Animated.View style={[StyleSheet.absoluteFill, { opacity: bottomBgOpacity }]}>
+           <Image 
+             source={prevScene.backgroundSource}
+             style={StyleSheet.absoluteFill}
+             resizeMode="cover"
+           />
+         </Animated.View>
+         
+         {/* 顶层前景图：300ms 快速淡入遮盖 */}
+         <Image 
+           key={`bg-top-${activeScene.id}`}
+           source={activeScene.backgroundSource}
+           style={StyleSheet.absoluteFill}
+           resizeMode="cover"
+           fadeDuration={300} // 缩短淡入时间到 300ms
+         />
+
+         <View 
+           style={[
+             StyleSheet.absoluteFill, 
+             { backgroundColor: 'rgba(0,0,0,0.3)' }
+           ]} 
+           pointerEvents="none"
+         />
+       </View>
+     );
+   };
+   // -----------------------
 
   const renderHeader = () => {
     // 冗余函数，逻辑已迁移至主渲染块
@@ -200,25 +217,30 @@ const ImmersivePlayerNew = () => {
 
   const renderScenePage = (scene: Scene, index: number) => {
     return (
-      <View key={scene.id} style={styles.page}>
-        <SafeAreaView style={styles.overlay}>
+      <View key={scene.id} style={[styles.page, { backgroundColor: 'transparent' }]}>
+        <SafeAreaView style={[styles.overlay, { backgroundColor: 'transparent' }]}>
           {/* 占位符，保持布局一致性 */}
           <View style={styles.headerPlaceholder} />
 
           <View style={styles.controlCenter}>
-            <TouchableOpacity 
-              style={styles.playButton}
-              onPress={handleToggle}
-            >
-              {isPlaying && currentScene?.id === scene.id ? (
-                <View style={styles.pauseIconContainer}>
-                  <View style={styles.pauseBar} />
-                  <View style={styles.pauseBar} />
-                </View>
-              ) : (
-                <View style={styles.playIcon} />
-              )}
-            </TouchableOpacity>
+            <Animated.View style={{ transform: [{ scale: playBtnScale }] }}>
+              <TouchableOpacity 
+                style={styles.playButton}
+                onPress={handleToggle}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={0.9}
+              >
+                {isPlaying && currentScene?.id === scene.id ? (
+                  <View style={styles.pauseIconContainer}>
+                    <View style={styles.pauseBar} />
+                    <View style={styles.pauseBar} />
+                  </View>
+                ) : (
+                  <View style={styles.playIcon} />
+                )}
+              </TouchableOpacity>
+            </Animated.View>
           </View>
 
           <View style={styles.footer}>
@@ -257,7 +279,7 @@ const ImmersivePlayerNew = () => {
 
       <AnimatedPagerView 
         ref={pagerRef}
-        style={styles.container} 
+        style={[styles.container, { backgroundColor: 'transparent' }]} 
         initialPage={initialPageIndex}
         onPageSelected={handlePageSelected}
         onPageScroll={Animated.event(
@@ -269,7 +291,23 @@ const ImmersivePlayerNew = () => {
               },
             },
           ],
-          { useNativeDriver: true }
+          { 
+            useNativeDriver: true,
+            listener: (e: any) => {
+              const { position: pos, offset: off } = e.nativeEvent;
+              // 计算当前最接近的页面索引
+              const currentIdx = Math.round(pos + off);
+              const safeIdx = Math.max(0, Math.min(currentIdx, displayScenes.length - 1));
+              
+              // 实时更新背景索引 (JS 线程同步更新)
+              setActiveIndex(prev => {
+                if (prev !== safeIdx) {
+                  return safeIdx;
+                }
+                return prev;
+              });
+            }
+          }
         )}
       >
         {displayScenes.map((scene, index) => renderScenePage(scene, index))}
@@ -297,12 +335,21 @@ const ImmersivePlayerNew = () => {
         alignItems: 'center',
         pointerEvents: 'none' // 点击穿透，不影响下方按钮
       }}> 
-        {MAIN_CATEGORIES.map((category, index) => {
-          const activeScene = displayScenes[index];
+        {MAIN_CATEGORIES.map((category, rawIndex) => {
+          // 索引越界硬保护
+          const index = Math.max(0, Math.min(rawIndex, displayScenes.length - 1));
+          const activeScene = displayScenes[index] || DEFAULT_SCENE;
           // 标题滑动渐变：200ms 对应的滑动区间大约是 0.5 左右
           const opacity = scrollProgress.interpolate({
             inputRange: [index - 0.5, index, index + 0.5],
             outputRange: [0, 1, 0],
+            extrapolate: 'clamp',
+          });
+
+          // Floating Animation: translateY 从 10 到 0 再到 10
+          const translateY = scrollProgress.interpolate({
+            inputRange: [index - 0.5, index, index + 0.5],
+            outputRange: [10, 0, 10],
             extrapolate: 'clamp',
           });
 
@@ -312,7 +359,8 @@ const ImmersivePlayerNew = () => {
               style={{ 
                 position: 'absolute', 
                 alignItems: 'center', 
-                opacity 
+                opacity,
+                transform: [{ translateY }]
               }}
             >
               {/* 主标题：24px 加粗 */}

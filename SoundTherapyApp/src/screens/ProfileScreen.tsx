@@ -18,7 +18,7 @@ import {
   Keyboard
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Feather';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation } from '@react-navigation/native';
@@ -69,29 +69,7 @@ export const ProfileScreen = () => {
 
   const handleAvatarPress = () => {
     triggerHaptic('selection');
-    Alert.alert(
-      "更换头像",
-      "请选择方式",
-      [
-        { text: "📷 拍照", onPress: requestCameraPermission },
-        { text: "🖼️ 从相册选择", onPress: openGallery },
-        { text: "取消", style: "cancel" }
-      ]
-    );
-  };
-
-  const requestCameraPermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) openCamera();
-      } catch (err) { console.warn(err); }
-    } else { openCamera(); }
-  };
-
-  const openCamera = async () => {
-    const result = await launchCamera({ mediaType: 'photo', cameraType: 'front', saveToPhotos: true, quality: 0.8 });
-    if (result.assets?.[0]?.uri) saveAvatar(result.assets[0].uri);
+    openGallery();
   };
 
   const openGallery = async () => {
@@ -201,9 +179,6 @@ export const ProfileScreen = () => {
                 <Text style={styles.placeholderText}>👤</Text>
               </View>
             )}
-            <View style={styles.cameraIconBadge}>
-              <Icon name="camera" size={14} color="#fff" />
-            </View>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -316,11 +291,6 @@ const styles = StyleSheet.create({
   avatarImage: { width: 104, height: 104, borderRadius: 52 },
   placeholderAvatar: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
   placeholderText: { fontSize: 40 },
-  cameraIconBadge: {
-    position: 'absolute', bottom: 0, right: 0,
-    backgroundColor: '#6C5DD3', width: 30, height: 30, borderRadius: 15,
-    justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#0a0a0c'
-  },
   nameContainer: { 
     flexDirection: 'row', 
     alignItems: 'center', 

@@ -50,42 +50,47 @@ export class NotificationService {
    * @param state 播放状态
    */
   static async updateNotification(scene: Scene, state: State) {
-    // 确保已初始化
-    if (!this.isInitialized) {
-      await this.setup();
-    }
-
-    if (!scene || state === State.Stopped || state === State.None) {
-      return;
-    }
-
-    const userName = (await AsyncStorage.getItem('USER_NAME')) || '朋友';
-    const isPlaying = state === State.Playing;
-
     try {
-      // 获取当前队列中的第一个轨道
-      const queue = await TrackPlayer.getQueue();
-      
-      // 如果队列为空，则不进行更新元数据操作，避免报错
-      if (queue.length === 0) {
+      // 确保已初始化
+      if (!this.isInitialized) {
+        await this.setup();
+      }
+
+      if (!scene || state === State.Stopped || state === State.None) {
         return;
       }
 
-      // 获取场景缩写
-      const shortName = scene.title.substring(0, 4);
+      const userName = (await AsyncStorage.getItem('USER_NAME')) || '朋友';
+      
+      // 索引安全检查：获取当前活动轨道的索引
+      let activeTrackIndex: number | undefined;
+      try {
+        activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
+      } catch (e) {
+        console.log('[NotificationService] Failed to get active track index');
+        return;
+      }
+      
+      // 如果索引为 undefined 或越界，则不更新，避免 throw out of bounds 异常
+      if (activeTrackIndex === undefined || activeTrackIndex < 0) {
+        return;
+      }
+
+      // 获取当前队列，双重校验
+      const queue = await TrackPlayer.getQueue();
+      if (queue.length === 0 || activeTrackIndex >= queue.length) {
+        return;
+      }
 
       // 更新 TrackPlayer 元数据
-      // 注意：这里更新的是当前正在播放的轨道（index 0）
-      await TrackPlayer.updateMetadataForTrack(0, {
+      await TrackPlayer.updateMetadataForTrack(activeTrackIndex, {
         title: scene.title,
         artist: `🎵 ${userName}，正在深度疗愈`,
         artwork: scene.backgroundUrl,
       });
-
-      // 同步到 Android 原生 MediaSession
-      // 在当前的 react-native-track-player 4.x 中，updateMetadataForTrack 会自动处理 MediaSession
     } catch (e) {
-      console.error('[NotificationService] Update failed:', e);
+      // 暴力吞掉所有通知栏更新相关的错误，绝对不允许影响主 UI 线程
+      console.log('[NotificationService] Silent error:', e);
     }
   }
 }
