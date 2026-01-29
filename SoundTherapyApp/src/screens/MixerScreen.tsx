@@ -13,6 +13,7 @@ import {
   TextInput,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Feather';
 import Slider from '@react-native-community/slider';
@@ -44,6 +45,7 @@ interface SavedPreset {
 
 const MixerScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute<any>();
   const { presetId } = route.params || {};
 
@@ -91,6 +93,21 @@ const MixerScreen = () => {
   const [sleepTimer, setSleepTimer] = useState<number | null>(null); // minutes
   const [timeLeft, setTimeLeft] = useState<number | null>(null); // seconds
   const timerRef = useRef<any>(null);
+  const saveBtnScale = useRef(new Animated.Value(1)).current;
+
+  const handleSavePressIn = () => {
+    Animated.spring(saveBtnScale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleSavePressOut = () => {
+    Animated.spring(saveBtnScale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
 
   // 睡眠定时器逻辑
   useEffect(() => {
@@ -251,19 +268,23 @@ const MixerScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Icon name="chevron-left" size={28} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>PRO 混音实验室</Text>
-        <TouchableOpacity onPress={() => setShowSaveModal(true)} style={styles.saveBtn}>
-          <Icon name="save" size={22} color={GOLD} />
-        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerSubtitle}>Nature 氛围点缀</Text>
+          <Text style={styles.headerTitle}>PRO 混音实验室</Text>
+        </View>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.timerSection}>
           <View style={styles.sectionHeader}>
             <Icon name="clock" size={20} color={GOLD} />
@@ -288,6 +309,21 @@ const MixerScreen = () => {
               <Text style={styles.countdownText}>{formatTime(timeLeft)}</Text>
             )}
           </View>
+        </View>
+
+        <View style={styles.saveBtnWrapper}>
+          <Animated.View style={{ transform: [{ scale: saveBtnScale }] }}>
+            <TouchableOpacity 
+              activeOpacity={1}
+              onPressIn={handleSavePressIn}
+              onPressOut={handleSavePressOut}
+              onPress={() => setShowSaveModal(true)} 
+              style={styles.mainSaveBtn}
+            >
+              <Icon name="save" size={20} color={BG_DARK} />
+              <Text style={styles.mainSaveBtnText}>保存当前混音配置</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
 
         <View style={styles.tracksGrid}>
@@ -325,7 +361,7 @@ const MixerScreen = () => {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -339,21 +375,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    height: 60,
+    height: 80,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+  },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 1,
   },
   backBtn: { padding: 5 },
-  saveBtn: { padding: 5 },
+  saveBtnWrapper: {
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  mainSaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GOLD,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    elevation: 4,
+    shadowColor: GOLD,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  mainSaveBtnText: {
+    color: BG_DARK,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
   scrollContent: {
     padding: 20,
+    paddingBottom: 100,
   },
   timerSection: {
-    marginBottom: 30,
+    marginBottom: 20,
     backgroundColor: CARD_BG,
     borderRadius: 20,
     padding: 20,
@@ -412,7 +483,7 @@ const styles = StyleSheet.create({
     backgroundColor: CARD_BG,
     borderRadius: 20,
     padding: 16,
-    marginBottom: 15,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
     position: 'relative',
