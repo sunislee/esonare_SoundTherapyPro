@@ -5,8 +5,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HistoryService } from '../services/HistoryService';
 import AudioService from '../services/AudioService';
-import { Soundscape } from '../config/soundscapes';
-import { RootStackParamList } from '../../App';
+import { Scene as Soundscape } from '../constants/scenes';
+import { RootStackParamList } from '../navigation/MainNavigator';
 
 type HistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'History'>;
 
@@ -29,7 +29,7 @@ const HistoryScreen = () => {
   const handlePlay = async (item: HistoryItemData) => {
     try {
       // Pass the item to the player screen to handle playback switch
-      navigation.navigate('ImmersivePlayer', { soundData: item }); 
+      navigation.navigate('ImmersivePlayer', { sceneId: item.id }); 
     } catch (error) {
       console.error('Failed to navigate to history item:', error);
     }

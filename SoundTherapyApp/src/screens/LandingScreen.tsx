@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, Animated, StatusBar, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, Animated, StatusBar, ActivityIndicator, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DownloadService } from '../services/DownloadService';
 import AudioService from '../services/AudioService';
@@ -7,37 +7,54 @@ import EngineControl from '../constants/EngineControl';
 
 export const LandingScreen = ({ navigation }: any) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const breathAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
 
-    // --- [暗号对齐 + 用户引导] 启动逻辑 ---
+    // 启动呼吸动画
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathAnim, {
+          toValue: 1,
+          duration: 2500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(breathAnim, {
+          toValue: 0,
+          duration: 2500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // --- [分流路由逻辑] ---
     const checkAndBoot = async () => {
       const startTime = Date.now();
-      const MIN_DISPLAY_TIME = 3000;
+      const MIN_DISPLAY_TIME = 2500; // 保证呼吸感展示
 
       try {
-        // 1. 先查“暗号”：资源是否就绪
+        // 1. 检查资源是否就绪
         const isReady = await DownloadService.isResourceReady();
         
-        // 2. 再查“身份”：检查是否已经有用户名
+        // 2. 检查用户信息
         const userName = await AsyncStorage.getItem('USER_NAME');
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
         
-        console.log('--- [Boot] Status:', { isReady, userName, hasSkipped });
-
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
 
         setTimeout(async () => {
           if (!isReady) {
-            // 情况 A: 资源未就绪，去下载页
-            navigation.replace('ResourceDownload');
+            // A. 资源不完整 -> 去下载页
+            navigation.replace('Download');
           } else if (!userName && hasSkipped !== 'true') {
-            // 情况 B: 资源好了但没名字，也没点过跳过，去填名页
+            // B. 资源好了但没名字 -> 去填名页
             navigation.replace('NameEntry');
           } else {
-            // 情况 C: 资源和身份都好了，进入主页
+            // C. 全部就绪 -> 进入主页
             EngineControl.allow();
             try { await AudioService.setupPlayer(); } catch (e) {}
             navigation.replace('MainTabs');
@@ -46,20 +63,35 @@ export const LandingScreen = ({ navigation }: any) => {
 
       } catch (e) {
         console.error('Landing Error:', e);
-        navigation.replace('ResourceDownload');
+        navigation.replace('Download');
       }
     };
     checkAndBoot();
   }, [navigation, fadeAnim]);
 
+  const iconScale = breathAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.15],
+  });
+
+  const iconOpacity = breathAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.5, 1],
+  });
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        <Text style={{ fontSize: 100, marginBottom: 20 }}>🧘‍♂️</Text>
+        <Animated.View style={{ 
+          transform: [{ scale: iconScale }],
+          opacity: iconOpacity,
+          marginBottom: 20
+        }}>
+          <Text style={{ fontSize: 100 }}>🧘‍♂️</Text>
+        </Animated.View>
         <Text style={styles.brandName}>ESONARE</Text>
         <Text style={styles.loadingText}>正在进入心灵空间...</Text>
-        <ActivityIndicator size="small" color="#6C5DD3" style={{ marginTop: 40 }} />
       </Animated.View>
     </View>
   );

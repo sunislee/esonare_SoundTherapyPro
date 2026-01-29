@@ -140,8 +140,8 @@ export const ProfileScreen = () => {
         style: "destructive",
         onPress: async () => {
           await AsyncStorage.multiRemove(['USER_NAME', 'USER_AVATAR', 'HAS_SET_NAME']);
-          // @ts-ignore
-          navigation.reset({ index: 0, routes: [{ name: 'ResourceDownload' }] });
+          // 清空后重启到 Landing
+          navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
         }
       }
     ]);
@@ -157,7 +157,7 @@ export const ProfileScreen = () => {
           await AsyncStorage.removeItem('RESOURCE_READY_V_1.0.7');
           Alert.alert("清除成功", "缓存已清理，请重启 App。");
           // @ts-ignore
-          navigation.reset({ index: 0, routes: [{ name: 'ResourceDownload' }] });
+          navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
         }
       }
     ]);

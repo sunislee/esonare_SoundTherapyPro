@@ -54,7 +54,8 @@ export const DownloadService = {
       const fileSizes: { [key: string]: number } = {};
       const filesToDownload: any[] = [];
 
-      // 1. 第一步：获取所有文件的真实大小（已存在的查本地，不存在的优先查清单 fallback，再尝试 HEAD）
+      // 1. 第一步：获取所有文件的真实大小
+      // 预扫描：先统计所有文件的总大小（优先使用清单数据，异步更新真实大小）
       for (const asset of AUDIO_MANIFEST) {
         const localPath = getLocalPathHelper(asset.category, asset.filename);
         const fileExists = await RNFS.exists(localPath);
@@ -64,29 +65,49 @@ export const DownloadService = {
           const size = Number(fileStat.size);
           fileSizes[asset.id] = size;
           totalBytes += size;
-          currentReceivedBytes += size; // 已存在的直接计入已下载
+          currentReceivedBytes += size;
         } else {
           filesToDownload.push(asset);
-          // 优先使用清单中预定义的 size 作为 fallback
-          let size = (asset as any).size || 0;
-          
-          try {
-            // 尝试通过 HEAD 请求获取更精准的远程文件大小
-            const response = await fetch(`${REMOTE_RESOURCE_BASE_URL}${asset.filename}`, { method: 'HEAD' });
-            const remoteSize = Number(response.headers.get('content-length'));
-            if (remoteSize && remoteSize > 0) {
-              size = remoteSize;
-            }
-          } catch (e) {
-            console.warn(`无法获取远程文件大小: ${asset.filename}, 使用 fallback: ${size}`, e);
-          }
-          
-          fileSizes[asset.id] = size;
-          totalBytes += size;
+          // 必须使用清单中定义的 size 作为初始基准，确保 totalBytes 相对准确
+          const fallbackSize = (asset as any).size || 1024 * 1024; // 兜底 1MB
+          fileSizes[asset.id] = fallbackSize;
+          totalBytes += fallbackSize;
         }
       }
 
-      // 初始进度
+      // 异步校准：在后台通过 HEAD 请求获取更精准的远程文件大小，但不阻塞主流程
+      // 如果校准成功，会更新 totalBytes，从而让进度条更准
+      const calibrateSizes = async () => {
+        // 标记是否有变化
+        let hasChanges = false;
+        
+        for (const asset of filesToDownload) {
+          try {
+            const response = await fetch(`${REMOTE_RESOURCE_BASE_URL}${asset.filename}`, { method: 'HEAD' });
+            const remoteSize = Number(response.headers.get('content-length'));
+            if (remoteSize && remoteSize > 0 && remoteSize !== fileSizes[asset.id]) {
+              const diff = remoteSize - fileSizes[asset.id];
+              fileSizes[asset.id] = remoteSize;
+              totalBytes += diff; // 修正总大小
+              hasChanges = true;
+            }
+          } catch (e) {
+            console.warn(`[Calibrate] 无法获取 ${asset.filename} 大小`, e);
+          }
+        }
+
+        if (hasChanges) {
+          // 只要有变化，立即触发一次进度更新以反映最新的总大小
+          onProgress({
+            progress: totalBytes > 0 ? currentReceivedBytes / totalBytes : 0,
+            receivedBytes: currentReceivedBytes,
+            totalBytes: totalBytes
+          });
+        }
+      };
+      calibrateSizes();
+
+      // 初始进度发送
       onProgress({
         progress: totalBytes > 0 ? currentReceivedBytes / totalBytes : 0,
         receivedBytes: currentReceivedBytes,

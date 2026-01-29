@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAudio } from '../context/AudioContext';
@@ -8,6 +9,8 @@ import AudioService from '../services/AudioService';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AmbientPickerSheet } from '../components/AmbientPickerSheet';
+
+const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -19,28 +22,60 @@ type ImmersivePlayerRouteProp = RouteProp<RootStackParamList, 'ImmersivePlayer'>
 const ImmersivePlayerNew = () => {
   const navigation = useNavigation();
   const route = useRoute<ImmersivePlayerRouteProp>();
+  const insets = useSafeAreaInsets();
   const { currentScene, isPlaying, togglePlayback } = useAudio();
   const pagerRef = useRef<PagerView>(null);
+
+  // 1. 从路由参数中获取选中的场景
+  const selectedScene = useMemo(() => {
+    const sceneId = route.params?.sceneId;
+    if (sceneId) {
+      return SCENES.find(s => s.id === sceneId) || null;
+    }
+    return null;
+  }, [route.params?.sceneId]);
+
+  // 核心动画绑定：使用 Animated.Value 绑定 ViewPager 的滑动偏移量
+  const scrollOffset = useRef(new Animated.Value(0)).current;
+  const position = useRef(new Animated.Value(0)).current;
+  
+  // 最终的滑动进度 (用于背景插值)
+  const scrollProgress = useRef(Animated.add(position, scrollOffset)).current;
   
   const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
   const [currentAmbient, setCurrentAmbient] = useState<'none' | 'rain' | 'fire'>('none');
 
-  // 根据当前场景确定初始页面索引
-  const initialPageIndex = useMemo(() => {
-    if (!currentScene) return 0;
-    const catIndex = MAIN_CATEGORIES.indexOf(currentScene.category);
-    return catIndex >= 0 ? catIndex : 0;
-  }, []);
-
-  // 背景渐变动画值
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const [bgIndex, setBgIndex] = useState(initialPageIndex);
-
-  // 过滤出每个分类的代表性场景
+  // 2. 过滤出每个分类的代表性场景 (优先使用选中的场景)
   const displayScenes = useMemo(() => {
     return MAIN_CATEGORIES.map(cat => {
+      // 如果选中的场景属于这个分类，优先展示选中的场景
+      if (selectedScene && selectedScene.category === cat) {
+        return selectedScene;
+      }
+      // 否则寻找该分类下的第一个场景
       return SCENES.find(s => s.category === cat) || SCENES[0];
     });
+  }, [selectedScene]);
+
+  // 根据当前场景或选定场景确定初始页面索引
+  const initialPageIndex = useMemo(() => {
+    const target = selectedScene || currentScene;
+    if (!target) return 0;
+    const catIndex = MAIN_CATEGORIES.indexOf(target.category);
+    return catIndex >= 0 ? catIndex : 0;
+  }, [selectedScene]); // 移除 currentScene 依赖，防止播放过程中意外跳页
+
+  // 3. 页面进入时，如果传入了场景且当前未播放该场景，自动切换
+  useEffect(() => {
+    if (selectedScene && selectedScene.id !== currentScene?.id) {
+      AudioService.switchSoundscape(selectedScene);
+    }
+  }, [selectedScene]);
+
+  // 挂载时根据初始页面设置动画值，防止首屏背景透明
+  useEffect(() => {
+    position.setValue(initialPageIndex);
+    scrollOffset.setValue(0);
   }, []);
 
   const handlePageSelected = (e: any) => {
@@ -50,18 +85,6 @@ const ImmersivePlayerNew = () => {
     const targetScene = displayScenes[index];
     if (targetScene && targetScene.id !== currentScene?.id) {
       AudioService.switchSoundscape(targetScene);
-    }
-
-    // 极简单图背景切换逻辑
-    if (index !== bgIndex) {
-      setBgIndex(index);       // 立即切换数据源
-      fadeAnim.setValue(0.3);  // 初始透明度设为 0.3
-      
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }).start();
     }
   };
 
@@ -88,18 +111,27 @@ const ImmersivePlayerNew = () => {
   const renderBackground = () => {
     return (
       <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
-        {/* 唯一背景图层 - 设置 0.85 透明度让底层灰透出，防止死黑 */}
-        <Animated.Image 
-          key="single-bg-layer"
-          source={displayScenes[bgIndex].backgroundSource}
-          style={[
-            StyleSheet.absoluteFill, 
-            { 
-              opacity: Animated.multiply(fadeAnim, 0.85)
-            }
-          ]}
-          resizeMode="cover"
-        />
+        {/* 多层背景淡入淡出逻辑 */}
+        {displayScenes.map((scene, index) => {
+          // 为每一层背景计算插值透明度
+          const opacity = scrollProgress.interpolate({
+            inputRange: [index - 1, index, index + 1],
+            outputRange: [0, 0.85, 0], // 当前页面 0.85 透明度，左右页面 0
+            extrapolate: 'clamp',
+          });
+
+          return (
+            <Animated.Image 
+              key={`bg-layer-${scene.id}`}
+              source={scene.backgroundSource}
+              style={[
+                StyleSheet.absoluteFill, 
+                { opacity }
+              ]}
+              resizeMode="cover"
+            />
+          );
+        })}
 
         {/* 亮度提升层: 0.1 透明度的白色遮罩 */}
         <View 
@@ -122,28 +154,17 @@ const ImmersivePlayerNew = () => {
     );
   };
 
+  const renderHeader = () => {
+    // 冗余函数，逻辑已迁移至主渲染块
+    return null;
+  };
+
   const renderScenePage = (scene: Scene, index: number) => {
     return (
       <View key={scene.id} style={styles.page}>
         <SafeAreaView style={styles.overlay}>
-          <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={() => navigation.goBack()}
-            >
-              <Icon name="chevron-down" size={32} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.title}>{scene.title}</Text>
-            <Text style={styles.subTitle}>{scene.category}</Text>
-
-            <TouchableOpacity 
-              style={styles.ambientTrigger}
-              onPress={toggleAmbientSheet}
-            >
-              <Icon name="options-outline" size={24} color="#fff" />
-              <Text style={styles.ambientTriggerText}>氛围点缀</Text>
-            </TouchableOpacity>
-          </View>
+          {/* 占位符，保持布局一致性 */}
+          <View style={styles.headerPlaceholder} />
 
           <View style={styles.controlCenter}>
             <TouchableOpacity 
@@ -195,14 +216,25 @@ const ImmersivePlayerNew = () => {
     <View style={styles.container}>
       {renderBackground()}
 
-      <PagerView 
+      <AnimatedPagerView 
         ref={pagerRef}
         style={styles.container} 
         initialPage={initialPageIndex}
         onPageSelected={handlePageSelected}
+        onPageScroll={Animated.event(
+          [
+            {
+              nativeEvent: {
+                offset: scrollOffset,
+                position: position,
+              },
+            },
+          ],
+          { useNativeDriver: true }
+        )}
       >
         {displayScenes.map((scene, index) => renderScenePage(scene, index))}
-      </PagerView>
+      </AnimatedPagerView>
 
       <AmbientPickerSheet
         visible={ambientSheetVisible}
@@ -214,6 +246,94 @@ const ImmersivePlayerNew = () => {
           handleAmbientSelect(mix.ambientType as any);
         }}
       />
+
+      {/* 正式大标题：保持 zIndex: 99999 活命层级 */}
+      <View style={{ 
+        position: 'absolute', 
+        top: 80, 
+        left: 0, 
+        right: 0, 
+        zIndex: 99999, 
+        elevation: 100,
+        alignItems: 'center',
+        pointerEvents: 'none' // 点击穿透，不影响下方按钮
+      }}> 
+        {MAIN_CATEGORIES.map((category, index) => {
+          const activeScene = displayScenes[index];
+          const opacity = scrollProgress.interpolate({
+            inputRange: [index - 0.6, index, index + 0.6],
+            outputRange: [0, 1, 0],
+            extrapolate: 'clamp',
+          });
+
+          return (
+            <Animated.View 
+              key={`final-title-${category}`}
+              style={{ 
+                position: 'absolute', 
+                alignItems: 'center', 
+                opacity 
+              }}
+            >
+              <Text style={{ 
+                color: 'white', 
+                fontSize: 28, 
+                fontWeight: 'bold',
+                letterSpacing: 2,
+                textShadowColor: 'rgba(0,0,0,0.5)', 
+                textShadowOffset: {width: 0, height: 2}, 
+                textShadowRadius: 4 
+              }}> 
+                {category} 
+              </Text> 
+              <Text style={{ 
+                color: 'white', 
+                fontSize: 16, 
+                marginTop: 4,
+                opacity: 0.8,
+                textShadowColor: 'rgba(0,0,0,0.5)', 
+                textShadowOffset: {width: 0, height: 2}, 
+                textShadowRadius: 4 
+              }}>
+                {activeScene?.title || ''}
+              </Text>
+            </Animated.View>
+          );
+        })}
+      </View>
+
+      {/* 顶部固定按钮层 */}
+      <View style={{
+        position: 'absolute',
+        top: insets.top,
+        left: 0,
+        right: 0,
+        height: 60,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        zIndex: 100000, // 按钮层级更高
+      }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8 }}>
+          <Icon name="chevron-down" size={32} color="#fff" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          onPress={toggleAmbientSheet}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 20,
+          }}
+        >
+          <Icon name="options-outline" size={20} color="#fff" />
+          <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -226,17 +346,70 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
-  header: { marginTop: 60, alignItems: 'center', width: '100%' },
-  backButton: {
+  headerWrapper: {
     position: 'absolute',
-    left: 20,
-    top: 0,
-    zIndex: 10,
+    left: 0,
+    right: 0,
+    width: '100%',
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 10,
+    backgroundColor: 'transparent',
   },
-  title: { color: '#fff', fontSize: 24, fontWeight: '600', letterSpacing: 2 },
-  subTitle: { color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 8, letterSpacing: 1 },
+  headerContainer: {
+    height: 80,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    width: '100%',
+  },
+  headerPlaceholder: {
+    height: 140,
+    width: '100%',
+  },
+  titleArea: {
+    flex: 2,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 10,
+    zIndex: 10000, // 比 wrapper 更高
+  },
+  absoluteHeader: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    backgroundColor: 'transparent',
+  },
+  backButton: {
+    padding: 5,
+    zIndex: 10001,
+  },
+  categoryTitle: { 
+    color: '#FFFFFF', // 暴力纯白
+    fontSize: 24, 
+    fontWeight: '600', 
+    letterSpacing: 2,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)', // 增加投影防止背景干扰
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10
+  },
+  sceneTitle: { 
+    color: '#FFFFFF', // 暴力纯白
+    fontSize: 14, 
+    marginTop: 4, 
+    letterSpacing: 1,
+    textAlign: 'center',
+    opacity: 0.8, // 稍微降点透明度区分主次，但颜色还是纯白
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10
+  },
   controlCenter: { justifyContent: 'center', alignItems: 'center', width: '100%' },
   playButton: {
     width: 100,

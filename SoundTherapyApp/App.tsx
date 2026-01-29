@@ -74,15 +74,15 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#0D1117',
+    backgroundColor: '#0F172A',
   },
   navContainer: {
     flex: 1,
-    backgroundColor: '#0D1117',
+    backgroundColor: '#0F172A',
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0a0a12',
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
   },

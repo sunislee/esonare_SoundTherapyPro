@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 
 // 导入所有必要的页面
+import LandingScreen from '../screens/LandingScreen';
 import { ResourceDownloadScreen } from '../screens/ResourceDownloadScreen';
 import NameEntryScreen from '../screens/NameEntryScreen';
 import { MainTabNavigator } from './MainTabNavigator';
@@ -13,7 +14,8 @@ import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 
 export type RootStackParamList = {
-  ResourceDownload: undefined;
+  Landing: undefined;
+  Download: undefined;
   NameEntry: undefined;
   MainTabs: undefined;
   ImmersivePlayer: { sceneId?: string } | undefined;
@@ -28,14 +30,18 @@ const Stack = createStackNavigator<RootStackParamList>();
 export function MainNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="ResourceDownload"
+      initialRouteName="Landing"
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
       }}
     >
       <Stack.Screen 
-        name="ResourceDownload" 
+        name="Landing" 
+        component={LandingScreen} 
+      />
+      <Stack.Screen 
+        name="Download" 
         component={ResourceDownloadScreen} 
       />
       <Stack.Screen 
