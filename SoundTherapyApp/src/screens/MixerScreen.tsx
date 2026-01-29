@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Feather';
 import Slider from '@react-native-community/slider';
 import Video from 'react-native-video';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL } from '../constants/audioAssets';
 import ToastUtil from '../utils/ToastUtil';
 import { BlurView } from '@react-native-community/blur';
@@ -44,6 +44,9 @@ interface SavedPreset {
 
 const MixerScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  const { presetId } = route.params || {};
+
   const [tracks, setTracks] = useState<TrackState[]>(
     AUDIO_MANIFEST.map(asset => ({
       id: asset.id,
@@ -54,12 +57,40 @@ const MixerScreen = () => {
     }))
   );
 
+  useEffect(() => {
+    if (presetId) {
+      loadPresetFromId(presetId);
+    }
+  }, [presetId]);
+
+  const loadPresetFromId = async (id: string) => {
+    try {
+      const presetsJson = await AsyncStorage.getItem('@mixer_presets');
+      if (presetsJson) {
+        const presets: SavedPreset[] = JSON.parse(presetsJson);
+        const preset = presets.find(p => p.id === id);
+        if (preset) {
+          setTracks(prev => prev.map(t => {
+            const savedTrack = preset.tracks.find(st => st.id === t.id);
+            if (savedTrack) {
+              return { ...t, volume: savedTrack.volume, isActive: true };
+            }
+            return { ...t, isActive: false };
+          }));
+          ToastUtil.success(`已加载预设: ${preset.name}`);
+        }
+      }
+    } catch (e) {
+      console.log('Failed to load preset', e);
+    }
+  };
+
   const [isSaving, setIsSaving] = useState(false);
   const [presetName, setPresetName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [sleepTimer, setSleepTimer] = useState<number | null>(null); // minutes
   const [timeLeft, setTimeLeft] = useState<number | null>(null); // seconds
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<any>(null);
 
   // 睡眠定时器逻辑
   useEffect(() => {
