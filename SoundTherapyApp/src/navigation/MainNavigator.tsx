@@ -8,11 +8,11 @@ import { ResourceDownloadScreen } from '../screens/ResourceDownloadScreen';
 import NameEntryScreen from '../screens/NameEntryScreen';
 import { MainTabNavigator } from './MainTabNavigator';
 import ImmersivePlayerNew from '../screens/ImmersivePlayerNew';
-import RemixSchemeManagerScreen from '../screens/RemixSchemeManagerScreen';
+// import RemixSchemeManagerScreen from '../screens/RemixSchemeManagerScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
-import { MixerScreen } from '../screens/MixerScreen';
+// import { MixerScreen } from '../screens/MixerScreen';
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -58,10 +58,12 @@ export function MainNavigator() {
         name="ImmersivePlayer" 
         component={ImmersivePlayerNew} 
       />
+      {/* 
       <Stack.Screen 
         name="RemixSchemeManager" 
         component={RemixSchemeManagerScreen} 
       />
+      */}
       <Stack.Screen 
         name="History" 
         component={HistoryScreen} 
@@ -74,15 +76,17 @@ export function MainNavigator() {
         name="About" 
         component={AboutScreen} 
       />
+      {/* 
       <Stack.Screen 
         name="Mixer" 
         component={MixerScreen} 
         options={{
           headerShown: false,
-          presentation: 'fullScreenModal',
+          presentation: 'modal',
           tabBarStyle: { display: 'none' }, // 物理隔离 TabBar，防止穿透
         }}
       />
+      */}
     </Stack.Navigator>
   );
 }

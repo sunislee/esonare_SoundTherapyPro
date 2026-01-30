@@ -293,11 +293,14 @@ export const ProfileScreen = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>核心功能</Text>
-          <MenuItem icon="zap" title="PRO 混音实验室" onPress={() => handleOpenMixer()} badge="PRO" color="#FFD700" />
-          <MenuItem icon="heart" title="我的收藏" onPress={() => navigation.navigate('RemixSchemeManager')} />
+          {/* 混音实验室入口屏蔽 */}
+          {/* <MenuItem icon="zap" title="PRO 混音实验室" onPress={() => handleOpenMixer()} badge="PRO" color="#FFD700" /> */}
+          {/* <MenuItem icon="heart" title="我的收藏" onPress={() => navigation.navigate('RemixSchemeManager')} /> */}
           <MenuItem icon="clock" title="睡眠定时" onPress={() => setIsTimerVisible(true)} />
         </View>
 
+        {/* 混音预设列表屏蔽 */}
+        {/* 
         {savedPresets.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>我的混音预设</Text>
@@ -327,6 +330,7 @@ export const ProfileScreen = () => {
             ))}
           </View>
         )}
+        */}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>资源与记录</Text>
