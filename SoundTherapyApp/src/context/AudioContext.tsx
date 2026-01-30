@@ -12,12 +12,16 @@ interface AudioContextType {
   remainingTime: number | null;
   initialRemaining: number | null;
   isTimerActive: boolean;
+  ambientVolume: number;
   play: (scene?: Scene) => Promise<void>;
   pause: () => Promise<void>;
   togglePlayback: (scene: Scene) => Promise<void>;
   syncNativeStatus: () => Promise<void>;
   setSleepTimer: (minutes: number) => Promise<void>;
   clearSleepTimer: () => void;
+  updateAmbientVolume: (volume: number) => void;
+  setAmbient: (id: string | null) => Promise<void>;
+  getAmbientVolumeById: (id: string) => number;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -28,6 +32,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentScene, setCurrentScene] = useState<Scene | null>(null);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [initialRemaining, setInitialRemaining] = useState<number | null>(AudioService.getInitialSleepSeconds());
+  const [ambientVolume, setAmbientVolume] = useState<number>(AudioService.getAmbientVolume());
 
   // 初始化时尝试从 Service 同步一次状态
   useEffect(() => {
@@ -51,6 +56,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setCurrentScene(AudioService.getCurrentScene());
     });
 
+    const unsubscribeVolume = AudioService.addVolumeListener((vol) => {
+      setAmbientVolume(vol);
+    });
+
     const unsubscribeTimer = AudioService.addSleepTimerListener((remaining) => {
       setRemainingTime(remaining);
       // 如果 initialRemaining 为空且当前有剩余时间，说明是重入页面，尝试恢复初始时间
@@ -64,9 +73,22 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       unsubscribeState();
+      unsubscribeVolume();
       unsubscribeTimer();
     };
   }, [initialRemaining]);
+
+  const updateAmbientVolume = useCallback((volume: number) => {
+    AudioService.updateAmbientVolume(volume);
+  }, []);
+
+  const setAmbient = useCallback(async (id: string | null) => {
+    await AudioService.setAmbient(id);
+  }, []);
+
+  const getAmbientVolumeById = useCallback((id: string) => {
+    return AudioService.getAmbientVolumeById(id);
+  }, []);
 
   const setSleepTimer = useCallback(async (minutes: number) => {
     await AudioService.setSleepTimer(minutes);
@@ -128,12 +150,16 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         remainingTime,
         initialRemaining,
         isTimerActive,
+        ambientVolume,
         play,
         pause,
         togglePlayback,
         syncNativeStatus,
         setSleepTimer,
         clearSleepTimer,
+        updateAmbientVolume,
+        setAmbient,
+        getAmbientVolumeById,
       }}
     >
       {children}

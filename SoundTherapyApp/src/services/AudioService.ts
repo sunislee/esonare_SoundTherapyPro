@@ -45,6 +45,9 @@ class AudioService {
   private meteringListeners = new Set<(level: number) => void>();
   private mainVolume = 1.0;
   private ambientVolume = 0.4;
+  
+  // Ambient volumes per sound ID
+  private ambientVolumes: Record<string, number> = {};
 
   // Unified State Management
   private currentAudioState: { id: string | null; state: State } = { id: null, state: State.None };
@@ -370,6 +373,7 @@ class AudioService {
   }
 
   public async setAmbient(id: string | null): Promise<void> {
+    // 互斥播放逻辑：如果已经有环境音在播放，先停止
     if (this.ambientSound) {
       this.ambientSound.stop(() => {
         this.ambientSound?.release();
@@ -379,6 +383,8 @@ class AudioService {
 
     if (!id) {
       this.ambientName = null;
+      this.ambientVolume = 0; // 重置音量
+      this.emitVolume(); // 通知 UI
       return;
     }
 
@@ -387,6 +393,13 @@ class AudioService {
       console.warn(`[Ambient] Asset not found for id: ${id}`);
       return;
     }
+
+    // 加载存储的音量
+    const storedVol = await this.getStoredVolume(id);
+    this.ambientVolume = storedVol;
+    this.ambientName = id;
+    this.ambientVolumes[id] = storedVol;
+    this.emitVolume(); // 同步全局音量状态
 
     const localPath = await DownloadService.getLocalPath(asset.id);
     const exists = localPath ? await RNFS.exists(localPath) : false;
@@ -400,7 +413,6 @@ class AudioService {
           return;
         }
         this.ambientSound = sound;
-        this.ambientName = id;
         sound.setNumberOfLoops(-1);
         sound.setVolume(this.ambientVolume);
         sound.play();
@@ -410,35 +422,32 @@ class AudioService {
   }
 
   public updateAmbientVolume(volume: number) {
-    // Defensive check: if volume < 0.01, set to 0. Otherwise use 0.001 as safety floor.
+    // Defensive check
     let finalVolume = volume < 0.01 ? 0 : Math.max(0.001, volume);
     
-    // 如果音量变化极小（小于 0.005），跳过处理，防止 UI 频繁重绘导致的闪烁
-    if (Math.abs(this.ambientVolume - finalVolume) < 0.005 && finalVolume !== 0) {
+    // 节流处理：音量变化极小时跳过
+    if (Math.abs(this.ambientVolume - finalVolume) < 0.005 && finalVolume !== 0 && finalVolume !== 1) {
       return;
     }
     
     this.ambientVolume = finalVolume;
     
-    // 异步执行原生音量设置，不阻塞 JS 线程
+    if (this.ambientName) {
+      this.ambientVolumes[this.ambientName] = finalVolume;
+      // 异步保存
+      AsyncStorage.setItem(`@ambient_volume_${this.ambientName}`, String(finalVolume)).catch(() => {});
+    }
+
+    // 同步给原生音频实例
     if (this.ambientSound) {
-      setTimeout(() => {
-        try {
-          this.ambientSound?.setVolume(this.ambientVolume);
-        } catch (e) {
-          if (this.ambientVolume === 0) {
-            this.ambientSound?.setVolume(0.0001);
-          }
-        }
-      }, 0);
+      this.ambientSound.setVolume(finalVolume);
     }
     
-    // 异步保存偏好，避免 I/O 阻塞
-    if (this.ambientName) {
-      const name = this.ambientName;
-      const vol = this.ambientVolume;
-      AsyncStorage.setItem(`@ambient_volume_${name}`, String(vol)).catch(() => {});
-    }
+    this.emitVolume();
+  }
+
+  public getAmbientVolumeById(id: string): number {
+    return this.ambientVolumes[id] ?? 0.4;
   }
 
   public async getStoredVolume(name: string): Promise<number> {

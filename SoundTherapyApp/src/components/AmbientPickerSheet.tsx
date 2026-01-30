@@ -19,14 +19,24 @@ import { Portal } from 'react-native-paper';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAudio } from '../context/AudioContext';
 import AudioService from '../services/AudioService';
 import ToastUtil from '../utils/ToastUtil';
 
 // ----------------------------------------------------------------
-// 内部组件：强制实色滑动条
+// 内部组件：带有颜色变化的滑块
 // ----------------------------------------------------------------
 const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor = '#D4AF37' }: any) => {
   const [width, setWidth] = useState(0);
+  
+  // 动态颜色逻辑：随数值增加而变亮
+  const getDynamicColor = () => {
+    if (activeColor !== '#D4AF37') return activeColor;
+    // D4AF37 变亮路径
+    const opacity = 0.3 + (value * 0.7);
+    return `rgba(212, 175, 55, ${opacity})`;
+  };
+
   return (
     <View 
       style={{ width: '100%', height: 44, justifyContent: 'center' }}
@@ -48,7 +58,7 @@ const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor =
       >
         <View style={{ width: '100%', height: 44, justifyContent: 'center' }}>
           <View style={{height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)', width: '100%', position: 'absolute'}} />
-          <View style={{height: 6, borderRadius: 3, backgroundColor: activeColor, width: `${value * 100}%`, position: 'absolute'}} />
+          <View style={{height: 6, borderRadius: 3, backgroundColor: getDynamicColor(), width: `${value * 100}%`, position: 'absolute'}} />
           <View style={{
             width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff',
             position: 'absolute', left: `${value * 100}%`, marginLeft: -12,
@@ -130,6 +140,13 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     }
   };
 
+  const { 
+    updateAmbientVolume, 
+    setAmbient, 
+    getAmbientVolumeById,
+    ambientVolume: globalAmbientVolume 
+  } = useAudio();
+  
   const [mainVolume, setMainVolume] = useState(1.0);
   const [rainVolume, setRainVolume] = useState(0.3);
   const [fireVolume, setFireVolume] = useState(0.3);
@@ -148,8 +165,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     if (visible) {
       loadMixes();
       setMainVolume(AudioService.getVolume());
-      AudioService.getStoredVolume('healing_rain').then(setRainVolume);
-      AudioService.getStoredVolume('life_fire_pure').then(setFireVolume);
+      setRainVolume(getAmbientVolumeById('healing_rain'));
+      setFireVolume(getAmbientVolumeById('life_fire_pure'));
       
       dragY.setValue(0); // 重置拖动值
       // 动画目标值为 0
@@ -166,7 +183,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
         useNativeDriver: true,
       }).start();
     }
-  }, [visible, hiddenValue, visibleValue, loadMixes]);
+  }, [visible, hiddenValue, visibleValue, loadMixes, getAmbientVolumeById]);
 
   const saveMix = async () => {
     const name = mixName.trim() || `${new Date().getMonth() + 1}月${new Date().getDate()}日 混音`;
@@ -180,9 +197,18 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   };
 
   const handleVolumeChange = (type: any, val: number) => {
-    if (type === 'main') { setMainVolume(val); AudioService.setVolume(val); }
-    else if (type === 'rain') { setRainVolume(val); if (currentAmbient === 'rain') AudioService.updateAmbientVolume(val); }
-    else { setFireVolume(val); if (currentAmbient === 'fire') AudioService.updateAmbientVolume(val); }
+    if (type === 'main') { 
+      setMainVolume(val); 
+      AudioService.setVolume(val); 
+    }
+    else if (type === 'rain') { 
+      setRainVolume(val); 
+      if (currentAmbient === 'rain') updateAmbientVolume(val); 
+    }
+    else { 
+      setFireVolume(val); 
+      if (currentAmbient === 'fire') updateAmbientVolume(val); 
+    }
   };
 
   if (!visible) return null;
