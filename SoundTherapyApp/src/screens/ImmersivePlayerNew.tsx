@@ -319,14 +319,25 @@ const ImmersivePlayerNew = () => {
           blurAmount={20}
           reducedTransparencyFallbackColor="black"
         />
-        <TouchableOpacity 
-          style={styles.footerContent} 
-          activeOpacity={0.8}
-          onPress={toggleAmbientSheet}
-        >
-          <Icon name="options-outline" size={20} color="#fff" />
-          <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
-        </TouchableOpacity>
+        <View style={styles.footerContent}>
+          <View style={styles.indicatorContainer}>
+            {MAIN_CATEGORIES.map((cat, index) => (
+              <AnimatedIndicator
+                key={cat}
+                isActive={activeIndex === index}
+                iconName={
+                  cat === 'Nature' ? 'leaf-outline' :
+                  cat === 'Healing' ? 'heart-outline' :
+                  cat === 'Brainwave' ? 'pulse-outline' : 'cafe-outline'
+                }
+                onPress={() => handleIndicatorPress(index)}
+              />
+            ))}
+          </View>
+          <Text style={styles.statusText}>
+            {isPlaying ? '正在疗愈中...' : '已暂停'}
+          </Text>
+        </View>
       </View>
     );
   };

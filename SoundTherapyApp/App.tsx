@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StatusBar, LogBox, StyleSheet, Platform, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Provider as PaperProvider } from 'react-native-paper';
 import Toast from 'react-native-toast-message';
 
 // Navigation
@@ -63,9 +64,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AudioProvider>
-          <AppContent />
-        </AudioProvider>
+        <PaperProvider>
+          <AudioProvider>
+            <AppContent />
+          </AudioProvider>
+        </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

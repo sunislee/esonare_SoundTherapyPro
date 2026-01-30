@@ -15,6 +15,7 @@ import {
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { Portal } from 'react-native-paper';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -187,139 +188,141 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   if (!visible) return null;
 
   return (
-    <View style={styles.overlay}>
-      {/* 遮罩背景：压暗效果调整为 0.6 */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
-      <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
+    <Portal>
+      <View style={styles.overlay}>
+        {/* 遮罩背景：压暗效果调整为 0.6 */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
+        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
 
-      {/* 纯实色弹窗主体：增加悬浮边距 */}
-      <PanGestureHandler
-        onGestureEvent={onGestureEvent}
-        onHandlerStateChange={onHandlerStateChange}
-      >
-        <Animated.View 
-          renderToHardwareTextureAndroid={false}
-          needsOffscreenAlphaCompositing={false}
-          style={[
-            styles.sheet, 
-            { 
-              height: sheetHeight,
-              marginBottom: insets.bottom + 20,
-              transform: [
-                { translateY: Animated.add(translateY, animatedDragY) }
-              ],
-              backgroundColor: '#121212',
-              opacity: 1
-            }
-          ]}
+        {/* 纯实色弹窗主体：增加悬浮边距 */}
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
         >
-          {/* 【关键】底层钢板 */}
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
-   
-          {/* 安全区适配 */}
-          <View style={{ 
-            paddingTop: insets.top, 
-            backgroundColor: '#121212', 
-            width: '100%',
-          }}>
-            {/* 拖动手柄容器：修复为单一连续 View */}
-            <View style={styles.handleContainer}>
-              <Animated.View style={styles.handle} />
-            </View>
-          </View>
-        
-        {/* 标题栏 */}
-        <View style={styles.navHeader}>
-          <TouchableOpacity style={styles.backButton} onPress={onClose}>
-            <Icon name="chevron-down" size={32} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitleText}>氛围点缀控制</Text>
-          <View style={{ width: 50 }} /> 
-        </View>
-
-        <ScrollView 
-          style={{ flex: 1, backgroundColor: '#121212' }} 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {/* 保存按钮 */}
-          <View style={styles.saveSection}>
-            {isEditing ? (
-              <View style={styles.inputBox}>
-                <TextInput 
-                  style={styles.textInput} 
-                  value={mixName} 
-                  onChangeText={setMixName} 
-                  placeholder="输入名称..."
-                  placeholderTextColor="#555"
-                  autoFocus
-                />
-                <TouchableOpacity onPress={saveMix}>
-                  <Icon name="checkmark-circle" size={32} color="#D4AF37" />
-                </TouchableOpacity>
+          <Animated.View 
+            renderToHardwareTextureAndroid={false}
+            needsOffscreenAlphaCompositing={false}
+            style={[
+              styles.sheet, 
+              { 
+                height: sheetHeight,
+                marginBottom: insets.bottom + 20,
+                transform: [
+                  { translateY: Animated.add(translateY, animatedDragY) }
+                ],
+                backgroundColor: '#121212',
+                opacity: 1
+              }
+            ]}
+          >
+            {/* 【关键】底层钢板 */}
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
+     
+            {/* 安全区适配 */}
+            <View style={{ 
+              paddingTop: insets.top, 
+              backgroundColor: '#121212', 
+              width: '100%',
+            }}>
+              {/* 拖动手柄容器：修复为单一连续 View */}
+              <View style={styles.handleContainer}>
+                <Animated.View style={styles.handle} />
               </View>
-            ) : (
-              <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditing(true)}>
-                <Icon name="save-outline" size={20} color="#000" />
-                <Text style={styles.saveButtonText}>保存当前混音方案</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* 音量控制组 */}
-          <Text style={styles.groupLabel}>场景主音量</Text>
-          <View style={styles.volumeCard}>
-            <SimpleJsSlider value={mainVolume} onValueChange={(v:any)=>handleVolumeChange('main',v)} onSlidingComplete={()=>{}} activeColor="#fff" />
-          </View>
-
-          <Text style={styles.groupLabel}>环境音效叠加</Text>
-          {['rain', 'fire'].map((type: any) => (
-            <View key={type} style={[styles.volumeCard, currentAmbient === type && styles.activeCard]}>
-              <TouchableOpacity style={styles.cardHeader} onPress={() => {
-                ReactNativeHapticFeedback.trigger('impactLight');
-                onSelect(currentAmbient === type ? 'none' : type);
-              }}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                   <Icon name={type === 'rain' ? "rainy-outline" : "flame-outline"} size={20} color={currentAmbient === type ? "#D4AF37" : "#666"} />
-                   <Text style={[styles.cardTitle, currentAmbient === type && {color: '#fff', fontWeight: 'bold'}]}>
-                     {type === 'rain' ? '  治愈雨声' : '  壁炉篝火'}
-                   </Text>
-                </View>
-                <Icon name={currentAmbient === type ? "radio-button-on" : "radio-button-off"} size={22} color={currentAmbient === type ? "#D4AF37" : "#444"} />
-              </TouchableOpacity>
-              <SimpleJsSlider 
-                value={type === 'rain' ? rainVolume : fireVolume} 
-                onValueChange={(v:any)=>handleVolumeChange(type,v)} 
-                onSlidingComplete={()=>{}}
-                activeColor={currentAmbient === type ? "#D4AF37" : "#333"}
-              />
             </View>
-          ))}
-
-          {/* 我的最爱列表 */}
-          <View style={styles.presetSection}>
-            <Text style={styles.groupLabel}>我的最爱</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop: 10}}>
-              {savedMixes.map(mix => (
-                <TouchableOpacity key={mix.id} style={styles.presetItem} onPress={() => {
-                  onRestoreMix(mix);
-                  setMainVolume(mix.mainVolume); setRainVolume(mix.rainVolume); setFireVolume(mix.fireVolume);
-                  ToastUtil.success(`已应用: ${mix.name}`);
-                }}>
-                  <Text style={{color: '#fff', fontWeight: 'bold'}} numberOfLines={1}>{mix.name}</Text>
-                  <Text style={{color: '#555', fontSize: 11, marginTop: 4}}>主音量 {Math.round(mix.mainVolume*100)}%</Text>
-                </TouchableOpacity>
-              ))}
-              {savedMixes.length === 0 && (
-                <Text style={{color: '#333', fontSize: 13, marginTop: 10, fontStyle: 'italic'}}>暂无保存方案</Text>
-              )}
-            </ScrollView>
+          
+          {/* 标题栏 */}
+          <View style={styles.navHeader}>
+            <TouchableOpacity style={styles.backButton} onPress={onClose}>
+              <Icon name="chevron-down" size={32} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitleText}>氛围点缀控制</Text>
+            <View style={{ width: 50 }} /> 
           </View>
-        </ScrollView>
-        </Animated.View>
-      </PanGestureHandler>
-    </View>
+
+          <ScrollView 
+            style={{ flex: 1, backgroundColor: '#121212' }} 
+            contentContainerStyle={styles.scrollContent} 
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
+            {/* 保存按钮 */}
+            <View style={styles.saveSection}>
+              {isEditing ? (
+                <View style={styles.inputBox}>
+                  <TextInput 
+                    style={styles.textInput} 
+                    value={mixName} 
+                    onChangeText={setMixName} 
+                    placeholder="输入名称..."
+                    placeholderTextColor="#555"
+                    autoFocus
+                  />
+                  <TouchableOpacity onPress={saveMix}>
+                    <Icon name="checkmark-circle" size={32} color="#D4AF37" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditing(true)}>
+                  <Icon name="save-outline" size={20} color="#000" />
+                  <Text style={styles.saveButtonText}>保存当前混音方案</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* 音量控制组 */}
+            <Text style={styles.groupLabel}>场景主音量</Text>
+            <View style={styles.volumeCard}>
+              <SimpleJsSlider value={mainVolume} onValueChange={(v:any)=>handleVolumeChange('main',v)} onSlidingComplete={()=>{}} activeColor="#fff" />
+            </View>
+
+            <Text style={styles.groupLabel}>环境音效叠加</Text>
+            {['rain', 'fire'].map((type: any) => (
+              <View key={type} style={[styles.volumeCard, currentAmbient === type && styles.activeCard]}>
+                <TouchableOpacity style={styles.cardHeader} onPress={() => {
+                  ReactNativeHapticFeedback.trigger('impactLight');
+                  onSelect(currentAmbient === type ? 'none' : type);
+                }}>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                     <Icon name={type === 'rain' ? "rainy-outline" : "flame-outline"} size={20} color={currentAmbient === type ? "#D4AF37" : "#666"} />
+                     <Text style={[styles.cardTitle, currentAmbient === type && {color: '#fff', fontWeight: 'bold'}]}>
+                       {type === 'rain' ? '  治愈雨声' : '  壁炉篝火'}
+                     </Text>
+                  </View>
+                  <Icon name={currentAmbient === type ? "radio-button-on" : "radio-button-off"} size={22} color={currentAmbient === type ? "#D4AF37" : "#444"} />
+                </TouchableOpacity>
+                <SimpleJsSlider 
+                  value={type === 'rain' ? rainVolume : fireVolume} 
+                  onValueChange={(v:any)=>handleVolumeChange(type,v)} 
+                  onSlidingComplete={()=>{}}
+                  activeColor={currentAmbient === type ? "#D4AF37" : "#333"}
+                />
+              </View>
+            ))}
+
+            {/* 我的最爱列表 */}
+            <View style={styles.presetSection}>
+              <Text style={styles.groupLabel}>我的最爱</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop: 10}}>
+                {savedMixes.map(mix => (
+                  <TouchableOpacity key={mix.id} style={styles.presetItem} onPress={() => {
+                    onRestoreMix(mix);
+                    setMainVolume(mix.mainVolume); setRainVolume(mix.rainVolume); setFireVolume(mix.fireVolume);
+                    ToastUtil.success(`已应用: ${mix.name}`);
+                  }}>
+                    <Text style={{color: '#fff', fontWeight: 'bold'}} numberOfLines={1}>{mix.name}</Text>
+                    <Text style={{color: '#555', fontSize: 11, marginTop: 4}}>主音量 {Math.round(mix.mainVolume*100)}%</Text>
+                  </TouchableOpacity>
+                ))}
+                {savedMixes.length === 0 && (
+                  <Text style={{color: '#333', fontSize: 13, marginTop: 10, fontStyle: 'italic'}}>暂无保存方案</Text>
+                )}
+              </ScrollView>
+            </View>
+          </ScrollView>
+          </Animated.View>
+        </PanGestureHandler>
+      </View>
+    </Portal>
   );
 };
 
