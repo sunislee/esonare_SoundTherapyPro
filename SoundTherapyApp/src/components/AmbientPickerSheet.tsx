@@ -85,10 +85,10 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   
-  // 1. 物理封印高度：视觉精修，改为屏幕高度的 90%
-  const sheetHeight = screenHeight * 0.9;
+  // 1. 高度重定义：调整为屏幕高度的 85%
+  const sheetHeight = screenHeight * 0.85;
   
-  // 2. 修正动画范围：归位到 0
+  // 2. 消除暴力位移：归位到 0
   const hiddenValue = sheetHeight;
   const visibleValue = 0; 
   const translateY = useRef(new Animated.Value(hiddenValue)).current;
@@ -114,7 +114,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
       AudioService.getStoredVolume('healing_rain').then(setRainVolume);
       AudioService.getStoredVolume('life_fire_pure').then(setFireVolume);
       
-      // 暴力冲顶动画：目标值为 -50
+      // 动画目标值为 0
       Animated.spring(translateY, {
         toValue: visibleValue,
         useNativeDriver: true,
@@ -172,15 +172,13 @@ export const AmbientPickerSheet: React.FC<Props> = ({
         {/* 【关键】底层钢板：绝对定位的黑漆，焊死在屏幕上 */}
         <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
 
-        {/* 顶部物理遮蔽：实色块，缩减高度 */}
+        {/* 安全区适配：顶部 Padding */}
         <View style={{ 
-          height: insets.top + 20, 
+          paddingTop: insets.top, 
           backgroundColor: '#121212', 
           width: '100%',
-          justifyContent: 'flex-end',
-          paddingBottom: 5
         }}>
-          {/* 拖动手柄 */}
+          {/* 拖动手柄容器 */}
           <View style={styles.handleContainer}>
             <View style={styles.handle} />
           </View>
@@ -300,8 +298,8 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     overflow: 'hidden', // 确保底层钢板不溢出圆角
   },
-  handleContainer: { alignItems: 'center', paddingVertical: 5 },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#333' },
+  handleContainer: { alignItems: 'center', paddingVertical: 12 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)' },
   navHeader: {
     flexDirection: 'row', 
     alignItems: 'center', 
