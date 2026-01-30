@@ -377,14 +377,18 @@ class AudioService {
       return;
     }
 
-    // 物理清场（Atomic Stop）：无论三七二十一，先杀掉所有可能存在的旧声音
+    // 【暴力切断】立即强制同步销毁所有旧实例，不留任何异步余地
     if (this.ambientSound) {
-        console.log('CLEANUP: All previous interactive sounds destroyed');
-        console.log('🔴 PHYSICAL_DEBUG: Stopping and releasing current sound before next load');
-        this.ambientSound.stop();
-        this.ambientSound.release();
-        this.ambientSound = null;
+      console.log('🔴 PHYSICAL_DEBUG: VIOLENT_CUTOFF - Destroying main ambient sound');
+      this.ambientSound.stop();
+      this.ambientSound.release();
+      this.ambientSound = null;
     }
+    
+    // 清空交互音效集合
+    console.log('🔴 PHYSICAL_DEBUG: VIOLENT_CUTOFF - Releasing all interactive sounds');
+    Object.values(this.interactiveSounds).forEach(s => s.release());
+    this.interactiveSounds = {};
 
     if (!id || id === 'none') {
       this.ambientName = null;
@@ -460,21 +464,19 @@ class AudioService {
    * 物理层面强行释放所有环境音实例
    */
   public async forceReleaseAllAmbient(): Promise<void> {
-    // 必须遍历并销毁之前残留的所有 interactiveSounds
-    if (this.interactiveSounds) {
-        Object.values(this.interactiveSounds).forEach(s => {
-          s.stop();
-          s.release();
-        });
-        this.interactiveSounds = {};
-    }
+    console.log('🔴 PHYSICAL_DEBUG: VIOLENT_CUTOFF - forceReleaseAllAmbient');
     
+    // 强制同步销毁
     if (this.ambientSound) {
-      console.log('🔴 PHYSICAL_DEBUG: Force releasing main ambient sound');
       this.ambientSound.stop();
       this.ambientSound.release();
       this.ambientSound = null;
     }
+
+    // 必须遍历并销毁之前残留的所有 interactiveSounds
+    Object.values(this.interactiveSounds).forEach(s => s.release());
+    this.interactiveSounds = {};
+    
     this.ambientName = null;
     this.updateAudioState(null, State.Stopped);
   }
