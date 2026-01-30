@@ -56,7 +56,6 @@ class AudioService {
   // Ambient Layer
   private ambientSound: Sound | null = null;
   private ambientName: string | null = null;
-  private interactiveSounds: Record<string, Sound> = {};
 
   private constructor() {
     // Enable Mix Mode (Ambient) to allow mixing with other apps or our own TrackPlayer
@@ -377,18 +376,17 @@ class AudioService {
       return;
     }
 
-    // 【暴力切断】立即强制同步销毁所有旧实例，不留任何异步余地
+    // 1. 暴力同步清理旧句柄，不留任何叠音空间
     if (this.ambientSound) {
-      console.log('🔴 PHYSICAL_DEBUG: VIOLENT_CUTOFF - Destroying main ambient sound');
+      console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Destroying old ambient sound');
       this.ambientSound.stop();
       this.ambientSound.release();
       this.ambientSound = null;
     }
     
-    // 清空交互音效集合
-    console.log('🔴 PHYSICAL_DEBUG: VIOLENT_CUTOFF - Releasing all interactive sounds');
-    Object.values(this.interactiveSounds).forEach(s => s.release());
-    this.interactiveSounds = {};
+    // 2. 停掉主播放器，确保绝对静默（互斥核心）
+    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Pausing TrackPlayer for exclusivity');
+    await TrackPlayer.pause();
 
     if (!id || id === 'none') {
       this.ambientName = null;
@@ -464,7 +462,7 @@ class AudioService {
    * 物理层面强行释放所有环境音实例
    */
   public async forceReleaseAllAmbient(): Promise<void> {
-    console.log('🔴 PHYSICAL_DEBUG: VIOLENT_CUTOFF - forceReleaseAllAmbient');
+    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - forceReleaseAllAmbient');
     
     // 强制同步销毁
     if (this.ambientSound) {
@@ -472,10 +470,6 @@ class AudioService {
       this.ambientSound.release();
       this.ambientSound = null;
     }
-
-    // 必须遍历并销毁之前残留的所有 interactiveSounds
-    Object.values(this.interactiveSounds).forEach(s => s.release());
-    this.interactiveSounds = {};
     
     this.ambientName = null;
     this.updateAudioState(null, State.Stopped);

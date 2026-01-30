@@ -218,8 +218,11 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const handleSelect = async (type: AmbientType) => {
     ReactNativeHapticFeedback.trigger('impactLight');
     
+    // 物理锁死：无论切到哪个，先暴力杀掉当前所有声音（包括主播放器）
+    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Entry point lockdown');
+    await setAmbient(null);
+
     if (type === 'none') {
-      await setAmbient(null);
       onSelect('none');
       return;
     }
@@ -231,8 +234,10 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     
     const targetId = idMap[type];
     
-    // 强制归口：唯一允许的调用只有 setAmbient(targetId)
-    await setAmbient(targetId);
+    // 等待旧声音彻底销毁后，再启动新声音
+    if (targetId) {
+      await setAmbient(targetId);
+    }
     
     // 通知父组件
     onSelect(type);

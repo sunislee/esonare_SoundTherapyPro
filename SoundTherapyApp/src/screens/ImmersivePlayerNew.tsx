@@ -82,7 +82,7 @@ const ImmersivePlayerNew = () => {
   const navigation = useNavigation();
   const route = useRoute<ImmersivePlayerRouteProp>();
   const insets = useSafeAreaInsets();
-  const { currentScene, isPlaying, togglePlayback } = useAudio();
+  const { currentScene, isPlaying, togglePlayback, setAmbient } = useAudio();
   const pagerRef = useRef<PagerView>(null);
 
   // 1. 从路由参数中获取选中的场景
@@ -224,10 +224,10 @@ const ImmersivePlayerNew = () => {
    const handleAmbientSelect = (type: 'none' | 'rain' | 'fire') => {
      setCurrentAmbient(type);
      if (type === 'none') {
-       AudioService.setAmbient(null);
+       setAmbient(null);
      } else {
        const soundId = type === 'rain' ? 'healing_rain' : 'life_fire_pure';
-       AudioService.setAmbient(soundId);
+       setAmbient(soundId);
      }
    };
 

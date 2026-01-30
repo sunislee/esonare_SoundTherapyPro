@@ -83,16 +83,24 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const setAmbient = useCallback(async (id: string | null) => {
-    // 1. 立即停止主场景播放，确保全局互斥 
-    await AudioService.pause(); 
-    // 2. 物理层面强行释放所有旧的环境音实例 
-    await AudioService.forceReleaseAllAmbient(); 
-    // 3. 更新 UI 状态 
-    setActiveSoundId(id); 
-    // 4. 如果 ID 不为空，再加载新声音 
-    if (id && id !== 'none') { 
-      await AudioService.playAmbient(id); 
+    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Context atomic transition start:', id);
+    
+    // 1. 调用底层 Service 实施暴力物理清场
+    // setAmbient(null) 会触发 stop(), release(), 以及 TrackPlayer.pause()
+    await AudioService.setAmbient(null);
+    
+    // 2. 等待底层彻底静默后，更新 UI 状态为 none
+    setActiveSoundId(null);
+    
+    // 3. 如果需要播放新声音，再次调用 Service
+    if (id && id !== 'none') {
+      await AudioService.setAmbient(id);
+      // activeSoundId 会通过 AudioService 的 listener 自动同步，
+      // 但为了绝对原子感，我们在 await 成功后手动补一次状态
+      setActiveSoundId(id);
     }
+    
+    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Context atomic transition end');
   }, []);
 
   const getAmbientVolumeById = useCallback((id: string) => {
