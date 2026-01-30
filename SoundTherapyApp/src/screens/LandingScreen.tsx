@@ -13,7 +13,7 @@ export const LandingScreen = ({ navigation }: any) => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
 
     // 启动呼吸动画
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(breathAnim, {
           toValue: 1,
@@ -28,7 +28,8 @@ export const LandingScreen = ({ navigation }: any) => {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    loop.start();
 
     // --- [分流路由逻辑] ---
     const checkAndBoot = async () => {
@@ -67,6 +68,10 @@ export const LandingScreen = ({ navigation }: any) => {
       }
     };
     checkAndBoot();
+
+    return () => {
+      loop.stop();
+    };
   }, [navigation, fadeAnim]);
 
   const iconScale = breathAnim.interpolate({

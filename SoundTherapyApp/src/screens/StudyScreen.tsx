@@ -115,8 +115,9 @@ const StudyScreen: React.FC = () => {
 
   // 呼吸灯动画
   useEffect(() => {
+    let loop: Animated.CompositeAnimation | null = null;
     if (isPlaying) {
-      Animated.loop(
+      loop = Animated.loop(
         Animated.sequence([
           Animated.timing(breathAnim, {
             toValue: 1.2,
@@ -129,10 +130,14 @@ const StudyScreen: React.FC = () => {
             useNativeDriver: true
           })
         ])
-      ).start();
+      );
+      loop.start();
     } else {
       breathAnim.setValue(1);
     }
+    return () => {
+      if (loop) loop.stop();
+    };
   }, [breathAnim, isPlaying]);
 
   // 初始化音频服务

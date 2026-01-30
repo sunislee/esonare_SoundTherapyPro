@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 
 // 导入所有必要的页面
@@ -27,7 +27,7 @@ export type RootStackParamList = {
   Mixer: { presetId?: string } | undefined;
 };
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function MainNavigator() {
   return (
@@ -57,6 +57,11 @@ export function MainNavigator() {
       <Stack.Screen 
         name="ImmersivePlayer" 
         component={ImmersivePlayerNew} 
+        options={{
+          animation: 'slide_from_bottom',
+          gestureEnabled: true,
+          headerShown: false,
+        }}
       />
       {/* 
       <Stack.Screen 

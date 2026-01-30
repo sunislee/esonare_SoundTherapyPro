@@ -219,7 +219,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     ReactNativeHapticFeedback.trigger('impactLight');
     
     // 物理锁死：无论切到哪个，先暴力杀掉当前所有声音（包括主播放器）
-    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Entry point lockdown');
     await setAmbient(null);
 
     if (type === 'none') {

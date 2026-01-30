@@ -203,8 +203,9 @@ export const MixerScreen = () => {
     const glowAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
+      let loop: Animated.CompositeAnimation | null = null;
       if (track.isActive) {
-        Animated.loop(
+        loop = Animated.loop(
           Animated.sequence([
             Animated.timing(glowAnim, {
               toValue: 1,
@@ -217,10 +218,14 @@ export const MixerScreen = () => {
               useNativeDriver: true,
             }),
           ])
-        ).start();
+        );
+        loop.start();
       } else {
         glowAnim.setValue(0);
       }
+      return () => {
+        if (loop) loop.stop();
+      };
     }, [track.isActive]);
 
     return (

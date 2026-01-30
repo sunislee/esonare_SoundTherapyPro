@@ -8,7 +8,8 @@ import {
   View,
   FlatList,
   Dimensions,
-  Platform
+  Platform,
+  InteractionManager
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -43,15 +44,18 @@ export const HomeScreen: React.FC = () => {
   // 使用 useFocusEffect 确保每次回到首页时重新读取用户名
   useFocusEffect(
     useCallback(() => {
-      const loadUserName = async () => {
-        const savedName = await AsyncStorage.getItem('USER_NAME');
-        if (savedName) {
-          setUserName(savedName);
-        } else {
-          setUserName(''); // 兜底处理
-        }
-      };
-      loadUserName();
+      const task = InteractionManager.runAfterInteractions(() => {
+        const loadUserName = async () => {
+          const savedName = await AsyncStorage.getItem('USER_NAME');
+          if (savedName) {
+            setUserName(savedName);
+          } else {
+            setUserName(''); // 兜底处理
+          }
+        };
+        loadUserName();
+      });
+      return () => task.cancel();
     }, [])
   );
 
@@ -89,7 +93,68 @@ export const HomeScreen: React.FC = () => {
   const [volume, _setVolume] = useState(0.5);
   
   const [rainDropConfigs, setRainDropConfigs] = useState<RainDropConfig[]>([]);
-  
+
+  // 1. 抽离 SceneItem 组件以管理独立的动画状态
+  const SceneItem = ({ item, isPlaying, activeSoundId, togglePlayback, navigation }: any) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const isThisPlaying = isPlaying && activeSoundId === item.id;
+
+    const handlePressIn = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.96,
+        useNativeDriver: true,
+        speed: 20,
+        bounciness: 10,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 20,
+        bounciness: 10,
+      }).start();
+    };
+
+    return (
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.card}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={() => {
+            // 物理延时：先完成缩放动画，给 UI 线程 50ms 喘息时间再触发跳转
+            setTimeout(() => {
+              navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
+            }, 50);
+          }}
+        >
+          <View style={styles.cardInner}>
+            <View style={[styles.cardBg, { backgroundColor: item.primaryColor }]} />
+            <View style={styles.cardContent}>
+              <View>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardSubtitle}>{item.category}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]}
+                onPress={async () => {
+                  await togglePlayback(item);
+                }}
+              >
+                <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>
+                  {isThisPlaying ? '||' : '▶'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   // Cold start sync
   useEffect(() => {
     syncNativeStatus();
@@ -97,17 +162,20 @@ export const HomeScreen: React.FC = () => {
 
   useEffect(() => {
     // Initialize RainDrops configuration
-    const drops: RainDropConfig[] = [];
-    for (let i = 0; i < 30; i++) {
-      drops.push({
-        id: i,
-        top: Math.random() * -20,
-        left: Math.random() * 100,
-        delay: Math.random() * 2000,
-        length: 15 + Math.random() * 15
-      });
-    }
-    setRainDropConfigs(drops);
+    const task = InteractionManager.runAfterInteractions(() => {
+      const drops: RainDropConfig[] = [];
+      for (let i = 0; i < 30; i++) {
+        drops.push({
+          id: i,
+          top: Math.random() * -20,
+          left: Math.random() * 100,
+          delay: Math.random() * 2000,
+          length: 15 + Math.random() * 15
+        });
+      }
+      setRainDropConfigs(drops);
+    });
+    return () => task.cancel();
   }, []);
 
   useEffect(() => {
@@ -126,35 +194,14 @@ export const HomeScreen: React.FC = () => {
   }, []);
 
   const renderSceneItem = ({ item }: { item: any }) => {
-    const isThisPlaying = isPlaying && activeSoundId === item.id;
-
     return (
-      <TouchableOpacity
-        activeOpacity={0.9}
-        style={styles.card}
-        onPress={() => {
-          // Navigate to Immersive Player with this sceneId
-          navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
-        }}
-      >
-        <View style={[styles.cardBg, { backgroundColor: item.primaryColor }]} />
-        <View style={styles.cardContent}>
-          <View>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardSubtitle}>{item.category}</Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]}
-            onPress={async () => {
-              await togglePlayback(item);
-            }}
-          >
-            <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>
-              {isThisPlaying ? '||' : '▶'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
+      <SceneItem 
+        item={item} 
+        isPlaying={isPlaying} 
+        activeSoundId={activeSoundId} 
+        togglePlayback={togglePlayback} 
+        navigation={navigation} 
+      />
     );
   };
 
@@ -198,6 +245,11 @@ export const HomeScreen: React.FC = () => {
             contentContainerStyle={styles.listContent}
             style={{ flex: 1, width: '100%' }}
             showsVerticalScrollIndicator={false}
+            // 性能优化：限制窗口大小，防止后台渲染过多
+            windowSize={5}
+            initialNumToRender={8}
+            maxToRenderPerBatch={10}
+            removeClippedSubviews={Platform.OS === 'android'}
           />
         </View>
       </View>
@@ -206,10 +258,10 @@ export const HomeScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a12' },
+  container: { flex: 1, backgroundColor: '#080912' },
   gradientBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0a0a12',
+    backgroundColor: '#080912',
     overflow: 'hidden'
   },
   rainContainer: {
@@ -242,16 +294,24 @@ const styles = StyleSheet.create({
   },
   card: {
     width: ITEM_WIDTH,
-    height: 100,
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
+    height: 110,
+    borderRadius: 20,
+    marginBottom: 20,
     position: 'relative',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  cardInner: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
     justifyContent: 'center',
   },
   cardBg: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.3,
+    opacity: 0.15,
   },
   cardContent: {
     flexDirection: 'row',
@@ -276,14 +336,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', // Pure White as requested
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    // 性能优化：移除复杂阴影，改用简单的边框区分
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   cardPlayIcon: {
     fontSize: 20,

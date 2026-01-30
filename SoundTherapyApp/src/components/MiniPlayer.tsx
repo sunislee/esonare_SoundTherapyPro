@@ -49,7 +49,7 @@ const MiniPlayer = () => {
     Animated.timing(autoHideAnim, {
       toValue: 1,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
 
     // Start timer to hide
@@ -59,7 +59,7 @@ const MiniPlayer = () => {
         Animated.timing(autoHideAnim, {
           toValue: 0,
           duration: 500,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }).start();
       }
     }, 5000);
@@ -105,7 +105,7 @@ const MiniPlayer = () => {
     Animated.timing(fadeAnim, {
       toValue: shouldShow ? 1 : 0,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
     
     if (shouldShow) {

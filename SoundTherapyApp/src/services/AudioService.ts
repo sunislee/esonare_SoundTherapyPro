@@ -1299,6 +1299,10 @@ class AudioService {
     return this.volume;
   }
 
+  public isPlayerInitialized(): boolean {
+    return this.isInitialized;
+  }
+
   public addVolumeListener(listener: (volume: number) => void): () => void {
     this.volumeListeners.add(listener);
     try {

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions, Easing } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
+import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions, Easing, InteractionManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -78,12 +78,64 @@ const DEFAULT_SCENE = SCENES[0];
 
 type ImmersivePlayerRouteProp = RouteProp<RootStackParamList, 'ImmersivePlayer'>;
 
+// --- 性能优化：背景渲染层 (Memoized) ---
+const BackgroundLayer = memo(({ 
+  activeScene, 
+  prevScene, 
+  bottomBgOpacity 
+}: { 
+  activeScene: Scene, 
+  prevScene: Scene, 
+  bottomBgOpacity: Animated.Value 
+}) => {
+  return (
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
+      {/* 底层垫底图：带缓慢淡出效果 */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: bottomBgOpacity }]}>
+        <Image 
+          source={prevScene.backgroundSource}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          fadeDuration={0}
+          // @ts-ignore - 强制硬件加速优先级
+          priority="high"
+        />
+      </Animated.View>
+      
+      {/* 顶层前景图：0ms 强制硬件加速，禁用淡入淡出 */}
+      <Image 
+        key={`bg-top-${activeScene.id}`}
+        source={activeScene.backgroundSource}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+        fadeDuration={0}
+        // @ts-ignore - 强制硬件加速优先级
+        priority="high"
+      />
+
+      <View 
+        style={[
+          StyleSheet.absoluteFill, 
+          { backgroundColor: 'rgba(0,0,0,0.3)' }
+        ]} 
+        pointerEvents="none"
+      />
+    </View>
+  );
+});
+
 const ImmersivePlayerNew = () => {
   const navigation = useNavigation();
   const route = useRoute<ImmersivePlayerRouteProp>();
   const insets = useSafeAreaInsets();
   const { currentScene, isPlaying, togglePlayback, setAmbient } = useAudio();
   const pagerRef = useRef<PagerView>(null);
+
+  // 第一步：引入‘断路器’状态
+  const [isFrozen, setIsFrozen] = useState(false);
+
+  // 第二步：渲染拦截 (最关键)
+  if (isFrozen) return <View style={{ flex: 1, backgroundColor: '#000' }} />;
 
   // 1. 从路由参数中获取选中的场景
   const selectedScene = useMemo(() => {
@@ -140,8 +192,12 @@ const ImmersivePlayerNew = () => {
   // 底层背景透明度动画
   const bottomBgOpacity = useRef(new Animated.Value(1)).current;
 
+  // 1. 拦截退出瞬间的 UI 更新：使用 useRef 物理标记
+  const isExiting = useRef(false);
+
   // 监听索引变化，同步记录上一个索引作为垫底
   useEffect(() => {
+    if (isExiting.current) return;
     // 1. 开始切换时，让底层图片稍微变暗，腾出视觉空间给顶层淡入
     Animated.timing(bottomBgOpacity, {
       toValue: 0.6,
@@ -151,12 +207,14 @@ const ImmersivePlayerNew = () => {
 
     const timer = setTimeout(() => {
       // 2. 800ms 后，顶层淡入肯定结束了，此时更新底层索引并恢复透明度
-      setPrevIndex(activeIndex);
-      Animated.timing(bottomBgOpacity, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }).start();
+      InteractionManager.runAfterInteractions(() => {
+        setPrevIndex(activeIndex);
+        Animated.timing(bottomBgOpacity, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }).start();
+      });
     }, 800); // 延长冻结时间到 800ms
 
     return () => clearTimeout(timer);
@@ -178,13 +236,35 @@ const ImmersivePlayerNew = () => {
   useEffect(() => {
     position.setValue(initialPageIndex);
     scrollOffset.setValue(0);
+
+    return () => {
+      // 延时静音：人都滑出页面了，再让音频静悄悄地在后台关掉
+      setTimeout(() => {
+        // AudioService.stop();
+      }, 800);
+
+      // 组件销毁时强制清理所有动画，防止内存泄漏和后台渲染开销
+      bottomBgOpacity.stopAnimation();
+      playBtnScale.stopAnimation();
+      position.stopAnimation();
+      scrollOffset.stopAnimation();
+    };
   }, []);
 
    // 3. 页面进入时，如果传入了场景且当前未播放该场景，自动切换
    useEffect(() => {
-     if (selectedScene && selectedScene.id !== currentScene?.id) {
-       AudioService.switchSoundscape(selectedScene);
+     // 性能降级保护：如果正在退出或已初始化且场景匹配，严禁在进入动画期间触发任何音频库逻辑
+     if (isFrozen || isExiting.current || (AudioService.isPlayerInitialized() && selectedScene?.id === currentScene?.id)) {
+       return;
      }
+
+     const task = InteractionManager.runAfterInteractions(() => {
+       if (isFrozen || isExiting.current) return;
+       if (selectedScene && selectedScene.id !== currentScene?.id) {
+         AudioService.switchSoundscape(selectedScene);
+       }
+     });
+     return () => task.cancel();
    }, [selectedScene]);
 
    const getSafeIndex = (index: number) => Math.max(0, Math.min(index, displayScenes.length - 1));
@@ -192,22 +272,30 @@ const ImmersivePlayerNew = () => {
    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
    const handlePageSelected = (e: any) => {
+     if (isFrozen || isExiting.current) return;
      const rawIndex = e.nativeEvent.position;
      const index = getSafeIndex(rawIndex);
      
-     // setActiveIndex(index);
-     
      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+     // 增加‘稳定期’：使用 400ms 延迟，确保 PagerView 完成物理滑动、动画彻底停稳
      debounceTimer.current = setTimeout(() => {
-        const safeIdx = Math.max(0, Math.min(index, displayScenes.length - 1));
-        const targetScene = displayScenes[safeIdx] || DEFAULT_SCENE;
-        if (targetScene && targetScene.id !== currentScene?.id) {
-         AudioService.switchSoundscape(targetScene);
-       }
-     }, 150);
+        InteractionManager.runAfterInteractions(() => {
+          if (isFrozen || isExiting.current) return;
+          const safeIdx = Math.max(0, Math.min(index, displayScenes.length - 1));
+
+          // 停稳后才同步一次背景索引，减少滑动中的渲染压力
+          setActiveIndex(safeIdx);
+
+          const targetScene = displayScenes[safeIdx] || DEFAULT_SCENE;
+          if (targetScene && targetScene.id !== currentScene?.id) {
+           AudioService.switchSoundscape(targetScene);
+          }
+        });
+     }, 400);
    };
 
    const handleToggle = async () => {
+    if (isFrozen) return;
     if (currentScene) {
       await togglePlayback(currentScene);
     }
@@ -215,6 +303,17 @@ const ImmersivePlayerNew = () => {
 
   const handleIndicatorPress = (targetIndex: number) => {
     pagerRef.current?.setPage(targetIndex);
+  };
+
+  const handleBack = () => {
+    // 第一步：同步执行 setIsFrozen(true) 开启断路器
+    setIsFrozen(true);
+
+    // 拦截退出瞬间的 UI 更新
+    isExiting.current = true;
+
+    // 立即触发返回导航 (最高优先级)
+    navigation.goBack();
   };
 
   const toggleAmbientSheet = () => {
@@ -231,7 +330,7 @@ const ImmersivePlayerNew = () => {
      }
    };
 
-   const renderBackground = () => {
+  const renderBackground = () => {
      const safeActiveIdx = Math.max(0, Math.min(activeIndex, displayScenes.length - 1));
      const safePrevIdx = Math.max(0, Math.min(prevIndex, displayScenes.length - 1));
      
@@ -239,33 +338,11 @@ const ImmersivePlayerNew = () => {
      const prevScene = displayScenes[safePrevIdx] || DEFAULT_SCENE;
 
      return (
-       <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
-         {/* 底层垫底图：带缓慢淡出效果 */}
-         <Animated.View style={[StyleSheet.absoluteFill, { opacity: bottomBgOpacity }]}>
-           <Image 
-             source={prevScene.backgroundSource}
-             style={StyleSheet.absoluteFill}
-             resizeMode="cover"
-           />
-         </Animated.View>
-         
-         {/* 顶层前景图：300ms 快速淡入遮盖 */}
-         <Image 
-           key={`bg-top-${activeScene.id}`}
-           source={activeScene.backgroundSource}
-           style={StyleSheet.absoluteFill}
-           resizeMode="cover"
-           fadeDuration={300} // 缩短淡入时间到 300ms
-         />
-
-         <View 
-           style={[
-             StyleSheet.absoluteFill, 
-             { backgroundColor: 'rgba(0,0,0,0.3)' }
-           ]} 
-           pointerEvents="none"
-         />
-       </View>
+       <BackgroundLayer 
+         activeScene={activeScene}
+         prevScene={prevScene}
+         bottomBgOpacity={bottomBgOpacity}
+       />
      );
    };
    // -----------------------
@@ -344,161 +421,168 @@ const ImmersivePlayerNew = () => {
 
   return (
     <View style={styles.container}>
-      {renderBackground()}
+      {isFrozen ? (
+        <View style={{ flex: 1, backgroundColor: '#000' }} />
+      ) : (
+        <>
+          {renderBackground()}
 
-      <AnimatedPagerView 
-        ref={pagerRef}
-        style={[styles.container, { backgroundColor: 'transparent' }]} 
-        initialPage={initialPageIndex}
-        onPageSelected={handlePageSelected}
-        onPageScroll={Animated.event(
-          [
-            {
-              nativeEvent: {
-                offset: scrollOffset,
-                position: position,
-              },
-            },
-          ],
-          { 
-            useNativeDriver: true,
-            listener: (e: any) => {
-              const { position: pos, offset: off } = e.nativeEvent;
-              // 计算当前最接近的页面索引
-              const currentIdx = Math.round(pos + off);
-              const safeIdx = Math.max(0, Math.min(currentIdx, displayScenes.length - 1));
-              
-              // 实时更新背景索引 (JS 线程同步更新)
-              setActiveIndex(prev => {
-                if (prev !== safeIdx) {
-                  return safeIdx;
+          <AnimatedPagerView 
+            ref={pagerRef}
+            style={[styles.container, { backgroundColor: 'transparent' }]} 
+            initialPage={initialPageIndex}
+            onPageSelected={handlePageSelected}
+            scrollEnabled={!isFrozen}
+            onPageScroll={Animated.event(
+              [
+                {
+                  nativeEvent: {
+                    offset: scrollOffset,
+                    position: position,
+                  },
+                },
+              ],
+              { 
+                useNativeDriver: true,
+                listener: (e: any) => {
+                  if (isFrozen || isExiting.current) return;
+                  // 拦截多余渲染：在滑动过程中完全禁用背景索引的同步更新
+                  // 只有在 handlePageSelected 停稳后，才通过其逻辑进行必要的更新（如果需要）
+                  // 目前逻辑下，背景层将通过 memo 化的渲染保证性能
                 }
-                return prev;
+              }
+            )}
+          >
+            {displayScenes.map((scene, index) => renderScenePage(scene, index))}
+          </AnimatedPagerView>
+
+          {renderFixedFooter()}
+
+          {/* 正式大标题：保持 zIndex: 99999 活命层级 */}
+          <View style={{ 
+            position: 'absolute', 
+            top: 80, 
+            left: 0, 
+            right: 0, 
+            zIndex: 99999, 
+            elevation: 100,
+            alignItems: 'center',
+            pointerEvents: 'none' // 点击穿透，不影响下方按钮
+          }}> 
+            {MAIN_CATEGORIES.map((category, rawIndex) => {
+              // 索引越界硬保护
+              const index = Math.max(0, Math.min(rawIndex, displayScenes.length - 1));
+              const activeScene = displayScenes[index] || DEFAULT_SCENE;
+              // 标题滑动渐变：200ms 对应的滑动区间大约是 0.5 左右
+              const opacity = scrollProgress.interpolate({
+                inputRange: [index - 0.5, index, index + 0.5],
+                outputRange: [0, 1, 0],
+                extrapolate: 'clamp',
               });
-            }
-          }
-        )}
-      >
-        {displayScenes.map((scene, index) => renderScenePage(scene, index))}
-      </AnimatedPagerView>
 
-      {renderFixedFooter()}
+              // Floating Animation: translateY 从 10 到 0 再到 10
+              const translateY = scrollProgress.interpolate({
+                inputRange: [index - 0.5, index, index + 0.5],
+                outputRange: [10, 0, 10],
+                extrapolate: 'clamp',
+              });
 
-      {/* 正式大标题：保持 zIndex: 99999 活命层级 */}
-      <View style={{ 
-        position: 'absolute', 
-        top: 80, 
-        left: 0, 
-        right: 0, 
-        zIndex: 99999, 
-        elevation: 100,
-        alignItems: 'center',
-        pointerEvents: 'none' // 点击穿透，不影响下方按钮
-      }}> 
-        {MAIN_CATEGORIES.map((category, rawIndex) => {
-          // 索引越界硬保护
-          const index = Math.max(0, Math.min(rawIndex, displayScenes.length - 1));
-          const activeScene = displayScenes[index] || DEFAULT_SCENE;
-          // 标题滑动渐变：200ms 对应的滑动区间大约是 0.5 左右
-          const opacity = scrollProgress.interpolate({
-            inputRange: [index - 0.5, index, index + 0.5],
-            outputRange: [0, 1, 0],
-            extrapolate: 'clamp',
-          });
+              return (
+                <Animated.View 
+                  key={`final-title-${category}`}
+                  style={{ 
+                    position: 'absolute', 
+                    alignItems: 'center', 
+                    opacity,
+                    transform: [{ translateY }]
+                  }}
+                >
+                  {/* 主标题：24px 加粗 */}
+                  <Text style={{ 
+                    color: 'white', 
+                    fontSize: 24, 
+                    fontWeight: 'bold',
+                    letterSpacing: 2,
+                    textShadowColor: 'rgba(0,0,0,0.5)', 
+                    textShadowOffset: {width: 0, height: 2}, 
+                    textShadowRadius: 4 
+                  }}> 
+                    {category} 
+                  </Text> 
+                  {/* 副标题：16px, 0.75 透明度 */}
+                  <Text style={{ 
+                    color: 'white', 
+                    fontSize: 16, 
+                    marginTop: 6,
+                    opacity: 0.75,
+                    fontWeight: '500',
+                    textShadowColor: 'rgba(0,0,0,0.5)', 
+                    textShadowOffset: {width: 0, height: 2}, 
+                    textShadowRadius: 4 
+                  }}>
+                    {activeScene?.title || ''}
+                  </Text>
+                </Animated.View>
+              );
+            })}
+          </View>
 
-          // Floating Animation: translateY 从 10 到 0 再到 10
-          const translateY = scrollProgress.interpolate({
-            inputRange: [index - 0.5, index, index + 0.5],
-            outputRange: [10, 0, 10],
-            extrapolate: 'clamp',
-          });
-
-          return (
-            <Animated.View 
-              key={`final-title-${category}`}
-              style={{ 
-                position: 'absolute', 
-                alignItems: 'center', 
-                opacity,
-                transform: [{ translateY }]
+          {/* 顶部固定按钮层 */}
+          <View style={{
+            position: 'absolute',
+            top: insets.top,
+            left: 0,
+            right: 0,
+            height: 60,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            zIndex: 100000, // 按钮层级更高
+          }}>
+            <TouchableOpacity 
+              onPress={() => { 
+                // 1. 立即触发原生导航返回，抢占主线程动画优先级 
+                navigation.goBack(); 
+                // 2. 彻底切断任何可能在退出时触发的 UI 更新 
+                setIsFrozen(true); 
+              }} 
+              style={{ padding: 8 }}
+            >
+              <Icon name="chevron-down" size={32} color="#fff" />
+            </TouchableOpacity>
+            
+            {/* 混音实验室入口临时屏蔽：逻辑清理中 */}
+            {/* 
+            <TouchableOpacity 
+              onPress={toggleAmbientSheet}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 20,
               }}
             >
-              {/* 主标题：24px 加粗 */}
-              <Text style={{ 
-                color: 'white', 
-                fontSize: 24, 
-                fontWeight: 'bold',
-                letterSpacing: 2,
-                textShadowColor: 'rgba(0,0,0,0.5)', 
-                textShadowOffset: {width: 0, height: 2}, 
-                textShadowRadius: 4 
-              }}> 
-                {category} 
-              </Text> 
-              {/* 副标题：16px, 0.75 透明度 */}
-              <Text style={{ 
-                color: 'white', 
-                fontSize: 16, 
-                marginTop: 6,
-                opacity: 0.75,
-                fontWeight: '500',
-                textShadowColor: 'rgba(0,0,0,0.5)', 
-                textShadowOffset: {width: 0, height: 2}, 
-                textShadowRadius: 4 
-              }}>
-                {activeScene?.title || ''}
-              </Text>
-            </Animated.View>
-          );
-        })}
-      </View>
+              <Icon name="options-outline" size={20} color="#fff" />
+              <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
+            </TouchableOpacity>
+            */}
+          </View>
 
-      {/* 顶部固定按钮层 */}
-      <View style={{
-        position: 'absolute',
-        top: insets.top,
-        left: 0,
-        right: 0,
-        height: 60,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        zIndex: 100000, // 按钮层级更高
-      }}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8 }}>
-          <Icon name="chevron-down" size={32} color="#fff" />
-        </TouchableOpacity>
-        
-        {/* 混音实验室入口临时屏蔽：逻辑清理中 */}
-        {/* 
-        <TouchableOpacity 
-          onPress={toggleAmbientSheet}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: 'rgba(255,255,255,0.15)',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 20,
-          }}
-        >
-          <Icon name="options-outline" size={20} color="#fff" />
-          <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
-        </TouchableOpacity>
-        */}
-      </View>
-
-      <AmbientPickerSheet
-        visible={ambientSheetVisible}
-        currentAmbient={currentAmbient}
-        currentSceneId={currentScene?.id || ''}
-        onClose={() => setAmbientSheetVisible(false)}
-        onSelect={handleAmbientSelect}
-        onRestoreMix={(mix) => {
-          handleAmbientSelect(mix.ambientType as any);
-        }}
-      />
+          <AmbientPickerSheet
+            visible={ambientSheetVisible}
+            currentAmbient={currentAmbient}
+            currentSceneId={currentScene?.id || ''}
+            onClose={() => setAmbientSheetVisible(false)}
+            onSelect={handleAmbientSelect}
+            onRestoreMix={(mix) => {
+              handleAmbientSelect(mix.ambientType as any);
+            }}
+          />
+        </>
+      )}
     </View>
   );
 };
