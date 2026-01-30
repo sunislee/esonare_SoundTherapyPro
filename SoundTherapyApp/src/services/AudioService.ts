@@ -828,6 +828,9 @@ class AudioService {
         // 初始化通知服务
         await NotificationService.setup();
 
+        // 止损隔离：初始化时强行清空所有环境音残留
+        await this.forceReleaseAllAmbient();
+
         this.isInitialized = true;
 
         // 封印：移除错误自动重连逻辑，避免死循环

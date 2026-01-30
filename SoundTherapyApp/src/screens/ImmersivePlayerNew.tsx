@@ -470,6 +470,8 @@ const ImmersivePlayerNew = () => {
           <Icon name="chevron-down" size={32} color="#fff" />
         </TouchableOpacity>
         
+        {/* 混音实验室入口临时屏蔽：逻辑清理中 */}
+        {/* 
         <TouchableOpacity 
           onPress={toggleAmbientSheet}
           style={{
@@ -484,6 +486,7 @@ const ImmersivePlayerNew = () => {
           <Icon name="options-outline" size={20} color="#fff" />
           <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
         </TouchableOpacity>
+        */}
       </View>
 
       <AmbientPickerSheet
