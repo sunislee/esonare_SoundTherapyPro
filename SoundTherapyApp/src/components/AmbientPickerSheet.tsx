@@ -89,23 +89,10 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const sheetHeight = screenHeight * 0.75;
   
   // 2. 消除暴力位移：归位到 0
-  const hiddenValue = sheetHeight;
+  const hiddenValue = sheetHeight + 100; // 增加冗余确保完全隐藏
   const visibleValue = 0; 
   const translateY = useRef(new Animated.Value(hiddenValue)).current;
   const dragY = useRef(new Animated.Value(0)).current;
-
-  // 手柄形变插值：通过倾斜实现 V 字感
-  const handleSkew = dragY.interpolate({
-    inputRange: [0, 150],
-    outputRange: ['0deg', '8deg'],
-    extrapolate: 'clamp',
-  });
-
-  const handleSkewReverse = dragY.interpolate({
-    inputRange: [0, 150],
-    outputRange: ['0deg', '-8deg'],
-    extrapolate: 'clamp',
-  });
 
   const handleOpacity = dragY.interpolate({
     inputRange: [0, 150],
@@ -201,63 +188,51 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 
   return (
     <View style={styles.overlay}>
-      {/* 遮罩背景：多层背景涂黑，物理封死底色，恢复 rgba(0,0,0,0.8) */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.8)' }]} />
+      {/* 遮罩背景：压暗效果调整为 0.5 */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
       <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
 
-      {/* 纯实色弹窗主体：强制不透明渲染，开启暴力不透明模式 */}
+      {/* 纯实色弹窗主体：增加悬浮边距 */}
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onHandlerStateChange}
       >
         <Animated.View 
-          renderToHardwareTextureAndroid={false} // 强制关闭硬件加速离屏渲染
-          needsOffscreenAlphaCompositing={false} // 强制安卓系统关闭离屏透明合成
+          renderToHardwareTextureAndroid={false}
+          needsOffscreenAlphaCompositing={false}
           style={[
             styles.sheet, 
             { 
               height: sheetHeight,
+              marginBottom: insets.bottom + 20,
               transform: [
                 { translateY: Animated.add(translateY, animatedDragY) }
               ],
-              backgroundColor: '#121212', // 再次硬编码确保背景不透
-              opacity: 1                  // 强制不透明
+              backgroundColor: '#121212',
+              opacity: 1
             }
           ]}
         >
-          {/* 【关键】底层钢板：绝对定位的黑漆，焊死在屏幕上 */}
+          {/* 【关键】底层钢板 */}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
    
-          {/* 安全区适配：顶部 Padding */}
+          {/* 安全区适配 */}
           <View style={{ 
             paddingTop: insets.top, 
             backgroundColor: '#121212', 
             width: '100%',
           }}>
-            {/* 拖动手柄容器 */}
+            {/* 拖动手柄容器：修复为单一连续 View */}
             <View style={styles.handleContainer}>
-              <View style={styles.handleWrapper}>
-                <Animated.View style={[
-                  styles.handlePart, 
-                  { 
-                    transform: [{ skewY: handleSkewReverse }],
-                    backgroundColor: handleOpacity.interpolate({
-                      inputRange: [0.4, 0.8],
-                      outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
-                    })
-                  }
-                ]} />
-                <Animated.View style={[
-                  styles.handlePart, 
-                  { 
-                    transform: [{ skewY: handleSkew }],
-                    backgroundColor: handleOpacity.interpolate({
-                      inputRange: [0.4, 0.8],
-                      outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
-                    })
-                  }
-                ]} />
-              </View>
+              <Animated.View style={[
+                styles.handle, 
+                { 
+                  backgroundColor: handleOpacity.interpolate({
+                    inputRange: [0.4, 0.8],
+                    outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
+                  })
+                }
+              ]} />
             </View>
           </View>
         
@@ -359,8 +334,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 const styles = StyleSheet.create({
   overlay: { 
     ...StyleSheet.absoluteFillObject, 
-    zIndex: 99999, 
-    elevation: 99999 
+    zIndex: 9999, 
+    elevation: 9999 
   },
   sheet: {
     position: 'absolute', 
@@ -374,11 +349,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -10 }, 
     shadowOpacity: 0.5, 
     shadowRadius: 15,
-    overflow: 'hidden', // 确保底层钢板不溢出圆角
+    overflow: 'hidden',
   },
   handleContainer: { alignItems: 'center', paddingVertical: 12 },
-  handleWrapper: { flexDirection: 'row', width: 40, height: 4, justifyContent: 'center', alignItems: 'center' },
-  handlePart: { width: 20, height: 4, borderRadius: 2 },
+  handle: { width: 40, height: 4, borderRadius: 2 },
   navHeader: {
     flexDirection: 'row', 
     alignItems: 'center', 
