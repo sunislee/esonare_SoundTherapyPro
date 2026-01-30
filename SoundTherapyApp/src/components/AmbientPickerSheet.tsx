@@ -212,6 +212,23 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     }
   };
 
+  const handleSelect = async (type: AmbientType) => {
+    ReactNativeHapticFeedback.trigger('impactLight');
+    
+    // 强制收口：统一调用 AudioContext 提供的具有互斥逻辑的 setAmbient
+    const idMap: Record<string, string | null> = {
+      'none': null,
+      'rain': 'healing_rain',
+      'fire': 'life_fire_pure'
+    };
+    
+    const targetId = idMap[type];
+    await setAmbient(targetId);
+    
+    // 通知父组件（用于同步可能的其他 UI 状态）
+    onSelect(type);
+  };
+
   if (!visible) return null;
 
   const getIsActive = (type: string) => {
@@ -314,8 +331,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
               return (
                 <View key={type} style={[styles.volumeCard, isActive && styles.activeCard]}>
                   <TouchableOpacity style={styles.cardHeader} onPress={() => {
-                    ReactNativeHapticFeedback.trigger('impactLight');
-                    onSelect(isActive ? 'none' : type);
+                    handleSelect(isActive ? 'none' : type);
                   }}>
                     <View style={{flexDirection: 'row', alignItems: 'center'}}>
                        <Icon name={type === 'rain' ? "rainy-outline" : "flame-outline"} size={20} color={isActive ? "#D4AF37" : "#666"} />

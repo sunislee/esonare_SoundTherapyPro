@@ -383,7 +383,7 @@ class AudioService {
       });
     }
 
-    if (!id) {
+    if (!id || id === 'none') {
       this.ambientName = null;
       this.ambientVolume = 0;
       this.updateAudioState(null, State.Stopped); // 触发 UI 状态强刷
@@ -438,6 +438,23 @@ class AudioService {
         resolve();
       });
     });
+  }
+
+  /**
+   * 停止所有环境音 (强制单例收口)
+   */
+  public stopAllAmbient(): void {
+    if (this.ambientSound) {
+      console.log(`[AudioService] 强制停止所有环境音`);
+      const oldSound = this.ambientSound;
+      this.ambientSound = null;
+      this.ambientName = null;
+      oldSound.stop(() => {
+        oldSound.release();
+      });
+      this.updateAudioState(null, State.Stopped);
+      this.emitVolume();
+    }
   }
 
   public updateAmbientVolume(volume: number) {
