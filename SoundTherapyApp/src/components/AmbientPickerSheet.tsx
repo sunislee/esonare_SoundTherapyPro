@@ -231,8 +231,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     
     const targetId = idMap[type];
     
-    // 强制斩断实验室内部重叠：先彻底清空当前状态（在 setAmbient 内部也有物理释放，这里做逻辑同步）
-    await setAmbient(null);
+    // 强制归口：唯一允许的调用只有 setAmbient(targetId)
     await setAmbient(targetId);
     
     // 通知父组件

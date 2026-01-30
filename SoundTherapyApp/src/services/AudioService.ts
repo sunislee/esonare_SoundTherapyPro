@@ -56,6 +56,7 @@ class AudioService {
   // Ambient Layer
   private ambientSound: Sound | null = null;
   private ambientName: string | null = null;
+  private interactiveSounds: Record<string, Sound> = {};
 
   private constructor() {
     // Enable Mix Mode (Ambient) to allow mixing with other apps or our own TrackPlayer
@@ -453,6 +454,37 @@ class AudioService {
     }
     this.ambientName = null;
     this.updateAudioState(null, State.Stopped);
+  }
+
+  /**
+   * 物理层面强行释放所有环境音实例
+   */
+  public async forceReleaseAllAmbient(): Promise<void> {
+    // 必须遍历并销毁之前残留的所有 interactiveSounds
+    if (this.interactiveSounds) {
+        Object.values(this.interactiveSounds).forEach(s => {
+          s.stop();
+          s.release();
+        });
+        this.interactiveSounds = {};
+    }
+    
+    if (this.ambientSound) {
+      console.log('🔴 PHYSICAL_DEBUG: Force releasing main ambient sound');
+      this.ambientSound.stop();
+      this.ambientSound.release();
+      this.ambientSound = null;
+    }
+    this.ambientName = null;
+    this.updateAudioState(null, State.Stopped);
+  }
+
+  /**
+   * 播放环境音 (别名，用于统一接口)
+   */
+  public async playAmbient(id: string): Promise<void> {
+    await this.forceReleaseAllAmbient();
+    return this.setAmbient(id);
   }
 
   public updateAmbientVolume(volume: number) {

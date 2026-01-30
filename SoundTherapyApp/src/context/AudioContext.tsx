@@ -83,16 +83,16 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const setAmbient = useCallback(async (id: string | null) => {
-    // 强一致性：先同步更新 UI 状态，消除延迟感
-    setActiveSoundId(id);
-    if (!id || id === 'none') {
-      setPlaybackState(State.Stopped);
-    } else {
-      setPlaybackState(State.Playing);
+    // 1. 立即停止主场景播放，确保全局互斥 
+    await AudioService.pause(); 
+    // 2. 物理层面强行释放所有旧的环境音实例 
+    await AudioService.forceReleaseAllAmbient(); 
+    // 3. 更新 UI 状态 
+    setActiveSoundId(id); 
+    // 4. 如果 ID 不为空，再加载新声音 
+    if (id && id !== 'none') { 
+      await AudioService.playAmbient(id); 
     }
-    
-    // 异步执行物理切换
-    await AudioService.setAmbient(id);
   }, []);
 
   const getAmbientVolumeById = useCallback((id: string) => {
