@@ -58,6 +58,17 @@ export const LandingScreen = ({ navigation }: any) => {
             // C. 全部就绪 -> 进入主页
             EngineControl.allow();
             try { await AudioService.setupPlayer(); } catch (e) {}
+            
+            // 状态感知跳转：如果音频正在播放，直接进入播放页
+            if (AudioService.isPlaying()) {
+              const scene = AudioService.getCurrentScene();
+              if (scene) {
+                console.log('[Landing] Audio is playing, jumping to ImmersivePlayer:', scene.id);
+                navigation.replace('ImmersivePlayer', { sceneId: scene.id });
+                return;
+              }
+            }
+            
             navigation.replace('MainTabs');
           }
         }, remainingTime);

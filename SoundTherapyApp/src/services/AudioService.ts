@@ -366,6 +366,10 @@ class AudioService {
     return this.currentScene;
   }
 
+  public isPlaying(): boolean {
+    return this.currentAudioState.state === State.Playing;
+  }
+
   public getCurrentState(): State {
     return this.currentAudioState.state;
   }

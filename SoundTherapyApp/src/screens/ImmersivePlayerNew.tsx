@@ -6,6 +6,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAudio } from '../context/AudioContext';
 import { SCENES, Scene } from '../constants/scenes';
 import AudioService from '../services/AudioService'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AmbientPickerSheet } from '../components/AmbientPickerSheet';
@@ -223,14 +224,16 @@ const ImmersivePlayerNew = () => {
   // 2. 过滤出每个分类的代表性场景 (优先使用选中的场景)
   const displayScenes = useMemo(() => {
     return MAIN_CATEGORIES.map(cat => {
-      // 如果选中的场景属于这个分类，优先展示选中的场景
-      if (selectedScene && selectedScene.category === cat) {
-        return selectedScene;
+      // 场景优先级：1. 路由传入的场景 2. 当前正在播放的场景 3. 分类默认场景
+      const targetScene = selectedScene || currentScene;
+      
+      if (targetScene && targetScene.category === cat) {
+        return targetScene;
       }
       // 否则寻找该分类下的第一个场景
       return SCENES.find(s => s.category === cat) || DEFAULT_SCENE;
     });
-  }, [selectedScene]);
+  }, [selectedScene, currentScene?.id]);
 
   // 挂载时设置初始索引
   useEffect(() => {
@@ -288,7 +291,12 @@ const ImmersivePlayerNew = () => {
 
           const targetScene = displayScenes[safeIdx] || DEFAULT_SCENE;
           if (targetScene && targetScene.id !== currentScene?.id) {
-           AudioService.switchSoundscape(targetScene);
+            AudioService.switchSoundscape(targetScene);
+          }
+          
+          // 持久化记录：存储最后查看的场景 ID
+          if (targetScene) {
+            AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', targetScene.id).catch(() => {});
           }
         });
      }, 400);

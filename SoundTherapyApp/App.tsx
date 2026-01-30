@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StatusBar, LogBox, StyleSheet, Platform, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, StatusBar, LogBox, StyleSheet, Platform, Text, ActivityIndicator, TouchableOpacity, AppState, AppStateStatus } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Provider as PaperProvider } from 'react-native-paper';
@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 // Navigation
 import { MainNavigator } from './src/navigation/MainNavigator';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './src/navigation/RootNavigation';
 
 // Services
 import AudioService from './src/services/AudioService';
@@ -18,6 +19,47 @@ import { AudioProvider } from './src/context/AudioContext';
 
 // Ignore common logs
 LogBox.ignoreLogs(['Attempting to run JS driven animation']);
+
+function StateAwareRouter() {
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        // 全局状态检查：App 唤醒时如果正在播放，跳转到播放页
+        if (AudioService.isPlaying()) {
+          const scene = AudioService.getCurrentScene();
+          if (scene) {
+            console.log('[StateAwareRouter] App active & Audio playing, jumping to ImmersivePlayer:', scene.id);
+            if (navigationRef.isReady()) {
+              navigationRef.navigate('ImmersivePlayer', { sceneId: scene.id });
+            }
+          }
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    // App 启动时的初始检查
+    const timer = setTimeout(() => {
+      if (AudioService.isPlaying()) {
+        const scene = AudioService.getCurrentScene();
+        if (scene) {
+          console.log('[StateAwareRouter] Initial check: Audio playing, jumping to ImmersivePlayer:', scene.id);
+          if (navigationRef.isReady()) {
+            navigationRef.navigate('ImmersivePlayer', { sceneId: scene.id });
+          }
+        }
+      }
+    }, 500); // 稍微延迟，等待导航系统就绪
+
+    return () => {
+      subscription.remove();
+      clearTimeout(timer);
+    };
+  }, []);
+
+  return null;
+}
 
 function AppContent() {
   const insets = useSafeAreaInsets();
@@ -30,7 +72,8 @@ function AppContent() {
         translucent={true} 
       />
       
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
+        <StateAwareRouter />
         <View style={styles.navContainer}>
           <MainNavigator />
         </View>
