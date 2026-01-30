@@ -92,6 +92,48 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const hiddenValue = sheetHeight;
   const visibleValue = 0; 
   const translateY = useRef(new Animated.Value(hiddenValue)).current;
+  const dragY = useRef(new Animated.Value(0)).current;
+
+  // 手柄形变插值：0 -> 1 代表从水平变 V 字
+  const handleRotate = dragY.interpolate({
+    inputRange: [0, 150],
+    outputRange: ['0deg', '15deg'],
+    extrapolate: 'clamp',
+  });
+
+  const handleRotateReverse = dragY.interpolate({
+    inputRange: [0, 150],
+    outputRange: ['0deg', '-15deg'],
+    extrapolate: 'clamp',
+  });
+
+  const handleOpacity = dragY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [0.4, 0.8],
+    extrapolate: 'clamp',
+  });
+
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: dragY } }],
+    { useNativeDriver: true }
+  );
+
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      if (event.nativeEvent.translationY > 150) {
+        // 超过 150px，优雅滑落关闭
+        onClose();
+      } else {
+        // 不足 150px，回弹
+        Animated.spring(dragY, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 65,
+          friction: 11,
+        }).start();
+      }
+    }
+  };
 
   const [mainVolume, setMainVolume] = useState(1.0);
   const [rainVolume, setRainVolume] = useState(0.3);
@@ -114,6 +156,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
       AudioService.getStoredVolume('healing_rain').then(setRainVolume);
       AudioService.getStoredVolume('life_fire_pure').then(setFireVolume);
       
+      dragY.setValue(0); // 重置拖动值
       // 动画目标值为 0
       Animated.spring(translateY, {
         toValue: visibleValue,
@@ -156,33 +199,60 @@ export const AmbientPickerSheet: React.FC<Props> = ({
       <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
 
       {/* 纯实色弹窗主体：强制不透明渲染，开启暴力不透明模式 */}
-      <Animated.View 
-        renderToHardwareTextureAndroid={false} // 强制关闭硬件加速离屏渲染
-        needsOffscreenAlphaCompositing={false} // 强制安卓系统关闭离屏透明合成
-        style={[
-          styles.sheet, 
-          { 
-            height: sheetHeight,
-            transform: [{ translateY }],
-            backgroundColor: '#121212', // 再次硬编码确保背景不透
-            opacity: 1                  // 强制不透明
-          }
-        ]}
+      <PanGestureHandler
+        onGestureEvent={onGestureEvent}
+        onHandlerStateChange={onHandlerStateChange}
       >
-        {/* 【关键】底层钢板：绝对定位的黑漆，焊死在屏幕上 */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
-
-        {/* 安全区适配：顶部 Padding */}
-        <View style={{ 
-          paddingTop: insets.top, 
-          backgroundColor: '#121212', 
-          width: '100%',
-        }}>
-          {/* 拖动手柄容器 */}
-          <View style={styles.handleContainer}>
-            <View style={styles.handle} />
+        <Animated.View 
+          renderToHardwareTextureAndroid={false} // 强制关闭硬件加速离屏渲染
+          needsOffscreenAlphaCompositing={false} // 强制安卓系统关闭离屏透明合成
+          style={[
+            styles.sheet, 
+            { 
+              height: sheetHeight,
+              transform: [
+                { translateY: Animated.add(translateY, dragY) }
+              ],
+              backgroundColor: '#121212', // 再次硬编码确保背景不透
+              opacity: 1                  // 强制不透明
+            }
+          ]}
+        >
+          {/* 【关键】底层钢板：绝对定位的黑漆，焊死在屏幕上 */}
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
+  
+          {/* 安全区适配：顶部 Padding */}
+          <View style={{ 
+            paddingTop: insets.top, 
+            backgroundColor: '#121212', 
+            width: '100%',
+          }}>
+            {/* 拖动手柄容器 */}
+            <View style={styles.handleContainer}>
+              <View style={styles.handleWrapper}>
+                <Animated.View style={[
+                  styles.handleBar, 
+                  { 
+                    transform: [{ rotate: handleRotateReverse }, { translateX: -10 }],
+                    backgroundColor: handleOpacity.interpolate({
+                      inputRange: [0.4, 0.8],
+                      outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
+                    })
+                  }
+                ]} />
+                <Animated.View style={[
+                  styles.handleBar, 
+                  { 
+                    transform: [{ rotate: handleRotate }, { translateX: 10 }],
+                    backgroundColor: handleOpacity.interpolate({
+                      inputRange: [0.4, 0.8],
+                      outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
+                    })
+                  }
+                ]} />
+              </View>
+            </View>
           </View>
-        </View>
         
         {/* 标题栏 */}
         <View style={styles.navHeader}>
@@ -273,7 +343,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
             </ScrollView>
           </View>
         </ScrollView>
-      </Animated.View>
+        </Animated.View>
+      </PanGestureHandler>
     </View>
   );
 };
@@ -299,7 +370,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // 确保底层钢板不溢出圆角
   },
   handleContainer: { alignItems: 'center', paddingVertical: 12 },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)' },
+  handleWrapper: { flexDirection: 'row', width: 40, height: 4, justifyContent: 'center', alignItems: 'center' },
+  handleBar: { width: 22, height: 4, borderRadius: 2 },
   navHeader: {
     flexDirection: 'row', 
     alignItems: 'center', 
