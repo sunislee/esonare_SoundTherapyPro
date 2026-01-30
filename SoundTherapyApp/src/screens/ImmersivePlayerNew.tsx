@@ -316,26 +316,17 @@ const ImmersivePlayerNew = () => {
         <BlurView
           style={styles.footerBlur}
           blurType="dark"
-          blurAmount={25}
+          blurAmount={20}
           reducedTransparencyFallbackColor="black"
         />
-        <View style={styles.footerContent}>
-          <View style={styles.indicatorContainer}>
-            {MAIN_CATEGORIES.map((cat, i) => (
-              <AnimatedIndicator
-                key={i}
-                isActive={activeIndex === i}
-                iconName={
-                  cat === 'Nature' ? 'moon-outline' : 
-                  cat === 'Healing' ? 'leaf-outline' : 
-                  cat === 'Brainwave' ? 'book-outline' : 'musical-notes-outline'
-                }
-                onPress={() => handleIndicatorPress(i)}
-              />
-            ))}
-          </View>
-          <Text style={styles.statusText}>左右滑动切换场景：Sleep, Relax, Study, Party</Text>
-        </View>
+        <TouchableOpacity 
+          style={styles.footerContent} 
+          activeOpacity={0.8}
+          onPress={toggleAmbientSheet}
+        >
+          <Icon name="options-outline" size={20} color="#fff" />
+          <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
+        </TouchableOpacity>
       </View>
     );
   };

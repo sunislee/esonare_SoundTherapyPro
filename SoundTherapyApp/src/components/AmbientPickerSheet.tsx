@@ -188,8 +188,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 
   return (
     <View style={styles.overlay}>
-      {/* 遮罩背景：压暗效果调整为 0.5 */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
+      {/* 遮罩背景：压暗效果调整为 0.6 */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
       <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
 
       {/* 纯实色弹窗主体：增加悬浮边距 */}
@@ -224,15 +224,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
           }}>
             {/* 拖动手柄容器：修复为单一连续 View */}
             <View style={styles.handleContainer}>
-              <Animated.View style={[
-                styles.handle, 
-                { 
-                  backgroundColor: handleOpacity.interpolate({
-                    inputRange: [0.4, 0.8],
-                    outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
-                  })
-                }
-              ]} />
+              <Animated.View style={styles.handle} />
             </View>
           </View>
         
@@ -346,13 +338,23 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30, 
     borderTopRightRadius: 30,
     shadowColor: '#000', 
-    shadowOffset: { width: 0, height: -10 }, 
-    shadowOpacity: 0.5, 
-    shadowRadius: 15,
-    overflow: 'hidden',
+    shadowOffset: { width: 0, height: -20 }, 
+    shadowOpacity: 0.8, 
+    shadowRadius: 30,
+    elevation: 20,
+    overflow: 'visible',
   },
-  handleContainer: { alignItems: 'center', paddingVertical: 12 },
-  handle: { width: 40, height: 4, borderRadius: 2 },
+  handleContainer: { 
+    alignItems: 'center', 
+    paddingVertical: 12,
+    marginTop: 10,
+  },
+  handle: { 
+    width: 40, 
+    height: 4, 
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
   navHeader: {
     flexDirection: 'row', 
     alignItems: 'center', 
