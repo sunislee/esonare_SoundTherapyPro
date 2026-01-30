@@ -57,8 +57,6 @@ class AudioService {
   private ambientSound: Sound | null = null;
   private ambientName: string | null = null;
 
-  private interactiveSounds: Partial<Record<string, Sound>> = {};
-
   private constructor() {
     // Enable Mix Mode (Ambient) to allow mixing with other apps or our own TrackPlayer
     (Sound as any).setCategory('Ambient', true);
@@ -373,17 +371,18 @@ class AudioService {
   }
 
   public async setAmbient(id: string | null): Promise<void> {
+    if (!EngineControl.isAllowed()) {
+      console.warn('[AudioService] setAmbient blocked: engine not allowed');
+      return;
+    }
+
     // 物理清场（Atomic Stop）：无论三七二十一，先杀掉所有可能存在的旧声音
     if (this.ambientSound) {
+        console.log('CLEANUP: All previous interactive sounds destroyed');
         console.log('🔴 PHYSICAL_DEBUG: Stopping and releasing current sound before next load');
         this.ambientSound.stop();
         this.ambientSound.release();
         this.ambientSound = null;
-    }
-
-    // 物理层互斥：如果点选了环境音，必须先强制暂停主场景 TrackPlayer
-    if (id && id !== 'none') {
-      await TrackPlayer.pause();
     }
 
     if (!id || id === 'none') {
@@ -494,10 +493,6 @@ class AudioService {
       }
   }
 
-  public getAmbientVolume(): number {
-      return this.ambientVolume;
-  }
-
   public async refreshNotification() {
     if (this.currentScene) {
       await NotificationService.updateNotification(this.currentScene, this.currentAudioState.state);
@@ -533,15 +528,6 @@ class AudioService {
         this.ambientSound.release();
         this.ambientSound = null;
       }
-
-      for (const key in this.interactiveSounds) {
-        const sound = this.interactiveSounds[key];
-        if (sound) {
-          sound.stop();
-          sound.release();
-        }
-      }
-      this.interactiveSounds = {};
 
       // 3. 停止原生混合引擎
       await this.stopMixing();
@@ -1300,32 +1286,8 @@ class AudioService {
     });
   }
 
-  public playInteractive(id: string): void {
-    const asset = AUDIO_MANIFEST.find(a => a.id === id);
-    if (!asset) {
-      console.warn(`[Interactive] Asset not found for id: ${id}`);
-      return;
-    }
-
-    DownloadService.getLocalPath(asset.id).then(localPath => {
-      return localPath ? RNFS.exists(localPath).then(exists => ({ exists, localPath })) : Promise.resolve({ exists: false, localPath: '' });
-    }).then(({ exists, localPath }) => {
-      const finalUrl = exists ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
-      
-      if (this.interactiveSounds[id]) {
-        this.interactiveSounds[id]?.play();
-        return;
-      }
-
-      const sound = new Sound(finalUrl, '', (error) => {
-        if (error) {
-          console.warn(`[Interactive] Load failed for ${id}:`, error);
-          return;
-        }
-        this.interactiveSounds[id] = sound;
-        sound.play();
-      });
-    });
+  public getAmbientVolume(): number {
+      return this.ambientVolume;
   }
 }
 
