@@ -144,7 +144,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     updateAmbientVolume, 
     setAmbient, 
     getAmbientVolumeById,
-    ambientVolume: globalAmbientVolume 
+    activeSoundId: globalActiveId,
+    isPlaying: globalIsPlaying 
   } = useAudio();
   
   const [mainVolume, setMainVolume] = useState(1.0);
@@ -203,15 +204,21 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     }
     else if (type === 'rain') { 
       setRainVolume(val); 
-      if (currentAmbient === 'rain') updateAmbientVolume(val); 
+      if (getIsActive('rain')) updateAmbientVolume(val); 
     }
     else { 
       setFireVolume(val); 
-      if (currentAmbient === 'fire') updateAmbientVolume(val); 
+      if (getIsActive('fire')) updateAmbientVolume(val); 
     }
   };
 
   if (!visible) return null;
+
+  const getIsActive = (type: string) => {
+    if (type === 'rain') return globalActiveId === 'healing_rain';
+    if (type === 'fire') return globalActiveId === 'life_fire_pure';
+    return false;
+  };
 
   return (
     <Portal>
@@ -302,28 +309,31 @@ export const AmbientPickerSheet: React.FC<Props> = ({
             </View>
 
             <Text style={styles.groupLabel}>环境音效叠加</Text>
-            {['rain', 'fire'].map((type: any) => (
-              <View key={type} style={[styles.volumeCard, currentAmbient === type && styles.activeCard]}>
-                <TouchableOpacity style={styles.cardHeader} onPress={() => {
-                  ReactNativeHapticFeedback.trigger('impactLight');
-                  onSelect(currentAmbient === type ? 'none' : type);
-                }}>
-                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                     <Icon name={type === 'rain' ? "rainy-outline" : "flame-outline"} size={20} color={currentAmbient === type ? "#D4AF37" : "#666"} />
-                     <Text style={[styles.cardTitle, currentAmbient === type && {color: '#fff', fontWeight: 'bold'}]}>
-                       {type === 'rain' ? '  治愈雨声' : '  壁炉篝火'}
-                     </Text>
-                  </View>
-                  <Icon name={currentAmbient === type ? "radio-button-on" : "radio-button-off"} size={22} color={currentAmbient === type ? "#D4AF37" : "#444"} />
-                </TouchableOpacity>
-                <SimpleJsSlider 
-                  value={type === 'rain' ? rainVolume : fireVolume} 
-                  onValueChange={(v:any)=>handleVolumeChange(type,v)} 
-                  onSlidingComplete={()=>{}}
-                  activeColor={currentAmbient === type ? "#D4AF37" : "#333"}
-                />
-              </View>
-            ))}
+            {['rain', 'fire'].map((type: any) => {
+              const isActive = getIsActive(type);
+              return (
+                <View key={type} style={[styles.volumeCard, isActive && styles.activeCard]}>
+                  <TouchableOpacity style={styles.cardHeader} onPress={() => {
+                    ReactNativeHapticFeedback.trigger('impactLight');
+                    onSelect(isActive ? 'none' : type);
+                  }}>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                       <Icon name={type === 'rain' ? "rainy-outline" : "flame-outline"} size={20} color={isActive ? "#D4AF37" : "#666"} />
+                       <Text style={[styles.cardTitle, isActive && {color: '#fff', fontWeight: 'bold'}]}>
+                         {type === 'rain' ? '  治愈雨声' : '  壁炉篝火'}
+                       </Text>
+                    </View>
+                    <Icon name={isActive ? "radio-button-on" : "radio-button-off"} size={22} color={isActive ? "#D4AF37" : "#444"} />
+                  </TouchableOpacity>
+                  <SimpleJsSlider 
+                    value={type === 'rain' ? rainVolume : fireVolume} 
+                    onValueChange={(v:any)=>handleVolumeChange(type,v)} 
+                    onSlidingComplete={()=>{}}
+                    activeColor={isActive ? "#D4AF37" : "#333"}
+                  />
+                </View>
+              );
+            })}
 
             {/* 我的最爱列表 */}
             <View style={styles.presetSection}>

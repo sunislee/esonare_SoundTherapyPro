@@ -373,18 +373,21 @@ class AudioService {
   }
 
   public async setAmbient(id: string | null): Promise<void> {
-    // 互斥播放逻辑：如果已经有环境音在播放，先停止
+    // 物理唯一性锁定：无论新 ID 是什么，先彻底杀死当前活跃实例
     if (this.ambientSound) {
-      this.ambientSound.stop(() => {
-        this.ambientSound?.release();
-        this.ambientSound = null;
+      console.log(`[AudioService] 物理释放旧实例: ${this.ambientName}`);
+      const oldSound = this.ambientSound;
+      this.ambientSound = null; // 立即置空防止竞态
+      oldSound.stop(() => {
+        oldSound.release();
       });
     }
 
     if (!id) {
       this.ambientName = null;
-      this.ambientVolume = 0; // 重置音量
-      this.emitVolume(); // 通知 UI
+      this.ambientVolume = 0;
+      this.updateAudioState(null, State.Stopped); // 触发 UI 状态强刷
+      this.emitVolume();
       return;
     }
 
@@ -399,23 +402,39 @@ class AudioService {
     this.ambientVolume = storedVol;
     this.ambientName = id;
     this.ambientVolumes[id] = storedVol;
-    this.emitVolume(); // 同步全局音量状态
+    this.emitVolume();
 
     const localPath = await DownloadService.getLocalPath(asset.id);
     const exists = localPath ? await RNFS.exists(localPath) : false;
     const finalUrl = exists ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
 
+    console.log(`[AudioService] 物理启动唯一实例: ${id}, 音量: ${storedVol}`);
+
     return new Promise((resolve) => {
       const sound = new Sound(finalUrl, '', (error) => {
         if (error) {
           console.warn(`[Ambient] Load failed for ${id}:`, error);
+          this.updateAudioState(null, State.Stopped);
           resolve();
           return;
         }
+        
+        // 双重检查：如果在加载过程中又触发了新的声音，释放当前这个
+        if (this.ambientName !== id) {
+          sound.release();
+          resolve();
+          return;
+        }
+
         this.ambientSound = sound;
         sound.setNumberOfLoops(-1);
         sound.setVolume(this.ambientVolume);
-        sound.play();
+        sound.play(() => {
+          // 播放结束回调（循环模式通常不触发）
+        });
+        
+        // 强刷 UI 状态：将当前环境音 ID 发送给监听者
+        this.updateAudioState(id, State.Playing);
         resolve();
       });
     });
