@@ -26,11 +26,12 @@ import ToastUtil from '../utils/ToastUtil';
 // ----------------------------------------------------------------
 // 内部组件：带有颜色变化的滑块
 // ----------------------------------------------------------------
-const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor = '#D4AF37' }: any) => {
+const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor = '#D4AF37', disabled = false }: any) => {
   const [width, setWidth] = useState(0);
   
-  // 动态颜色逻辑：随数值增加而变亮
+  // 动态颜色逻辑：随数值增加而变亮，如果禁用则显示灰色
   const getDynamicColor = () => {
+    if (disabled) return 'rgba(100, 100, 100, 0.3)';
     if (activeColor !== '#D4AF37') return activeColor;
     // D4AF37 变亮路径
     const opacity = 0.3 + (value * 0.7);
@@ -39,10 +40,12 @@ const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor =
 
   return (
     <View 
-      style={{ width: '100%', height: 44, justifyContent: 'center' }}
+      style={{ width: '100%', height: 44, justifyContent: 'center', opacity: disabled ? 0.5 : 1 }}
       onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+      pointerEvents={disabled ? 'none' : 'auto'}
     >
       <PanGestureHandler
+        enabled={!disabled}
         onGestureEvent={(e) => {
           if (width > 0) {
             const newVal = e.nativeEvent.x / width;
@@ -60,7 +63,7 @@ const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor =
           <View style={{height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)', width: '100%', position: 'absolute'}} />
           <View style={{height: 6, borderRadius: 3, backgroundColor: getDynamicColor(), width: `${value * 100}%`, position: 'absolute'}} />
           <View style={{
-            width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff',
+            width: 24, height: 24, borderRadius: 12, backgroundColor: disabled ? '#666' : '#fff',
             position: 'absolute', left: `${value * 100}%`, marginLeft: -12,
             elevation: 4, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.3, shadowRadius: 3
           }} />
@@ -215,9 +218,15 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const handleSelect = async (type: AmbientType) => {
     ReactNativeHapticFeedback.trigger('impactLight');
     
-    // 强制收口：统一调用 AudioContext 提供的具有互斥逻辑的 setAmbient
+    // 强制斩断实验室内部重叠：先彻底清空当前状态
+    await setAmbient(null);
+    
+    if (type === 'none') {
+      onSelect('none');
+      return;
+    }
+
     const idMap: Record<string, string | null> = {
-      'none': null,
       'rain': 'healing_rain',
       'fire': 'life_fire_pure'
     };
@@ -225,7 +234,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     const targetId = idMap[type];
     await setAmbient(targetId);
     
-    // 通知父组件（用于同步可能的其他 UI 状态）
+    // 通知父组件
     onSelect(type);
   };
 
@@ -341,11 +350,13 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                     </View>
                     <Icon name={isActive ? "radio-button-on" : "radio-button-off"} size={22} color={isActive ? "#D4AF37" : "#444"} />
                   </TouchableOpacity>
+                  
+                  {/* 滑块锁死：非活跃声音的滑块全部禁用 */}
                   <SimpleJsSlider 
                     value={type === 'rain' ? rainVolume : fireVolume} 
-                    onValueChange={(v:any)=>handleVolumeChange(type,v)} 
-                    onSlidingComplete={()=>{}}
-                    activeColor={isActive ? "#D4AF37" : "#333"}
+                    onValueChange={(v: any) => handleVolumeChange(type, v)}
+                    onSlidingComplete={() => {}}
+                    disabled={!isActive}
                   />
                 </View>
               );

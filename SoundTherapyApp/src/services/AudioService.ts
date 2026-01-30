@@ -373,16 +373,17 @@ class AudioService {
   }
 
   public async setAmbient(id: string | null): Promise<void> {
-    // 1. 物理层互斥：如果点选了环境音，必须先强制暂停主场景 TrackPlayer
-    if (id && id !== 'none') {
-      console.log('[AudioService] 激活环境音，强制暂停主场景 TrackPlayer');
-      await TrackPlayer.pause();
+    // 物理清场（Atomic Stop）：无论三七二十一，先杀掉所有可能存在的旧声音
+    if (this.ambientSound) {
+        console.log('🔴 PHYSICAL_DEBUG: Stopping and releasing current sound before next load');
+        this.ambientSound.stop();
+        this.ambientSound.release();
+        this.ambientSound = null;
     }
 
-    // 2. 优雅淡出旧实例
-    if (this.ambientSound) {
-      console.log(`[AudioService] 开始淡出旧环境音实例: ${this.ambientName}`);
-      await this.fadeOutAndRelease();
+    // 物理层互斥：如果点选了环境音，必须先强制暂停主场景 TrackPlayer
+    if (id && id !== 'none') {
+      await TrackPlayer.pause();
     }
 
     if (!id || id === 'none') {
@@ -399,7 +400,7 @@ class AudioService {
       return;
     }
 
-    // 3. 独立音量记忆恢复
+    // 独立音量记忆恢复
     const storedVol = await this.getStoredVolume(id);
     this.ambientVolume = storedVol;
     this.ambientName = id;
@@ -410,6 +411,9 @@ class AudioService {
     const exists = localPath ? await RNFS.exists(localPath) : false;
     const finalUrl = exists ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
 
+    // 实时日志监控
+    console.log('🔴 PHYSICAL_DEBUG: Releasing old sound and creating NEW one for ID:', id);
+
     return new Promise((resolve) => {
       const sound = new Sound(finalUrl, '', (error) => {
         if (error) {
@@ -419,7 +423,9 @@ class AudioService {
           return;
         }
         
+        // 双重保险：加载完成后再次确认没有新的播放指令下达
         if (this.ambientName !== id) {
+          console.log('🔴 PHYSICAL_DEBUG: Concurrent load detected, releasing stale sound:', id);
           sound.release();
           resolve();
           return;
@@ -437,57 +443,17 @@ class AudioService {
   }
 
   /**
-   * 优雅淡出并释放当前环境音
-   */
-  private async fadeOutAndRelease(): Promise<void> {
-    return new Promise((resolve) => {
-      if (!this.ambientSound) {
-        resolve();
-        return;
-      }
-
-      const sound = this.ambientSound;
-      const currentVol = this.ambientVolume;
-      const steps = 10;
-      const stepDuration = 30; // 总计 300ms
-      let currentStep = 0;
-
-      const fadeInterval = setInterval(() => {
-        currentStep++;
-        const newVol = currentVol * (1 - currentStep / steps);
-        
-        if (currentStep >= steps) {
-          clearInterval(fadeInterval);
-          sound.stop(() => {
-            sound.release();
-            resolve();
-          });
-        } else {
-          sound.setVolume(Math.max(0, newVol));
-        }
-      }, stepDuration);
-
-      this.ambientSound = null; // 立即断开引用，防止竞态
-    });
-  }
-
-
-
-  /**
-   * 停止所有环境音 (强制单例收口)
+   * 停止所有环境音
    */
   public stopAllAmbient(): void {
     if (this.ambientSound) {
-      console.log(`[AudioService] 强制停止所有环境音`);
-      const oldSound = this.ambientSound;
+      console.log('🔴 PHYSICAL_DEBUG: Force stopping all ambient sounds');
+      this.ambientSound.stop();
+      this.ambientSound.release();
       this.ambientSound = null;
-      this.ambientName = null;
-      oldSound.stop(() => {
-        oldSound.release();
-      });
-      this.updateAudioState(null, State.Stopped);
-      this.emitVolume();
     }
+    this.ambientName = null;
+    this.updateAudioState(null, State.Stopped);
   }
 
   public updateAmbientVolume(volume: number) {
