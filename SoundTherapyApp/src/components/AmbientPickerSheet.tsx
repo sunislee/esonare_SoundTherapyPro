@@ -85,8 +85,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   
-  // 1. 高度重定义：调整为屏幕高度的 85%
-  const sheetHeight = screenHeight * 0.85;
+  // 1. 高度重定义：调整为屏幕高度的 75%
+  const sheetHeight = screenHeight * 0.75;
   
   // 2. 消除暴力位移：归位到 0
   const hiddenValue = sheetHeight;
@@ -94,16 +94,16 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const translateY = useRef(new Animated.Value(hiddenValue)).current;
   const dragY = useRef(new Animated.Value(0)).current;
 
-  // 手柄形变插值：0 -> 1 代表从水平变 V 字
-  const handleRotate = dragY.interpolate({
+  // 手柄形变插值：通过倾斜实现 V 字感
+  const handleSkew = dragY.interpolate({
     inputRange: [0, 150],
-    outputRange: ['0deg', '15deg'],
+    outputRange: ['0deg', '8deg'],
     extrapolate: 'clamp',
   });
 
-  const handleRotateReverse = dragY.interpolate({
+  const handleSkewReverse = dragY.interpolate({
     inputRange: [0, 150],
-    outputRange: ['0deg', '-15deg'],
+    outputRange: ['0deg', '-8deg'],
     extrapolate: 'clamp',
   });
 
@@ -117,6 +117,13 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     [{ nativeEvent: { translationY: dragY } }],
     { useNativeDriver: true }
   );
+
+  // 增加阻尼感：在 UI 层对 translateY 应用物理阻尼
+  const animatedDragY = dragY.interpolate({
+    inputRange: [0, 500],
+    outputRange: [0, 350], // 500px 实际位移只产生 350px 视觉位移，增加沉重感
+    extrapolate: 'clamp',
+  });
 
   const onHandlerStateChange = (event: any) => {
     if (event.nativeEvent.state === State.END) {
@@ -211,7 +218,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
             { 
               height: sheetHeight,
               transform: [
-                { translateY: Animated.add(translateY, dragY) }
+                { translateY: Animated.add(translateY, animatedDragY) }
               ],
               backgroundColor: '#121212', // 再次硬编码确保背景不透
               opacity: 1                  // 强制不透明
@@ -220,7 +227,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
         >
           {/* 【关键】底层钢板：绝对定位的黑漆，焊死在屏幕上 */}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
-  
+   
           {/* 安全区适配：顶部 Padding */}
           <View style={{ 
             paddingTop: insets.top, 
@@ -231,9 +238,9 @@ export const AmbientPickerSheet: React.FC<Props> = ({
             <View style={styles.handleContainer}>
               <View style={styles.handleWrapper}>
                 <Animated.View style={[
-                  styles.handleBar, 
+                  styles.handlePart, 
                   { 
-                    transform: [{ rotate: handleRotateReverse }, { translateX: -10 }],
+                    transform: [{ skewY: handleSkewReverse }],
                     backgroundColor: handleOpacity.interpolate({
                       inputRange: [0.4, 0.8],
                       outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
@@ -241,9 +248,9 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                   }
                 ]} />
                 <Animated.View style={[
-                  styles.handleBar, 
+                  styles.handlePart, 
                   { 
-                    transform: [{ rotate: handleRotate }, { translateX: 10 }],
+                    transform: [{ skewY: handleSkew }],
                     backgroundColor: handleOpacity.interpolate({
                       inputRange: [0.4, 0.8],
                       outputRange: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)']
@@ -371,7 +378,7 @@ const styles = StyleSheet.create({
   },
   handleContainer: { alignItems: 'center', paddingVertical: 12 },
   handleWrapper: { flexDirection: 'row', width: 40, height: 4, justifyContent: 'center', alignItems: 'center' },
-  handleBar: { width: 22, height: 4, borderRadius: 2 },
+  handlePart: { width: 20, height: 4, borderRadius: 2 },
   navHeader: {
     flexDirection: 'row', 
     alignItems: 'center', 
