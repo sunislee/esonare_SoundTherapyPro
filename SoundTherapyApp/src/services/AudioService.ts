@@ -373,20 +373,22 @@ class AudioService {
   }
 
   public async setAmbient(id: string | null): Promise<void> {
-    // 物理唯一性锁定：无论新 ID 是什么，先彻底杀死当前活跃实例
+    // 1. 物理层互斥：如果点选了环境音，必须先强制暂停主场景 TrackPlayer
+    if (id && id !== 'none') {
+      console.log('[AudioService] 激活环境音，强制暂停主场景 TrackPlayer');
+      await TrackPlayer.pause();
+    }
+
+    // 2. 优雅淡出旧实例
     if (this.ambientSound) {
-      console.log(`[AudioService] 物理释放旧实例: ${this.ambientName}`);
-      const oldSound = this.ambientSound;
-      this.ambientSound = null; // 立即置空防止竞态
-      oldSound.stop(() => {
-        oldSound.release();
-      });
+      console.log(`[AudioService] 开始淡出旧环境音实例: ${this.ambientName}`);
+      await this.fadeOutAndRelease();
     }
 
     if (!id || id === 'none') {
       this.ambientName = null;
       this.ambientVolume = 0;
-      this.updateAudioState(null, State.Stopped); // 触发 UI 状态强刷
+      this.updateAudioState(null, State.Stopped);
       this.emitVolume();
       return;
     }
@@ -397,7 +399,7 @@ class AudioService {
       return;
     }
 
-    // 加载存储的音量
+    // 3. 独立音量记忆恢复
     const storedVol = await this.getStoredVolume(id);
     this.ambientVolume = storedVol;
     this.ambientName = id;
@@ -408,8 +410,6 @@ class AudioService {
     const exists = localPath ? await RNFS.exists(localPath) : false;
     const finalUrl = exists ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
 
-    console.log(`[AudioService] 物理启动唯一实例: ${id}, 音量: ${storedVol}`);
-
     return new Promise((resolve) => {
       const sound = new Sound(finalUrl, '', (error) => {
         if (error) {
@@ -419,7 +419,6 @@ class AudioService {
           return;
         }
         
-        // 双重检查：如果在加载过程中又触发了新的声音，释放当前这个
         if (this.ambientName !== id) {
           sound.release();
           resolve();
@@ -429,16 +428,50 @@ class AudioService {
         this.ambientSound = sound;
         sound.setNumberOfLoops(-1);
         sound.setVolume(this.ambientVolume);
-        sound.play(() => {
-          // 播放结束回调（循环模式通常不触发）
-        });
+        sound.play();
         
-        // 强刷 UI 状态：将当前环境音 ID 发送给监听者
         this.updateAudioState(id, State.Playing);
         resolve();
       });
     });
   }
+
+  /**
+   * 优雅淡出并释放当前环境音
+   */
+  private async fadeOutAndRelease(): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.ambientSound) {
+        resolve();
+        return;
+      }
+
+      const sound = this.ambientSound;
+      const currentVol = this.ambientVolume;
+      const steps = 10;
+      const stepDuration = 30; // 总计 300ms
+      let currentStep = 0;
+
+      const fadeInterval = setInterval(() => {
+        currentStep++;
+        const newVol = currentVol * (1 - currentStep / steps);
+        
+        if (currentStep >= steps) {
+          clearInterval(fadeInterval);
+          sound.stop(() => {
+            sound.release();
+            resolve();
+          });
+        } else {
+          sound.setVolume(Math.max(0, newVol));
+        }
+      }, stepDuration);
+
+      this.ambientSound = null; // 立即断开引用，防止竞态
+    });
+  }
+
+
 
   /**
    * 停止所有环境音 (强制单例收口)
@@ -975,6 +1008,12 @@ class AudioService {
     }
     this.lastSwitchTime = now;
     this.isSwitching = true;
+
+    // 物理层互斥：切换主场景时，必须彻底释放环境音
+    if (this.ambientSound) {
+      console.log('[AudioService] 切换主场景，彻底释放实验室环境音');
+      await this.setAmbient(null);
+    }
 
     try {
       await this.ensureSetup();

@@ -83,6 +83,15 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const setAmbient = useCallback(async (id: string | null) => {
+    // 强一致性：先同步更新 UI 状态，消除延迟感
+    setActiveSoundId(id);
+    if (!id || id === 'none') {
+      setPlaybackState(State.Stopped);
+    } else {
+      setPlaybackState(State.Playing);
+    }
+    
+    // 异步执行物理切换
     await AudioService.setAmbient(id);
   }, []);
 
