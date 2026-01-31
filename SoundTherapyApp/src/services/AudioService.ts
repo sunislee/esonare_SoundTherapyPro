@@ -10,7 +10,7 @@ import TrackPlayer, {
   Event,
   State,
 } from 'react-native-track-player';
-import { SCENES, type Scene } from '../constants/scenes';
+import { SCENES, Scene } from '../constants/scenes';
 import ToastUtil from '../utils/ToastUtil';
 import { HistoryService } from './HistoryService';
 import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL } from '../constants/audioAssets';
@@ -40,11 +40,13 @@ class AudioService {
   private alarmListeners = new Set<(time: string | null) => void>();
   private lastSwitchTime = 0;
   private currentScene: Scene | null = null;
+  private currentBaseSceneId: string | null = null;
   private fadeInterval: ReturnType<typeof setInterval> | null = null;
   private meteringInterval: ReturnType<typeof setInterval> | null = null;
   private meteringListeners = new Set<(level: number) => void>();
   private mainVolume = 1.0;
   private ambientVolume = 0.4;
+  private _isPickingFile = false;
   
   // Ambient volumes per sound ID
   private ambientVolumes: Record<string, number> = {};
@@ -52,9 +54,11 @@ class AudioService {
   // Unified State Management
   private currentAudioState: { id: string | null; state: State } = { id: null, state: State.None };
   private audioStateListeners = new Set<(state: { id: string | null; state: State }) => void>();
+  private smallScenesListeners = new Set<(ids: string[]) => void>();
 
-  // Ambient Layer
-  private ambientSound: Sound | null = null;
+  // Ambient Layer (Small Scenes)
+  private smallScenes = new Map<string, Sound>();
+  private ambientSound: Sound | null = null; // Keep for compatibility if needed, but we'll use smallScenes
   private ambientName: string | null = null;
 
   private constructor() {
@@ -370,6 +374,227 @@ class AudioService {
     return this.currentAudioState.state === State.Playing;
   }
 
+  public setPickingFile(isPicking: boolean) {
+    if (isPicking) {
+      this._isPickingFile = true;
+    } else {
+      // 延迟 500ms 设为 false，确保生命周期事件先触发完
+      setTimeout(() => {
+        this._isPickingFile = false;
+        console.log('[AudioService] isPickingFile set to false');
+      }, 500);
+    }
+  }
+
+  public isPickingFile(): boolean {
+    return this._isPickingFile;
+  }
+
+  public getCurrentBaseSceneId(): string | null {
+    return this.currentBaseSceneId;
+  }
+
+  /**
+   * 停止所有声音（主场景 + 所有小场景）
+   */
+  public async stopAllSounds(): Promise<void> {
+    console.log('🛑 [AudioService] stopAllSounds: Stopping everything');
+    
+    // 1. 停止主场景
+    await TrackPlayer.pause();
+    
+    // 2. 停止所有小场景
+    for (const [id, sound] of this.smallScenes) {
+      try {
+        sound.stop();
+        sound.release();
+      } catch (e) {}
+    }
+    this.smallScenes.clear();
+    
+    // 3. 清理兼容性变量
+    this.ambientSound = null;
+    this.ambientName = null;
+    
+    this.emitSmallScenes();
+    this.updateAudioState(null, State.Stopped);
+  }
+
+  /**
+   * 播放小场景音效
+   */
+  private async playSmallScene(scene: Scene): Promise<void> {
+    const asset = AUDIO_MANIFEST.find(a => a.id === scene.id);
+    if (!asset) return;
+
+    // 获取音量
+    const storedVol = await this.getStoredVolume(scene.id);
+    const volume = storedVol || 0.4;
+    this.ambientVolumes[scene.id] = volume;
+
+    const localPath = await DownloadService.getLocalPath(scene.id);
+    const exists = localPath ? await RNFS.exists(localPath) : false;
+    const finalUrl = exists ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
+
+    console.log('🔊 [AudioService] playSmallScene:', scene.id);
+
+    return new Promise((resolve) => {
+      const sound = new Sound(finalUrl, '', (error) => {
+        if (error) {
+          console.warn(`[SmallScene] Load failed for ${scene.id}:`, error);
+          resolve();
+          return;
+        }
+        
+        sound.setNumberOfLoops(-1);
+        sound.setVolume(0); // 从 0 开始淡入
+        sound.play();
+        
+        this.smallScenes.set(scene.id, sound);
+        this.emitSmallScenes();
+        
+        // 执行淡入
+        this.fadeSound(sound, volume, 1000).catch(() => {});
+        
+        // 兼容性设置：如果是第一个开启的小场景，设为 ambientSound
+        if (!this.ambientSound) {
+          this.ambientSound = sound;
+          this.ambientName = scene.id;
+          this.ambientVolume = volume;
+        }
+        
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * 核心 Toggle 逻辑：区分大场景和小场景
+   */
+  /**
+   * 平滑调整 react-native-sound 的音量
+   */
+  private fadeSound(sound: Sound, targetVolume: number, duration: number = 800): Promise<void> {
+    return new Promise((resolve) => {
+      const startVolume = (sound as any)._volume || 0;
+      const steps = 16;
+      const interval = duration / steps;
+      const stepValue = (targetVolume - startVolume) / steps;
+      let currentStep = 0;
+
+      const timer = setInterval(() => {
+        currentStep++;
+        const newVol = startVolume + stepValue * currentStep;
+        sound.setVolume(Math.max(0, Math.min(1, newVol)));
+
+        if (currentStep >= steps) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, interval);
+    });
+  }
+
+  /**
+   * 平滑调整 TrackPlayer 的音量
+   */
+  private async fadeTrackPlayer(targetVolume: number, duration: number = 800): Promise<void> {
+    const steps = 16;
+    const interval = duration / steps;
+    const currentVolume = await TrackPlayer.getVolume();
+    const stepValue = (targetVolume - currentVolume) / steps;
+
+    for (let i = 1; i <= steps; i++) {
+      await new Promise(r => setTimeout(r, interval));
+      const newVol = currentVolume + stepValue * i;
+      await TrackPlayer.setVolume(Math.max(0, Math.min(1, newVol)));
+    }
+  }
+
+  public async toggleScene(scene: Scene): Promise<void> {
+    if (scene.isBaseScene) {
+      // 大场景逻辑
+      const state = await TrackPlayer.getState();
+      const activeTrack = await TrackPlayer.getActiveTrack();
+      
+      if (state === State.Playing && activeTrack?.id === scene.id) {
+        // 如果正在播放当前大场景，则平滑暂停
+        console.log('⏸️ [AudioService] Fading out base scene:', scene.id);
+        await this.fadeTrackPlayer(0, 800);
+        await this.pause();
+      } else if (activeTrack?.id === scene.id) {
+        // 如果轨道已经是当前场景，只是暂停了，那就直接继续播放
+        console.log('▶️ [AudioService] Resuming base scene:', scene.id);
+        await this.play();
+        await this.fadeTrackPlayer(1.0, 1000);
+      } else {
+        // 开启新大场景：先平滑停止当前所有声音
+        console.log('🚀 [AudioService] Starting new base scene with fade out of others:', scene.id);
+        
+        // 如果当前有 TrackPlayer 在播放，先淡出
+        const currentState = await TrackPlayer.getState();
+        if (currentState === State.Playing) {
+          await this.fadeTrackPlayer(0, 500);
+        }
+
+        // 淡出所有小场景
+        const fadePromises = Array.from(this.smallScenes.values()).map(sound => this.fadeSound(sound, 0, 500));
+        await Promise.all(fadePromises);
+
+        await this.stopAllSounds();
+        this.currentBaseSceneId = scene.id;
+        
+        // 开启新大场景并淡入
+        await this.switchSoundscape(scene, 0);
+        await this.fadeTrackPlayer(1.0, 1000);
+      }
+    } else {
+      // 小场景逻辑
+      const existingSound = this.smallScenes.get(scene.id);
+      if (existingSound) {
+        // 已在播放，则淡出后停止
+        console.log('⏹️ [AudioService] Fading out small scene:', scene.id);
+        await this.fadeSound(existingSound, 0, 800);
+        existingSound.stop();
+        existingSound.release();
+        this.smallScenes.delete(scene.id);
+        this.emitSmallScenes();
+        
+        if (this.ambientName === scene.id) {
+          this.ambientSound = null;
+          this.ambientName = null;
+        }
+        // 小场景停止时不干扰主场景状态
+        /*
+        const tpState = await TrackPlayer.getState();
+        if (this.smallScenes.size === 0 && tpState !== State.Playing) {
+          this.updateAudioState(null, State.Stopped);
+        }
+        */
+      } else {
+        // 未在播放，则开启（带淡入）
+        await this.playSmallScene(scene);
+      }
+    }
+  }
+
+  public addSmallScenesListener(listener: (ids: string[]) => void): () => void {
+    this.smallScenesListeners.add(listener);
+    listener(Array.from(this.smallScenes.keys()));
+    return () => {
+      this.smallScenesListeners.delete(listener);
+    };
+  }
+
+  private emitSmallScenes() {
+    const ids = Array.from(this.smallScenes.keys());
+    this.smallScenesListeners.forEach((l) => l(ids));
+  }
+
+  public getActiveSmallSceneIds(): string[] {
+    return Array.from(this.smallScenes.keys());
+  }
+
   public getCurrentState(): State {
     return this.currentAudioState.state;
   }
@@ -388,14 +613,13 @@ class AudioService {
       this.ambientSound = null;
     }
     
-    // 2. 停掉主播放器，确保绝对静默（互斥核心）
-    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Pausing TrackPlayer for exclusivity');
-    await TrackPlayer.pause();
+    // 2. 环境音不再强制停掉主播放器，支持共存
+    console.log('🔊 [AudioService] setAmbient: Playing ambient alongside main scene');
+    // await TrackPlayer.pause(); // 移除互斥逻辑
 
     if (!id || id === 'none') {
       this.ambientName = null;
       this.ambientVolume = 0;
-      this.updateAudioState(null, State.Stopped);
       this.emitVolume();
       return;
     }
@@ -424,7 +648,8 @@ class AudioService {
       const sound = new Sound(finalUrl, '', (error) => {
         if (error) {
           console.warn(`[Ambient] Load failed for ${id}:`, error);
-          this.updateAudioState(null, State.Stopped);
+          // 不再干扰主状态
+          // this.updateAudioState(null, State.Stopped);
           resolve();
           return;
         }
@@ -442,7 +667,6 @@ class AudioService {
         sound.setVolume(this.ambientVolume);
         sound.play();
         
-        this.updateAudioState(id, State.Playing);
         resolve();
       });
     });
@@ -459,7 +683,6 @@ class AudioService {
       this.ambientSound = null;
     }
     this.ambientName = null;
-    this.updateAudioState(null, State.Stopped);
   }
 
   /**
@@ -476,7 +699,6 @@ class AudioService {
     }
     
     this.ambientName = null;
-    this.updateAudioState(null, State.Stopped);
   }
 
   /**
@@ -740,7 +962,7 @@ class AudioService {
   }
 
   private async triggerAlarm() {
-    const ALARM_SCENE: Scene = {
+    const ALARM_SCENE = new Scene({
       id: 'morning-alarm',
       title: '清晨唤醒',
       audioUrl: '',
@@ -750,8 +972,9 @@ class AudioService {
       audioSource: 'life_fire_pure',
       baseVolume: 1.0,
       backgroundSource: { uri: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8' },
-      category: 'Life'
-    };
+      category: 'Life',
+      isBaseScene: true
+    });
 
     try {
       await this.switchSoundscape(ALARM_SCENE);
@@ -908,6 +1131,7 @@ class AudioService {
       const soundscape = initialSoundscape || SCENES[0];
       
       this.currentScene = soundscape; 
+      this.currentBaseSceneId = soundscape.id;
       
       console.log('🎵 [AudioService] loadAudio:', soundscape.id);
       
@@ -988,7 +1212,7 @@ class AudioService {
     }
   }
 
-  public async switchSoundscape(newScene: Scene): Promise<void> {
+  public async switchSoundscape(newScene: Scene, startVolume: number = 1.0): Promise<void> {
     const now = Date.now();
     if (now - this.lastSwitchTime < 300) {
       return;
@@ -1017,6 +1241,7 @@ class AudioService {
       }
 
       this.currentScene = newScene; // 保存当前场景引用
+      this.currentBaseSceneId = newScene.id;
       console.log('🔄 [AudioService] switchSoundscape:', newScene.id);
 
       // 提前触发状态更新，实现“即时上岛”视觉反馈
@@ -1073,16 +1298,18 @@ class AudioService {
       });
 
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
-      await TrackPlayer.setVolume(1.0);
+      await TrackPlayer.setVolume(startVolume);
       await TrackPlayer.play();
       
-      // 强制音量回正：play 后 100ms 再次确保音量为 1.0
-      setTimeout(() => {
-        TrackPlayer.setVolume(1.0).catch(() => {});
-        console.log('🔊 [AudioService] Volume correction executed (switch): 1.0');
-      }, 100);
+      // 强制音量回正：如果不是 0，则 play 后 100ms 再次确保音量正确
+      if (startVolume > 0) {
+        setTimeout(() => {
+          TrackPlayer.setVolume(startVolume).catch(() => {});
+          console.log(`🔊 [AudioService] Volume correction executed (switch): ${startVolume}`);
+        }, 100);
+      }
       
-      this.volume = 1.0;
+      this.volume = startVolume;
       this.emitVolume();
     } catch (e: any) {
       const message = (e && e.message) || String(e);

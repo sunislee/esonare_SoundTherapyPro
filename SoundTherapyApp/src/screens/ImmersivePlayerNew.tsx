@@ -74,6 +74,14 @@ const AnimatedIndicator = ({
 // 定义四大核心分类
 const MAIN_CATEGORIES = ['Nature', 'Healing', 'Brainwave', 'Life'];
 
+// 分类文案映射
+const CATEGORY_MAP: Record<string, string> = {
+  'Nature': '自然',
+  'Healing': '疗愈',
+  'Brainwave': '脑波',
+  'Life': '生活',
+};
+
 // 默认兜底场景
 const DEFAULT_SCENE = SCENES[0];
 
@@ -129,7 +137,7 @@ const ImmersivePlayerNew = () => {
   const navigation = useNavigation();
   const route = useRoute<ImmersivePlayerRouteProp>();
   const insets = useSafeAreaInsets();
-  const { currentScene, isPlaying, togglePlayback, setAmbient } = useAudio();
+  const { currentScene, currentBaseSceneId, isPlaying, activeSmallSceneIds, togglePlayback, setAmbient } = useAudio();
   const pagerRef = useRef<PagerView>(null);
 
   // 第一步：引入‘断路器’状态
@@ -155,7 +163,7 @@ const ImmersivePlayerNew = () => {
   const scrollProgress = useRef(Animated.add(position, scrollOffset)).current;
   
   const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
-  const [currentAmbient, setCurrentAmbient] = useState<'none' | 'rain' | 'fire'>('none');
+  const [currentAmbient, setCurrentAmbient] = useState<'none' | 'fireplace' | 'summer'>('none');
 
   // 播放按钮缩放动画
   const playBtnScale = useRef(new Animated.Value(1)).current;
@@ -302,10 +310,11 @@ const ImmersivePlayerNew = () => {
      }, 400);
    };
 
-   const handleToggle = async () => {
+  const handleToggle = async (sceneToToggle?: Scene) => {
     if (isFrozen) return;
-    if (currentScene) {
-      await togglePlayback(currentScene);
+    const target = sceneToToggle || currentScene;
+    if (target) {
+      await togglePlayback(target);
     }
   };
 
@@ -328,13 +337,16 @@ const ImmersivePlayerNew = () => {
     setAmbientSheetVisible(!ambientSheetVisible);
   };
 
-   const handleAmbientSelect = (type: 'none' | 'rain' | 'fire') => {
+  const handleAmbientSelect = (type: 'none' | 'fireplace' | 'summer') => {
      setCurrentAmbient(type);
      if (type === 'none') {
        setAmbient(null);
      } else {
-       const soundId = type === 'rain' ? 'healing_rain' : 'life_fire_pure';
-       setAmbient(soundId);
+       const idMap: Record<string, string> = {
+         'fireplace': 'life_fireplace',
+         'summer': 'life_summer'
+       };
+       setAmbient(idMap[type]);
      }
    };
 
@@ -361,6 +373,9 @@ const ImmersivePlayerNew = () => {
   };
 
   const renderScenePage = (scene: Scene, index: number) => {
+    // 关键修复：判断当前页面场景是否正在播放
+    const isThisScenePlaying = isPlaying && currentBaseSceneId === scene.id;
+
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: 'transparent' }]}>
         <SafeAreaView style={[styles.overlay, { backgroundColor: 'transparent' }]}>
@@ -371,12 +386,12 @@ const ImmersivePlayerNew = () => {
             <Animated.View style={{ transform: [{ scale: playBtnScale }] }}>
               <TouchableOpacity 
                 style={styles.playButton}
-                onPress={handleToggle}
+                onPress={() => handleToggle(scene)}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 activeOpacity={0.9}
               >
-                {isPlaying && currentScene?.id === scene.id ? (
+                {isThisScenePlaying ? (
                   <View style={styles.pauseIconContainer}>
                     <View style={styles.pauseBar} />
                     <View style={styles.pauseBar} />
@@ -396,6 +411,17 @@ const ImmersivePlayerNew = () => {
   };
 
   const renderFixedFooter = () => {
+    // 1. 提取全局通用的氛围音 ID
+    const GLOBAL_AMBIENT_IDS = ['life_fireplace', 'life_summer'];
+
+    // 2. 过滤出当前分类下的小场景，并合并全局通用音效
+    const currentCategory = MAIN_CATEGORIES[activeIndex];
+    const categorySmallScenes = SCENES.filter(s => {
+      if (s.isBaseScene) return false;
+      // 满足以下任一条件：1. 属于当前分类 2. 属于全局通用 ID 列表
+      return s.category === currentCategory || GLOBAL_AMBIENT_IDS.includes(s.id);
+    });
+
     return (
       <View style={styles.fixedFooterContainer}>
         <BlurView
@@ -405,6 +431,36 @@ const ImmersivePlayerNew = () => {
           reducedTransparencyFallbackColor="black"
         />
         <View style={styles.footerContent}>
+          {/* 氛围点缀区域 */}
+          {categorySmallScenes.length > 0 && (
+            <View style={styles.ambientContainer}>
+              {categorySmallScenes.map(scene => {
+                const isActive = (activeSmallSceneIds || []).includes(scene.id);
+                return (
+                  <TouchableOpacity
+                    key={scene.id}
+                    style={[styles.ambientBtn, isActive && styles.ambientBtnActive]}
+                    onPress={() => togglePlayback(scene)}
+                    activeOpacity={0.7}
+                  >
+                    <Icon 
+                      name={
+                        scene.id.includes('fireplace') ? 'flame' : 
+                        scene.id.includes('summer') ? 'sunny' : 
+                        scene.id.includes('fire_pure') ? 'bonfire' : 'musical-notes'
+                      } 
+                      size={16} 
+                      color={isActive ? '#fff' : 'rgba(255,255,255,0.4)'} 
+                    />
+                    <Text style={[styles.ambientText, isActive && styles.ambientTextActive]}>
+                      {scene.title}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+
           <View style={styles.indicatorContainer}>
             {MAIN_CATEGORIES.map((cat, index) => (
               <AnimatedIndicator
@@ -515,7 +571,7 @@ const ImmersivePlayerNew = () => {
                     textShadowOffset: {width: 0, height: 2}, 
                     textShadowRadius: 4 
                   }}> 
-                    {category} 
+                    {CATEGORY_MAP[category] || category} 
                   </Text> 
                   {/* 副标题：16px, 0.75 透明度 */}
                   <Text style={{ 
@@ -583,7 +639,7 @@ const ImmersivePlayerNew = () => {
             visible={ambientSheetVisible}
             currentAmbient={currentAmbient}
             currentSceneId={currentScene?.id || ''}
-            onClose={() => setAmbientSheetVisible(false)}
+            onClose={toggleAmbientSheet}
             onSelect={handleAmbientSelect}
             onRestoreMix={(mix) => {
               handleAmbientSelect(mix.ambientType as any);
@@ -709,6 +765,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   indicatorContainer: { flexDirection: 'row', marginBottom: 15, alignItems: 'center' },
+  ambientContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  ambientBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  ambientBtnActive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  ambientText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.4)',
+    marginLeft: 4,
+  },
+  ambientTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
   indicator: { 
     width: 32, 
     height: 32, 

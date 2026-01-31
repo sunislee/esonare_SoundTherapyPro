@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
+import AudioService from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Feather';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation } from '@react-navigation/native';
@@ -115,8 +116,22 @@ export const ProfileScreen = () => {
   };
 
   const openGallery = async () => {
-    const result = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8 });
-    if (result.assets?.[0]?.uri) saveAvatar(result.assets[0].uri);
+    try {
+      AudioService.setPickingFile(true);
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        selectionLimit: 1,
+        quality: 0.8,
+      });
+
+      if (result.assets?.[0]?.uri) {
+        saveAvatar(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Pick image error:', error);
+    } finally {
+      AudioService.setPickingFile(false);
+    }
   };
 
   const saveAvatar = async (uri: string) => {

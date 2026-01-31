@@ -76,7 +76,7 @@ const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor =
 // ----------------------------------------------------------------
 // 主组件：氛围点缀控制弹窗 (暴力不透明“物理封印”版)
 // ----------------------------------------------------------------
-type AmbientType = 'none' | 'rain' | 'fire';
+type AmbientType = 'none' | 'fireplace' | 'summer';
 type MixPreset = { id: string; name: string; sceneId: string; mainVolume: number; rainVolume: number; fireVolume: number; ambientType: AmbientType; };
 
 type Props = {
@@ -147,13 +147,13 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     updateAmbientVolume, 
     setAmbient, 
     getAmbientVolumeById,
-    activeSoundId: globalActiveId,
+    activeSmallSceneIds,
     isPlaying: globalIsPlaying 
   } = useAudio();
   
   const [mainVolume, setMainVolume] = useState(1.0);
-  const [rainVolume, setRainVolume] = useState(0.3);
-  const [fireVolume, setFireVolume] = useState(0.3);
+  const [fireplaceVolume, setFireplaceVolume] = useState(0.3);
+  const [summerVolume, setSummerVolume] = useState(0.3);
   const [isEditing, setIsEditing] = useState(false);
   const [mixName, setMixName] = useState('');
   const [savedMixes, setSavedMixes] = useState<MixPreset[]>([]);
@@ -169,8 +169,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     if (visible) {
       loadMixes();
       setMainVolume(AudioService.getVolume());
-      setRainVolume(getAmbientVolumeById('healing_rain'));
-      setFireVolume(getAmbientVolumeById('life_fire_pure'));
+      setFireplaceVolume(getAmbientVolumeById('life_fireplace'));
+      setSummerVolume(getAmbientVolumeById('life_summer'));
       
       dragY.setValue(0); // 重置拖动值
       // 动画目标值为 0
@@ -191,7 +191,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 
   const saveMix = async () => {
     const name = mixName.trim() || `${new Date().getMonth() + 1}月${new Date().getDate()}日 混音`;
-    const newMix = { id: Date.now().toString(), name, sceneId: currentSceneId, mainVolume, rainVolume, fireVolume, ambientType: currentAmbient };
+    // 兼容旧版 MixPreset 结构，这里可能需要调整，但暂且保持主要逻辑
+    const newMix = { id: Date.now().toString(), name, sceneId: currentSceneId, mainVolume, rainVolume: 0, fireVolume: fireplaceVolume, ambientType: currentAmbient };
     const updated = [newMix, ...savedMixes];
     setSavedMixes(updated);
     await AsyncStorage.setItem('@mix_presets', JSON.stringify(updated));
@@ -200,25 +201,25 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     Alert.alert('成功', '方案已保存');
   };
 
-  const handleVolumeChange = (type: any, val: number) => {
+  const handleVolumeChange = (type: 'main' | 'fireplace' | 'summer', val: number) => {
     if (type === 'main') { 
       setMainVolume(val); 
       AudioService.setVolume(val); 
     }
-    else if (type === 'rain') { 
-      setRainVolume(val); 
-      if (getIsActive('rain')) updateAmbientVolume(val); 
+    else if (type === 'fireplace') { 
+      setFireplaceVolume(val); 
+      if (getIsActive('fireplace')) updateAmbientVolume(val); 
     }
-    else { 
-      setFireVolume(val); 
-      if (getIsActive('fire')) updateAmbientVolume(val); 
+    else if (type === 'summer') { 
+      setSummerVolume(val); 
+      if (getIsActive('summer')) updateAmbientVolume(val); 
     }
   };
 
   const handleSelect = async (type: AmbientType) => {
     ReactNativeHapticFeedback.trigger('impactLight');
     
-    // 物理锁死：无论切到哪个，先暴力杀掉当前所有声音（包括主播放器）
+    // 物理锁死：无论切到哪个，先暴力杀掉当前所有声音
     await setAmbient(null);
 
     if (type === 'none') {
@@ -227,8 +228,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     }
 
     const idMap: Record<string, string | null> = {
-      'rain': 'healing_rain',
-      'fire': 'life_fire_pure'
+      'fireplace': 'life_fireplace',
+      'summer': 'life_summer'
     };
     
     const targetId = idMap[type];
@@ -244,10 +245,26 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 
   if (!visible) return null;
 
-  const getIsActive = (type: string) => {
-    if (type === 'rain') return globalActiveId === 'healing_rain';
-    if (type === 'fire') return globalActiveId === 'life_fire_pure';
+  const getIsActive = (type: AmbientType) => {
+    if (type === 'fireplace') return (activeSmallSceneIds || []).includes('life_fireplace');
+    if (type === 'summer') return (activeSmallSceneIds || []).includes('life_summer');
     return false;
+  };
+
+  const getAmbientIcon = (type: AmbientType) => {
+    switch(type) {
+      case 'fireplace': return "flame-outline";
+      case 'summer': return "sunny-outline";
+      default: return "musical-notes-outline";
+    }
+  };
+
+  const getAmbientLabel = (type: AmbientType) => {
+    switch(type) {
+      case 'fireplace': return "  炉火";
+      case 'summer': return "  夏日烟火";
+      default: return "";
+    }
   };
 
   return (
@@ -339,17 +356,18 @@ export const AmbientPickerSheet: React.FC<Props> = ({
             </View>
 
             <Text style={styles.groupLabel}>环境音效叠加</Text>
-            {['rain', 'fire'].map((type: any) => {
+            {(['fireplace', 'summer'] as AmbientType[]).map((type) => {
               const isActive = getIsActive(type);
+              const volume = type === 'fireplace' ? fireplaceVolume : summerVolume;
               return (
                 <View key={type} style={[styles.volumeCard, isActive && styles.activeCard]}>
                   <TouchableOpacity style={styles.cardHeader} onPress={() => {
                     handleSelect(isActive ? 'none' : type);
                   }}>
                     <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                       <Icon name={type === 'rain' ? "rainy-outline" : "flame-outline"} size={20} color={isActive ? "#D4AF37" : "#666"} />
+                       <Icon name={getAmbientIcon(type)} size={20} color={isActive ? "#D4AF37" : "#666"} />
                        <Text style={[styles.cardTitle, isActive && {color: '#fff', fontWeight: 'bold'}]}>
-                         {type === 'rain' ? '  治愈雨声' : '  壁炉篝火'}
+                         {getAmbientLabel(type)}
                        </Text>
                     </View>
                     <Icon name={isActive ? "radio-button-on" : "radio-button-off"} size={22} color={isActive ? "#D4AF37" : "#444"} />
@@ -357,8 +375,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                   
                   {/* 滑块锁死：非活跃声音的滑块全部禁用 */}
                   <SimpleJsSlider 
-                    value={type === 'rain' ? rainVolume : fireVolume} 
-                    onValueChange={(v: any) => handleVolumeChange(type, v)}
+                    value={volume} 
+                    onValueChange={(v: any) => handleVolumeChange(type as any, v)}
                     onSlidingComplete={() => {}}
                     disabled={!isActive}
                   />
@@ -373,7 +391,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                 {savedMixes.map(mix => (
                   <TouchableOpacity key={mix.id} style={styles.presetItem} onPress={() => {
                     onRestoreMix(mix);
-                    setMainVolume(mix.mainVolume); setRainVolume(mix.rainVolume); setFireVolume(mix.fireVolume);
+                    setMainVolume(mix.mainVolume); 
+                    setFireplaceVolume(mix.fireVolume); 
                     ToastUtil.success(`已应用: ${mix.name}`);
                   }}>
                     <Text style={{color: '#fff', fontWeight: 'bold'}} numberOfLines={1}>{mix.name}</Text>

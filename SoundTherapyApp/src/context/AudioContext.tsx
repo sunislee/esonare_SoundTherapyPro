@@ -7,8 +7,10 @@ interface AudioContextType {
   activeSoundId: string | null;
   playbackState: State;
   currentScene: Scene | null;
+  currentBaseSceneId: string | null;
   isPlaying: boolean;
   isBuffering: boolean;
+  activeSmallSceneIds: string[];
   remainingTime: number | null;
   initialRemaining: number | null;
   isTimerActive: boolean;
@@ -27,9 +29,11 @@ interface AudioContextType {
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeSoundId, setActiveSoundId] = useState<string | null>(null);
-  const [playbackState, setPlaybackState] = useState<State>(State.None);
-  const [currentScene, setCurrentScene] = useState<Scene | null>(null);
+  const [activeSoundId, setActiveSoundId] = useState<string | null>(AudioService.getCurrentBaseSceneId());
+  const [playbackState, setPlaybackState] = useState<State>(AudioService.getCurrentState());
+  const [currentScene, setCurrentScene] = useState<Scene | null>(AudioService.getCurrentScene());
+  const [currentBaseSceneId, setCurrentBaseSceneId] = useState<string | null>(AudioService.getCurrentBaseSceneId());
+  const [activeSmallSceneIds, setActiveSmallSceneIds] = useState<string[]>(AudioService.getActiveSmallSceneIds());
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [initialRemaining, setInitialRemaining] = useState<number | null>(AudioService.getInitialSleepSeconds());
   const [ambientVolume, setAmbientVolume] = useState<number>(AudioService.getAmbientVolume());
@@ -54,6 +58,13 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setActiveSoundId(state.id);
       setPlaybackState(state.state);
       setCurrentScene(AudioService.getCurrentScene());
+      setCurrentBaseSceneId(AudioService.getCurrentBaseSceneId());
+      setActiveSmallSceneIds(AudioService.getActiveSmallSceneIds());
+    });
+
+    const unsubscribeSmallScenes = AudioService.addSmallScenesListener((ids) => {
+      console.log('[AudioContext] Small Scenes Update:', ids);
+      setActiveSmallSceneIds(ids);
     });
 
     const unsubscribeVolume = AudioService.addVolumeListener((vol) => {
@@ -73,6 +84,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       unsubscribeState();
+      unsubscribeSmallScenes();
       unsubscribeVolume();
       unsubscribeTimer();
     };
@@ -136,25 +148,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const togglePlayback = useCallback(async (scene: Scene) => {
-    // 强化冷启动：如果点击的是当前正在“显示播放”的音源，但实际上没声音，触发强制重置
-    if (activeSoundId === scene.id && isPlaying) {
-      console.log('[AudioContext] Toggle existing scene:', scene.id);
-      // 检查底层是否真的有 activeTrack
-      const activeTrack = await AudioService.getCurrentActiveTrack();
-      if (!activeTrack) {
-        console.log('[AudioContext] Cold start sync: UI says playing but no track, forcing reset');
-        await AudioService.forceResetAndPlay(scene);
-        return;
-      }
-      await AudioService.pause();
-    } else if (activeSoundId === scene.id) {
-      console.log('[AudioContext] Playing scene:', scene.id);
-      await AudioService.play();
-    } else {
-      console.log('[AudioContext] Switching to scene:', scene.id);
-      await AudioService.switchSoundscape(scene);
-    }
-  }, [activeSoundId, isPlaying]);
+    console.log('[AudioContext] togglePlayback for scene:', scene.id, 'isBase:', scene.isBaseScene);
+    await AudioService.toggleScene(scene);
+  }, []);
 
   return (
     <AudioContext.Provider
@@ -162,8 +158,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         activeSoundId,
         playbackState,
         currentScene,
+        currentBaseSceneId,
         isPlaying,
         isBuffering,
+        activeSmallSceneIds,
         remainingTime,
         initialRemaining,
         isTimerActive,

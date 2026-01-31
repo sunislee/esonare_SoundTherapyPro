@@ -24,8 +24,8 @@ function StateAwareRouter() {
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
-        // 全局状态检查：App 唤醒时如果正在播放，跳转到播放页
-        if (AudioService.isPlaying()) {
+        // 全局状态检查：App 唤醒时如果正在播放且非正在选择文件，跳转到播放页
+        if (AudioService.isPlaying() && !AudioService.isPickingFile()) {
           const scene = AudioService.getCurrentScene();
           if (scene) {
             console.log('[StateAwareRouter] App active & Audio playing, jumping to ImmersivePlayer:', scene.id);

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Animated,
   StatusBar,
@@ -6,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  FlatList,
   Dimensions,
   Platform,
   InteractionManager,
@@ -17,11 +16,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { usePlaybackState, State } from 'react-native-track-player';
 import AudioService from '../services/AudioService';
 import { RainDrop } from '../components/RainDrop';
-import { SCENES } from '../constants/scenes';
+import { SCENES, Scene } from '../constants/scenes';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import { useAudio } from '../context/AudioContext';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { ScrollView } from 'react-native-gesture-handler';
+import { Typography } from '../theme/Typography';
 
 interface RainDropConfig {
   id: number;
@@ -34,14 +36,17 @@ interface RainDropConfig {
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40;
 
-  // 1. 抽离 SceneItem 组件以管理独立的动画状态，并使用 React.memo 确保渲染隔离
-const SceneItem = React.memo(({ item, isPlaying, activeSoundId, togglePlayback, navigation, isFocused }: any) => {
+// 1. 抽离 SceneItem 组件以管理独立的动画状态
+const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, activeSmallSceneIds, togglePlayback, navigation, isFocused }: any) => {
+  // ... (keep existing implementation for big cards)
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const breathAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
-  const isThisPlaying = isPlaying && activeSoundId === item.id;
+  
+  const isThisPlaying = item.isBaseScene 
+    ? (isPlaying && currentBaseSceneId === item.id)
+    : (activeSmallSceneIds || []).includes(item.id);
 
-  // 合并缩放逻辑：将呼吸缩放与点击缩放合并，避免多个 transform scale 导致的渲染 Bug
   const combinedScale = Animated.multiply(
     scaleAnim,
     breathAnim.interpolate({
@@ -50,7 +55,6 @@ const SceneItem = React.memo(({ item, isPlaying, activeSoundId, togglePlayback, 
     })
   );
 
-  // 提示性呼吸动画逻辑
   useEffect(() => {
     if (isFocused) {
       Animated.loop(
@@ -68,7 +72,7 @@ const SceneItem = React.memo(({ item, isPlaying, activeSoundId, togglePlayback, 
             useNativeDriver: true,
           }),
         ]),
-        { iterations: 2 } // 呼吸两次
+        { iterations: 2 }
       ).start();
     } else {
       breathAnim.setValue(0);
@@ -101,77 +105,29 @@ const SceneItem = React.memo(({ item, isPlaying, activeSoundId, togglePlayback, 
   });
 
   return (
-    <View style={{ 
-      width: ITEM_WIDTH,
-      height: 110,
-      marginBottom: 20,
-      zIndex: isPressed || isFocused ? 10 : 1,
-      position: 'relative',
-    }}>
+    <View style={styles.cardWrapper}>
       <Animated.View 
-        renderToHardwareTextureAndroid={true} // Android 硬件加速稳定渲染
-        style={{ 
-          width: ITEM_WIDTH,
-          height: 110,
-          transform: [{ scale: combinedScale }],
-        }}
+        renderToHardwareTextureAndroid={true}
+        style={[styles.cardContainer, { transform: [{ scale: combinedScale }] }]}
       >
-        <View style={{
-          width: ITEM_WIDTH,
-          height: 110,
-          overflow: 'hidden', // 强制剪裁：分离 transform 和 overflow，提高 Android 稳定性
-          borderRadius: 20,
-          backgroundColor: 'transparent',
-        }}>
-          {/* 呼吸提示光晕层 - 仅在 isFocused 时显示 */}
+        <View style={styles.cardClip}>
           {isFocused && (
-            <Animated.View style={[
-              {
-                position: 'absolute',
-                top: 5,     // 收紧边缘：确保上下各留出 5px 安全距离
-                bottom: 5,
-                left: 5,
-                right: 5,
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                borderRadius: 15, // 相应收紧圆角
-                opacity: focusGlowOpacity,
-                borderWidth: 1.5,
-                borderColor: 'rgba(255,255,255,0.5)',
-              }
-            ]} />
+            <Animated.View style={[styles.focusGlow, { opacity: focusGlowOpacity }]} />
           )}
           
-          {/* 点击即时高亮反馈层 - 严格限制在当前 Item 内部并收紧边距 */}
-          {isPressed && (
-            <View style={[
-              {
-                position: 'absolute',
-                top: 2,
-                bottom: 2,
-                left: 2,
-                right: 2,
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                borderRadius: 18,
-                borderWidth: 1.5,
-                borderColor: 'rgba(255,255,255,0.3)',
-                zIndex: 2
-              }
-            ]} />
-          )}
+          {isPressed && <View style={styles.pressOverlay} />}
 
           <TouchableOpacity
             activeOpacity={1}
             style={[
               styles.card, 
-              isPressed && { borderColor: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.1)' }
+              isPressed && styles.cardPressed
             ]}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            delayLongPress={150} // 增加长按判定延迟，减少滑动时的误触
+            delayLongPress={150}
             onPress={() => {
-              // 物理延时：先完成缩放动画，给 UI 线程 50ms 喘息时间再触发跳转
               setTimeout(async () => {
-                // 异步记录最后查看的场景
                 await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
                 navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
               }, 50);
@@ -203,15 +159,87 @@ const SceneItem = React.memo(({ item, isPlaying, activeSoundId, togglePlayback, 
   );
 });
 
+// 2. 小场景 (Elements) 组件：以紧凑的图标/开关形式展示
+const SmallSceneItem = React.memo(({ item, isActive, togglePlayback }: any) => {
+  const [isPressed, setIsPressed] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+    Animated.spring(scaleAnim, { toValue: 0.9, useNativeDriver: true }).start();
+  };
+
+  const handlePressOut = () => {
+    setIsPressed(false);
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+  };
+
+  // 根据 ID 选择图标 (暂时硬编码，后续可在数据中扩展)
+  const getIconName = (id: string) => {
+    if (id.includes('fireplace')) return 'flame-outline';
+    if (id.includes('summer')) return 'sunny-outline';
+    if (id.includes('breath')) return 'heart-outline';
+    if (id.includes('white_noise')) return 'radio-outline';
+    return 'musical-notes-outline';
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={() => togglePlayback(item)}
+        style={[
+          styles.smallCard,
+          isActive && styles.smallCardActive,
+          isPressed && styles.smallCardPressed
+        ]}
+      >
+        <Icon 
+          name={getIconName(item.id)} 
+          size={18} 
+          color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)'} 
+        />
+        <Text style={[
+          styles.smallCardText,
+          isActive && styles.smallCardTextActive
+        ]}>
+          {item.title}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
+
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { isPlaying, activeSoundId, togglePlayback, syncNativeStatus } = useAudio();
+  const { isPlaying, currentBaseSceneId, activeSmallSceneIds, togglePlayback, syncNativeStatus } = useAudio();
   
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
   const greetingFadeAnim = useRef(new Animated.Value(0)).current;
-  const flatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
+
+  // 1. 分类逻辑定义
+  const categories = ['Nature', 'Life', 'Healing', 'Brainwave'];
+  const categoryLabels: Record<string, string> = {
+    'Nature': '自然力量',
+    'Life': '生活角落',
+    'Healing': '深度疗愈',
+    'Brainwave': '脑波专注'
+  };
+
+  // 分组数据
+  const groupedScenes = useMemo(() => {
+    return categories.map(cat => ({
+      title: cat,
+      label: categoryLabels[cat],
+      baseScenes: SCENES.filter(s => s.category === cat && s.isBaseScene),
+      smallScenes: SCENES.filter(s => s.category === cat && !s.isBaseScene)
+    }));
+  }, []);
 
   // 使用 useFocusEffect 确保每次回到首页时重新读取用户名
   useFocusEffect(
@@ -223,27 +251,7 @@ export const HomeScreen: React.FC = () => {
           if (savedName) setUserName(savedName);
           else setUserName('');
 
-          // 首页智能定位：如果没有音频播放，定位到上次观看的场景
-          if (!AudioService.isPlaying()) {
-            const lastId = await AsyncStorage.getItem('LAST_VIEWED_SCENE_ID');
-            if (lastId) {
-              const index = SCENES.findIndex(s => s.id === lastId);
-              if (index !== -1) {
-                // 稍微延迟等待 FlatList 渲染
-                setTimeout(() => {
-                  flatListRef.current?.scrollToIndex({
-                    index,
-                    animated: false,
-                    viewPosition: 0.5,
-                  });
-                  setFocusedSceneId(lastId);
-                  
-                  // 3秒后移除提示状态
-                  setTimeout(() => setFocusedSceneId(null), 3000);
-                }, 400);
-              }
-            }
-          }
+          // 首页智能定位 (逻辑调整为定位到对应分类，由于改为 ScrollView，暂时移除 index 定位)
         };
         loadInitialState();
       });
@@ -307,30 +315,14 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     // Initialize Audio
     const init = async () => {
-      // setIsLoading(true); // User requested NO loading state
       try {
         await AudioService.setupPlayer();
-        // 恢复默认加载但不自动播放：预加载第一个音源
         await AudioService.loadAudio(SCENES[0], false);
       } finally {
-        // setIsLoading(false);
       }
     };
     init().catch(() => {});
   }, []);
-
-  const renderSceneItem = useCallback(({ item }: { item: any }) => {
-    return (
-      <SceneItem 
-        item={item} 
-        isPlaying={isPlaying} 
-        activeSoundId={activeSoundId} 
-        togglePlayback={togglePlayback} 
-        navigation={navigation} 
-        isFocused={focusedSceneId === item.id}
-      />
-    );
-  }, [isPlaying, activeSoundId, togglePlayback, navigation, focusedSceneId]);
 
   return (
     <View style={styles.container}>
@@ -352,7 +344,12 @@ export const HomeScreen: React.FC = () => {
           ))}
         </View>
         
-        <View style={styles.content}>
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>Sound Therapy</Text>
             <Animated.View style={{ opacity: greetingFadeAnim }}>
@@ -365,26 +362,43 @@ export const HomeScreen: React.FC = () => {
             </Animated.View>
           </View>
 
-          <FlatList
-            ref={flatListRef}
-            data={SCENES}
-            renderItem={renderSceneItem}
-            keyExtractor={item => item.id}
-            contentContainerStyle={styles.listContent}
-            style={{ flex: 1, width: '100%' }}
-            showsVerticalScrollIndicator={false}
-            // 性能优化：限制窗口大小，防止后台渲染过多
-            windowSize={5}
-            initialNumToRender={8}
-            maxToRenderPerBatch={10}
-            removeClippedSubviews={false} // 关键修复：Android 上开启此项在复杂动画下极易导致渲染树异常闪退
-            getItemLayout={(data, index) => ({
-              length: 130, // card height 110 + margin 20
-              offset: 130 * index,
-              index,
-            })}
-          />
-        </View>
+          {groupedScenes.map((group) => (
+            <View key={group.title} style={styles.section}>
+              <Text style={styles.sectionTitle}>{group.label}</Text>
+              
+              {/* 大场景列表 */}
+              {group.baseScenes.map((scene: Scene) => (
+                <SceneItem 
+                  key={scene.id}
+                  item={scene} 
+                  isPlaying={isPlaying} 
+                  currentBaseSceneId={currentBaseSceneId} 
+                  activeSmallSceneIds={activeSmallSceneIds}
+                  togglePlayback={togglePlayback} 
+                  navigation={navigation} 
+                  isFocused={focusedSceneId === scene.id}
+                />
+              ))}
+
+              {/* 小场景入口 (Elements) */}
+              {group.smallScenes.length > 0 && (
+                <View style={styles.smallScenesContainer}>
+                  <Text style={styles.smallScenesLabel}>氛围点缀</Text>
+                  <View style={styles.smallScenesGrid}>
+                    {group.smallScenes.map((scene: Scene) => (
+                      <SmallSceneItem 
+                        key={scene.id}
+                        item={scene}
+                        isActive={(activeSmallSceneIds || []).includes(scene.id)}
+                        togglePlayback={togglePlayback}
+                      />
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          ))}
+        </ScrollView>
       </View>
     </View>
   );
@@ -406,24 +420,88 @@ const styles = StyleSheet.create({
     opacity: 0.3,
     zIndex: 999,
   },
-  content: { 
-    flex: 1, 
-    position: 'relative',
-    zIndex: 1,
-    paddingTop: 10, // 减小整体内边距，改为由 header 精确控制
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 120,
+    alignItems: 'center',
   },
   header: { 
     alignItems: 'center', 
-    marginBottom: 20,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 40, // iOS 考虑灵动岛/刘海高度
+    marginBottom: 40,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
   },
-  title: { fontSize: 32, color: '#fff', fontWeight: 'bold', letterSpacing: 1 },
-  subtitle: { fontSize: 14, color: 'rgba(255, 255, 255, 0.7)', marginTop: 5 },
-  userName: { fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)' },
+  title: { 
+    fontSize: 32, 
+    color: '#fff', 
+    fontWeight: '700', 
+    letterSpacing: 1,
+    fontFamily: Typography.fontFamily
+  },
+  subtitle: { 
+    fontSize: 14, 
+    color: 'rgba(255, 255, 255, 0.6)', 
+    marginTop: 8,
+    fontFamily: Typography.fontFamily
+  },
+  userName: { fontWeight: '700', color: 'rgba(255, 255, 255, 0.9)' },
   
-  listContent: {
-    paddingBottom: 120, // 增加底部间距以防被 TabBar 遮挡
+  section: {
+    width: '100%',
     alignItems: 'center',
+    marginBottom: 40,
+  },
+  sectionTitle: {
+    width: ITEM_WIDTH,
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: '700',
+    marginBottom: 20,
+    fontFamily: Typography.fontFamily,
+    letterSpacing: 0.5,
+  },
+
+  cardWrapper: { 
+    width: ITEM_WIDTH,
+    height: 110,
+    marginBottom: 20,
+    zIndex: 1,
+    position: 'relative',
+  },
+  cardContainer: { 
+    width: ITEM_WIDTH,
+    height: 110,
+  },
+  cardClip: {
+    width: ITEM_WIDTH,
+    height: 110,
+    overflow: 'hidden',
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+  },
+  focusGlow: {
+    position: 'absolute',
+    top: 5,
+    bottom: 5,
+    left: 5,
+    right: 5,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 15,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  pressOverlay: {
+    position: 'absolute',
+    top: 2,
+    bottom: 2,
+    left: 2,
+    right: 2,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+    zIndex: 2
   },
   card: {
     width: ITEM_WIDTH,
@@ -434,7 +512,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    // 移除 redundent overflow: 'hidden'，父容器已处理剪裁，减少 Android 渲染层级
+  },
+  cardPressed: {
+    borderColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.1)'
   },
   cardInner: {
     flex: 1,
@@ -454,21 +535,22 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontFamily: Typography.fontFamily
   },
   cardSubtitle: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.5)',
     marginTop: 4,
+    fontFamily: Typography.fontFamily
   },
   cardPlayButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF', // Pure White as requested
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    // 性能优化：移除复杂阴影，改用简单的边框区分
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
   },
@@ -485,5 +567,50 @@ const styles = StyleSheet.create({
     marginLeft: 0,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  smallScenesContainer: {
+    width: ITEM_WIDTH,
+    marginTop: 10,
+    paddingHorizontal: 5,
+  },
+  smallScenesLabel: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.4)',
+    marginBottom: 12,
+    fontFamily: Typography.fontFamily,
+    fontWeight: '700',
+  },
+  smallScenesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  smallCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  smallCardActive: {
+    backgroundColor: 'rgba(108, 93, 211, 0.3)',
+    borderColor: 'rgba(108, 93, 211, 0.5)',
+  },
+  smallCardPressed: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  smallCardText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    marginLeft: 6,
+    fontFamily: Typography.fontFamily,
+  },
+  smallCardTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   }
 });
