@@ -1,8 +1,9 @@
 {
   "name": "SoundTherapyApp",
   "displayName": "SoundTherapyApp",
+  "version": "1.0.11",
   "china_compliance": {
-    "icp_beian": "待填写",
-    "privacy_policy_url": "待填写"
+    "icp_beian": "粤ICP备XXXXXXXX号-1",
+    "privacy_policy_url": "https://esonare.com/privacy"
   }
 }

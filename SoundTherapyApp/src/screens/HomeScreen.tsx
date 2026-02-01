@@ -37,15 +37,13 @@ const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40;
 
 // 1. 抽离 SceneItem 组件以管理独立的动画状态
-const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, activeSmallSceneIds, togglePlayback, navigation, isFocused }: any) => {
+const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused }: any) => {
   // ... (keep existing implementation for big cards)
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const breathAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
   
-  const isThisPlaying = item.isBaseScene 
-    ? (isPlaying && currentBaseSceneId === item.id)
-    : (activeSmallSceneIds || []).includes(item.id);
+  const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
 
   const combinedScale = Animated.multiply(
     scaleAnim,
@@ -129,6 +127,8 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, activeSmall
             onPress={() => {
               setTimeout(async () => {
                 await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
+                // 显式调用 switchSoundscape 并传递 autoPlay: true，确保进入即播放
+                AudioService.switchSoundscape(item, true);
                 navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
               }, 50);
             }}
@@ -159,62 +159,9 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, activeSmall
   );
 });
 
-// 2. 小场景 (Elements) 组件：以紧凑的图标/开关形式展示
-const SmallSceneItem = React.memo(({ item, isActive, togglePlayback }: any) => {
-  const [isPressed, setIsPressed] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    setIsPressed(true);
-    Animated.spring(scaleAnim, { toValue: 0.9, useNativeDriver: true }).start();
-  };
-
-  const handlePressOut = () => {
-    setIsPressed(false);
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-  };
-
-  // 根据 ID 选择图标 (暂时硬编码，后续可在数据中扩展)
-  const getIconName = (id: string) => {
-    if (id.includes('fireplace')) return 'flame-outline';
-    if (id.includes('summer')) return 'sunny-outline';
-    if (id.includes('breath')) return 'heart-outline';
-    if (id.includes('white_noise')) return 'radio-outline';
-    return 'musical-notes-outline';
-  };
-
-  return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={() => togglePlayback(item)}
-        style={[
-          styles.smallCard,
-          isActive && styles.smallCardActive,
-          isPressed && styles.smallCardPressed
-        ]}
-      >
-        <Icon 
-          name={getIconName(item.id)} 
-          size={18} 
-          color={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)'} 
-        />
-        <Text style={[
-          styles.smallCardText,
-          isActive && styles.smallCardTextActive
-        ]}>
-          {item.title}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-});
-
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { isPlaying, currentBaseSceneId, activeSmallSceneIds, togglePlayback, syncNativeStatus } = useAudio();
+  const { isPlaying, currentBaseSceneId, togglePlayback, syncNativeStatus } = useAudio();
   
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
@@ -237,7 +184,6 @@ export const HomeScreen: React.FC = () => {
       title: cat,
       label: categoryLabels[cat],
       baseScenes: SCENES.filter(s => s.category === cat && s.isBaseScene),
-      smallScenes: SCENES.filter(s => s.category === cat && !s.isBaseScene)
     }));
   }, []);
 
@@ -369,33 +315,15 @@ export const HomeScreen: React.FC = () => {
               {/* 大场景列表 */}
               {group.baseScenes.map((scene: Scene) => (
                 <SceneItem 
-                  key={scene.id}
+                  key={scene.id} 
                   item={scene} 
                   isPlaying={isPlaying} 
                   currentBaseSceneId={currentBaseSceneId} 
-                  activeSmallSceneIds={activeSmallSceneIds}
                   togglePlayback={togglePlayback} 
                   navigation={navigation} 
                   isFocused={focusedSceneId === scene.id}
                 />
               ))}
-
-              {/* 小场景入口 (Elements) */}
-              {group.smallScenes.length > 0 && (
-                <View style={styles.smallScenesContainer}>
-                  <Text style={styles.smallScenesLabel}>氛围点缀</Text>
-                  <View style={styles.smallScenesGrid}>
-                    {group.smallScenes.map((scene: Scene) => (
-                      <SmallSceneItem 
-                        key={scene.id}
-                        item={scene}
-                        isActive={(activeSmallSceneIds || []).includes(scene.id)}
-                        togglePlayback={togglePlayback}
-                      />
-                    ))}
-                  </View>
-                </View>
-              )}
             </View>
           ))}
         </ScrollView>
@@ -568,49 +496,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-
-  smallScenesContainer: {
-    width: ITEM_WIDTH,
-    marginTop: 10,
-    paddingHorizontal: 5,
-  },
-  smallScenesLabel: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.4)',
-    marginBottom: 12,
-    fontFamily: Typography.fontFamily,
-    fontWeight: '700',
-  },
-  smallScenesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  smallCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  smallCardActive: {
-    backgroundColor: 'rgba(108, 93, 211, 0.3)',
-    borderColor: 'rgba(108, 93, 211, 0.5)',
-  },
-  smallCardPressed: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  smallCardText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
-    marginLeft: 6,
-    fontFamily: Typography.fontFamily,
-  },
-  smallCardTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  }
 });

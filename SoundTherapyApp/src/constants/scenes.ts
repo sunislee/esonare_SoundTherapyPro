@@ -1,5 +1,5 @@
 import { Platform, ImageSourcePropType, Image } from 'react-native';
-import { AUDIO_MANIFEST } from './audioAssets';
+import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL } from './audioAssets';
 
 export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life';
 
@@ -12,6 +12,7 @@ export class Scene {
   primaryColor: string;
   audioSource: string;
   audioFile: any;
+  filename: string;
   baseVolume: number;
   backgroundSource: any;
   category: SceneCategory;
@@ -26,6 +27,7 @@ export class Scene {
     this.primaryColor = data.primaryColor || '#000000';
     this.audioSource = data.audioSource || '';
     this.audioFile = data.audioFile;
+    this.filename = data.filename || '';
     this.baseVolume = data.baseVolume ?? 1.0;
     this.backgroundSource = data.backgroundSource;
     this.category = data.category || 'Nature';
@@ -42,6 +44,7 @@ export class Scene {
       primaryColor: json.primaryColor,
       audioSource: json.audioSource,
       audioFile: json.audioFile,
+      filename: json.filename,
       baseVolume: json.baseVolume,
       backgroundSource: json.backgroundSource,
       category: json.category,
@@ -59,6 +62,7 @@ export class Scene {
       primaryColor: this.primaryColor,
       audioSource: this.audioSource,
       audioFile: this.audioFile,
+      filename: this.filename,
       baseVolume: this.baseVolume,
       backgroundSource: this.backgroundSource,
       category: this.category,
@@ -101,36 +105,54 @@ const getCategory = (cat: string): SceneCategory => {
   }
 };
 
+export const getIconName = (id: string) => {
+  if (id.includes('fireplace')) return 'flame-outline';
+  if (id.includes('summer')) return 'sunny-outline';
+  if (id.includes('white_noise')) return 'radio-outline';
+  if (id.includes('wind_chime')) return 'notifications-outline';
+  if (id.includes('breath')) return 'heart-outline';
+  if (id.includes('apple')) return 'nutrition-outline';
+  if (id.includes('match')) return 'flame'; // 划火柴使用实心火焰图标
+  if (id.includes('rain')) return 'rainy-outline';
+  if (id.includes('ocean')) return 'boat-outline';
+  return 'musical-notes-outline';
+};
+
+// 1. 明确指定的小场景 ID (isBaseScene: false) - 7 大全局氛围音
+export const SMALL_SCENE_IDS = [
+  'interactive_match',       // 点燃 (划火柴)
+  'interactive_apple',       // 清脆 (嚼苹果)
+  'interactive_wind_chime',  // 空灵 (风铃)
+  'life_summer',             // 夏夜 (夏日烟火)
+  'interactive_rain',        // 听雨
+  'interactive_ocean',       // 观海
+  'life_fireplace',          // 围炉 (炉火)
+];
+
 export const SCENES: Scene[] = AUDIO_MANIFEST
-  .filter(item => item.category !== 'interactive')
   .map((item) => {
     const category = getCategory(item.category);
     const bg = backgrounds[category];
     const resolvedBg = Image.resolveAssetSource(bg.source);
     
-    // 1. 明确指定的大场景 ID (isBaseScene: true)
+    // 2. 明确指定的大场景 ID (isBaseScene: true)
     const baseSceneIds = [
       'nature_ocean',         // 深海
       'nature_forest',        // 迷雾森林
       'nature_river',         // 晨间河畔
+      'nature_night',         // 静谧部落
       'life_rain_boat',       // 舟上雨
       'life_bookstore',       // 午后书店
       'healing_zen_bowl',     // 颂钵冥想
       'healing_clean_space',  // 洁净空间
+      'healing_crystal',      // 水晶钵
       'brainwave_alpha',      // Alpha专注
       'brainwave_delta',      // Delta入眠
     ];
 
-    // 2. 明确指定的小场景 ID (isBaseScene: false)
-    const smallSceneIds = [
-      'life_fireplace',       // 炉火
-      'life_summer',          // 夏日烟火
-      'life_fire_pure',       // 篝火
-    ];
-
     let isBase = true;
     
-    if (smallSceneIds.includes(item.id)) {
+    if (SMALL_SCENE_IDS.includes(item.id)) {
       isBase = false;
     } else if (baseSceneIds.includes(item.id)) {
       isBase = true;
@@ -142,14 +164,12 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
     return new Scene({
       id: item.id,
       title: item.title,
-      audioUrl: Platform.select({
-        android: item.id,
-        default: `asset:///${item.id}`,
-      }) as string,
+      audioUrl: `${REMOTE_RESOURCE_BASE_URL}${item.filename}`,
       backgroundUrl: resolvedBg.uri,
       primaryColor: bg.color,
       audioSource: item.id,
       audioFile: null,
+      filename: item.filename,
       baseVolume: 1.0,
       backgroundSource: bg.source,
       category: category,

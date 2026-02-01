@@ -3,12 +3,14 @@ import RNFS from 'react-native-fs';
 import { 
   AUDIO_MANIFEST, 
   REMOTE_RESOURCE_BASE_URL, 
+  IS_GOOGLE_PLAY_VERSION,
   getLocalPath as getLocalPathHelper 
 } from '../constants/audioAssets';
 
 // 核心：版本号必须一致
 const RESOURCE_VERSION = '1.0.7'; 
-const READY_KEY = 'RESOURCE_READY_V_' + RESOURCE_VERSION; 
+const SOURCE_ID = IS_GOOGLE_PLAY_VERSION ? 'GITHUB' : 'GITEE';
+const READY_KEY = `RESOURCE_READY_V_${RESOURCE_VERSION}_${SOURCE_ID}`; 
 
 export interface DownloadProgress {
   progress: number;

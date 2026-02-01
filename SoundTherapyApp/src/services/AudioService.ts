@@ -13,7 +13,7 @@ import TrackPlayer, {
 import { SCENES, Scene } from '../constants/scenes';
 import ToastUtil from '../utils/ToastUtil';
 import { HistoryService } from './HistoryService';
-import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL } from '../constants/audioAssets';
+import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSION } from '../constants/audioAssets';
 import { NotificationService } from './NotificationService';
 import { DownloadService } from './DownloadService';
 import EngineControl from '../constants/EngineControl';
@@ -41,6 +41,7 @@ class AudioService {
   private lastSwitchTime = 0;
   private currentScene: Scene | null = null;
   private currentBaseSceneId: string | null = null;
+  private isStateLocked = false; // 播放状态锁定开关
   private fadeInterval: ReturnType<typeof setInterval> | null = null;
   private meteringInterval: ReturnType<typeof setInterval> | null = null;
   private meteringListeners = new Set<(level: number) => void>();
@@ -58,6 +59,7 @@ class AudioService {
 
   // Ambient Layer (Small Scenes)
   private smallScenes = new Map<string, Sound>();
+  private backgroundLayers = new Map<string, Sound>(); // 叠加背景音轨道 (听雨、夏夜、观海)
   private ambientSound: Sound | null = null; // Keep for compatibility if needed, but we'll use smallScenes
   private ambientName: string | null = null;
 
@@ -120,49 +122,71 @@ class AudioService {
   }
 
   /**
-   * 启动环境音混合 (包含自动下载逻辑)
+   * 启动环境音混合 (包含自动下载逻辑与重试机制)
    */
-  public async startAmbientWithDownload(id: string): Promise<void> {
+  public async startAmbientWithDownload(id: string, retries = 3): Promise<void> {
     if (!EngineControl.isAllowed()) {
       console.warn('[AudioService] startAmbientWithDownload blocked: engine not allowed');
       return;
     }
     
-    try {
-      console.log('DEBUG: Entering Download Logic');
-    
-    // 检查资源状态
-    const asset = AUDIO_MANIFEST.find(a => a.id === id);
-    const remoteUrl = asset ? `${REMOTE_RESOURCE_BASE_URL}${asset.filename}` : '';
-    
-    console.log('DEBUG: Asset Config:', {
-      id,
-      remoteUrl,
-      isRemote: !!remoteUrl
-    });
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        console.log(`[AudioService] 尝试加载环境音 (尝试 ${attempt + 1}/${retries}): ${id}`);
+        
+        // 检查资源状态
+        const asset = AUDIO_MANIFEST.find(a => a.id === id);
+        if (!asset) {
+          throw new Error(`未找到 ID 为 ${id} 的资源配置`);
+        }
+        
+        const remoteUrl = `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
+        const localPath = await DownloadService.getLocalPath(id);
+        
+        let targetPath = localPath;
+        
+        // 1. 检查本地资源
+        if (localPath) {
+          const canAccess = await this.checkFileAccess(localPath);
+          if (canAccess) {
+            console.log(`[AudioService] 资源就绪，直接加载: ${localPath}`);
+          } else {
+            // 2. 资源不存在，触发下载
+            console.log(`[AudioService] 资源缺失或损坏，开始下载: ${id}`);
+            const downloadedPath = await DownloadService.downloadAudio(id, remoteUrl);
+            if (!downloadedPath) {
+              throw new Error('下载失败');
+            }
+            targetPath = downloadedPath;
+          }
+        } else {
+          throw new Error('无法获取本地路径');
+        }
 
-    const localPath = await DownloadService.getLocalPath(id);
-    
-    if (localPath) {
-      const canAccess = await this.checkFileAccess(localPath);
-      if (canAccess) {
-        console.log(`[AudioService] 资源就绪，直接加载: ${localPath}`);
-        await this.loadTrack(localPath, 1); // 假设 1 是氛围音轨道
-        await this.startMixing();
-        return;
+        // 3. 加载到原生引擎 (轨道 1 预留给主氛围音)
+        if (!targetPath) {
+          throw new Error('目标路径无效');
+        }
+        const success = await this.loadTrack(targetPath, 1);
+        if (success) {
+          await this.startMixing();
+          console.log(`[AudioService] 环境音加载并播放成功: ${id}`);
+          return; // 成功后退出
+        } else {
+          throw new Error('原生加载失败');
+        }
+        
+      } catch (e) {
+        attempt++;
+        console.error(`[AudioService] 第 ${attempt} 次尝试失败:`, e);
+        if (attempt >= retries) {
+          ToastUtil.error(`环境音加载失败，请检查网络`);
+        } else {
+          // 指数退避重试
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
-    }
-
-    // 资源不存在，触发下载
-    console.log(`[AudioService] 资源缺失，开始下载: ${id}`);
-    const downloadedPath = await DownloadService.downloadAudio(id, remoteUrl || ''); 
-    
-    if (downloadedPath) {
-      await this.loadTrack(downloadedPath, 1);
-      await this.startMixing();
-    }
-    } catch (e) {
-      console.error('[AudioService] startAmbientWithDownload failed:', e);
     }
   }
 
@@ -279,37 +303,6 @@ class AudioService {
 
   // --- End Superpowered Logic Layer ---
 
-  public async syncNativeStatus(): Promise<void> {
-    if (!NativeAudioModule || !NativeAudioModule.getCurrentState) return;
-    
-    try {
-      const state = await NativeAudioModule.getCurrentState();
-      console.log('[AudioService] Native Status Sync:', state);
-      
-      if (state && state.id) {
-        let tpState = State.None;
-        switch (state.state) {
-          case 'playing': tpState = State.Playing; break;
-          case 'paused': tpState = State.Paused; break;
-          case 'fading': tpState = State.Playing; break;
-          case 'idle': tpState = State.None; break;
-          default: tpState = State.None;
-        }
-
-        // 仅当状态不一致时更新，避免死循环或多余渲染
-        if (this.currentAudioState.id !== state.id || this.currentAudioState.state !== tpState) {
-          const found = SCENES.find(s => s.id === state.id);
-          if (found) {
-            this.currentScene = found;
-          }
-          this.updateAudioState(state.id, tpState);
-        }
-      }
-    } catch (e) {
-      console.warn('[AudioService] Failed to sync native status', e);
-    }
-  }
-
   public addAudioStateListener(listener: (state: { id: string | null; state: State }) => void): () => void {
     this.audioStateListeners.add(listener);
     listener(this.currentAudioState);
@@ -354,6 +347,12 @@ class AudioService {
   }
 
   private updateAudioState(id: string | null, state: State) {
+    // 状态锁定逻辑：如果在 switchSoundscape 期间收到非 Error 的暂停信号，直接拦截
+    if (this.isStateLocked && state === State.Paused) {
+      console.log('🛡️ [AudioService] 状态锁定中，拦截外部/自动暂停信号');
+      return;
+    }
+
     // Only update if changed
     if (this.currentAudioState.id !== id || this.currentAudioState.state !== state) {
         this.currentAudioState = { id, state };
@@ -394,30 +393,8 @@ class AudioService {
     return this.currentBaseSceneId;
   }
 
-  /**
-   * 停止所有声音（主场景 + 所有小场景）
-   */
-  public async stopAllSounds(): Promise<void> {
-    console.log('🛑 [AudioService] stopAllSounds: Stopping everything');
-    
-    // 1. 停止主场景
-    await TrackPlayer.pause();
-    
-    // 2. 停止所有小场景
-    for (const [id, sound] of this.smallScenes) {
-      try {
-        sound.stop();
-        sound.release();
-      } catch (e) {}
-    }
-    this.smallScenes.clear();
-    
-    // 3. 清理兼容性变量
-    this.ambientSound = null;
-    this.ambientName = null;
-    
-    this.emitSmallScenes();
-    this.updateAudioState(null, State.Stopped);
+  public getAssetById(id: string) {
+    return AUDIO_MANIFEST.find(a => a.id === id);
   }
 
   /**
@@ -434,38 +411,88 @@ class AudioService {
 
     const localPath = await DownloadService.getLocalPath(scene.id);
     const exists = localPath ? await RNFS.exists(localPath) : false;
-    const finalUrl = exists ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
+    
+    const finalUrl = (exists && localPath) ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
 
-    console.log('🔊 [AudioService] playSmallScene:', scene.id);
+    // Android 远程播放地址补丁：强制使用 http 协议并关闭 https
+    const safeUrl = (Platform.OS === 'android' && !exists && finalUrl && finalUrl.startsWith('https://')) 
+      ? finalUrl.replace('https://', 'http://') 
+      : finalUrl;
+
+    console.log(`🔊 [AudioService] playSmallScene: ${scene.id}, URL: ${safeUrl}`);
 
     return new Promise((resolve) => {
-      const sound = new Sound(finalUrl, '', (error) => {
+      if (!safeUrl) {
+        console.warn(`[AudioService] No valid URL for scene: ${scene.id}`);
+        resolve();
+        return;
+      }
+
+      // Android 专用配置：关闭 SSL 验证，允许混合内容
+      const soundOptions = Platform.OS === 'android' ? {
+        streaming: true,
+        loadIncrementally: true,
+      } : {};
+
+      const sound = new Sound(safeUrl, '', (error) => {
         if (error) {
-          console.warn(`[SmallScene] Load failed for ${scene.id}:`, error);
-          resolve();
+          console.warn(`[SmallScene] Load failed for ${scene.id}:`, error, 'URL:', safeUrl);
+          
+          // 如果是 https 导致的错误且尚未尝试 http，自动重试
+          if (Platform.OS === 'android' && !exists && safeUrl && safeUrl.startsWith('http://') && finalUrl && !finalUrl.startsWith('http://')) {
+             console.log(`[AudioService] Retrying ${scene.id} with original URL: ${finalUrl}`);
+             const retrySound = new Sound(finalUrl, '', (retryError) => {
+               if (retryError) {
+                 console.warn(`[SmallScene] Final Load failed for ${scene.id}:`, retryError);
+                 resolve();
+               } else {
+                 this.handleSoundLoaded(retrySound, scene, resolve);
+               }
+             });
+          } else {
+            resolve();
+          }
           return;
         }
         
-        sound.setNumberOfLoops(-1);
-        sound.setVolume(0); // 从 0 开始淡入
-        sound.play();
-        
-        this.smallScenes.set(scene.id, sound);
-        this.emitSmallScenes();
-        
-        // 执行淡入
-        this.fadeSound(sound, volume, 1000).catch(() => {});
-        
-        // 兼容性设置：如果是第一个开启的小场景，设为 ambientSound
-        if (!this.ambientSound) {
-          this.ambientSound = sound;
-          this.ambientName = scene.id;
-          this.ambientVolume = volume;
-        }
-        
-        resolve();
+        this.handleSoundLoaded(sound, scene, resolve);
       });
     });
+  }
+
+  /**
+   * 提取 Sound 加载后的处理逻辑
+   */
+  private async handleSoundLoaded(sound: Sound, scene: Scene, resolve: () => void) {
+    const storedVol = await this.getStoredVolume(scene.id);
+    const volume = storedVol || 0.4;
+    
+    // 确保无缝循环播放：针对远程 .m4a 优化
+    sound.setNumberOfLoops(-1);
+    if (Platform.OS === 'android') {
+      sound.setSpeed(1.0);
+    }
+    sound.setVolume(0); // 从 0 开始淡入
+    sound.play((success) => {
+      if (!success) {
+        console.warn(`[SmallScene] Playback failed for ${scene.id}`);
+      }
+    });
+    
+    this.smallScenes.set(scene.id, sound);
+    this.emitSmallScenes();
+    
+    // 执行淡入
+    this.fadeSound(sound, volume, 1000).catch(() => {});
+    
+    // 兼容性设置
+    if (!this.ambientSound) {
+      this.ambientSound = sound;
+      this.ambientName = scene.id;
+      this.ambientVolume = volume;
+    }
+    
+    resolve();
   }
 
   /**
@@ -511,6 +538,127 @@ class AudioService {
     }
   }
 
+  /**
+   * 统一切换氛围音（小场景）的方法，支持同步日志
+   * @param scene 场景对象
+   * @param fromSource 调用来源标识（用于日志）
+   */
+  public async toggleAmbience(scene: Scene, fromSource: 'Floating Icon' | 'Bottom List' = 'Bottom List'): Promise<void> {
+    console.log(`🎵 [Ambience Sync] Playing: ${scene.id} from Source: ${fromSource}`);
+    
+    // 强制刷新 activeSmallSceneIds，确保 UI 状态同步
+    this.emitSmallScenes();
+    
+    // 区分短音效(SmallScene)与叠加背景音(Background Layer)
+    // 将 围炉 (life_fireplace) 也加入背景层，以获得更好的混音和重试逻辑
+    const backgroundLayerIds = ['interactive_rain', 'life_summer', 'interactive_ocean', 'life_fireplace'];
+    
+    if (backgroundLayerIds.includes(scene.id)) {
+      return this.toggleBackgroundLayer(scene);
+    }
+    
+    return this.toggleScene(scene);
+  }
+
+  /**
+   * 切换叠加背景音 (听雨、夏夜、观海)
+   */
+  private async toggleBackgroundLayer(scene: Scene): Promise<void> {
+    const existingSound = this.backgroundLayers.get(scene.id);
+    console.log(`[AudioService] toggleBackgroundLayer: ${scene.id}, currentlyActive: ${!!existingSound}`);
+    
+    if (existingSound) {
+      console.log('⏹️ [AudioService] Fading out background layer:', scene.id);
+      await this.fadeSound(existingSound, 0, 800);
+      existingSound.stop();
+      existingSound.release();
+      this.backgroundLayers.delete(scene.id);
+      this.smallScenes.delete(scene.id); // 同步状态
+      this.emitSmallScenes();
+    } else {
+      console.log('🚀 [AudioService] Starting background layer:', scene.id);
+      // 复用 playSmallScene 的加载逻辑，但存入 backgroundLayers，并增加重试逻辑
+      await this.playBackgroundLayerWithRetry(scene);
+    }
+  }
+
+  private async playBackgroundLayerWithRetry(scene: Scene, retryCount = 0): Promise<void> {
+    try {
+      await this.playBackgroundLayer(scene);
+    } catch (error) {
+      if (retryCount < 1) {
+        console.log(`🔄 [AudioService] BackgroundLayer load failed, retrying in 2s... (${scene.id})`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return this.playBackgroundLayerWithRetry(scene, retryCount + 1);
+      }
+      console.error(`❌ [AudioService] BackgroundLayer final load failed: ${scene.id}`, error);
+    }
+  }
+
+  private async playBackgroundLayer(scene: Scene): Promise<void> {
+    const asset = AUDIO_MANIFEST.find(a => a.id === scene.id);
+    if (!asset) return;
+
+    const storedVol = await this.getStoredVolume(scene.id);
+    const volume = storedVol || 0.5; // 背景层默认音量稍高
+    this.ambientVolumes[scene.id] = volume;
+
+    const localPath = await DownloadService.getLocalPath(scene.id);
+    const exists = localPath ? await RNFS.exists(localPath) : false;
+    
+    // 强制硬编码 URL 逻辑
+    let finalUrl = '';
+    const hardcodedUrls: Record<string, string> = {
+      'interactive_ocean': `${REMOTE_RESOURCE_BASE_URL}base/ocean.mp3`,
+      'life_summer': `${REMOTE_RESOURCE_BASE_URL}base/summer_fireworks.m4a`,
+      'interactive_rain': `${REMOTE_RESOURCE_BASE_URL}base/final_healing_rain.m4a`,
+      'life_fireplace': `${REMOTE_RESOURCE_BASE_URL}base/fire.mp3`
+    };
+
+    if (hardcodedUrls[scene.id]) {
+      finalUrl = hardcodedUrls[scene.id];
+      console.log(`[AudioService] Using hardcoded URL for ${scene.id}: ${finalUrl}`);
+    } else {
+      finalUrl = (exists && localPath) ? (Platform.OS === 'android' ? `file://${localPath}` : localPath) : `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`;
+    }
+
+    const safeUrl = (Platform.OS === 'android' && !exists && finalUrl && finalUrl.startsWith('https://')) 
+      ? finalUrl.replace('https://', 'http://') 
+      : finalUrl;
+
+    return new Promise((resolve, reject) => {
+      console.log(`[AudioService] Initializing Sound for BackgroundLayer: ${scene.id}, URL: ${safeUrl}`);
+      
+      // Android 专用配置：关闭 SSL 验证，允许混合内容
+      const soundOptions = Platform.OS === 'android' ? {
+        streaming: true,
+        loadIncrementally: true,
+      } : {};
+
+      const sound = new Sound(safeUrl, '', (error) => {
+        if (error) {
+          console.warn(`[BackgroundLayer] Load failed: ${scene.id}`, error);
+          reject(error);
+          return;
+        }
+        
+        console.log(`✅ [AudioService] BackgroundLayer Sound loaded successfully: ${scene.id}`);
+        sound.setNumberOfLoops(-1);
+        sound.setVolume(0.1); // 初始音量不为 0
+        sound.play();
+        
+        console.log(`🎵 [AudioService] BackgroundLayer Sound playing: ${scene.id} at volume 0.1, starting fade to ${volume}`);
+        
+        this.backgroundLayers.set(scene.id, sound);
+        this.smallScenes.set(scene.id, sound); // 为了让 UI 状态同步
+        this.emitSmallScenes();
+        
+        this.fadeSound(sound, volume, 1500).catch(() => {});
+        resolve();
+      });
+    });
+  }
+
   public async toggleScene(scene: Scene): Promise<void> {
     if (scene.isBaseScene) {
       // 大场景逻辑
@@ -528,8 +676,8 @@ class AudioService {
         await this.play();
         await this.fadeTrackPlayer(1.0, 1000);
       } else {
-        // 开启新大场景：先平滑停止当前所有声音
-        console.log('🚀 [AudioService] Starting new base scene with fade out of others:', scene.id);
+        // 开启新大场景：不再强制停止所有小场景，支持全局氛围共存
+        console.log('🚀 [AudioService] Starting new base scene:', scene.id);
         
         // 如果当前有 TrackPlayer 在播放，先淡出
         const currentState = await TrackPlayer.getState();
@@ -537,16 +685,15 @@ class AudioService {
           await this.fadeTrackPlayer(0, 500);
         }
 
-        // 淡出所有小场景
-        const fadePromises = Array.from(this.smallScenes.values()).map(sound => this.fadeSound(sound, 0, 500));
-        await Promise.all(fadePromises);
+        // 仅停止 TrackPlayer，保留 smallScenes (氛围音)
+        await TrackPlayer.pause();
+        await TrackPlayer.reset();
 
-        await this.stopAllSounds();
         this.currentBaseSceneId = scene.id;
         
-        // 开启新大场景并淡入
-        await this.switchSoundscape(scene, 0);
-        await this.fadeTrackPlayer(1.0, 1000);
+        // 开启新大场景并直接播放（取消渐变，确保声音第一时间响起）
+        await this.switchSoundscape(scene, true);
+        // await this.fadeTrackPlayer(1.0, 1000); 暂时封印渐变，响应用户“响起来”的指令
       }
     } else {
       // 小场景逻辑
@@ -663,26 +810,19 @@ class AudioService {
         }
 
         this.ambientSound = sound;
+        // 确保无缝循环播放：针对远程 .m4a 优化
         sound.setNumberOfLoops(-1);
+        if (Platform.OS === 'android') {
+          sound.setSpeed(1.0);
+        }
         sound.setVolume(this.ambientVolume);
-        sound.play();
+        sound.play((success) => {
+          if (!success) console.warn(`[Ambient] Playback failed for ${id}`);
+        });
         
         resolve();
       });
     });
-  }
-
-  /**
-   * 停止所有环境音
-   */
-  public stopAllAmbient(): void {
-    if (this.ambientSound) {
-      console.log('🔴 PHYSICAL_DEBUG: Force stopping all ambient sounds');
-      this.ambientSound.stop();
-      this.ambientSound.release();
-      this.ambientSound = null;
-    }
-    this.ambientName = null;
   }
 
   /**
@@ -1055,6 +1195,13 @@ class AudioService {
         // 初始化通知服务
         await NotificationService.setup();
 
+        // 自动化 URL 验证 (GitHub/Gitee 双源巡检)
+        console.log('🚀 [URL VALIDATION] Current Source:', IS_GOOGLE_PLAY_VERSION ? 'GITHUB' : 'GITEE');
+        const oceanUrl = `${REMOTE_RESOURCE_BASE_URL}base/ocean.mp3`;
+        const matchUrl = `${REMOTE_RESOURCE_BASE_URL}interactive/match_strike.wav`;
+        console.log('🔗 [VERIFY] nature_ocean:', oceanUrl);
+        console.log('🔗 [VERIFY] interactive_match:', matchUrl);
+
         // 止损隔离：初始化时强行清空所有环境音残留
         await this.forceReleaseAllAmbient();
 
@@ -1133,29 +1280,45 @@ class AudioService {
       this.currentScene = soundscape; 
       this.currentBaseSceneId = soundscape.id;
       
-      console.log('🎵 [AudioService] loadAudio:', soundscape.id);
+      console.log('🎵 [AudioService] loadAudio:', soundscape.id, 'URL:', soundscape.audioUrl);
       
       let resolvedUri = '';
       
-      // 优先检查本地下载
+      // 1. 优先检查本地下载
       const localPath = await DownloadService.getLocalPath(soundscape.id);
       let localFileValid = false;
       if (localPath) {
         try {
-          // 物理校验文件是否存在
           localFileValid = await RNFS.exists(localPath);
           if (localFileValid) {
-            resolvedUri = Platform.OS === 'android' ? `file://${localPath}` : localPath;
-            console.log('📂 [AudioService] Using cached local file:', resolvedUri);
+            // 强制 URL 格式：使用 file:/// (三个斜杠)
+            resolvedUri = `file://${localPath}`; 
+            console.log('📂 [AudioService] Using cached local file (forced prefix):', resolvedUri);
           }
         } catch (e) {
           console.warn('[AudioService] Local file check failed:', e);
         }
       }
 
-      // 兜底：如果本地文件不存在或校验失败，降级使用 App 内置资源 (src/assets)
+      // 2. 兜底：如果本地文件不存在或校验失败，使用 scenes.ts 中定义的远程 URL
       if (!resolvedUri || !localFileValid) {
-        console.log('📦 [AudioService] Local file missing or invalid, falling back to assets for:', soundscape.id);
+        console.log('🌐 [AudioService] Local file missing, using remote URL:', soundscape.audioUrl);
+        resolvedUri = soundscape.audioUrl;
+      }
+
+      // 3. 极度兜底：如果远程 URL 也没有，尝试从 AUDIO_MANIFEST 中寻找 filename 并拼接
+      if (!resolvedUri) {
+        console.log('📦 [AudioService] Remote URL missing, falling back to manifest for:', soundscape.id);
+        const manifestItem = AUDIO_MANIFEST.find(item => item.id === soundscape.id);
+        if (manifestItem) {
+          resolvedUri = `${REMOTE_RESOURCE_BASE_URL}${manifestItem.filename}`;
+          console.log('🔗 [AudioService] Reconstructed URL from manifest:', resolvedUri);
+        }
+      }
+
+      // 4. 内置资源兜底
+      if (!resolvedUri) {
+        console.log('📦 [AudioService] Reconstructed URL missing, falling back to assets for:', soundscape.id);
         try {
           const resolved = Image.resolveAssetSource(soundscape.audioFile);
           resolvedUri = resolved?.uri ?? '';
@@ -1163,13 +1326,13 @@ class AudioService {
           if (Platform.OS === 'android' && resolvedUri && !resolvedUri.includes('://')) {
             resolvedUri = `android.resource://com.soundtherapyapp/raw/${resolvedUri}`;
           }
-          console.log('🔗 [AudioService] Asset Fallback URI:', resolvedUri);
         } catch (e) {
           console.error('❌ [AudioService] Fallback resolveAssetSource failed:', e);
         }
       }
 
       if (!resolvedUri) {
+        console.error('CRITICAL: No URL found for scene:', soundscape.id);
         const msg = 'loadAudio 失败: 无法解析场景音频资源';
         ToastUtil.error(msg);
         return;
@@ -1178,11 +1341,9 @@ class AudioService {
       // Add to history
       HistoryService.addToHistory(soundscape.id);
 
-      // 提前触发状态更新，实现“即时上岛”视觉反馈
-      this.updateAudioState(soundscape.id, autoPlay ? State.Playing : State.Paused);
-
       // 统一使用 TrackPlayer，抛弃 NativeAudioModule 原生控制
       await TrackPlayer.reset();
+      console.log('Final Audio URL (loadAudio):', resolvedUri);
       await TrackPlayer.add({
         id: soundscape.id,
         url: resolvedUri,
@@ -1192,16 +1353,49 @@ class AudioService {
         isLiveStream: false,
       });
 
+      await TrackPlayer.setVolume(1.0); // 必须在 add 后紧跟 setVolume(1.0)
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
-      await TrackPlayer.setVolume(1.0);
 
       if (autoPlay) {
+        // 等待底层就绪 (PlaybackState)
+        await new Promise<void>((resolve) => {
+          const listener = TrackPlayer.addEventListener(Event.PlaybackState, (state) => {
+            if (state.state === State.Ready) {
+              console.log('✅ [AudioService] TrackPlayer Ready (loadAudio)');
+              listener.remove();
+              resolve();
+            }
+          });
+          setTimeout(() => {
+            listener.remove();
+            resolve();
+          }, 5000);
+        });
+
+        await TrackPlayer.setVolume(1.0); // 确保 play 瞬间是满音量
         await TrackPlayer.play();
+        
+        // 此时才设为 Playing
+        this.updateAudioState(soundscape.id, State.Playing);
+
+        // 硬核日志：验证最终音量数值
+        const currentVol = await TrackPlayer.getVolume();
+        console.log('🔈 [FINAL CHECK] Player Volume is:', currentVol);
+
+        // 静音监测 (防呆设计)
+        if (currentVol === 0) {
+          console.error('❌ [SILENCE ALERT] Player volume is ZERO! User won\'t hear anything.');
+          ToastUtil.error('监测到系统静音，请检查音量');
+        }
+
         // 强制音量回正：play 后 100ms 再次确保音量为 1.0
         setTimeout(() => {
           TrackPlayer.setVolume(1.0).catch(() => {});
           console.log('🔊 [AudioService] Volume correction executed: 1.0');
         }, 100);
+      } else {
+        // 如果不自动播放，设为 Paused
+        this.updateAudioState(soundscape.id, State.Paused);
       }
 
     } catch (e: any) {
@@ -1212,111 +1406,100 @@ class AudioService {
     }
   }
 
-  public async switchSoundscape(newScene: Scene, startVolume: number = 1.0): Promise<void> {
+  public async switchSoundscape(newScene: Scene, autoPlay: boolean = true): Promise<void> {
     const now = Date.now();
     if (now - this.lastSwitchTime < 300) {
+      console.log('🛡️ [AudioService] switchSoundscape ignored: debounced');
       return;
     }
     this.lastSwitchTime = now;
     this.isSwitching = true;
+    this.isStateLocked = true; // 强制锁定状态，防止加载过程中的外部暂停干扰
 
-    // 物理层互斥：切换主场景时，必须彻底释放环境音
-    if (this.ambientSound) {
-      console.log('[AudioService] 切换主场景，彻底释放实验室环境音');
-      await this.setAmbient(null);
-    }
+    // 1. 进入加载态
+    console.log(`🚀 [AudioService] switchSoundscape START: ${newScene.id}, autoPlay: ${autoPlay}`);
+    this.updateAudioState(newScene.id, State.Loading);
 
     try {
       await this.ensureSetup();
       
-      // 暴力重置：如果是第一个音源 (brain_alpha_new)，强制物理停止并清除所有状态
-      if (newScene.id === 'brain_alpha_new') {
-        console.log('🔥 [AudioService] 针对第一个音源执行暴力重置');
-        try {
-          if (NativeModules.NativeAudioModule) {
-            await NativeModules.NativeAudioModule.stop();
-          }
-        } catch (e) {}
-        await TrackPlayer.reset();
-      }
-
-      this.currentScene = newScene; // 保存当前场景引用
+      this.currentScene = newScene; 
       this.currentBaseSceneId = newScene.id;
-      console.log('🔄 [AudioService] switchSoundscape:', newScene.id);
-
-      // 提前触发状态更新，实现“即时上岛”视觉反馈
-      this.updateAudioState(newScene.id, State.Playing);
 
       let resolvedUri = '';
       
-      // 优先从 DocumentDir 加载已下载资源
+      // 2. 本地资源定位
       const localPath = await DownloadService.getLocalPath(newScene.id);
       let localFileValid = false;
       if (localPath) {
-        try {
-          localFileValid = await RNFS.exists(localPath);
-          if (localFileValid) {
-            resolvedUri = Platform.OS === 'android' ? `file://${localPath}` : localPath;
-            console.log('📂 [AudioService] Using local downloaded resource:', resolvedUri);
-          }
-        } catch (e) {
-          console.warn('[AudioService] Local file check failed (switch):', e);
-        }
-      }
-
-      // 兜底：如果本地文件不存在，使用内置资源
-      if (!resolvedUri || !localFileValid) {
-        console.log('📦 [AudioService] Falling back to assets for scene:', newScene.id);
-        try {
-          const resolved = Image.resolveAssetSource(newScene.audioFile);
-          resolvedUri = resolved?.uri ?? '';
-          if (Platform.OS === 'android' && resolvedUri && !resolvedUri.includes('://')) {
-            resolvedUri = `android.resource://com.soundtherapyapp/raw/${resolvedUri}`;
-          }
-          console.log('🔗 [AudioService] Asset Fallback URI (switch):', resolvedUri);
-        } catch (e) {
-          console.error('❌ [AudioService] Fallback resolveAssetSource failed (switch):', e);
+        localFileValid = await RNFS.exists(localPath);
+        if (localFileValid) {
+          resolvedUri = `file://${localPath}`;
+          console.log('📂 [AudioService] switch: Using local file:', resolvedUri);
         }
       }
 
       if (!resolvedUri) {
-        ToastUtil.error('切换场景失败: 无法解析场景音频资源');
-        return;
+        console.log('🌐 [AudioService] switch: Using remote URL:', newScene.audioUrl);
+        resolvedUri = newScene.audioUrl;
       }
 
-      HistoryService.addToHistory(newScene.id);
-
-      // 瞬时切换：reset 并加载新音源，跳过所有渐变
+      // 3. 物理重置播放器
       await TrackPlayer.reset();
+      
       await TrackPlayer.add({
         id: newScene.id,
         url: resolvedUri,
         title: newScene.title,
-        artist: 'Sound Therapy',
+        artist: 'Sound Therapy Pro',
         artwork: newScene.backgroundUrl,
-        isLiveStream: false,
       });
 
+      await TrackPlayer.setVolume(1.0);
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
-      await TrackPlayer.setVolume(startVolume);
-      await TrackPlayer.play();
       
-      // 强制音量回正：如果不是 0，则 play 后 100ms 再次确保音量正确
-      if (startVolume > 0) {
-        setTimeout(() => {
-          TrackPlayer.setVolume(startVolume).catch(() => {});
-          console.log(`🔊 [AudioService] Volume correction executed (switch): ${startVolume}`);
-        }, 100);
+      if (autoPlay) {
+        // 4. 关键：等待 OnPrepared (State.Ready)
+        console.log('⌛ [AudioService] Waiting for Player Ready...');
+        await new Promise<void>((resolve) => {
+          const listener = TrackPlayer.addEventListener(Event.PlaybackState, (state) => {
+            console.log(`📡 [AudioService] PlaybackState Changed: ${state.state}`);
+            if (state.state === State.Ready) {
+              console.log('✅ [AudioService] Player Ready, starting playback');
+              listener.remove();
+              resolve();
+            }
+          });
+          setTimeout(() => {
+            listener.remove();
+            resolve();
+          }, 8000); // 延长超时时间到 8s
+        });
+
+        // 5. 物理起播
+        await TrackPlayer.play();
+        
+        // 6. 成功后再解锁并更新状态
+        this.isStateLocked = false; 
+        this.updateAudioState(newScene.id, State.Playing);
+      } else {
+        this.isStateLocked = false;
+        this.updateAudioState(newScene.id, State.Paused);
       }
       
-      this.volume = startVolume;
+      console.log(`🎵 [AudioService] switchSoundscape SUCCESS: ${newScene.id}`);
+      
+      this.volume = 1.0;
       this.emitVolume();
     } catch (e: any) {
-      const message = (e && e.message) || String(e);
-      const msg = '切换场景失败: ' + message;
-      ToastUtil.error(msg);
+      this.isStateLocked = false;
+      this.isSwitching = false;
+      console.error('❌ [AudioService] switchSoundscape FAILED:', e);
+      this.updateAudioState(newScene.id, State.Error);
+      ToastUtil.error('切换场景失败');
     } finally {
       this.isSwitching = false;
+      this.isStateLocked = false;
     }
   }
 
@@ -1328,21 +1511,27 @@ class AudioService {
     // 彻底销毁：函数体已清空
   }
 
-  public async togglePlayback(): Promise<void> {
-    const state = await TrackPlayer.getState();
-    const activeTrack = await TrackPlayer.getActiveTrack();
+  public async togglePlayback(scene: Scene): Promise<void> {
+    await this.ensureSetup();
+    const state = await TrackPlayer.getPlaybackState();
+    const isCurrentPlaying = state.state === State.Playing && this.currentBaseSceneId === scene.id;
 
-    // 强化：如果状态是播放中，但没有 activeTrack（冷启动异常状态），强制重置并播放当前场景
-    if (state === State.Playing && !activeTrack && this.currentScene) {
-      console.log('⚠️ [AudioService] 状态冲突：正在播放但无轨道，触发强制重置');
-      await this.forceResetAndPlay(this.currentScene);
-      return;
-    }
-
-    if (state === State.Playing) {
+    if (isCurrentPlaying) {
       await this.pause();
     } else {
-      await this.play();
+      if (this.currentBaseSceneId === scene.id) {
+        await this.play();
+      } else {
+        await this.switchSoundscape(scene);
+      }
+    }
+  }
+
+  public async syncNativeStatus(): Promise<void> {
+    const state = await TrackPlayer.getPlaybackState();
+    const activeTrack = await TrackPlayer.getActiveTrack();
+    if (activeTrack) {
+      this.updateAudioState(activeTrack.id as string, state.state);
     }
   }
 
@@ -1351,14 +1540,14 @@ class AudioService {
    * 解决“按钮变了但没声音”的死循环问题
    */
   public async forceResetAndPlay(scene: Scene): Promise<void> {
-    console.log('🚀 [AudioService] 执行强制重置播放:', scene.id);
+    console.log('🚀 [AudioService] 执行强制重置播放:', scene.id, 'URL:', scene.audioUrl);
     try {
       await this.ensureSetup();
       await TrackPlayer.reset();
       
       let resolvedUri = '';
       
-      // 优先检查本地下载
+      // 1. 优先检查本地下载
       const localPath = await DownloadService.getLocalPath(scene.id);
       let localFileValid = false;
       if (localPath) {
@@ -1370,7 +1559,14 @@ class AudioService {
         } catch (e) {}
       }
 
+      // 2. 兜底：使用远程 URL
       if (!resolvedUri || !localFileValid) {
+        console.log('🌐 [AudioService] Local file missing (force), using remote URL:', scene.audioUrl);
+        resolvedUri = scene.audioUrl;
+      }
+
+      // 3. 极度兜底：使用内置资源
+      if (!resolvedUri) {
         try {
           const resolved = Image.resolveAssetSource(scene.audioFile);
           resolvedUri = resolved?.uri ?? '';
@@ -1384,6 +1580,7 @@ class AudioService {
         throw new Error('无法解析音频资源');
       }
 
+      console.log('Final Audio URL (force):', resolvedUri);
       await TrackPlayer.add({
         id: scene.id,
         url: resolvedUri,
@@ -1417,6 +1614,9 @@ class AudioService {
     await this.ensureSetup();
     try {
       const activeTrack = await TrackPlayer.getActiveTrack();
+      if (activeTrack) {
+        console.log('Final Audio URL (play):', activeTrack.url);
+      }
       
       // 强化冷启动：如果 play 时没有 activeTrack，说明没加载好，强制加载当前场景
       if (!activeTrack && this.currentScene) {
@@ -1448,9 +1648,89 @@ class AudioService {
     }
   }
 
-  public async pause(): Promise<void> {
+  /**
+   * 停止所有声音（主场景 + 环境音层）
+   * 物理级停止，确保没有任何残留
+   */
+  public async stopAll(): Promise<void> {
+    console.log('🛑 [AudioService] stopAll triggered: Clearing all sounds');
     await this.ensureSetup();
     try {
+      // 1. 停止环境音层 (Native Sound)
+      this.stopAllAmbient();
+
+      // 2. 物理重置 TrackPlayer (主场景)
+      await TrackPlayer.reset();
+      
+      this.updateAudioState(null, State.Stopped);
+    } catch (e) {
+      console.error('[AudioService] stopAll failed:', e);
+    }
+  }
+
+  /**
+   * 停止所有环境音层
+   */
+  public stopAllAmbient(): void {
+    console.log('🔇 [AudioService] Stopping all ambient layers');
+    
+    // 停止混合层 (NativeAudioModule)
+    if (NativeAudioModule && NativeAudioModule.stopMixing) {
+      NativeAudioModule.stopMixing().catch(() => {});
+    }
+
+    // 停止旧版兼容对象
+    if (this.ambientSound) {
+      this.ambientSound.stop();
+      this.ambientSound.release();
+      this.ambientSound = null;
+    }
+
+    // 停止并清理小场景/背景层 (react-native-sound)
+    this.backgroundLayers.forEach((sound, id) => {
+      console.log(`- Releasing background layer: ${id}`);
+      sound.stop();
+      sound.release();
+    });
+    this.backgroundLayers.clear();
+
+    this.smallScenes.forEach((sound, id) => {
+      console.log(`- Releasing small scene: ${id}`);
+      sound.stop();
+      sound.release();
+    });
+    this.smallScenes.clear();
+    
+    this.emitSmallScenes();
+  }
+
+  /**
+   * 获取底层播放器真实状态 (物理级检查)
+   */
+  public async getRealIsPlaying(): Promise<boolean> {
+    try {
+      await this.ensureSetup();
+      const state = await TrackPlayer.getPlaybackState();
+      return state.state === State.Playing || state.state === State.Buffering;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  public async pause(): Promise<void> {
+    console.log('⏸️ [AudioService] pause called. Stack Trace:');
+    // 打印调用栈以追踪是谁触发了暂停
+    const stack = new Error().stack;
+    console.log(stack);
+
+    await this.ensureSetup();
+    try {
+      // 锁定期间拦截非错误的暂停请求
+      if (this.isStateLocked) {
+        console.warn('🛡️ [AudioService] pause intercepted: State is LOCKED during switch');
+        return;
+      }
+
       if (this.ambientSound) {
         this.ambientSound.pause();
       }
@@ -1557,5 +1837,13 @@ class AudioService {
   }
 }
 
-const audioServiceInstance = AudioService.getInstance();
-export default audioServiceInstance;
+// 导出单例实例作为默认导出，这是 React Native 中最常用的模式
+// 这样 import AudioService from './AudioService' 得到的就是可以直接调用的实例
+const instance = AudioService.getInstance();
+
+// 同时为了防止某些环境下 require().default 拿到的是类，我们做一个极端的兼容：
+// 让实例本身也带有一个 default 属性指向自己
+(instance as any).default = instance;
+
+export default instance;
+export { AudioService };

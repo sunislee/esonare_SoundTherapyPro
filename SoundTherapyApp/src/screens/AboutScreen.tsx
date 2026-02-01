@@ -26,7 +26,7 @@ const AboutScreen = () => {
             <Text style={styles.logoText}>S</Text>
           </View>
           <Text style={styles.appName}>SoundTherapy Pro</Text>
-          <Text style={styles.version}>Version 1.0.5</Text>
+          <Text style={styles.version}>Version 1.0.11</Text>
         </View>
 
         <View style={styles.infoContainer}>

@@ -24,6 +24,7 @@ interface AudioContextType {
   updateAmbientVolume: (volume: number) => void;
   setAmbient: (id: string | null) => Promise<void>;
   getAmbientVolumeById: (id: string) => number;
+  toggleAmbience: (scene: Scene, fromSource: 'Floating Icon' | 'Bottom List') => Promise<void>;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -96,48 +97,25 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setAmbient = useCallback(async (id: string | null) => {
     console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Context atomic transition start:', id);
-    
-    // 1. 调用底层 Service 实施暴力物理清场
-    // setAmbient(null) 会触发 stop(), release(), 以及 TrackPlayer.pause()
-    await AudioService.setAmbient(null);
-    
-    // 2. 等待底层彻底静默后，更新 UI 状态为 none
-    setActiveSoundId(null);
-    
-    // 3. 如果需要播放新声音，再次调用 Service
-    if (id && id !== 'none') {
-      await AudioService.setAmbient(id);
-      // activeSoundId 会通过 AudioService 的 listener 自动同步，
-      // 但为了绝对原子感，我们在 await 成功后手动补一次状态
-      setActiveSoundId(id);
+    if (id) {
+      await AudioService.playAmbient(id);
+    } else {
+      await AudioService.stopAllAmbient();
     }
-    
-    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Context atomic transition end');
   }, []);
 
   const getAmbientVolumeById = useCallback((id: string) => {
     return AudioService.getAmbientVolumeById(id);
   }, []);
 
-  const setSleepTimer = useCallback(async (minutes: number) => {
-    await AudioService.setSleepTimer(minutes);
-    setInitialRemaining(minutes * 60);
-  }, []);
-
-  const clearSleepTimer = useCallback(() => {
-    AudioService.clearSleepTimer();
-    setRemainingTime(null);
-    setInitialRemaining(null);
-  }, []);
-
-  const syncNativeStatus = useCallback(async () => {
-    console.log('[AudioContext] Syncing Native Status...');
-    await AudioService.syncNativeStatus();
+  const toggleAmbience = useCallback(async (scene: Scene) => {
+    console.log(`[AudioContext] toggleAmbience: ${scene.id}`);
+    await AudioService.toggleAmbience(scene);
   }, []);
 
   const play = useCallback(async (scene?: Scene) => {
     if (scene) {
-      await AudioService.loadAudio(scene, true);
+      await AudioService.switchSoundscape(scene);
     } else {
       await AudioService.play();
     }
@@ -148,8 +126,19 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const togglePlayback = useCallback(async (scene: Scene) => {
-    console.log('[AudioContext] togglePlayback for scene:', scene.id, 'isBase:', scene.isBaseScene);
-    await AudioService.toggleScene(scene);
+    await AudioService.togglePlayback(scene);
+  }, []);
+
+  const syncNativeStatus = useCallback(async () => {
+    await AudioService.syncNativeStatus();
+  }, []);
+
+  const setSleepTimer = useCallback(async (minutes: number) => {
+    await AudioService.setSleepTimer(minutes);
+  }, []);
+
+  const clearSleepTimer = useCallback(() => {
+    AudioService.clearSleepTimer();
   }, []);
 
   return (
@@ -175,6 +164,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateAmbientVolume,
         setAmbient,
         getAmbientVolumeById,
+        toggleAmbience,
       }}
     >
       {children}

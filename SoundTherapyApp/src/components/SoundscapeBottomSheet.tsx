@@ -157,6 +157,9 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
         disabled={isLoading}
         onPress={() => {
           triggerHaptic();
+          // 显式调用 switchSoundscape 并传递 autoPlay: true，确保进入即播放
+          const AudioService = require('../services/AudioService').default;
+          AudioService.switchSoundscape(item, true);
           onSelect(item);
         }}
         activeOpacity={0.7}>

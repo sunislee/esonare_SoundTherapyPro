@@ -4,17 +4,144 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAudio } from '../context/AudioContext';
-import { SCENES, Scene } from '../constants/scenes';
+import { SCENES, Scene, SMALL_SCENE_IDS, getIconName } from '../constants/scenes';
 import AudioService from '../services/AudioService'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AmbientPickerSheet } from '../components/AmbientPickerSheet';
 import { BlurView } from '@react-native-community/blur';
+import { State } from 'react-native-track-player';
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// --- 动画浮动按钮组件 ---
+const AnimatedFloatingButton = ({ 
+  ambient, 
+  isActive, 
+  onPress,
+  column,
+  row
+}: { 
+  ambient: Scene, 
+  isActive: boolean, 
+  onPress: () => void,
+  column: number,
+  row: number
+}) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+
+  // 呼吸灯特效逻辑 (针对背景层图标)
+  useEffect(() => {
+    const isBackgroundLayer = ['interactive_rain', 'life_summer', 'interactive_ocean', 'life_fireplace'].includes(ambient.id);
+    
+    if (isActive && isBackgroundLayer) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 1500,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0,
+            duration: 1500,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          })
+        ])
+      ).start();
+    } else {
+      glowAnim.setValue(0);
+      glowAnim.stopAnimation();
+    }
+  }, [isActive, ambient.id]);
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.85,
+      friction: 4,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 4,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const getLabel = (id: string) => {
+    switch(id) {
+      case 'interactive_match': return '点燃';
+      case 'interactive_apple': return '清脆';
+      case 'interactive_wind_chime': return '空灵';
+      case 'life_summer': return '夏夜';
+      case 'interactive_rain': return '听雨';
+      case 'interactive_ocean': return '观海';
+      case 'life_fireplace': return '围炉';
+      default: return '';
+    }
+  };
+
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        top: 50 + row * 100,
+        left: column === 0 ? 30 : SCREEN_WIDTH - 80,
+        alignItems: 'center',
+        transform: [{ scale }]
+      }}
+    >
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+        style={[
+          styles.floatingIconBtn,
+          isActive && styles.floatingIconBtnActive,
+          isActive && ['interactive_rain', 'life_summer', 'interactive_ocean', 'life_fireplace'].includes(ambient.id) && {
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowColor: '#fff',
+            shadowOpacity: 0.8,
+            shadowRadius: 15,
+          }
+        ]}
+      >
+        <Animated.View style={{
+          opacity: glowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.6, 1]
+          }),
+          transform: [{
+            scale: glowAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 1.1]
+            })
+          }]
+        }}>
+          <Icon 
+            name={getIconName(ambient.id)} 
+            size={20} 
+            color={isActive ? '#fff' : 'rgba(255,255,255,0.6)'} 
+          />
+        </Animated.View>
+      </TouchableOpacity>
+      <Text style={styles.iconLabel}>{getLabel(ambient.id)}</Text>
+    </Animated.View>
+  );
+};
 
 // --- 动画按钮组件 ---
 const AnimatedIndicator = ({ 
@@ -137,8 +264,26 @@ const ImmersivePlayerNew = () => {
   const navigation = useNavigation();
   const route = useRoute<ImmersivePlayerRouteProp>();
   const insets = useSafeAreaInsets();
-  const { currentScene, currentBaseSceneId, isPlaying, activeSmallSceneIds, togglePlayback, setAmbient } = useAudio();
+  const { currentScene, currentBaseSceneId, isPlaying, playbackState, activeSmallSceneIds, togglePlayback, toggleAmbience, setAmbient } = useAudio();
   const pagerRef = useRef<PagerView>(null);
+
+  // 播放按钮本地状态同步 (针对按钮响应性)
+  const [localIsPlaying, setLocalIsPlaying] = useState(isPlaying);
+  const lastClickTime = useRef(0);
+
+  // 1. 显式状态对齐：监听 AudioContext 状态并强制刷新本地按钮 UI
+  useEffect(() => {
+    setLocalIsPlaying(isPlaying);
+  }, [isPlaying]);
+
+  // 2. 页面销毁清理：仅在退出页面时清理互动音效，防止进入页面时误伤加载逻辑
+  useEffect(() => {
+    return () => {
+      console.log('[ImmersivePlayer] Page unmounting, cleaning up background layers...');
+      // 仅清理互动音效，不伤及主音轨
+      AudioService.stopAllAmbient();
+    };
+  }, []);
 
   // 第一步：引入‘断路器’状态
   const [isFrozen, setIsFrozen] = useState(false);
@@ -164,6 +309,33 @@ const ImmersivePlayerNew = () => {
   
   const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
   const [currentAmbient, setCurrentAmbient] = useState<'none' | 'fireplace' | 'summer'>('none');
+  const [showGuide, setShowGuide] = useState(false);
+  const guideOpacity = useRef(new Animated.Value(0)).current;
+
+  // 首访引导逻辑
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      const hasVisited = await AsyncStorage.getItem('HAS_VISITED_PLAYER');
+      if (!hasVisited) {
+        setShowGuide(true);
+        Animated.timing(guideOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }).start();
+
+        setTimeout(() => {
+          Animated.timing(guideOpacity, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }).start(() => setShowGuide(false));
+          AsyncStorage.setItem('HAS_VISITED_PLAYER', 'true');
+        }, 3500); // 500ms 淡入 + 3000ms 展示
+      }
+    };
+    checkFirstVisit();
+  }, []);
 
   // 播放按钮缩放动画
   const playBtnScale = useRef(new Animated.Value(1)).current;
@@ -243,10 +415,18 @@ const ImmersivePlayerNew = () => {
     });
   }, [selectedScene, currentScene?.id]);
 
-  // 挂载时设置初始索引
+  // 挂载时设置初始索引并同步播放状态
   useEffect(() => {
     position.setValue(initialPageIndex);
     scrollOffset.setValue(0);
+
+    // 双向绑定：挂载时自动同步一次全局 TrackPlayer 的实时播放状态
+    const syncStatus = async () => {
+      const realIsPlaying = await AudioService.getRealIsPlaying();
+      console.log('🔄 [ImmersivePlayer] Mount sync: RealIsPlaying =', realIsPlaying);
+      setLocalIsPlaying(realIsPlaying);
+    };
+    syncStatus();
 
     return () => {
       // 延时静音：人都滑出页面了，再让音频静悄悄地在后台关掉
@@ -265,14 +445,33 @@ const ImmersivePlayerNew = () => {
    // 3. 页面进入时，如果传入了场景且当前未播放该场景，自动切换
    useEffect(() => {
      // 性能降级保护：如果正在退出或已初始化且场景匹配，严禁在进入动画期间触发任何音频库逻辑
-     if (isFrozen || isExiting.current || (AudioService.isPlayerInitialized() && selectedScene?.id === currentScene?.id)) {
+     if (isFrozen || isExiting.current) {
        return;
      }
 
-     const task = InteractionManager.runAfterInteractions(() => {
+     const task = InteractionManager.runAfterInteractions(async () => {
        if (isFrozen || isExiting.current) return;
-       if (selectedScene && selectedScene.id !== currentScene?.id) {
-         AudioService.switchSoundscape(selectedScene);
+       
+       const realIsPlaying = await AudioService.getRealIsPlaying();
+       
+       if (selectedScene) {
+         if (selectedScene.id !== currentScene?.id) {
+           console.log('🔄 [ImmersivePlayer] Lifecycle sync: Stopping all before switch');
+           // 生命周期强同步：先物理停止所有声音，防止叠加或干扰
+           await AudioService.stopAll();
+           
+           // 延迟 100ms 确保 native 释放彻底
+           setTimeout(() => {
+             if (!isExiting.current) {
+               console.log('🚀 [ImmersivePlayer] Lifecycle sync: Starting new soundscape');
+               AudioService.switchSoundscape(selectedScene, true);
+             }
+           }, 100);
+         } else if (!realIsPlaying) {
+           // 如果场景相同但当前没响，立即补发一个 play() 指令，确保“进门就响”
+           console.log('▶️ [ImmersivePlayer] Scene matched but not playing, forcing play');
+           AudioService.play();
+         }
        }
      });
      return () => task.cancel();
@@ -311,10 +510,49 @@ const ImmersivePlayerNew = () => {
    };
 
   const handleToggle = async (sceneToToggle?: Scene) => {
-    if (isFrozen) return;
+    if (isFrozen) {
+      console.log('[UI Click Blocked] Component is frozen');
+      return;
+    }
+
+    // 3. 防抖处理 (300ms)
+    const now = Date.now();
+    if (now - lastClickTime.current < 300) {
+      console.log('[UI Click Blocked] Debounced');
+      return;
+    }
+    lastClickTime.current = now;
+
     const target = sceneToToggle || currentScene;
     if (target) {
-      await togglePlayback(target);
+      // 5. 日志追踪
+      const realIsPlaying = await AudioService.getRealIsPlaying();
+      console.log(`[UI] Pause Button Clicked - Target Instance ID: ${target.id}, RealIsPlaying: ${realIsPlaying}`);
+      
+      // 预判性 UI 更新，增强反馈速度
+      setLocalIsPlaying(!realIsPlaying);
+      
+      try {
+        if (realIsPlaying && target.id === currentBaseSceneId) {
+          // 物理级穿透修复：直接调用全局单例的物理暂停，不依赖本地 useState
+          console.log('🛑 [ImmersivePlayer] Global Singleton Physical Pause triggered');
+          
+          // 直接调用底层 API 确保彻底安静
+          const TrackPlayer = require('react-native-track-player').default;
+          await TrackPlayer.pause();
+          
+          // 同步更新全局服务状态
+          await AudioService.pause();
+        } else {
+          // 否则触发播放/切换
+          await togglePlayback(target);
+        }
+      } catch (error) {
+        console.error('[ImmersivePlayer] togglePlayback Error:', error);
+        // 发生错误时回滚 UI 状态
+        const finalIsPlaying = await AudioService.getRealIsPlaying();
+        setLocalIsPlaying(finalIsPlaying);
+      }
     }
   };
 
@@ -373,14 +611,48 @@ const ImmersivePlayerNew = () => {
   };
 
   const renderScenePage = (scene: Scene, index: number) => {
-    // 关键修复：判断当前页面场景是否正在播放
-    const isThisScenePlaying = isPlaying && currentBaseSceneId === scene.id;
+    // 关键修复：判断当前页面场景是否正在播放，优先使用本地预判状态
+    const isThisScenePlaying = localIsPlaying && currentBaseSceneId === scene.id;
+
+    // 获取 7 大全局氛围音，用于悬浮图标 (按 SMALL_SCENE_IDS 顺序排序)
+    const globalAmbientScenes = useMemo(() => {
+      return SMALL_SCENE_IDS.map(id => SCENES.find(s => s.id === id)).filter(Boolean) as Scene[];
+    }, []);
 
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: 'transparent' }]}>
         <SafeAreaView style={[styles.overlay, { backgroundColor: 'transparent' }]}>
           {/* 占位符，保持布局一致性 */}
           <View style={styles.headerPlaceholder} />
+
+          {/* 悬浮图标容器 - 动态生成 */}
+          <View style={styles.floatingIconsContainer}>
+            {showGuide && (
+              <Animated.View style={[styles.guideBubble, { opacity: guideOpacity }]}>
+                <View style={styles.bubbleArrow} />
+                <Text style={styles.guideText}>试试点击这些图标，有惊喜音效</Text>
+              </Animated.View>
+            )}
+            {globalAmbientScenes.map((ambient, idx) => {
+              const isActive = (activeSmallSceneIds || []).includes(ambient.id);
+              const column = idx % 2;
+              const row = Math.floor(idx / 2);
+              
+              return (
+                <AnimatedFloatingButton
+                  key={`floating-${ambient.id}`}
+                  ambient={ambient}
+                  isActive={isActive}
+                  column={column}
+                  row={row}
+                  onPress={() => {
+                    console.log(`[Floating Icon Click] ID: ${ambient.id}, isActive: ${isActive}`);
+                    toggleAmbience(ambient, 'Floating Icon');
+                  }}
+                />
+              );
+            })}
+          </View>
 
           <View style={styles.controlCenter}>
             <Animated.View style={{ transform: [{ scale: playBtnScale }] }}>
@@ -411,17 +683,6 @@ const ImmersivePlayerNew = () => {
   };
 
   const renderFixedFooter = () => {
-    // 1. 提取全局通用的氛围音 ID
-    const GLOBAL_AMBIENT_IDS = ['life_fireplace', 'life_summer'];
-
-    // 2. 过滤出当前分类下的小场景，并合并全局通用音效
-    const currentCategory = MAIN_CATEGORIES[activeIndex];
-    const categorySmallScenes = SCENES.filter(s => {
-      if (s.isBaseScene) return false;
-      // 满足以下任一条件：1. 属于当前分类 2. 属于全局通用 ID 列表
-      return s.category === currentCategory || GLOBAL_AMBIENT_IDS.includes(s.id);
-    });
-
     return (
       <View style={styles.fixedFooterContainer}>
         <BlurView
@@ -431,36 +692,6 @@ const ImmersivePlayerNew = () => {
           reducedTransparencyFallbackColor="black"
         />
         <View style={styles.footerContent}>
-          {/* 氛围点缀区域 */}
-          {categorySmallScenes.length > 0 && (
-            <View style={styles.ambientContainer}>
-              {categorySmallScenes.map(scene => {
-                const isActive = (activeSmallSceneIds || []).includes(scene.id);
-                return (
-                  <TouchableOpacity
-                    key={scene.id}
-                    style={[styles.ambientBtn, isActive && styles.ambientBtnActive]}
-                    onPress={() => togglePlayback(scene)}
-                    activeOpacity={0.7}
-                  >
-                    <Icon 
-                      name={
-                        scene.id.includes('fireplace') ? 'flame' : 
-                        scene.id.includes('summer') ? 'sunny' : 
-                        scene.id.includes('fire_pure') ? 'bonfire' : 'musical-notes'
-                      } 
-                      size={16} 
-                      color={isActive ? '#fff' : 'rgba(255,255,255,0.4)'} 
-                    />
-                    <Text style={[styles.ambientText, isActive && styles.ambientTextActive]}>
-                      {scene.title}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-
           <View style={styles.indicatorContainer}>
             {MAIN_CATEGORIES.map((cat, index) => (
               <AnimatedIndicator
@@ -724,6 +955,80 @@ const styles = StyleSheet.create({
     textShadowRadius: 10
   },
   controlCenter: { justifyContent: 'center', alignItems: 'center', width: '100%' },
+  floatingIconsContainer: {
+    position: 'absolute',
+    top: 140,
+    left: 0,
+    right: 0,
+    bottom: 260,
+    zIndex: 10,
+  },
+  floatingIconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  floatingIconBtnActive: {
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  iconLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: '400',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+    overflow: 'hidden',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  guideBubble: {
+    position: 'absolute',
+    top: 0,
+    left: 40,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    zIndex: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  bubbleArrow: {
+    position: 'absolute',
+    bottom: -6,
+    left: 20,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: 'rgba(255,255,255,0.95)',
+  },
+  guideText: {
+    color: '#333',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   playButton: {
     width: 100,
     height: 100,
@@ -765,37 +1070,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   indicatorContainer: { flexDirection: 'row', marginBottom: 15, alignItems: 'center' },
-  ambientContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  ambientBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  ambientBtnActive: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderColor: 'rgba(255,255,255,0.5)',
-  },
-  ambientText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
-    marginLeft: 4,
-  },
-  ambientTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
   indicator: { 
     width: 32, 
     height: 32, 
@@ -820,23 +1094,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   statusText: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
-  ambientTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  ambientTriggerText: {
-    color: '#fff',
-    fontSize: 14,
-    marginLeft: 8,
-    fontWeight: '500',
-  },
 });
 
 

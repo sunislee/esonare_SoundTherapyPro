@@ -360,7 +360,7 @@ export const ProfileScreen = () => {
           <MenuItem icon="log-out" title="退出登录" onPress={handleLogout} color="#FF4D4F" showArrow={false} />
         </View>
 
-        <Text style={styles.versionText}>Version 1.0.5 (Build 105)</Text>
+        <Text style={styles.versionText}>Version 1.0.11 (Build 20111)</Text>
       </ScrollView>
 
       <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} />
