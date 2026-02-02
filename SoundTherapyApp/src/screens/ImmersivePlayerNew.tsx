@@ -37,20 +37,22 @@ const AnimatedFloatingButton = ({
 
   // 呼吸灯特效逻辑 (针对背景层图标)
   useEffect(() => {
-    const isBackgroundLayer = ['interactive_rain', 'life_summer', 'interactive_ocean', 'life_fireplace'].includes(ambient.id);
+    const isBackgroundLayer = ['interactive_rain', 'life_summer', 'interactive_ocean', 'life_fireplace', 'interactive_breath'].includes(ambient.id);
+    const isBreath = ambient.id === 'interactive_breath';
+    const animationDuration = isBreath ? 2500 : 1500;
     
     if (isActive && isBackgroundLayer) {
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowAnim, {
             toValue: 1,
-            duration: 1500,
+            duration: animationDuration,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
           Animated.timing(glowAnim, {
             toValue: 0,
-            duration: 1500,
+            duration: animationDuration,
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           })
@@ -89,6 +91,7 @@ const AnimatedFloatingButton = ({
       case 'interactive_rain': return '听雨';
       case 'interactive_ocean': return '观海';
       case 'life_fireplace': return '围炉';
+      case 'interactive_breath': return '呼吸';
       default: return '';
     }
   };

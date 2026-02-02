@@ -208,7 +208,7 @@ const SettingsScreen: React.FC = () => {
               key: 'version',
               icon: '📦',
               title: '版本',
-              subtitle: 'v1.0.11 (Pro)',
+              subtitle: 'v1.0.13 (Pro)',
               type: 'static',
             },
             {

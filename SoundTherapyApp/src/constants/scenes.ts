@@ -123,6 +123,7 @@ export const SMALL_SCENE_IDS = [
   'interactive_match',       // 点燃 (划火柴)
   'interactive_apple',       // 清脆 (嚼苹果)
   'interactive_wind_chime',  // 空灵 (风铃)
+  'interactive_breath',      // 呼吸
   'life_summer',             // 夏夜 (夏日烟火)
   'interactive_rain',        // 听雨
   'interactive_ocean',       // 观海
