@@ -125,13 +125,13 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             onPressOut={handlePressOut}
             delayLongPress={150}
             onPress={() => {
-              setTimeout(async () => {
-                await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
-                // 显式调用 switchSoundscape 并传递 autoPlay: true，确保进入即播放
-                AudioService.switchSoundscape(item, true);
-                navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
-              }, 50);
-            }}
+                setTimeout(async () => {
+                  await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
+                  // 显式调用 switchSoundscape 并传递 autoPlay: true，确保进入即播放
+                  AudioService.switchSoundscape(item, true);
+                  navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
+                }, 50);
+              }}
           >
             <View style={styles.cardInner}>
               <View style={[styles.cardBg, { backgroundColor: item.primaryColor }]} />
@@ -259,6 +259,11 @@ export const HomeScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // 单例实例检查
+    console.log('🔄 [HomeScreen] AudioService Instance Check: Using default exported instance');
+    console.log('🔄 [HomeScreen] AudioService Instance Type:', typeof AudioService);
+    console.log('🔄 [HomeScreen] AudioService Has Pause Method:', typeof AudioService.pause === 'function');
+
     // Initialize Audio
     const init = async () => {
       try {

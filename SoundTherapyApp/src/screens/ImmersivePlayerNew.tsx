@@ -1,17 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
-import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions, Easing, InteractionManager } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeAreaView, Animated, Platform, Dimensions, Easing, InteractionManager, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAudio } from '../context/AudioContext';
 import { SCENES, Scene, SMALL_SCENE_IDS, getIconName } from '../constants/scenes';
 import AudioService from '../services/AudioService'; 
+import { usePlayerState } from '../hooks/usePlayerState';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AmbientPickerSheet } from '../components/AmbientPickerSheet';
 import { BlurView } from '@react-native-community/blur';
-import { State } from 'react-native-track-player';
+import TrackPlayer, { State } from 'react-native-track-player';
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
@@ -264,17 +265,11 @@ const ImmersivePlayerNew = () => {
   const navigation = useNavigation();
   const route = useRoute<ImmersivePlayerRouteProp>();
   const insets = useSafeAreaInsets();
-  const { currentScene, currentBaseSceneId, isPlaying, playbackState, activeSmallSceneIds, togglePlayback, toggleAmbience, setAmbient } = useAudio();
+  const { currentScene, currentBaseSceneId, activeSmallSceneIds, toggleAmbience, setAmbient } = useAudio();
+  const { isPlaying, currentState, getRealIsPlaying } = usePlayerState();
   const pagerRef = useRef<PagerView>(null);
 
-  // 播放按钮本地状态同步 (针对按钮响应性)
-  const [localIsPlaying, setLocalIsPlaying] = useState(isPlaying);
   const lastClickTime = useRef(0);
-
-  // 1. 显式状态对齐：监听 AudioContext 状态并强制刷新本地按钮 UI
-  useEffect(() => {
-    setLocalIsPlaying(isPlaying);
-  }, [isPlaying]);
 
   // 2. 页面销毁清理：仅在退出页面时清理互动音效，防止进入页面时误伤加载逻辑
   useEffect(() => {
@@ -420,11 +415,16 @@ const ImmersivePlayerNew = () => {
     position.setValue(initialPageIndex);
     scrollOffset.setValue(0);
 
+    // 单例实例检查
+    console.log('🔄 [ImmersivePlayer] AudioService Instance Check: Using default exported instance');
+    console.log('🔄 [ImmersivePlayer] AudioService Instance Type:', typeof AudioService);
+    console.log('🔄 [ImmersivePlayer] AudioService Has Pause Method:', typeof AudioService.pause === 'function');
+
     // 双向绑定：挂载时自动同步一次全局 TrackPlayer 的实时播放状态
     const syncStatus = async () => {
       const realIsPlaying = await AudioService.getRealIsPlaying();
       console.log('🔄 [ImmersivePlayer] Mount sync: RealIsPlaying =', realIsPlaying);
-      setLocalIsPlaying(realIsPlaying);
+      // 不再需要手动设置localIsPlaying，usePlayerState会自动处理
     };
     syncStatus();
 
@@ -509,50 +509,25 @@ const ImmersivePlayerNew = () => {
      }, 400);
    };
 
-  const handleToggle = async (sceneToToggle?: Scene) => {
-    if (isFrozen) {
-      console.log('[UI Click Blocked] Component is frozen');
-      return;
-    }
-
-    // 3. 防抖处理 (300ms)
-    const now = Date.now();
-    if (now - lastClickTime.current < 300) {
-      console.log('[UI Click Blocked] Debounced');
-      return;
-    }
-    lastClickTime.current = now;
-
-    const target = sceneToToggle || currentScene;
-    if (target) {
-      // 5. 日志追踪
-      const realIsPlaying = await AudioService.getRealIsPlaying();
-      console.log(`[UI] Pause Button Clicked - Target Instance ID: ${target.id}, RealIsPlaying: ${realIsPlaying}`);
+  const handleToggle = async () => {
+    console.log('--- [PAUSE_TEST] BUTTON CLICKED ---');
+    try {
+      // 别管 Service 了，直接调底层，看它死不死
+      const state = await TrackPlayer.getState();
+      console.log('--- [PAUSE_TEST] CURRENT STATE:', state);
       
-      // 预判性 UI 更新，增强反馈速度
-      setLocalIsPlaying(!realIsPlaying);
-      
-      try {
-        if (realIsPlaying && target.id === currentBaseSceneId) {
-          // 物理级穿透修复：直接调用全局单例的物理暂停，不依赖本地 useState
-          console.log('🛑 [ImmersivePlayer] Global Singleton Physical Pause triggered');
-          
-          // 直接调用底层 API 确保彻底安静
-          const TrackPlayer = require('react-native-track-player').default;
-          await TrackPlayer.pause();
-          
-          // 同步更新全局服务状态
-          await AudioService.pause();
-        } else {
-          // 否则触发播放/切换
-          await togglePlayback(target);
-        }
-      } catch (error) {
-        console.error('[ImmersivePlayer] togglePlayback Error:', error);
-        // 发生错误时回滚 UI 状态
-        const finalIsPlaying = await AudioService.getRealIsPlaying();
-        setLocalIsPlaying(finalIsPlaying);
+      if (state === State.Playing) {
+        await TrackPlayer.pause();
+        console.log('--- [PAUSE_TEST] TrackPlayer.pause() CALLED ---');
+        // 手动同步状态，确保UI能实时更新
+        await AudioService.syncNativeStatus();
+        console.log('--- [PAUSE_TEST] State synchronized ---');
+      } else {
+        await AudioService.play();
+        // 播放时AudioService.play()内部会自动更新状态
       }
+    } catch (e) {
+      console.error('--- [PAUSE_TEST] ERROR:', e);
     }
   };
 
@@ -611,8 +586,8 @@ const ImmersivePlayerNew = () => {
   };
 
   const renderScenePage = (scene: Scene, index: number) => {
-    // 关键修复：判断当前页面场景是否正在播放，优先使用本地预判状态
-    const isThisScenePlaying = localIsPlaying && currentBaseSceneId === scene.id;
+    // 关键修复：判断当前页面场景是否正在播放，使用全局实时状态
+    const isThisScenePlaying = isPlaying && currentBaseSceneId === scene.id;
 
     // 获取 7 大全局氛围音，用于悬浮图标 (按 SMALL_SCENE_IDS 顺序排序)
     const globalAmbientScenes = useMemo(() => {
@@ -626,7 +601,7 @@ const ImmersivePlayerNew = () => {
           <View style={styles.headerPlaceholder} />
 
           {/* 悬浮图标容器 - 动态生成 */}
-          <View style={styles.floatingIconsContainer}>
+          <View style={styles.floatingIconsContainer} pointerEvents="box-none">
             {showGuide && (
               <Animated.View style={[styles.guideBubble, { opacity: guideOpacity }]}>
                 <View style={styles.bubbleArrow} />
@@ -658,7 +633,7 @@ const ImmersivePlayerNew = () => {
             <Animated.View style={{ transform: [{ scale: playBtnScale }] }}>
               <TouchableOpacity 
                 style={styles.playButton}
-                onPress={() => handleToggle(scene)}
+                onPress={() => handleToggle()}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 activeOpacity={0.9}

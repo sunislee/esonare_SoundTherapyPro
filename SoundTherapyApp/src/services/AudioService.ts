@@ -22,7 +22,7 @@ const { NativeAudioModule } = NativeModules;
 const nativeAudioEmitter = NativeAudioModule ? new NativeEventEmitter(NativeAudioModule) : null;
 
 class AudioService {
-  private static instance: AudioService;
+  private static instance: AudioService | null = null;
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
   private isSwitching = false;
@@ -975,6 +975,7 @@ class AudioService {
   public static getInstance(): AudioService {
     if (!AudioService.instance) {
       AudioService.instance = new AudioService();
+      console.log('--- [CRITICAL] NEW AUDIOSERVICE INSTANCE CREATED: ' + Math.random() + ' ---');
     }
     return AudioService.instance;
   }
@@ -1725,20 +1726,23 @@ class AudioService {
 
     await this.ensureSetup();
     try {
-      // 锁定期间拦截非错误的暂停请求
-      if (this.isStateLocked) {
-        console.warn('🛡️ [AudioService] pause intercepted: State is LOCKED during switch');
-        return;
-      }
-
       if (this.ambientSound) {
         this.ambientSound.pause();
       }
 
       await TrackPlayer.pause();
+      console.log('DEBUG: PHYSICAL PAUSE EXECUTED');
       // 修复“暂停不更新”：强制更新 JS 层的播放状态为 Paused
       if (this.currentScene) {
+        // 临时解锁以允许状态更新
+        const wasLocked = this.isStateLocked;
+        if (wasLocked) {
+          this.isStateLocked = false;
+        }
         this.updateAudioState(this.currentScene.id, State.Paused);
+        if (wasLocked) {
+          this.isStateLocked = true;
+        }
       }
     } catch (e: any) {
       const message = (e && e.message) || String(e);
