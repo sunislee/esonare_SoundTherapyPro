@@ -4,15 +4,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DownloadService } from '../services/DownloadService';
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
+import { initLanguage } from '../i18n';
+import { useTranslation } from 'react-i18next';
 
 export const LandingScreen = ({ navigation }: any) => {
+  const { t, i18n } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const breathAnim = useRef(new Animated.Value(0)).current;
+
+  // 强制重新渲染，确保 i18n 初始化后能正确获取文本
+  const [, setTick] = React.useState(0);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
 
-    // 启动呼吸动画
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(breathAnim, {
@@ -31,16 +36,21 @@ export const LandingScreen = ({ navigation }: any) => {
     );
     loop.start();
 
-    // --- [分流路由逻辑] ---
     const checkAndBoot = async () => {
       const startTime = Date.now();
-      const MIN_DISPLAY_TIME = 2500; // 保证呼吸感展示
+      const MIN_DISPLAY_TIME = 2500;
 
       try {
-        // 1. 检查资源是否就绪
+        // 1. 优先初始化多语言设置
+        await initLanguage();
+        
+        // 初始化完成后触发一次强制刷新
+        setTick(t => t + 1);
+
+        // 2. 检查资源状态
         const isReady = await DownloadService.isResourceReady();
         
-        // 2. 检查用户信息
+
         const userName = await AsyncStorage.getItem('USER_NAME');
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
         
@@ -49,17 +59,14 @@ export const LandingScreen = ({ navigation }: any) => {
 
         setTimeout(async () => {
           if (!isReady) {
-            // A. 资源不完整 -> 去下载页
             navigation.replace('Download');
           } else if (!userName && hasSkipped !== 'true') {
-            // B. 资源好了但没名字 -> 去填名页
             navigation.replace('NameEntry');
           } else {
-            // C. 全部就绪 -> 进入主页
             EngineControl.allow();
             try { await AudioService.setupPlayer(); } catch (e) {}
             
-            // 状态感知跳转：如果音频正在播放，直接进入播放页
+
             if (AudioService.isPlaying()) {
               const scene = AudioService.getCurrentScene();
               if (scene) {
@@ -107,7 +114,7 @@ export const LandingScreen = ({ navigation }: any) => {
           <Text style={{ fontSize: 100 }}>🧘‍♂️</Text>
         </Animated.View>
         <Text style={styles.brandName}>ESONARE</Text>
-        <Text style={styles.loadingText}>正在进入心灵空间...</Text>
+        <Text style={styles.loadingText}>{t('player.landing.loading')}</Text>
       </Animated.View>
     </View>
   );

@@ -9,6 +9,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmationModalProps {
   visible: boolean;
@@ -27,13 +28,17 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   visible,
   title,
   message,
-  confirmText = '确定',
-  cancelText = '取消',
+  confirmText,
+  cancelText,
   onConfirm,
   onCancel,
   isDestructive = false,
 }) => {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(visible);
+
+  const finalConfirmText = confirmText || t('common.confirm');
+  const finalCancelText = cancelText || t('common.cancel');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
@@ -101,7 +106,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   onPress={onCancel}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.cancelButtonText}>{cancelText}</Text>
+                  <Text style={styles.cancelButtonText}>{finalCancelText}</Text>
                 </TouchableOpacity>
                 
                 <View style={styles.buttonSeparator} />
@@ -117,7 +122,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                       isDestructive && styles.destructiveText,
                     ]}
                   >
-                    {confirmText}
+                    {finalConfirmText}
                   </Text>
                 </TouchableOpacity>
               </View>

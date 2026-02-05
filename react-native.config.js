@@ -1,7 +1,9 @@
 module.exports = {
   project: {
     ios: {},
-    android: {},
+    android: {
+      sourceDir: './SoundTherapyApp/android',
+    },
   },
   assets: ['./node_modules/react-native-vector-icons/Fonts'],
 };

@@ -16,6 +16,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Portal } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,17 +24,12 @@ import { useAudio } from '../context/AudioContext';
 import AudioService from '../services/AudioService';
 import ToastUtil from '../utils/ToastUtil';
 
-// ----------------------------------------------------------------
-// 内部组件：带有颜色变化的滑块
-// ----------------------------------------------------------------
 const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor = '#D4AF37', disabled = false }: any) => {
   const [width, setWidth] = useState(0);
   
-  // 动态颜色逻辑：随数值增加而变亮，如果禁用则显示灰色
   const getDynamicColor = () => {
     if (disabled) return 'rgba(100, 100, 100, 0.3)';
     if (activeColor !== '#D4AF37') return activeColor;
-    // D4AF37 变亮路径
     const opacity = 0.3 + (value * 0.7);
     return `rgba(212, 175, 55, ${opacity})`;
   };
@@ -73,9 +69,6 @@ const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor =
   );
 };
 
-// ----------------------------------------------------------------
-// 主组件：氛围点缀控制弹窗 (暴力不透明“物理封印”版)
-// ----------------------------------------------------------------
 type AmbientType = 'none' | 'fireplace' | 'summer';
 type MixPreset = { id: string; name: string; sceneId: string; mainVolume: number; rainVolume: number; fireVolume: number; ambientType: AmbientType; };
 
@@ -96,14 +89,13 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   onSelect,
   onRestoreMix,
 }) => {
+  const { t } = useTranslation();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   
-  // 1. 高度重定义：调整为屏幕高度的 75%
   const sheetHeight = screenHeight * 0.75;
   
-  // 2. 消除暴力位移：归位到 0
-  const hiddenValue = sheetHeight + 100; // 增加冗余确保完全隐藏
+  const hiddenValue = sheetHeight + 100; // Extra padding to ensure hidden
   const visibleValue = 0; 
   const translateY = useRef(new Animated.Value(hiddenValue)).current;
   const dragY = useRef(new Animated.Value(0)).current;
@@ -119,20 +111,17 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     { useNativeDriver: true }
   );
 
-  // 增加阻尼感：在 UI 层对 translateY 应用物理阻尼
   const animatedDragY = dragY.interpolate({
     inputRange: [0, 500],
-    outputRange: [0, 350], // 500px 实际位移只产生 350px 视觉位移，增加沉重感
+    outputRange: [0, 350], 
     extrapolate: 'clamp',
   });
 
   const onHandlerStateChange = (event: any) => {
     if (event.nativeEvent.state === State.END) {
       if (event.nativeEvent.translationY > 150) {
-        // 超过 150px，优雅滑落关闭
         onClose();
       } else {
-        // 不足 150px，回弹
         Animated.spring(dragY, {
           toValue: 0,
           useNativeDriver: true,
@@ -172,8 +161,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
       setFireplaceVolume(getAmbientVolumeById('life_fireplace'));
       setSummerVolume(getAmbientVolumeById('life_summer'));
       
-      dragY.setValue(0); // 重置拖动值
-      // 动画目标值为 0
+      dragY.setValue(0); 
       Animated.spring(translateY, {
         toValue: visibleValue,
         useNativeDriver: true,
@@ -190,15 +178,17 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   }, [visible, hiddenValue, visibleValue, loadMixes, getAmbientVolumeById]);
 
   const saveMix = async () => {
-    const name = mixName.trim() || `${new Date().getMonth() + 1}月${new Date().getDate()}日 混音`;
-    // 兼容旧版 MixPreset 结构，这里可能需要调整，但暂且保持主要逻辑
+    const name = mixName.trim() || t('player.ambient.defaultMixName', {
+      month: new Date().getMonth() + 1,
+      day: new Date().getDate()
+    });
     const newMix = { id: Date.now().toString(), name, sceneId: currentSceneId, mainVolume, rainVolume: 0, fireVolume: fireplaceVolume, ambientType: currentAmbient };
     const updated = [newMix, ...savedMixes];
     setSavedMixes(updated);
     await AsyncStorage.setItem('@mix_presets', JSON.stringify(updated));
     setIsEditing(false);
     setMixName('');
-    Alert.alert('成功', '方案已保存');
+    Alert.alert(t('player.ambient.success'), t('player.ambient.saveSuccess'));
   };
 
   const handleVolumeChange = (type: 'main' | 'fireplace' | 'summer', val: number) => {
@@ -219,7 +209,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   const handleSelect = async (type: AmbientType) => {
     ReactNativeHapticFeedback.trigger('impactLight');
     
-    // 物理锁死：无论切到哪个，先暴力杀掉当前所有声音
     await setAmbient(null);
 
     if (type === 'none') {
@@ -235,14 +224,12 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     
     const targetId = idMap[type];
     
-    // 等待旧声音彻底销毁后，再启动新声音
     if (targetId) {
       const asset = AudioService.getAssetById(targetId);
       console.log(`[UI Click] Title: ${asset?.title || type} -> Attempting to play ID: ${targetId} -> File: ${asset?.filename}`);
       await setAmbient(targetId);
     }
     
-    // 通知父组件
     onSelect(type);
   };
 
@@ -264,8 +251,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 
   const getAmbientLabel = (type: AmbientType) => {
     switch(type) {
-      case 'fireplace': return "  炉火";
-      case 'summer': return "  夏日烟火";
+      case 'fireplace': return `  ${t('player.labels.fireplace')}`;
+      case 'summer': return `  ${t('player.labels.summer')}`;
       default: return "";
     }
   };
@@ -273,11 +260,9 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   return (
     <Portal>
       <View style={styles.overlay}>
-        {/* 遮罩背景：压暗效果调整为 0.6 */}
         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
         <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
 
-        {/* 纯实色弹窗主体：增加悬浮边距 */}
         <PanGestureHandler
           onGestureEvent={onGestureEvent}
           onHandlerStateChange={onHandlerStateChange}
@@ -298,27 +283,23 @@ export const AmbientPickerSheet: React.FC<Props> = ({
               }
             ]}
           >
-            {/* 【关键】底层钢板 */}
             <View style={[StyleSheet.absoluteFill, { backgroundColor: '#121212', zIndex: -1 }]} />
      
-            {/* 安全区适配 */}
             <View style={{ 
               paddingTop: insets.top, 
               backgroundColor: '#121212', 
               width: '100%',
             }}>
-              {/* 拖动手柄容器：修复为单一连续 View */}
               <View style={styles.handleContainer}>
                 <Animated.View style={styles.handle} />
               </View>
             </View>
           
-          {/* 标题栏 */}
           <View style={styles.navHeader}>
             <TouchableOpacity style={styles.backButton} onPress={onClose}>
               <Icon name="chevron-down" size={32} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text style={styles.headerTitleText}>氛围点缀控制</Text>
+            <Text style={styles.headerTitleText}>{t('player.ambient.controlTitle')}</Text>
             <View style={{ width: 50 }} /> 
           </View>
 
@@ -328,7 +309,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* 保存按钮 */}
             <View style={styles.saveSection}>
               {isEditing ? (
                 <View style={styles.inputBox}>
@@ -336,7 +316,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                     style={styles.textInput} 
                     value={mixName} 
                     onChangeText={setMixName} 
-                    placeholder="输入名称..."
+                    placeholder={t('player.ambient.inputPlaceholder')}
                     placeholderTextColor="#555"
                     autoFocus
                   />
@@ -347,18 +327,17 @@ export const AmbientPickerSheet: React.FC<Props> = ({
               ) : (
                 <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditing(true)}>
                   <Icon name="save-outline" size={20} color="#000" />
-                  <Text style={styles.saveButtonText}>保存当前混音方案</Text>
+                  <Text style={styles.saveButtonText}>{t('player.ambient.saveMix')}</Text>
                 </TouchableOpacity>
               )}
             </View>
 
-            {/* 音量控制组 */}
-            <Text style={styles.groupLabel}>场景主音量</Text>
+            <Text style={styles.groupLabel}>{t('player.ambient.mainVolume')}</Text>
             <View style={styles.volumeCard}>
               <SimpleJsSlider value={mainVolume} onValueChange={(v:any)=>handleVolumeChange('main',v)} onSlidingComplete={()=>{}} activeColor="#fff" />
             </View>
 
-            <Text style={styles.groupLabel}>环境音效叠加</Text>
+            <Text style={styles.groupLabel}>{t('player.ambient.ambientOverlay')}</Text>
             {(['fireplace', 'summer'] as AmbientType[]).map((type) => {
               const isActive = getIsActive(type);
               const volume = type === 'fireplace' ? fireplaceVolume : summerVolume;
@@ -376,7 +355,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                     <Icon name={isActive ? "radio-button-on" : "radio-button-off"} size={22} color={isActive ? "#D4AF37" : "#444"} />
                   </TouchableOpacity>
                   
-                  {/* 滑块锁死：非活跃声音的滑块全部禁用 */}
                   <SimpleJsSlider 
                     value={volume} 
                     onValueChange={(v: any) => handleVolumeChange(type as any, v)}
@@ -387,9 +365,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
               );
             })}
 
-            {/* 我的最爱列表 */}
             <View style={styles.presetSection}>
-              <Text style={styles.groupLabel}>我的最爱</Text>
+              <Text style={styles.groupLabel}>{t('player.ambient.myFavorites')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop: 10}}>
                 {savedMixes.map(mix => (
                   <TouchableOpacity key={mix.id} style={styles.presetItem} onPress={() => {
@@ -397,14 +374,14 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                     onRestoreMix(mix);
                     setMainVolume(mix.mainVolume); 
                     setFireplaceVolume(mix.fireVolume); 
-                    ToastUtil.success(`已应用: ${mix.name}`);
+                    ToastUtil.success(t('player.ambient.applied', { name: mix.name }));
                   }}>
                     <Text style={{color: '#fff', fontWeight: 'bold'}} numberOfLines={1}>{mix.name}</Text>
-                    <Text style={{color: '#555', fontSize: 11, marginTop: 4}}>主音量 {Math.round(mix.mainVolume*100)}%</Text>
+                    <Text style={{color: '#555', fontSize: 11, marginTop: 4}}>{t('player.ambient.mainVolumeLabel')} {Math.round(mix.mainVolume*100)}%</Text>
                   </TouchableOpacity>
                 ))}
                 {savedMixes.length === 0 && (
-                  <Text style={{color: '#333', fontSize: 13, marginTop: 10, fontStyle: 'italic'}}>暂无保存方案</Text>
+                  <Text style={{color: '#333', fontSize: 13, marginTop: 10, fontStyle: 'italic'}}>{t('player.ambient.noPresets')}</Text>
                 )}
               </ScrollView>
             </View>
@@ -458,7 +435,7 @@ const styles = StyleSheet.create({
   },
   backButton: { padding: 5 },
   headerTitleText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 }, // 缩减底部边距
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 }, 
   saveSection: { marginVertical: 10 },
   saveButton: {
     backgroundColor: '#D4AF37', height: 52, borderRadius: 16,

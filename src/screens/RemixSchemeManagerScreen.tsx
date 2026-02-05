@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useTranslation } from 'react-i18next';
 
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { EditSchemeModal } from '../components/EditSchemeModal';
@@ -73,11 +74,12 @@ interface RemixSchemeItemProps {
 }
 
 const RemixSchemeItem = ({ item, onDelete, onEdit }: RemixSchemeItemProps) => {
+  const { t } = useTranslation();
   const swipeableRef = useRef<any>(null);
 
   const formatDate = (timestamp: string) => {
     const date = new Date(parseInt(timestamp));
-    return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+    return t('player.remix.date', { month: date.getMonth() + 1, day: date.getDate() }) + ` ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
   const handleDeletePress = () => {
@@ -121,10 +123,10 @@ const RemixSchemeItem = ({ item, onDelete, onEdit }: RemixSchemeItemProps) => {
             <Text style={styles.cardSubtitle}>
               {formatDate(item.id)} •{' '}
               {item.ambientType === 'none'
-                ? '纯净'
+                ? t('player.remix.types.none')
                 : item.ambientType === 'rain'
-                ? '雨声'
-                : '篝火'}
+                ? t('player.remix.types.rain')
+                : t('player.remix.types.fire')}
             </Text>
           </View>
           
@@ -143,6 +145,7 @@ const RemixSchemeItem = ({ item, onDelete, onEdit }: RemixSchemeItemProps) => {
 
 // --- 3. Main Screen Logic ---
 const RemixSchemeManagerScreen: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<MixPreset[]>(INITIAL_DATA);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIdToDelete, setSelectedIdToDelete] = useState<string | null>(null);
@@ -210,8 +213,8 @@ const RemixSchemeManagerScreen: React.FC = () => {
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <StatusBar barStyle="light-content" />
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>我的混音</Text>
-          <Text style={styles.headerSubtitle}>已保存 {data.length} 个方案</Text>
+          <Text style={styles.headerTitle}>{t('player.remix.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('player.remix.count', { count: data.length })}</Text>
         </View>
 
         <FlatList
@@ -227,10 +230,10 @@ const RemixSchemeManagerScreen: React.FC = () => {
 
         <ConfirmationModal
           visible={modalVisible}
-          title="删除方案"
-          message="确定要删除这个混音方案吗？此操作无法撤销。"
-          confirmText="删除"
-          cancelText="取消"
+          title={t('player.remix.deleteTitle')}
+          message={t('player.remix.deleteMsg')}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
           isDestructive={true}
@@ -238,7 +241,7 @@ const RemixSchemeManagerScreen: React.FC = () => {
 
         <EditSchemeModal
           visible={editModalVisible}
-          title="重命名方案"
+          title={t('player.remix.renameTitle')}
           initialValue={editingScheme?.name || ''}
           onConfirm={saveSchemeName}
           onCancel={() => {

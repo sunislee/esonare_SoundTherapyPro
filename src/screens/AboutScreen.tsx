@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const AboutScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -15,9 +17,9 @@ const AboutScreen = () => {
           style={styles.backButton}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         >
-          <Text style={styles.backText}>{'< 返回'}</Text>
+          <Text style={styles.backText}>{`< ${t('settings.back')}`}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>关于</Text>
+        <Text style={styles.headerTitle}>{t('about.header')}</Text>
       </View>
 
       <View style={styles.content}>
@@ -25,24 +27,24 @@ const AboutScreen = () => {
           <View style={styles.logoPlaceholder}>
             <Text style={styles.logoText}>S</Text>
           </View>
-          <Text style={styles.appName}>SoundTherapy Pro</Text>
-          <Text style={styles.version}>Version 1.1.0</Text>
+          <Text style={styles.appName}>{t('appTitle')}</Text>
+          <Text style={styles.version}>{t('settings.version')} 1.1.0</Text>
         </View>
 
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>内核版本</Text>
+            <Text style={styles.infoLabel}>{t('about.kernelVersion')}</Text>
             <Text style={styles.infoValue}>React Native 0.73</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>开发者</Text>
+            <Text style={styles.infoLabel}>{t('settings.developer')}</Text>
             <Text style={styles.infoValue}>fakecoder</Text>
           </View>
         </View>
         
         <View style={styles.footer}>
-          <Text style={styles.copyright}>© 2024 SoundTherapy Pro. All rights reserved.</Text>
+          <Text style={styles.copyright}>{t('about.copyright')}</Text>
         </View>
       </View>
     </View>

@@ -10,6 +10,7 @@ import {
   Platform,
   BackHandler,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Typography } from '../theme/Typography';
@@ -27,12 +28,6 @@ type Props = {
 const HANDLE_HEIGHT = 24;
 const SNAP_THRESHOLD = 50;
 const CATEGORIES: SceneCategory[] = ['Nature', 'Healing', 'Brainwave', 'Life'];
-const CATEGORY_LABELS: Record<SceneCategory, string> = {
-  Nature: '自然',
-  Healing: '疗愈',
-  Brainwave: '脑波',
-  Life: '生活',
-};
 
 export const SoundscapeBottomSheet: React.FC<Props> = ({
   visible,
@@ -42,6 +37,7 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
   onClose,
   onSelect,
 }) => {
+  const { t } = useTranslation();
   const { height: screenHeight } = useWindowDimensions();
   const SHEET_HEIGHT = screenHeight * 0.65;
   
@@ -157,7 +153,6 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
         disabled={isLoading}
         onPress={() => {
           triggerHaptic();
-          // 显式调用 switchSoundscape 并传递 autoPlay: true，确保进入即播放
           const AudioService = require('../services/AudioService').default;
           AudioService.switchSoundscape(item, true);
           onSelect(item);
@@ -168,7 +163,7 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
           <Text style={[styles.itemTitle, isSelected && styles.itemTitleSelected]}>
             {item.title}
           </Text>
-          <Text style={styles.itemDesc}>沉浸式自然白噪音</Text>
+          <Text style={styles.itemDesc}>{t('player.soundscape.description')}</Text>
         </View>
         {isSelected && (
           <View style={styles.checkIcon}>
@@ -216,7 +211,7 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
             <View style={styles.handleContainer}>
               <View style={styles.handle} />
             </View>
-            <Text style={styles.headerTitle}>选择场景</Text>
+            <Text style={styles.headerTitle}>{t('player.soundscape.pickerTitle')}</Text>
           </Animated.View>
         </PanGestureHandler>
 
@@ -231,7 +226,7 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
                 onPress={() => setSelectedCategory(cat)}
               >
                 <Text style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}>
-                  {CATEGORY_LABELS[cat]}
+                  {t(`player.soundscape.categories.${cat}`)}
                 </Text>
               </TouchableOpacity>
             );
@@ -250,24 +245,7 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
   );
 };
 
-// ... Wait, if I put PanGestureHandler around the whole view, FlatList won't scroll on Android sometimes.
-// Ideally, the user wants "Panel dragging".
-// Let's wrap ONLY the Header/Handle in PanGestureHandler for now to guarantee no conflict.
-// If the user wants full-sheet dragging, we need nested handlers or native driver.
-// Given "Handle Bar" requirement, it's intuitive to drag there.
-// I will wrap the Sheet, but I will check if FlatList captures touches.
-// Actually, standard RN PanGestureHandler as parent of FlatList works if we configure it right.
-// But simplest robust solution: Header is draggable.
-// Let's modify the JSX to wrap only the top part? 
-// No, user expects standard sheet behavior.
-// Let's try wrapping the whole sheet. If ScrollView steals touch, that's fine (it scrolls).
-// If ScrollView is at top and we drag down... standard RN ScrollView doesn't bubble that easily without nested scrollview coordination.
-// I will stick to "Drag Header to move" logic effectively by layout, OR accept that scrolling takes precedence.
-// But wait, `Animated.event` on `translateY` will move the sheet.
-// If I drag on FlatList, FlatList will consume the event?
-// I will modify the implementation to put PanGestureHandler ONLY on the Handle/Header section.
-// This is the safest way to avoid "internal ScrollView conflict" without complex ref handling.
-// It also makes the "Handle Bar" functional purpose clear.
+
 
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 1000, elevation: 1000, justifyContent: 'flex-end' },

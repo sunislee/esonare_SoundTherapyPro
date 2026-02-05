@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Mac
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+.trae/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Android / Gradle
+.gradle/
+build/
+*.apk
+*.aar
+*.jks
+*.keystore
+
+# SoundTherapyApp specific (hidden gradle and build)
+SoundTherapyApp/**/.gradle/
+SoundTherapyApp/**/build/
+
+# Temporary/Output folders
+temp/
+clean_source/
+audio_engine/
+exported_assets/

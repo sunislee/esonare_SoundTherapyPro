@@ -1,0 +1,363 @@
+{
+  "welcome": "Welcome to Sound Therapy App",
+  "appTitle": "SoundTherapy Pro",
+  "tabs": {
+    "scenes": "Scenes",
+    "profile": "My"
+  },
+  "categories": {
+    "nature": "Natural Power",
+    "healing": "Deep Healing",
+    "brainwave": "Focus Brainwaves",
+    "life": "Life Corners"
+  },
+  "actions": {
+    "play": "Play",
+    "pause": "Pause",
+    "stop": "Stop",
+    "next": "Next",
+    "previous": "Previous",
+    "deleted": "Deleted",
+    "deleteFailed": "Delete failed",
+    "restored": "Playback restored"
+  },
+  "slogans": {
+    "journey": "Begin a healing journey",
+    "peace": "May your heart be at peace",
+    "silence": "Let the world be quiet for a while"
+  },
+  "greetings": {
+    "hello": "Hello",
+    "midnight": "Good midnight",
+    "morning": "Good morning",
+    "noon": "Good noon",
+    "afternoon": "Good morning",
+    "lateAfternoon": "Good afternoon",
+    "evening": "Good evening",
+    "night": "Good night"
+  },
+  "common": {
+    "confirm": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "success": "Success",
+    "error": "Error",
+    "loading": "Loading...",
+    "back": "Back",
+    "delete": "Delete",
+    "comma": ", ",
+    "period": ". ",
+    "enter_scheme_name": "Enter scheme name",
+    "friend": "Friend"
+  },
+  "notification": {
+    "artistDescription": "🎵 {{userName}}, in deep healing"
+  },
+  "about": {
+    "header": "About",
+    "kernelVersion": "Kernel Version",
+    "copyright": "© 2024 SoundTherapy Pro. All rights reserved."
+  },
+  "profile": {
+    "loading": "Loading...",
+    "defaultUser": "SoundTherapy User",
+    "stats": {
+      "focusCount": "Focus Sessions",
+      "totalDuration": "Total Duration"
+    },
+    "menu": {
+      "coreFeatures": "Core Features",
+      "sleepTimer": "Sleep Timer",
+      "myPresets": "My Mix Presets",
+      "settings": "Preferences",
+      "clearCache": "Clear Cache",
+      "logout": "Logout",
+      "comingSoon": "{{feature}} is coming soon",
+      "comingSoonDesc": "Stay tuned for the next version",
+      "resources": "Resources & History",
+      "history": "Playback History",
+      "about": "About",
+      "aboutUs": "About Us",
+      "proMember": "Member Center",
+      "editNickname": "Edit Nickname",
+      "nicknamePlaceholder": "Enter your nickname"
+    },
+    "modals": {
+      "renameTitle": "Edit Nickname",
+      "renamePlaceholder": "Enter new nickname",
+      "save": "Save",
+      "cancel": "Cancel",
+      "deletePresetTitle": "Delete Preset",
+      "deletePresetMsg": "Are you sure you want to delete this mix preset?",
+      "logoutTitle": "Logout",
+      "logoutMsg": "Are you sure you want to logout and clear all local settings?",
+      "clearCacheTitle": "Clear Cache",
+      "clearCacheMsg": "This will delete all downloaded audio resources. They will need to be re-downloaded next time.",
+      "clearCacheSuccess": "Cache cleared, please restart the App.",
+      "confirmLogout": "Logout",
+      "confirmClear": "Clear",
+      "confirmDelete": "Delete",
+      "prompt": "Prompt",
+      "nameEmpty": "Name cannot be empty",
+      "error": "Error",
+      "saveFailed": "Save failed"
+    },
+    "background": {
+      "selectTitle": "Select Background",
+      "selectMsg": "Please choose background setting method",
+      "systemPreset": "System Presets",
+      "customPro": "Select from Album",
+      "proFeatureTitle": "✨ Unlock Pro Features",
+      "proFeatureMsg": "Custom background is a Pro exclusive feature. Upgrade to Pro to unlock gallery selection, exclusive sounds, and more! This feature will be available in future versions.",
+      "proFeatureConfirm": "Got it",
+      "updateSuccess": "Background updated",
+      "recommended": "Recommended",
+      "fire": "Fire",
+      "forest": "Forest",
+      "rain": "Rain",
+      "ocean": "Ocean",
+      "selectFromAlbum": "Select from Album"
+    }
+  },
+  "player": {
+    "landing": {
+      "loading": "Entering mind space..."
+    },
+    "labels": {
+      "ignite": "Ignite",
+      "crisp": "Crisp",
+      "ethereal": "Ethereal",
+      "summer": "Summer",
+      "rain": "Rain",
+      "ocean": "Ocean",
+      "fireplace": "Fireplace",
+      "breath": "Breath"
+    },
+    "guide": {
+      "text": "Try clicking these icons for surprise sound effects"
+    },
+    "status": {
+      "playing": "Healing in progress...",
+      "paused": "Paused",
+      "buffering": "Buffering...",
+      "loading": "Loading...",
+      "ready": "Ready"
+    },
+    "ambient": {
+      "pickerTitle": "Ambient Decor",
+      "controlTitle": "Ambient Control",
+      "saveMix": "Save Current Mix",
+      "inputPlaceholder": "Enter name...",
+      "success": "Success",
+      "saveSuccess": "Preset saved",
+      "mainVolume": "Main Volume",
+      "ambientOverlay": "Ambient Overlay",
+      "myFavorites": "My Favorites",
+      "applied": "Applied: {{name}}",
+      "mainVolumeLabel": "Main Vol",
+      "noPresets": "No presets yet",
+      "defaultMixName": "Mix of {{month}}/{{day}}",
+      "saveCurrent": "Click to save current mix"
+    },
+    "debug": {
+      "title": "Advanced Debug",
+      "restartTitle": "Emergency Tools",
+      "restartButton": "🚀 One-Tap Audio Restart",
+      "restartHint": "Click here to revive if audio is stuck",
+      "restarting": "Restarting audio engine...",
+      "restartSuccess": "Audio engine reset successfully",
+      "restartFailed": "Restart failed: {{error}}",
+      "unknownError": "Unknown error",
+      "monitorTitle": "Native State Monitor",
+      "activeScene": "Active Scene",
+      "nativePlayers": "Native Players",
+      "logToggle": "Debug Logs",
+      "logHint": "Show RENDER_CHECK logs when enabled",
+      "logEnabled": "Debug logging enabled",
+      "logDisabled": "Debug logging disabled",
+      "close": "Close"
+    },
+    "alarm": {
+      "title": "Morning Wake",
+      "hour": "Hr",
+      "minute": "Min",
+      "clear": "Clear",
+      "confirm": "Set Alarm"
+    },
+    "sleepTimer": {
+      "title": "Sleep Timer",
+      "remaining": "Left",
+      "stop": "Stop",
+      "minutes": "{{count}} Mins",
+      "close": "Set Later",
+      "finished": "Sleep timer ended, playback stopped"
+    },
+    "timer": {
+      "title": "Auto-Off",
+      "unit": "Min",
+      "clear": "Clear Timer",
+      "option1min": "1 Minute",
+      "option15min": "15 Minutes",
+      "option30min": "30 Minutes",
+      "option60min": "60 Minutes",
+      "minuteUnit": "Minutes",
+      "set_success": "Timer set: stopped playing after {{minutes}} minutes",
+      "finished": "Timer ended, playback stopped"
+    }
+  },
+  "soundscape": {
+    "pickerTitle": "Select Scene",
+    "description": "Immersive nature sound",
+    "categories": {
+      "Nature": "Nature",
+      "Healing": "Healing",
+      "Brainwave": "Brainwave",
+      "Life": "Life"
+    }
+  },
+  "miniPlayer": {
+    "nowPlaying": "Now Playing"
+  },
+  "error": {
+    "boundaryTitle": "Oops!",
+    "boundaryMessage": "Something went wrong.",
+    "restartApp": "Please restart the app.",
+    "playError": "Playback Error",
+    "operationFailed": "Operation Failed: {{message}}",
+    "audio_playback_error": "Audio playback error",
+    "ambient_load_failed": "Ambient sound failed to load, please check network",
+    "load_audio_failed": "loadAudio failed: unable to resolve scene audio resource",
+    "system_mute": "System mute detected, please check volume",
+    "load_audio_failed_with_msg": "loadAudio failed: {{message}}",
+    "switch_failed": "Failed to switch scene",
+    "resolve_failed": "Unable to resolve audio resource",
+    "reset_failed_with_msg": "Reset playback failed: {{message}}",
+    "play_failed_with_msg": "Play failed: {{message}}",
+    "pause_failed_with_msg": "Pause failed: {{message}}"
+  },
+  "alarm_msg": {
+    "morning_title": "Morning Wake-up",
+    "morning_msg": "Good morning! A new day has begun",
+    "set_success": "Alarm set: {{time}}",
+    "cancelled": "Alarm cancelled"
+  },
+  "study": {
+    "title": "Rainy Bookstore",
+    "subtitle": "Immersive Audio Experience",
+    "description": "Let your soul grow quietly in the rain",
+    "status": {
+      "playing": "Rain falling in bookstore...",
+      "paused": "Rain stops for a while",
+      "buffering": "Clouds gathering...",
+      "ready": "Bookstore waiting"
+    }
+  },
+  "download": {
+    "title": "Downloading Resources",
+    "subtitle": "Preparing immersive audio resources for you...",
+    "calculating": "Calculating resource size...",
+    "tip": "Please stay connected for the first time, syncing high-quality audio"
+  },
+  "remix": {
+    "title": "My Mixes",
+    "count": "{{count}} Presets Saved",
+    "deleteTitle": "Delete Preset",
+    "deleteMsg": "Are you sure you want to delete this mix preset? This cannot be undone.",
+    "renameTitle": "Rename Preset",
+    "date": "{{month}}/{{day}}",
+    "types": {
+      "none": "Pure",
+      "rain": "Rain",
+      "fire": "Fire"
+    }
+  },
+  "nameEntry": {
+    "title": "What's your name?",
+    "subtitle": "Let's begin your exclusive healing journey",
+    "placeholder": "Enter your name",
+    "button": "Begin Journey",
+    "skip": "Skip for now"
+  },
+  "mixer": {
+    "title": "Ambient Decor",
+    "labTitle": "PRO Mix Lab",
+    "saveConfig": "Save Current Config",
+    "presetNamePlaceholder": "Enter preset name",
+    "presetLoaded": "Preset loaded: {{name}}",
+    "emptyTracksError": "Please enable at least one track before saving"
+  },
+  "landing": {
+    "loading": "Entering mind space..."
+  },
+  "history": {
+    "title": "Playback History",
+    "lastPlayed": "Last played: {{time}}",
+    "empty": "No playback history"
+  },
+  "settings": {
+    "header": "Settings",
+    "back": "Back",
+    "language": "Language",
+    "followSystem": "Follow System",
+    "zh": "简体中文",
+    "en": "English",
+    "ja": "日本語",
+    "personal": "Personal",
+    "editName": "Edit Nickname",
+    "defaultName": "Friend",
+    "audio": "Audio",
+    "fadeOut": "Fade Out on Timer",
+    "fadeOutDesc": "Fade out audio when sleep timer ends",
+    "highQuality": "High Quality Audio",
+    "highQualityDesc": "Enable high bitrate audio playback",
+    "storage": "Storage",
+    "clearHistory": "Clear Playback History",
+    "clearHistoryDesc": "Delete all playback history",
+    "clearPresets": "Clear All Mix Presets",
+    "clearPresetsDesc": "Delete all saved mix presets",
+    "about": "About",
+    "version": "Version",
+    "developer": "Developer",
+    "devOptions": "Developer Options",
+    "advancedDebug": "Advanced Debug",
+    "advancedDebugDesc": "View application debug info",
+    "toast": {
+      "devOn": "Developer mode enabled",
+      "devOff": "Developer mode disabled",
+      "devClick": "{{count}} more clicks to {{action}} debug mode",
+      "devActionOpen": "enable",
+      "devActionClose": "disable",
+      "nameUpdated": "Nickname updated"
+    },
+    "modals": {
+      "clearHistoryTitle": "Clear History",
+      "clearHistoryMsg": "Are you sure you want to clear all history? This cannot be undone.",
+      "clearPresetsTitle": "Clear Presets",
+      "clearPresetsMsg": "Are you sure you want to clear all presets? This cannot be undone.",
+      "confirm": "Clear",
+      "cancel": "Cancel"
+    }
+  },
+  "scenes": {
+    "nature_ocean": { "title": "Deep Ocean", "desc": "Deep blue tranquility" },
+    "nature_forest": { "title": "Mist Forest", "desc": "A walk through the woods" },
+    "nature_river": { "title": "Morning River", "desc": "Clear stream over stones" },
+    "nature_night": { "title": "Quiet Tribe", "desc": "Ancient callings" },
+    "life_rain_boat": { "title": "Rain on Boat", "desc": "Light rain on a lonely boat" },
+    "life_bookstore": { "title": "Afternoon Bookstore", "desc": "Paper and silence" },
+    "life_fireplace": { "title": "Fireplace", "desc": "Warm winter night" },
+    "life_summer": { "title": "Summer Fireworks", "desc": "Brilliant moments" },
+    "healing_zen_bowl": { "title": "Zen Bowl", "desc": "Instant stillness" },
+    "healing_clean_space": { "title": "Liquid Peace", "desc": "Flowing like water" },
+    "healing_crystal": { "title": "Crystal Bowl", "desc": "High frequency resonance" },
+    "brainwave_alpha": { "title": "Alpha Focus", "desc": "Focus and relaxation" },
+    "brainwave_delta": { "title": "Delta Sleep", "desc": "Binaural synchronization" },
+    "interactive_white_noise": { "title": "White Noise", "desc": "Deep concentration" },
+    "interactive_wind_chime": { "title": "Wind Chimes", "desc": "Ethereal sounds" },
+    "interactive_breath": { "title": "Breathing", "desc": "Mindfulness guidance" },
+    "interactive_apple": { "title": "Apple Crunch", "desc": "Relaxing sound" },
+    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" },
+    "interactive_rain": { "title": "Listening to Rain", "desc": "Rain against the window" },
+    "interactive_ocean": { "title": "Watching the Sea", "desc": "Sound of waves" }
+  }
+}

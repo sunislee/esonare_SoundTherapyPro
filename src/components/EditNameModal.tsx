@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface EditNameModalProps {
   visible: boolean;
@@ -28,6 +29,7 @@ export const EditNameModal: React.FC<EditNameModalProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(visible);
   const [name, setName] = useState(currentName);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -100,7 +102,7 @@ export const EditNameModal: React.FC<EditNameModalProps> = ({
                   },
                 ]}
               >
-                <Text style={styles.title}>修改昵称</Text>
+                <Text style={styles.title}>{t('profile.editNickname')}</Text>
                 
                 <View style={styles.inputContainer}>
                   <TextInput
@@ -108,7 +110,7 @@ export const EditNameModal: React.FC<EditNameModalProps> = ({
                     style={styles.input}
                     value={name}
                     onChangeText={setName}
-                    placeholder="请输入您的昵称"
+                    placeholder={t('profile.nicknamePlaceholder')}
                     placeholderTextColor="rgba(255, 255, 255, 0.3)"
                     maxLength={15}
                     autoFocus
@@ -123,7 +125,7 @@ export const EditNameModal: React.FC<EditNameModalProps> = ({
                     onPress={onCancel}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.cancelButtonText}>取消</Text>
+                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   
                   <View style={styles.buttonSeparator} />
@@ -133,7 +135,7 @@ export const EditNameModal: React.FC<EditNameModalProps> = ({
                     onPress={handleSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.confirmButtonText}>保存</Text>
+                    <Text style={styles.confirmButtonText}>{t('common.save')}</Text>
                   </TouchableOpacity>
                 </View>
               </Animated.View>

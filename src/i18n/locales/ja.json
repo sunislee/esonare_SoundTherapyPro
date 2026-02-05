@@ -1,0 +1,84 @@
+{
+  "welcome": "サウンドセラピーアプリへようこそ",
+  "appTitle": "サウンドセラピー",
+  "categories": {
+    "nature": "自然の力",
+    "healing": "深いヒーリング",
+    "brainwave": "脳波集中",
+    "life": "生活の片隅"
+  },
+  "actions": {
+    "play": "再生",
+    "pause": "一時停止",
+    "stop": "停止",
+    "next": "次へ",
+    "previous": "前へ"
+  },
+  "slogans": {
+    "journey": "癒しの旅に出かけよう",
+    "peace": "心が平和になるように",
+    "silence": "世界を少し静かにしよう"
+  },
+  "greetings": {
+    "hello": "こんにちは",
+    "midnight": "こんばんは",
+    "morning": "おはよう",
+    "noon": "こんにちは",
+    "afternoon": "こんにちは",
+    "lateAfternoon": "こんにちは",
+    "evening": "こんばんは",
+    "night": "こんばんは"
+  },
+  "landing": {
+    "loading": "マインドスペースに入っています..."
+  },
+  "player": {
+    "landing": {
+      "loading": "マインドスペースに入っています..."
+    }
+  },
+  "settings": {
+    "header": "設定",
+    "back": "戻る",
+    "language": "言語",
+    "followSystem": "システム設定に従う",
+    "zh": "简体中文",
+    "en": "English",
+    "ja": "日本語",
+    "personal": "個人",
+    "editName": "ニックネームの変更",
+    "defaultName": "友達",
+    "audio": "オーディオ",
+    "fadeOut": "タイマー終了時にフェードアウト",
+    "fadeOutDesc": "スリープタイマー終了時に音声をフェードアウトさせる",
+    "highQuality": "高音質オーディオ",
+    "highQualityDesc": "高ビットレートのオーディオ再生を有効にする",
+    "storage": "ストレージ",
+    "clearHistory": "再生履歴を消去",
+    "clearHistoryDesc": "すべての再生履歴を削除する",
+    "clearPresets": "すべてのミックスプリセットを消去",
+    "clearPresetsDesc": "保存されたすべてのミックスプリセットを削除する",
+    "about": "アプリについて",
+    "version": "バージョン",
+    "developer": "開発者",
+    "devOptions": "開発者向けオプション",
+    "advancedDebug": "高度なデバッグ",
+    "advancedDebugDesc": "アプリケーションのデバッグ情報を表示する",
+    "toast": {
+      "devOn": "開発者モードが有効になりました",
+      "devOff": "開発者モードが無効になりました",
+      "devClick": "あと {{count}} 回クリックしてデバッグモードを{{action}}します",
+      "devActionOpen": "有効に",
+      "devActionClose": "無効に",
+      "nameUpdated": "ニックネームが更新されました"
+    },
+    "modals": {
+      "clearHistoryTitle": "履歴を消去",
+      "clearHistoryMsg": "すべての履歴を消去してもよろしいですか？この操作は取り消せません。",
+      "clearPresetsTitle": "プリセットを消去",
+      "clearPresetsMsg": "保存されたすべてのプリセットを消去してもよろしいですか？この操作は取り消せません。",
+      "confirm": "消去",
+      "cancel": "キャンセル"
+    }
+  }
+}

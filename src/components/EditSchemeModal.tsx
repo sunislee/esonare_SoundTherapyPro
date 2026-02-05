@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface EditSchemeModalProps {
   visible: boolean;
@@ -29,16 +30,20 @@ export const EditSchemeModal: React.FC<EditSchemeModalProps> = ({
   visible,
   title,
   initialValue,
-  confirmText = '保存',
-  cancelText = '取消',
+  confirmText,
+  cancelText,
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(visible);
   const [value, setValue] = useState(initialValue);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const inputRef = useRef<TextInput>(null);
+
+  const finalConfirmText = confirmText || t('common.save');
+  const finalCancelText = cancelText || t('common.cancel');
 
   useEffect(() => {
     if (visible) {
@@ -115,7 +120,7 @@ export const EditSchemeModal: React.FC<EditSchemeModalProps> = ({
                 style={styles.input}
                 value={value}
                 onChangeText={setValue}
-                placeholder="请输入方案名称"
+                placeholder={t('common.enter_scheme_name')}
                 placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 selectionColor="#6C5DD3"
                 returnKeyType="done"
@@ -128,7 +133,7 @@ export const EditSchemeModal: React.FC<EditSchemeModalProps> = ({
                   onPress={onCancel}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.cancelButtonText}>{cancelText}</Text>
+                  <Text style={styles.cancelButtonText}>{finalCancelText}</Text>
                 </TouchableOpacity>
                 
                 <View style={styles.buttonSeparator} />
@@ -145,7 +150,7 @@ export const EditSchemeModal: React.FC<EditSchemeModalProps> = ({
                       !value.trim() && styles.disabledText,
                     ]}
                   >
-                    {confirmText}
+                    {finalConfirmText}
                   </Text>
                 </TouchableOpacity>
               </View>

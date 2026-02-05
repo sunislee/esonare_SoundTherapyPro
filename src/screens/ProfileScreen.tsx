@@ -17,13 +17,7 @@ import {
   ImageBackground
 } from 'react-native';
 
-// 默认背景数组
-const DEFAULT_BGS = [
-  { id: '1', name: '火焰', source: require('../assets/images/fire_bg.jpg') },
-  { id: '2', name: '森林', source: require('../assets/images/forest_bg.jpg') },
-  { id: '3', name: '雨声', source: require('../assets/images/rain_bg.jpg') },
-  { id: '4', name: '海洋', source: require('../assets/images/sea_bg.jpg') },
-];
+
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -33,6 +27,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import ToastUtil from '../utils/ToastUtil';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 
@@ -40,19 +35,26 @@ import { SleepTimerSheet } from '../components/SleepTimerSheet';
 type ProfileScreenNavigationProp = StackNavigationProp<any, 'Profile'>;
 
 export const ProfileScreen = () => {
+  const { t } = useTranslation();
   // @ts-ignore
   const navigation = useNavigation<any>();
+  const DEFAULT_BGS = [
+    { id: '1', name: t('profile.background.fire'), source: require('../assets/images/fire_bg.jpg') },
+    { id: '2', name: t('profile.background.forest'), source: require('../assets/images/forest_bg.jpg') },
+    { id: '3', name: t('profile.background.rain'), source: require('../assets/images/rain_bg.jpg') },
+    { id: '4', name: t('profile.background.ocean'), source: require('../assets/images/sea_bg.jpg') },
+  ];
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
-  const [userName, setUserName] = useState('加载中...');
-  const [newName, setNewName] = useState('');
+  const [userName, setUserName] = useState<string>(t('profile.loading'));
+  const [newName, setNewName] = useState<string>('');
   const [isNameModalVisible, setIsNameModalVisible] = useState(false);
   const [isTimerVisible, setIsTimerVisible] = useState(false);
   const [stats, setStats] = useState({ count: 0, duration: '0h' });
   const [savedPresets, setSavedPresets] = useState<any[]>([]);
-  const [isProUser, setIsProUser] = useState(false); // 恢复真实判断逻辑
-  const [backgroundImage, setBackgroundImage] = useState<string>(''); // 自定义背景图片 URI
-  const [selectedBackgroundIndex, setSelectedBackgroundIndex] = useState<number>(0); // 默认背景索引
-  const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false); // 背景选择浮层可见性
+  const [isProUser, setIsProUser] = useState(false); 
+  const [backgroundImage, setBackgroundImage] = useState<string>(''); 
+  const [selectedBackgroundIndex, setSelectedBackgroundIndex] = useState<number>(0); 
+  const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false); 
 
   useEffect(() => {
     loadProfile();
@@ -80,26 +82,22 @@ export const ProfileScreen = () => {
       
       if (savedAvatar) setAvatarUri(savedAvatar);
       if (savedName) setUserName(savedName);
-      else setUserName('ESONARE 用户');
+      else setUserName(t('profile.defaultUser'));
       
-      // 加载保存的背景图片
       if (savedCustomBackground) {
         setBackgroundImage(savedCustomBackground);
       }
       
-      // 加载保存的默认背景索引
       if (savedDefaultBackgroundIndex) {
         setSelectedBackgroundIndex(parseInt(savedDefaultBackgroundIndex, 10));
       }
       
-      // 加载 Pro 用户状态
       if (isPro) {
         setIsProUser(isPro === 'true');
       } else {
         setIsProUser(false);
       }
 
-      // 模拟加载统计数据 (实际可从 HistoryService 获取)
       setStats({ count: 12, duration: '4.5h' });
     } catch (e) {
       console.log('Failed to load profile', e);
@@ -118,19 +116,19 @@ export const ProfileScreen = () => {
   };
 
   const deletePreset = async (id: string) => {
-    Alert.alert('删除预设', '确定要删除这个混音预设吗？', [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(t('profile.modals.deletePresetTitle'), t('profile.modals.deletePresetMsg'), [
+      { text: t('profile.modals.cancel'), style: 'cancel' },
       { 
-        text: '删除', 
+        text: t('profile.modals.confirmDelete'), 
         style: 'destructive',
         onPress: async () => {
           try {
             const updated = savedPresets.filter(p => p.id !== id);
             setSavedPresets(updated);
             await AsyncStorage.setItem('@mixer_presets', JSON.stringify(updated));
-            ToastUtil.success('已删除');
+            ToastUtil.success(t('actions.deleted'));
           } catch (e) {
-            ToastUtil.error('删除失败');
+            ToastUtil.error(t('actions.deleteFailed'));
           }
         }
       }
@@ -181,7 +179,7 @@ export const ProfileScreen = () => {
 
   const handleSaveName = async () => {
     if (!newName.trim()) {
-      Alert.alert('提示', '名字不能为空');
+      Alert.alert(t('profile.modals.prompt'), t('profile.modals.nameEmpty'));
       return;
     }
     
@@ -190,26 +188,24 @@ export const ProfileScreen = () => {
       setUserName(newName.trim());
       setIsNameModalVisible(false);
       
-      // 触发成功反馈震动 (双震)
       ReactNativeHapticFeedback.trigger('notificationSuccess', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
     } catch (e) {
-      Alert.alert('错误', '保存失败');
+      Alert.alert(t('profile.modals.error'), t('profile.modals.saveFailed'));
     }
   };
 
   const handleLogout = () => {
     triggerHaptic('impactMedium');
-    Alert.alert("退出登录", "确定要退出当前账号并清除所有本地设置吗？", [
-      { text: "取消", style: "cancel" },
+    Alert.alert(t('profile.modals.logoutTitle'), t('profile.modals.logoutMsg'), [
+      { text: t('profile.modals.cancel'), style: "cancel" },
       { 
-        text: "确定退出", 
+        text: t('profile.modals.confirmLogout'), 
         style: "destructive",
         onPress: async () => {
           await AsyncStorage.multiRemove(['USER_NAME', 'USER_AVATAR', 'HAS_SET_NAME']);
-          // 清空后重启到 Landing
           navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
         }
       }
@@ -218,13 +214,13 @@ export const ProfileScreen = () => {
 
   const handleClearCache = () => {
     triggerHaptic('impactMedium');
-    Alert.alert("清除缓存", "这将删除所有已下载的音频资源，下次使用需重新下载。", [
-      { text: "取消", style: "cancel" },
+    Alert.alert(t('profile.modals.clearCacheTitle'), t('profile.modals.clearCacheMsg'), [
+      { text: t('profile.modals.cancel'), style: "cancel" },
       { 
-        text: "确认清除", 
+        text: t('profile.modals.confirmClear'), 
         onPress: async () => {
           await AsyncStorage.removeItem('RESOURCE_READY_V_1.0.7');
-          Alert.alert("清除成功", "缓存已清理，请重启 App。");
+          Alert.alert(t('profile.modals.clearCacheTitle'), t('profile.modals.clearCacheSuccess'));
           // @ts-ignore
           navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
         }
@@ -234,39 +230,35 @@ export const ProfileScreen = () => {
 
   const handleComingSoon = (feature: string) => {
     triggerHaptic('impactMedium');
-    ToastUtil.info(`${feature} 正在开发中`, '敬请期待下一版本');
+    ToastUtil.info(t('profile.menu.comingSoon', { feature }), t('profile.menu.comingSoonDesc'));
   };
-
-
 
   const handleChangeBackground = () => {
     triggerHaptic('selection');
-    // 弹出ActionSheet选择背景
     Alert.alert(
-      '选择背景',
-      '请选择背景设置方式',
+      t('profile.background.selectTitle'),
+      t('profile.background.selectMsg'),
       [
         {
-          text: '选择系统预设背景',
+          text: t('profile.background.systemPreset'),
           onPress: () => {
             triggerHaptic('selection');
             showBackgroundOptions();
           }
         },
         {
-          text: '从相册自定义(Pro特权)',
+          text: t('profile.background.customPro'),
           onPress: () => {
             triggerHaptic('selection');
             if (isProUser) {
               openBackgroundPicker();
             } else {
-              // 普通用户：弹出 Pro 特权提示
               Alert.alert(
-                '✨ 解锁 Pro 专属特权',
-                '自定义背景是 Pro 用户的专属功能。升级 Pro 即可解锁相册选图、专属音效等更多福利！该功能将在未来版本开放开通。',
+                t('profile.background.proFeatureTitle'),
+                t('profile.background.proFeatureMsg'),
                 [
                   {
-                    text: '我知道了',
+                    text: t('profile.background.proFeatureConfirm'),
                     style: 'default'
                   }
                 ]
@@ -275,7 +267,7 @@ export const ProfileScreen = () => {
           }
         },
         {
-          text: '取消',
+          text: t('profile.modals.cancel'),
           style: 'cancel'
         }
       ]
@@ -283,30 +275,23 @@ export const ProfileScreen = () => {
   };
 
   const showBackgroundOptions = () => {
-    // 显示底部Modal浮层
     setIsBackgroundModalVisible(true);
   };
 
   const selectPresetBackground = async (id: string) => {
     try {
-      // 查找选中的默认背景索引
       const selectedIndex = DEFAULT_BGS.findIndex(bg => bg.id === id);
       if (selectedIndex !== -1) {
-        // 保存默认背景索引到AsyncStorage
         await AsyncStorage.setItem('PRO_DEFAULT_BACKGROUND_INDEX', selectedIndex.toString());
-        // 清除自定义背景（如果有）
         await AsyncStorage.removeItem('PRO_CUSTOM_BACKGROUND');
-        // 更新状态
         setSelectedBackgroundIndex(selectedIndex);
         setBackgroundImage('');
-        // 显示成功提示
-        ToastUtil.success('背景已更新');
-        // 触发成功反馈
+        ToastUtil.success(t('profile.background.updateSuccess'));
         triggerHaptic('notificationSuccess');
       }
     } catch (error) {
       console.error('Failed to save background:', error);
-      ToastUtil.error('保存失败，请重试');
+      ToastUtil.error(t('settings.toast.saveFailed'));
     }
   };
 
@@ -317,26 +302,19 @@ export const ProfileScreen = () => {
         mediaType: 'photo',
         selectionLimit: 1,
         quality: 0.8,
-        allowsEditing: true,
-        aspect: [16, 9], // 设置宽屏裁剪比例，适合 Header
       });
 
       if (result.assets?.[0]?.uri) {
-        // 保存自定义背景图片URI到AsyncStorage
         await AsyncStorage.setItem('PRO_CUSTOM_BACKGROUND', result.assets[0].uri);
-        // 清除默认背景索引（如果有）
         await AsyncStorage.removeItem('PRO_DEFAULT_BACKGROUND_INDEX');
-        // 更新状态，实时预览
         setBackgroundImage(result.assets[0].uri);
-        setSelectedBackgroundIndex(0); // 重置默认背景索引
-        // 显示成功提示
-        ToastUtil.success('背景已更新');
-        // 触发成功反馈
+        setSelectedBackgroundIndex(0); 
+        ToastUtil.success(t('profile.background.updateSuccess'));
         triggerHaptic('notificationSuccess');
       }
     } catch (error) {
       console.error('Pick image error:', error);
-      ToastUtil.error('选择图片失败，请重试');
+      ToastUtil.error(t('settings.toast.saveFailed'));
     } finally {
       AudioService.setPickingFile(false);
     }
@@ -352,7 +330,7 @@ export const ProfileScreen = () => {
         <Icon name={icon} size={20} color={color} style={styles.menuIcon} />
         <Text style={[styles.menuText, { color }]}>{title}</Text>
         {badge && (
-          <View style={[styles.badge, title === '会员中心' && styles.proBadge]}>
+          <View style={[styles.badge, badge === 'PRO' && styles.proBadge]}>
             <Text style={styles.badgeText}>{badge}</Text>
           </View>
         )}
@@ -367,7 +345,6 @@ export const ProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
   
         
-        {/* 头部装饰区 - 所有用户都可以使用预设背景 */}
         <ImageBackground
           source={(backgroundImage && typeof backgroundImage === 'string' && isProUser) ? { uri: backgroundImage } : DEFAULT_BGS[selectedBackgroundIndex]?.source || DEFAULT_BGS[0].source}
           style={styles.headerBackground}
@@ -383,14 +360,13 @@ export const ProfileScreen = () => {
           <View style={styles.headerOverlay}>
             <View style={styles.header}>
               <TouchableOpacity style={styles.avatarWrapper} onPress={handleAvatarPress}>
-                {/* 强制默认图逻辑，确保 source 始终有效 */}
                 {(() => {
                   const avatarSource = (avatarUri && typeof avatarUri === 'string') ? { uri: avatarUri } : require('../assets/images/fire_bg.jpg');
                   return (
                     <Image 
                       source={avatarSource} 
                       style={styles.avatarImage} 
-                      key={avatarUri} // 增加 key 强制刷新
+                      key={avatarUri} 
                     />
                   );
                 })()}
@@ -409,14 +385,14 @@ export const ProfileScreen = () => {
             </View>
 
             <View style={styles.statsContainer}>
-              <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon('详细统计')}>
+              <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.focusCount'))}>
                 <Text style={styles.statNumber}>{stats.count}</Text>
-                <Text style={styles.statLabel}>专注次数</Text>
+                <Text style={styles.statLabel}>{t('profile.stats.focusCount')}</Text>
               </TouchableOpacity>
               <View style={styles.statDivider} />
-              <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon('详细统计')}>
+              <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.totalDuration'))}>
                 <Text style={styles.statNumber}>{stats.duration}</Text>
-                <Text style={styles.statLabel}>总时长</Text>
+                <Text style={styles.statLabel}>{t('profile.stats.totalDuration')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -434,12 +410,12 @@ export const ProfileScreen = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.modalContent}
               >
-                <Text style={styles.modalTitle}>修改昵称</Text>
+                <Text style={styles.modalTitle}>{t('profile.modals.renameTitle')}</Text>
                 <TextInput
                   style={styles.nameInput}
                   value={newName}
                   onChangeText={setNewName}
-                  placeholder="请输入新名字"
+                  placeholder={t('profile.modals.renamePlaceholder')}
                   placeholderTextColor="#444"
                   maxLength={12}
                   autoFocus={true}
@@ -452,13 +428,13 @@ export const ProfileScreen = () => {
                     style={[styles.modalButton, styles.modalCancelButton]} 
                     onPress={() => setIsNameModalVisible(false)}
                   >
-                    <Text style={styles.cancelButtonText}>取消</Text>
+                    <Text style={styles.cancelButtonText}>{t('profile.modals.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.modalButton, styles.saveButton]} 
                     onPress={handleSaveName}
                   >
-                    <Text style={styles.saveButtonText}>保存</Text>
+                    <Text style={styles.saveButtonText}>{t('profile.modals.save')}</Text>
                   </TouchableOpacity>
                 </View>
               </KeyboardAvoidingView>
@@ -467,57 +443,21 @@ export const ProfileScreen = () => {
         </Modal>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>核心功能</Text>
-          {/* 混音实验室入口屏蔽 */}
-          {/* <MenuItem icon="zap" title="PRO 混音实验室" onPress={() => handleOpenMixer()} badge="PRO" color="#FFD700" /> */}
-          {/* <MenuItem icon="heart" title="我的收藏" onPress={() => navigation.navigate('RemixSchemeManager')} /> */}
-          <MenuItem icon="clock" title="睡眠定时" onPress={() => setIsTimerVisible(true)} />
-        </View>
-
-        {/* 混音预设列表屏蔽 */}
-        {/* 
-        {savedPresets.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>我的混音预设</Text>
-            {savedPresets.map((preset) => (
-              <View key={preset.id} style={styles.presetItem}>
-                <View style={styles.presetInfo}>
-                  <Text style={styles.presetName}>{preset.name}</Text>
-                  <Text style={styles.presetDate}>
-                    {new Date(preset.createdAt).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View style={styles.presetActions}>
-                  <TouchableOpacity 
-                    onPress={() => handleOpenMixer(preset.id)}
-                    style={styles.presetBtn}
-                  >
-                    <Icon name="play" size={16} color="#D4AF37" />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    onPress={() => deletePreset(preset.id)}
-                    style={styles.presetBtn}
-                  >
-                    <Icon name="trash-2" size={16} color="#666" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-        */}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>资源与记录</Text>
-          <MenuItem icon="calendar" title="播放历史" onPress={() => navigation.navigate('History')} />
-          <MenuItem icon="settings" title="偏好设置" onPress={() => navigation.navigate('Settings')} />
-          <MenuItem icon="trash-2" title="清除缓存" onPress={handleClearCache} />
+          <Text style={styles.sectionTitle}>{t('profile.menu.coreFeatures')}</Text>
+          <MenuItem icon="clock" title={t('profile.menu.sleepTimer')} onPress={() => setIsTimerVisible(true)} />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>关于</Text>
-          <MenuItem icon="info" title="关于我们" onPress={() => navigation.navigate('About')} />
-          <MenuItem icon="log-out" title="退出登录" onPress={handleLogout} color="#FF4D4F" showArrow={false} />
+          <Text style={styles.sectionTitle}>{t('profile.menu.resources')}</Text>
+          <MenuItem icon="calendar" title={t('profile.menu.history')} onPress={() => navigation.navigate('History')} />
+          <MenuItem icon="settings" title={t('profile.menu.settings')} onPress={() => navigation.navigate('Settings')} />
+          <MenuItem icon="trash-2" title={t('profile.menu.clearCache')} onPress={handleClearCache} />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('profile.menu.about')}</Text>
+          <MenuItem icon="info" title={t('profile.menu.aboutUs')} onPress={() => navigation.navigate('About')} />
+          <MenuItem icon="log-out" title={t('profile.menu.logout')} onPress={handleLogout} color="#FF4D4F" showArrow={false} />
         </View>
 
         <Text style={styles.versionText}>Version 1.1.0 (Build 40112)</Text>
@@ -525,7 +465,6 @@ export const ProfileScreen = () => {
 
       <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} />
 
-      {/* 背景选择浮层 */}
       <Modal
         visible={isBackgroundModalVisible}
         transparent={true}
@@ -537,7 +476,7 @@ export const ProfileScreen = () => {
             <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View style={styles.backgroundModalContent}>
                 <View style={styles.backgroundModalHeader}>
-                  <Text style={styles.backgroundModalTitle}>选择背景</Text>
+                  <Text style={styles.backgroundModalTitle}>{t('profile.background.selectTitle')}</Text>
                   <TouchableOpacity 
                     onPress={() => setIsBackgroundModalVisible(false)}
                     style={styles.closeButton}
@@ -546,7 +485,7 @@ export const ProfileScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.backgroundModalSubtitle}>推荐背景</Text>
+                <Text style={styles.backgroundModalSubtitle}>{t('profile.background.recommended')}</Text>
                 <View style={styles.presetBackgroundsGrid}>
                   {DEFAULT_BGS.map((bg) => (
                     <TouchableOpacity
@@ -576,7 +515,7 @@ export const ProfileScreen = () => {
                   activeOpacity={0.7}
                 >
                   <Icon name="image" size={20} color="#6C5DD3" />
-                  <Text style={styles.albumSelectText}>从相册选择</Text>
+                  <Text style={styles.albumSelectText}>{t('profile.background.selectFromAlbum')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -584,7 +523,7 @@ export const ProfileScreen = () => {
                   onPress={() => setIsBackgroundModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.backgroundModalCancelButtonText}>取消</Text>
+                  <Text style={styles.backgroundModalCancelButtonText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -810,7 +749,6 @@ const styles = StyleSheet.create({
     fontSize: 18
   },
 
-  // 背景选择浮层样式
   backgroundModalContent: {
     position: 'absolute',
     bottom: 0,
