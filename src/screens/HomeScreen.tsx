@@ -24,6 +24,7 @@ import { useAudio } from '../context/AudioContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Typography } from '../theme/Typography';
+import { useTranslation } from 'react-i18next';
 
 interface RainDropConfig {
   id: number;
@@ -36,7 +37,7 @@ interface RainDropConfig {
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40;
 
-// 1. 抽离 SceneItem 组件以管理独立的动画状态
+// 1. Extract SceneItem component to manage independent animation states
 const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused }: any) => {
   // ... (keep existing implementation for big cards)
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -44,6 +45,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   const [isPressed, setIsPressed] = useState(false);
   
   const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
+  const { t } = useTranslation();
 
   const combinedScale = Animated.multiply(
     scaleAnim,
@@ -127,7 +129,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             onPress={() => {
                 setTimeout(async () => {
                   await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
-                  // 显式调用 switchSoundscape 并传递 autoPlay: true，确保进入即播放
+                  // Explicitly call switchSoundscape with autoPlay: true to ensure playback on entry
                   AudioService.switchSoundscape(item, true);
                   navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
                 }, 50);
@@ -137,8 +139,8 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
               <View style={[styles.cardBg, { backgroundColor: item.primaryColor }]} />
               <View style={styles.cardContent}>
                 <View>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.category}</Text>
+                  <Text style={styles.cardTitle}>{t(`scenes.${item.id}.title`)}</Text>
+                  <Text style={styles.cardSubtitle}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
                 </View>
                 <TouchableOpacity
                   style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]}
@@ -162,6 +164,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isPlaying, currentBaseSceneId, togglePlayback, syncNativeStatus } = useAudio();
+  const { t } = useTranslation();
   
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
@@ -169,16 +172,16 @@ export const HomeScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
 
-  // 1. 分类逻辑定义
+  // 1. Category logic definition
   const categories = ['Nature', 'Life', 'Healing', 'Brainwave'];
   const categoryLabels: Record<string, string> = {
-    'Nature': '自然力量',
-    'Life': '生活角落',
-    'Healing': '深度疗愈',
-    'Brainwave': '脑波专注'
+    'Nature': t('categories.nature'),
+    'Life': t('categories.life'),
+    'Healing': t('categories.healing'),
+    'Brainwave': t('categories.brainwave')
   };
 
-  // 分组数据
+  // Grouped data
   const groupedScenes = useMemo(() => {
     return categories.map(cat => ({
       title: cat,
@@ -187,17 +190,17 @@ export const HomeScreen: React.FC = () => {
     }));
   }, []);
 
-  // 使用 useFocusEffect 确保每次回到首页时重新读取用户名
+  // Use useFocusEffect to ensure the username is re-read every time we return to the home page
   useFocusEffect(
     useCallback(() => {
       const task = InteractionManager.runAfterInteractions(() => {
         const loadInitialState = async () => {
-          // 读取用户名
+          // Read username
           const savedName = await AsyncStorage.getItem('USER_NAME');
           if (savedName) setUserName(savedName);
           else setUserName('');
 
-          // 首页智能定位 (逻辑调整为定位到对应分类，由于改为 ScrollView，暂时移除 index 定位)
+          // Home smart positioning (logic adjusted to position to corresponding category, temporarily removed index positioning due to ScrollView)
         };
         loadInitialState();
       });
@@ -206,7 +209,7 @@ export const HomeScreen: React.FC = () => {
   );
 
   useEffect(() => {
-    const slogans = ['开启一段疗愈之旅', '愿你内心平静', '让世界安静一会儿'];
+    const slogans = [t('slogans.journey'), t('slogans.peace'), t('slogans.silence')];
     const randomSlogan = slogans[Math.floor(Math.random() * slogans.length)];
     setSlogan(randomSlogan);
 
@@ -216,18 +219,18 @@ export const HomeScreen: React.FC = () => {
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [t]);
 
   const getGreetingParts = () => {
     const hour = new Date().getHours();
-    let greeting = '你好';
-    if (hour < 6) greeting = '凌晨好';
-    else if (hour < 9) greeting = '早安';
-    else if (hour < 12) greeting = '上午好';
-    else if (hour < 14) greeting = '中午好';
-    else if (hour < 17) greeting = '下午好';
-    else if (hour < 19) greeting = '傍晚好';
-    else greeting = '晚上好';
+    let greeting = t('greetings.hello');
+    if (hour < 6) greeting = t('greetings.midnight');
+    else if (hour < 9) greeting = t('greetings.morning');
+    else if (hour < 12) greeting = t('greetings.afternoon');
+    else if (hour < 14) greeting = t('greetings.noon');
+    else if (hour < 17) greeting = t('greetings.lateAfternoon');
+    else if (hour < 19) greeting = t('greetings.evening');
+    else greeting = t('greetings.night');
     
     return { greeting, userName };
   };
@@ -259,7 +262,7 @@ export const HomeScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // 单例实例检查
+    // Singleton instance check
     console.log('🔄 [HomeScreen] AudioService Instance Check: Using default exported instance');
     console.log('🔄 [HomeScreen] AudioService Instance Type:', typeof AudioService);
     console.log('🔄 [HomeScreen] AudioService Has Pause Method:', typeof AudioService.pause === 'function');
@@ -302,13 +305,13 @@ export const HomeScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Sound Therapy</Text>
+            <Text style={styles.title}>{t('appTitle')}</Text>
             <Animated.View style={{ opacity: greetingFadeAnim }}>
               <Text style={styles.subtitle}>
                 {getGreetingParts().greeting}
-                {getGreetingParts().userName ? `，` : ''}
+                {getGreetingParts().userName ? `, ` : ''}
                 <Text style={styles.userName}>{getGreetingParts().userName}</Text>
-                {getGreetingParts().userName ? '。' : ''}{slogan}
+                {getGreetingParts().userName ? '. ' : ''}{slogan}
               </Text>
             </Animated.View>
           </View>
@@ -317,7 +320,7 @@ export const HomeScreen: React.FC = () => {
             <View key={group.title} style={styles.section}>
               <Text style={styles.sectionTitle}>{group.label}</Text>
               
-              {/* 大场景列表 */}
+              {/* Big scene list */}
               {group.baseScenes.map((scene: Scene) => (
                 <SceneItem 
                   key={scene.id} 

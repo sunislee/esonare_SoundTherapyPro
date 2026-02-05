@@ -10,6 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useTranslation } from 'react-i18next';
 import Icon from 'react-native-vector-icons/Feather';
 import Svg, { Circle } from 'react-native-svg';
 import AudioService from '../services/AudioService';
@@ -28,16 +29,8 @@ interface SleepTimerSheetProps {
   onClose: () => void;
 }
 
-const TIMER_OPTIONS = [
-  { label: '10 分钟', value: 10 },
-  { label: '20 分钟', value: 20 },
-  { label: '30 分钟', value: 30 },
-  { label: '45 分钟', value: 45 },
-  { label: '60 分钟', value: 60 },
-  { label: '90 分钟', value: 90 },
-];
-
 export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClose }) => {
+  const { t } = useTranslation();
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -142,7 +135,7 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
           <View style={styles.handle} />
           
           <View style={styles.header}>
-            <Text style={styles.title}>睡眠定时</Text>
+            <Text style={styles.title}>{t('sleepTimer.title')}</Text>
           </View>
 
           {remainingTime !== null ? (
@@ -175,30 +168,30 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
                 </Svg>
                 <View style={styles.timerTextContainer}>
                   <Text style={styles.timerValue}>{formatRemaining(remainingTime)}</Text>
-                  <Text style={styles.timerLabel}>剩余</Text>
+                  <Text style={styles.timerLabel}>{t('sleepTimer.remaining')}</Text>
                 </View>
               </View>
 
               <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTimer}>
-                <Text style={styles.cancelButtonText}>停止计时</Text>
+                <Text style={styles.cancelButtonText}>{t('sleepTimer.stop')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.optionsGrid}>
-              {TIMER_OPTIONS.map((opt) => (
+              {[10, 20, 30, 45, 60, 90].map((mins) => (
                 <TouchableOpacity
-                  key={opt.value}
+                  key={mins}
                   style={styles.optionButton}
-                  onPress={() => handleSetTimer(opt.value)}
+                  onPress={() => handleSetTimer(mins)}
                 >
-                  <Text style={styles.optionLabel}>{opt.label}</Text>
+                  <Text style={styles.optionLabel}>{t('sleepTimer.minutes', { count: mins })}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
           
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>稍后设置</Text>
+            <Text style={styles.closeButtonText}>{t('sleepTimer.close')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

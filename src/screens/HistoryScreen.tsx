@@ -7,12 +7,14 @@ import { HistoryService } from '../services/HistoryService';
 import AudioService from '../services/AudioService';
 import { Scene as Soundscape } from '../constants/scenes';
 import { RootStackParamList } from '../navigation/MainNavigator';
+import { useTranslation } from 'react-i18next';
 
 type HistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'History'>;
 
 type HistoryItemData = Soundscape & { playedAt: number };
 
 const HistoryScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<HistoryScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<HistoryItemData[]>([]);
@@ -37,15 +39,15 @@ const HistoryScreen = () => {
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
-    return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    return t('player.remix.date', { month: date.getMonth() + 1, day: date.getDate() }) + ` ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
   const renderItem = ({ item }: { item: HistoryItemData }) => (
     <TouchableOpacity style={styles.item} onPress={() => handlePlay(item)}>
       <Image source={item.backgroundSource} style={styles.thumbnail} />
       <View style={styles.info}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.time}>上次播放: {formatTime(item.playedAt)}</Text>
+        <Text style={styles.title}>{t(`scenes.${item.id}.title`) || item.title}</Text>
+        <Text style={styles.time}>{t('player.history.lastPlayed', { time: formatTime(item.playedAt) })}</Text>
       </View>
       <View style={styles.playButton}>
         <Text style={styles.playIcon}>▶</Text>
@@ -56,13 +58,13 @@ const HistoryScreen = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>播放历史</Text>
+        <Text style={styles.headerTitle}>{t('player.history.title')}</Text>
         <TouchableOpacity 
           onPress={() => navigation.goBack()} 
           style={styles.backButton}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         >
-          <Text style={styles.backText}>{'< 返回'}</Text>
+          <Text style={styles.backText}>{`< ${t('common.back')}`}</Text>
         </TouchableOpacity>
       </View>
       
@@ -73,7 +75,7 @@ const HistoryScreen = () => {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>暂无播放记录</Text>
+            <Text style={styles.emptyText}>{t('player.history.empty')}</Text>
           </View>
         }
       />

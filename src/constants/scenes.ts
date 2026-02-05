@@ -112,22 +112,22 @@ export const getIconName = (id: string) => {
   if (id.includes('wind_chime')) return 'notifications-outline';
   if (id.includes('breath')) return 'heart-outline';
   if (id.includes('apple')) return 'nutrition-outline';
-  if (id.includes('match')) return 'flame'; // 划火柴使用实心火焰图标
+  if (id.includes('match')) return 'flame';
   if (id.includes('rain')) return 'rainy-outline';
   if (id.includes('ocean')) return 'boat-outline';
   return 'musical-notes-outline';
 };
 
-// 1. 明确指定的小场景 ID (isBaseScene: false) - 7 大全局氛围音
+// 1. Explicitly specified small scene IDs (isBaseScene: false) - 7 global ambient sounds
 export const SMALL_SCENE_IDS = [
-  'interactive_match',       // 点燃 (划火柴)
-  'interactive_apple',       // 清脆 (嚼苹果)
-  'interactive_wind_chime',  // 空灵 (风铃)
-  'interactive_breath',      // 呼吸
-  'life_summer',             // 夏夜 (夏日烟火)
-  'interactive_rain',        // 听雨
-  'interactive_ocean',       // 观海
-  'life_fireplace',          // 围炉 (炉火)
+  'interactive_match',
+  'interactive_apple',
+  'interactive_wind_chime',
+  'interactive_breath',
+  'life_summer',
+  'interactive_rain',
+  'interactive_ocean',
+  'life_fireplace',
 ];
 
 export const SCENES: Scene[] = AUDIO_MANIFEST
@@ -136,19 +136,19 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
     const bg = backgrounds[category];
     const resolvedBg = Image.resolveAssetSource(bg.source);
     
-    // 2. 明确指定的大场景 ID (isBaseScene: true)
+    // 2. Explicitly specified big scene IDs (isBaseScene: true)
     const baseSceneIds = [
-      'nature_ocean',         // 深海
-      'nature_forest',        // 迷雾森林
-      'nature_river',         // 晨间河畔
-      'nature_night',         // 静谧部落
-      'life_rain_boat',       // 舟上雨
-      'life_bookstore',       // 午后书店
-      'healing_zen_bowl',     // 颂钵冥想
-      'healing_clean_space',  // 洁净空间
-      'healing_crystal',      // 水晶钵
-      'brainwave_alpha',      // Alpha专注
-      'brainwave_delta',      // Delta入眠
+      'nature_ocean',
+      'nature_forest',
+      'nature_river',
+      'nature_night',
+      'life_rain_boat',
+      'life_bookstore',
+      'healing_zen_bowl',
+      'healing_clean_space',
+      'healing_crystal',
+      'brainwave_alpha',
+      'brainwave_delta',
     ];
 
     let isBase = true;
@@ -158,7 +158,7 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
     } else if (baseSceneIds.includes(item.id)) {
       isBase = true;
     } else {
-      // 默认逻辑：fx/ 目录下或 interactive 分类为小场景
+      // Default logic: small scenes if in fx/ directory or interactive category
       isBase = !item.filename.startsWith('fx/') && item.category !== 'interactive';
     }
 

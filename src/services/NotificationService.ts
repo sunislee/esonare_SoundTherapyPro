@@ -1,13 +1,14 @@
 import { Platform } from 'react-native';
 import TrackPlayer, { Capability, AppKilledPlaybackBehavior, State } from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../i18n';
 import { Scene } from '../constants/scenes';
 
 export class NotificationService {
   private static isInitialized = false;
 
   /**
-   * 初始化通知服务配置
+   * Initialize notification service configuration
    */
   static async setup() {
     if (this.isInitialized) return;
@@ -16,26 +17,26 @@ export class NotificationService {
       await TrackPlayer.updateOptions({
         android: {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
-          // 开启 Android 的 MediaSession 管理
+          // Enable Android MediaSession management
           alwaysPauseOnInterruption: true,
         },
-        // 核心控制能力
+        // Core control capabilities
         capabilities: [
           Capability.Play,
           Capability.Pause,
           Capability.Stop,
           Capability.SeekTo,
         ],
-        // 通知栏显示的控制按钮
+        // Control buttons displayed in the notification bar
         notificationCapabilities: [
           Capability.Play,
           Capability.Pause,
           Capability.Stop,
           Capability.SeekTo,
         ],
-        // 紧凑模式下的按钮（通知栏折叠时显示）
+        // Buttons in compact mode (displayed when notification bar is collapsed)
         compactCapabilities: [Capability.Play, Capability.Pause],
-        // 进度条更新频率（秒）
+        // Progress bar update frequency (seconds)
         progressUpdateEventInterval: 1,
       });
       this.isInitialized = true;
@@ -45,13 +46,13 @@ export class NotificationService {
   }
 
   /**
-   * 同步更新通知栏信息
-   * @param scene 当前场景
-   * @param state 播放状态
+   * Sync update notification bar info
+   * @param scene Current scene
+   * @param state Playback state
    */
   static async updateNotification(scene: Scene, state: State) {
     try {
-      // 确保已初始化
+      // Ensure initialized
       if (!this.isInitialized) {
         await this.setup();
       }
@@ -60,9 +61,9 @@ export class NotificationService {
         return;
       }
 
-      const userName = (await AsyncStorage.getItem('USER_NAME')) || '朋友';
+      const userName = (await AsyncStorage.getItem('USER_NAME')) || i18n.t('settings.defaultName');
       
-      // 索引安全检查：获取当前活动轨道的索引
+      // Index safety check: get current active track index
       let activeTrackIndex: number | undefined;
       try {
         activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
@@ -71,25 +72,25 @@ export class NotificationService {
         return;
       }
       
-      // 如果索引为 undefined 或越界，则不更新，避免 throw out of bounds 异常
+      // If index is undefined or out of bounds, do not update to avoid throw out of bounds exception
       if (activeTrackIndex === undefined || activeTrackIndex < 0) {
         return;
       }
 
-      // 获取当前队列，双重校验
+      // Get current queue, double check
       const queue = await TrackPlayer.getQueue();
       if (queue.length === 0 || activeTrackIndex >= queue.length) {
         return;
       }
 
-      // 更新 TrackPlayer 元数据
+      // Update TrackPlayer metadata
       await TrackPlayer.updateMetadataForTrack(activeTrackIndex, {
-        title: scene.title,
-        artist: `🎵 ${userName}，正在深度疗愈`,
+        title: i18n.t(`scenes.${scene.id}.title`),
+        artist: i18n.t('notification.artistDescription', { userName }),
         artwork: scene.backgroundUrl,
       });
     } catch (e) {
-      // 暴力吞掉所有通知栏更新相关的错误，绝对不允许影响主 UI 线程
+      // Swallow all notification bar update errors, do not allow affecting main UI thread
       console.log('[NotificationService] Silent error:', e);
     }
   }

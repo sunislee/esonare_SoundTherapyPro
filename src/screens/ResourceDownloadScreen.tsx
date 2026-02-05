@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, StatusBar, Dimensions } from 'react-native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useTranslation } from 'react-i18next';
 import { DownloadService, DownloadProgress } from '../services/DownloadService'; 
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
@@ -9,6 +10,7 @@ import EngineControl from '../constants/EngineControl';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const ResourceDownloadScreen = ({ navigation }: any) => { 
+  const { t } = useTranslation();
   const [downloadInfo, setDownloadInfo] = useState<DownloadProgress>({
     progress: 0,
     receivedBytes: 0,
@@ -23,7 +25,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         await DownloadService.checkAndDownload((info) => { 
           setDownloadInfo(info);
           
-          // 触发震动反馈
+
           const p = Math.floor(info.progress * 100);
           if (p >= 25 && p < 50 && !hapticFlags.current.p25) {
             ReactNativeHapticFeedback.trigger('impactLight');
@@ -40,7 +42,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           }
         }); 
         
-        // 下载完成后延迟跳转
+
         setTimeout(async () => {
           await enterMainApp();
         }, 800);
@@ -81,10 +83,10 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       
       <View style={styles.content}>
-        <Text style={styles.title}>资源下载中</Text>
-        <Text style={styles.subtitle}>正在为您准备沉浸式音频资源...</Text>
+        <Text style={styles.title}>{t('player.download.title')}</Text>
+        <Text style={styles.subtitle}>{t('player.download.subtitle')}</Text>
 
-        {/* 进度条容器 */}
+
                 <View style={styles.progressBarContainer}>
                   <View style={styles.progressBarBackground}>
                     <View 
@@ -101,12 +103,12 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
                         {formatMB(downloadInfo.receivedBytes)}MB / {formatMB(downloadInfo.totalBytes)}MB
                       </Text>
                     ) : (
-                      <Text style={styles.progressBytes}>正在计算资源大小...</Text>
+                      <Text style={styles.progressBytes}>{t('player.download.calculating')}</Text>
                     )}
                   </View>
                 </View>
 
-                <Text style={styles.tip}>初次使用请保持网络畅通，正在为您同步高品质音频</Text>
+                <Text style={styles.tip}>{t('player.download.tip')}</Text>
               </View>
     </View> 
   ); 

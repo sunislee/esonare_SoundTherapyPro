@@ -14,11 +14,12 @@ import {
   State,
   usePlaybackState,
 } from 'react-native-track-player';
+import { useTranslation } from 'react-i18next';
 import { RainDrop } from '../components/RainDrop';
 import AudioService from '../services/AudioService';
 import { Typography } from '../theme/Typography';
 
-// 定义雨滴配置接口
+
 interface RainDropConfig {
   id: number;
   top: number;
@@ -28,6 +29,7 @@ interface RainDropConfig {
 }
 
 const StudyScreen: React.FC = () => {
+  const { t } = useTranslation();
   const playbackState = usePlaybackState();
   const [isLoading, setIsLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -35,22 +37,22 @@ const StudyScreen: React.FC = () => {
   const breathAnim = useRef(new Animated.Value(1)).current;
   const [volume, _setVolume] = useState(0.5);
   
-  // 雨滴动画状态
+  // Raindrop animation state
   const rainDrops = useRef<RainDropConfig[]>([]);
   const [isRainReady, setIsRainReady] = useState(false);
   
-  // 监听音量变化 (这里可以扩展音量控制逻辑)
+
   useEffect(() => {
     AudioService.setVolume(volume).catch(() => {});
   }, [volume]);
   
-  // 初始化雨滴动画
+
   useEffect(() => {
     const drops: RainDropConfig[] = [];
     for (let i = 0; i < 30; i++) {
       drops.push({
         id: i,
-        top: Math.random() * -20, // 从屏幕上方开始
+        top: Math.random() * -20,
         left: Math.random() * 100,
         delay: Math.random() * 2000,
         length: 15 + Math.random() * 15
@@ -60,9 +62,9 @@ const StudyScreen: React.FC = () => {
     setIsRainReady(true);
   }, []);
   
-  // 获取当前播放状态逻辑
+
   const getPlaybackStatus = () => {
-    // 适配 TrackPlayer v4+ 的状态对象或字符串
+
     const currentState = typeof playbackState === 'object' && 'state' in playbackState 
       ? playbackState.state 
       : playbackState;
@@ -72,22 +74,22 @@ const StudyScreen: React.FC = () => {
         return {
           isPlaying: true,
           isBuffering: false,
-          statusText: '雨落书屋中...',
+          statusText: t('study.status.playing'),
           buttonIcon: '⏸',
-          buttonText: '暂停'
+          buttonText: t('actions.pause')
         };
       case State.Paused:
       case State.Ready:
       case State.Stopped:
-      case 'ready': // 兼容某些版本的字符串状态
+
       case 'paused':
       case 'stopped':
         return {
           isPlaying: false,
           isBuffering: false,
-          statusText: '已暂停',
+          statusText: t('study.status.paused'),
           buttonIcon: '▶',
-          buttonText: '播放'
+          buttonText: t('actions.play')
         };
       case State.Buffering:
       case State.Loading:
@@ -96,24 +98,24 @@ const StudyScreen: React.FC = () => {
         return {
           isPlaying: false,
           isBuffering: true,
-          statusText: '缓冲中...',
+          statusText: t('study.status.buffering'),
           buttonIcon: '⏸',
-          buttonText: '缓冲中'
+          buttonText: t('study.status.buffering')
         };
       default:
         return {
           isPlaying: false,
           isBuffering: false,
-          statusText: '准备中...',
+          statusText: t('study.status.ready'),
           buttonIcon: '▶',
-          buttonText: '准备'
+          buttonText: t('study.status.ready')
         };
     }
   };
 
   const { isPlaying, isBuffering, statusText, buttonIcon, buttonText } = getPlaybackStatus();
 
-  // 呼吸灯动画
+
   useEffect(() => {
     let loop: Animated.CompositeAnimation | null = null;
     if (isPlaying) {
@@ -140,14 +142,14 @@ const StudyScreen: React.FC = () => {
     };
   }, [breathAnim, isPlaying]);
 
-  // 初始化音频服务
+
   useEffect(() => {
     const initAudio = async () => {
       setIsLoading(true);
       try {
         await AudioService.setupPlayer();
         await AudioService.loadAudio();
-        // 自动播放
+
         await AudioService.play();
       } catch (error) {
         console.error('StudyScreen: Setup failed', error);
@@ -159,20 +161,20 @@ const StudyScreen: React.FC = () => {
     initAudio();
 
     return () => {
-      // 组件卸载时的逻辑，如果需要停止播放可以在这里调用 AudioService.stop()
-      // 但为了保持后台播放，通常不停止
+
+
     };
   }, []);
 
-  // 监听状态变化，触发文字平滑过渡
+
   useEffect(() => {
-    // 先淡出
+
     Animated.timing(statusAnim, {
       toValue: 0,
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
-      // 然后淡入新状态
+
       Animated.timing(statusAnim, {
         toValue: 1,
         duration: 500,
@@ -181,7 +183,7 @@ const StudyScreen: React.FC = () => {
     });
   }, [statusAnim, statusText]);
 
-  // 初始化状态动画
+
   useEffect(() => {
     Animated.timing(statusAnim, {
       toValue: 1,
@@ -190,7 +192,7 @@ const StudyScreen: React.FC = () => {
     }).start();
   }, [statusAnim]);
 
-  // 监听播放状态执行呼吸灯背景显隐动画
+
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: isPlaying ? 1 : 0,
@@ -207,8 +209,8 @@ const StudyScreen: React.FC = () => {
         await AudioService.play();
       }
     } catch (error) {
-      console.error('播放状态切换失败:', error);
-      Alert.alert('播放错误', `操作失败: ${(error as Error).message}`);
+      console.error('Playback toggle failed:', error);
+      Alert.alert(t('error.playError'), t('error.operationFailed', { message: (error as Error).message }));
     }
   };
 
@@ -220,10 +222,10 @@ const StudyScreen: React.FC = () => {
         translucent={true} 
       />
       
-      {/* 深蓝黑色背景 */}
+
       <View style={styles.gradientBackground}>
         
-        {/* 雨滴动画层 */}
+
         <View style={[styles.rainContainer, { zIndex: 999 }]} pointerEvents="none">
           {isRainReady && rainDrops.current.map((drop) => (
             <RainDrop 
@@ -236,12 +238,12 @@ const StudyScreen: React.FC = () => {
         
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>雨夜书屋</Text>
-            <Text style={styles.subtitle}>沉浸式音频体验</Text>
-            <Text style={styles.description}>让心灵在雨中静谧成长</Text>
+            <Text style={styles.title}>{t('study.title')}</Text>
+            <Text style={styles.subtitle}>{t('study.subtitle')}</Text>
+            <Text style={styles.description}>{t('study.description')}</Text>
           </View>
 
-          {/* 呼吸感背景 */}
+
           <Animated.View style={[styles.breathBackground, { 
             opacity: fadeAnim.interpolate({
               inputRange: [0, 1],
@@ -273,11 +275,11 @@ const StudyScreen: React.FC = () => {
                   }]
                 }]}
               >
-                {isLoading ? '加载中...' : statusText}
+                {isLoading ? t('player.status.loading') : statusText}
               </Animated.Text>
             </View>
             
-            {/* 播放按钮 - 带有呼吸灯效果 */}
+
             <View style={{ zIndex: 999, elevation: 999 }} pointerEvents="auto">
               <TouchableOpacity
                 {...({ pointerEvents: 'auto' } as any)}
@@ -319,14 +321,14 @@ const StudyScreen: React.FC = () => {
                 isPlaying && styles.playingButtonText,
                 isBuffering && styles.bufferingButtonText
               ]}>
-                {isLoading ? '加载中' : buttonText}
+                {isLoading ? t('player.status.loading') : buttonText}
               </Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>内核版本: 0.83.0 | 开发者: fakecoder</Text>
+            <Text style={styles.footerText}>{t('about.kernelVersion')}: 0.83.0 | {t('settings.developer')}: fakecoder</Text>
           </View>
         </View>
       </View>
@@ -336,14 +338,14 @@ const StudyScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a12' },
-  // 深蓝黑色背景
+
   gradientBackground: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#0a0a12',
     overflow: 'hidden'
   },
 
-  // 雨滴容器样式
+
   rainContainer: {
     position: 'absolute',
     top: 0,
@@ -374,7 +376,7 @@ const styles = StyleSheet.create({
     borderRadius: 125,
     backgroundColor: '#4a90e2',
     opacity: 0.1,
-    // filter: 'blur(50px)', // React Native doesn't support filter directly like web, handled by opacity/image usually. Removing to avoid error.
+
   },
   controlArea: { alignItems: 'center', zIndex: 10 },
   statusRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
@@ -413,11 +415,11 @@ const styles = StyleSheet.create({
   playButtonText: {
     fontSize: 24,
     color: '#fff',
-    marginLeft: 4, // Visual correction for play icon
+
   },
   playingButtonText: {
     color: '#4a90e2',
-    marginLeft: 0, // Correction not needed for pause icon
+
   },
   bufferingButtonText: {
     color: '#f5a623',

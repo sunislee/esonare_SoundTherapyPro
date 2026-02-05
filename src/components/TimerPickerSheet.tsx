@@ -11,6 +11,7 @@ import {
 import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Typography } from '../theme/Typography';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   visible: boolean;
@@ -21,16 +22,17 @@ type Props = {
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 const TIMER_OPTIONS = [
-  { label: '1 分钟', value: 1 },
-  { label: '15 分钟', value: 15 },
-  { label: '30 分钟', value: 30 },
-  { label: '60 分钟', value: 60 },
+  { value: 1 },
+  { value: 15 },
+  { value: 30 },
+  { value: 60 },
 ];
 
 const OptionButton: React.FC<{
   option: typeof TIMER_OPTIONS[0];
   onPress: (value: number) => void;
 }> = ({ option, onPress }) => {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -58,7 +60,7 @@ const OptionButton: React.FC<{
       activeOpacity={0.8}
     >
       <Text style={styles.optionText}>{option.value}</Text>
-      <Text style={styles.optionLabel}>分钟</Text>
+      <Text style={styles.optionLabel}>{t('player.timer.minuteUnit')}</Text>
     </AnimatedTouchableOpacity>
   );
 };
@@ -68,6 +70,7 @@ export const TimerPickerSheet: React.FC<Props> = ({
   onClose,
   onSelectTime,
 }) => {
+  const { t } = useTranslation();
   const { height: screenHeight } = useWindowDimensions();
   const SHEET_HEIGHT = 320; // Fixed height for timer picker
   
@@ -196,7 +199,7 @@ export const TimerPickerSheet: React.FC<Props> = ({
             <View style={styles.handleContainer}>
               <View style={styles.handle} />
             </View>
-            <Text style={styles.headerTitle}>定时关闭</Text>
+            <Text style={styles.headerTitle}>{t('player.timer.title')}</Text>
           </Animated.View>
         </PanGestureHandler>
         
@@ -216,7 +219,7 @@ export const TimerPickerSheet: React.FC<Props> = ({
             onPress={handleClearTimer}
             activeOpacity={0.7}
           >
-            <Text style={styles.closeButtonText}>关闭定时器</Text>
+            <Text style={styles.closeButtonText}>{t('player.timer.clear')}</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>

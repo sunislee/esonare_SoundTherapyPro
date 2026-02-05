@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, SafeA
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useAudio } from '../context/AudioContext';
 import { SCENES, Scene, SMALL_SCENE_IDS, getIconName } from '../constants/scenes';
 import AudioService from '../services/AudioService'; 
@@ -18,7 +19,7 @@ const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// --- 动画浮动按钮组件 ---
+
 const AnimatedFloatingButton = ({ 
   ambient, 
   isActive, 
@@ -32,10 +33,11 @@ const AnimatedFloatingButton = ({
   column: number,
   row: number
 }) => {
+  const { t } = useTranslation();
   const scale = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
-  // 呼吸灯特效逻辑 (针对背景层图标)
+
   useEffect(() => {
     const isBackgroundLayer = ['interactive_rain', 'life_summer', 'interactive_ocean', 'life_fireplace', 'interactive_breath'].includes(ambient.id);
     const isBreath = ambient.id === 'interactive_breath';
@@ -84,14 +86,14 @@ const AnimatedFloatingButton = ({
 
   const getLabel = (id: string) => {
     switch(id) {
-      case 'interactive_match': return '点燃';
-      case 'interactive_apple': return '清脆';
-      case 'interactive_wind_chime': return '空灵';
-      case 'life_summer': return '夏夜';
-      case 'interactive_rain': return '听雨';
-      case 'interactive_ocean': return '观海';
-      case 'life_fireplace': return '围炉';
-      case 'interactive_breath': return '呼吸';
+      case 'interactive_match': return t('player.labels.ignite');
+      case 'interactive_apple': return t('player.labels.crisp');
+      case 'interactive_wind_chime': return t('player.labels.ethereal');
+      case 'life_summer': return t('player.labels.summer');
+      case 'interactive_rain': return t('player.labels.rain');
+      case 'interactive_ocean': return t('player.labels.ocean');
+      case 'life_fireplace': return t('player.labels.fireplace');
+      case 'interactive_breath': return t('player.labels.breath');
       default: return '';
     }
   };
@@ -147,7 +149,7 @@ const AnimatedFloatingButton = ({
   );
 };
 
-// --- 动画按钮组件 ---
+
 const AnimatedIndicator = ({ 
   isActive, 
   iconName, 
@@ -202,23 +204,17 @@ const AnimatedIndicator = ({
   );
 };
 
-// 定义四大核心分类
+
 const MAIN_CATEGORIES = ['Nature', 'Healing', 'Brainwave', 'Life'];
 
-// 分类文案映射
-const CATEGORY_MAP: Record<string, string> = {
-  'Nature': '自然',
-  'Healing': '疗愈',
-  'Brainwave': '脑波',
-  'Life': '生活',
-};
 
-// 默认兜底场景
+
+
 const DEFAULT_SCENE = SCENES[0];
 
 type ImmersivePlayerRouteProp = RouteProp<RootStackParamList, 'ImmersivePlayer'>;
 
-// --- 性能优化：背景渲染层 (Memoized) ---
+
 const BackgroundLayer = memo(({ 
   activeScene, 
   prevScene, 
@@ -230,27 +226,24 @@ const BackgroundLayer = memo(({
 }) => {
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]}>
-      {/* 底层垫底图：带缓慢淡出效果 */}
+
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: bottomBgOpacity }]}>
         <Image 
           source={prevScene.backgroundSource}
           style={StyleSheet.absoluteFill}
           resizeMode="cover"
           fadeDuration={0}
-          // @ts-ignore - 强制硬件加速优先级
-          priority="high"
         />
       </Animated.View>
       
-      {/* 顶层前景图：0ms 强制硬件加速，禁用淡入淡出 */}
+
       <Image 
         key={`bg-top-${activeScene.id}`}
         source={activeScene.backgroundSource}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
         fadeDuration={0}
-        // @ts-ignore - 强制硬件加速优先级
-        priority="high"
+        
       />
 
       <View 
@@ -265,6 +258,7 @@ const BackgroundLayer = memo(({
 });
 
 const ImmersivePlayerNew = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<ImmersivePlayerRouteProp>();
   const insets = useSafeAreaInsets();
@@ -272,24 +266,26 @@ const ImmersivePlayerNew = () => {
   const { isPlaying, currentState, getRealIsPlaying } = usePlayerState();
   const pagerRef = useRef<PagerView>(null);
 
+  const CATEGORY_MAP: Record<string, string> = useMemo(() => ({
+    'Nature': t('categories.nature'),
+    'Healing': t('categories.healing'),
+    'Brainwave': t('categories.brainwave'),
+    'Life': t('categories.life'),
+  }), [t]);
+
   const lastClickTime = useRef(0);
 
-  // 2. 页面销毁清理：仅在退出页面时清理互动音效，防止进入页面时误伤加载逻辑
   useEffect(() => {
     return () => {
       console.log('[ImmersivePlayer] Page unmounting, cleaning up background layers...');
-      // 仅清理互动音效，不伤及主音轨
       AudioService.stopAllAmbient();
     };
   }, []);
 
-  // 第一步：引入‘断路器’状态
   const [isFrozen, setIsFrozen] = useState(false);
 
-  // 第二步：渲染拦截 (最关键)
   if (isFrozen) return <View style={{ flex: 1, backgroundColor: '#000' }} />;
 
-  // 1. 从路由参数中获取选中的场景
   const selectedScene = useMemo(() => {
     const sceneId = route.params?.sceneId;
     if (sceneId) {
@@ -298,11 +294,9 @@ const ImmersivePlayerNew = () => {
     return null;
   }, [route.params?.sceneId]);
 
-  // 核心动画绑定：使用 Animated.Value 绑定 ViewPager 的滑动偏移量
   const scrollOffset = useRef(new Animated.Value(0)).current;
   const position = useRef(new Animated.Value(0)).current;
   
-  // 最终的滑动进度 (用于背景插值)
   const scrollProgress = useRef(Animated.add(position, scrollOffset)).current;
   
   const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
@@ -310,7 +304,6 @@ const ImmersivePlayerNew = () => {
   const [showGuide, setShowGuide] = useState(false);
   const guideOpacity = useRef(new Animated.Value(0)).current;
 
-  // 首访引导逻辑
   useEffect(() => {
     const checkFirstVisit = async () => {
       const hasVisited = await AsyncStorage.getItem('HAS_VISITED_PLAYER');
@@ -329,13 +322,12 @@ const ImmersivePlayerNew = () => {
             useNativeDriver: true,
           }).start(() => setShowGuide(false));
           AsyncStorage.setItem('HAS_VISITED_PLAYER', 'true');
-        }, 3500); // 500ms 淡入 + 3000ms 展示
+        }, 3500);
       }
     };
     checkFirstVisit();
   }, []);
 
-  // 播放按钮缩放动画
   const playBtnScale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -356,8 +348,6 @@ const ImmersivePlayerNew = () => {
     }).start();
   };
 
-  // --- 索引与背景逻辑 (实时映射 + 边界保护) ---
-  // 根据当前场景或选定场景确定初始页面索引
   const initialPageIndex = useMemo(() => {
     const target = selectedScene || currentScene;
     if (!target) return 0;
@@ -368,16 +358,12 @@ const ImmersivePlayerNew = () => {
   const [activeIndex, setActiveIndex] = useState(initialPageIndex);
   const [prevIndex, setPrevIndex] = useState(initialPageIndex);
   
-  // 底层背景透明度动画
   const bottomBgOpacity = useRef(new Animated.Value(1)).current;
 
-  // 1. 拦截退出瞬间的 UI 更新：使用 useRef 物理标记
   const isExiting = useRef(false);
 
-  // 监听索引变化，同步记录上一个索引作为垫底
   useEffect(() => {
     if (isExiting.current) return;
-    // 1. 开始切换时，让底层图片稍微变暗，腾出视觉空间给顶层淡入
     Animated.timing(bottomBgOpacity, {
       toValue: 0.6,
       duration: 300,
@@ -385,7 +371,6 @@ const ImmersivePlayerNew = () => {
     }).start();
 
     const timer = setTimeout(() => {
-      // 2. 800ms 后，顶层淡入肯定结束了，此时更新底层索引并恢复透明度
       InteractionManager.runAfterInteractions(() => {
         setPrevIndex(activeIndex);
         Animated.timing(bottomBgOpacity, {
@@ -394,50 +379,41 @@ const ImmersivePlayerNew = () => {
           useNativeDriver: true,
         }).start();
       });
-    }, 800); // 延长冻结时间到 800ms
+    }, 800);
 
     return () => clearTimeout(timer);
   }, [activeIndex]);
 
-  // 2. 过滤出每个分类的代表性场景 (优先使用选中的场景)
   const displayScenes = useMemo(() => {
     return MAIN_CATEGORIES.map(cat => {
-      // 场景优先级：1. 路由传入的场景 2. 当前正在播放的场景 3. 分类默认场景
       const targetScene = selectedScene || currentScene;
       
       if (targetScene && targetScene.category === cat) {
         return targetScene;
       }
-      // 否则寻找该分类下的第一个场景
       return SCENES.find(s => s.category === cat) || DEFAULT_SCENE;
     });
   }, [selectedScene, currentScene?.id]);
 
-  // 挂载时设置初始索引并同步播放状态
   useEffect(() => {
     position.setValue(initialPageIndex);
     scrollOffset.setValue(0);
 
-    // 单例实例检查
     console.log('🔄 [ImmersivePlayer] AudioService Instance Check: Using default exported instance');
     console.log('🔄 [ImmersivePlayer] AudioService Instance Type:', typeof AudioService);
     console.log('🔄 [ImmersivePlayer] AudioService Has Pause Method:', typeof AudioService.pause === 'function');
 
-    // 双向绑定：挂载时自动同步一次全局 TrackPlayer 的实时播放状态
     const syncStatus = async () => {
       const realIsPlaying = await AudioService.getRealIsPlaying();
       console.log('🔄 [ImmersivePlayer] Mount sync: RealIsPlaying =', realIsPlaying);
-      // 不再需要手动设置localIsPlaying，usePlayerState会自动处理
     };
     syncStatus();
 
     return () => {
-      // 延时静音：人都滑出页面了，再让音频静悄悄地在后台关掉
       setTimeout(() => {
         // AudioService.stop();
       }, 800);
 
-      // 组件销毁时强制清理所有动画，防止内存泄漏和后台渲染开销
       bottomBgOpacity.stopAnimation();
       playBtnScale.stopAnimation();
       position.stopAnimation();
@@ -445,9 +421,8 @@ const ImmersivePlayerNew = () => {
     };
   }, []);
 
-   // 3. 页面进入时，如果传入了场景且当前未播放该场景，自动切换
    useEffect(() => {
-     // 性能降级保护：如果正在退出或已初始化且场景匹配，严禁在进入动画期间触发任何音频库逻辑
+     
      if (isFrozen || isExiting.current) {
        return;
      }
@@ -460,10 +435,8 @@ const ImmersivePlayerNew = () => {
        if (selectedScene) {
          if (selectedScene.id !== currentScene?.id) {
            console.log('🔄 [ImmersivePlayer] Lifecycle sync: Stopping all before switch');
-           // 生命周期强同步：先物理停止所有声音，防止叠加或干扰
            await AudioService.stopAll();
            
-           // 延迟 100ms 确保 native 释放彻底
            setTimeout(() => {
              if (!isExiting.current) {
                console.log('🚀 [ImmersivePlayer] Lifecycle sync: Starting new soundscape');
@@ -471,7 +444,6 @@ const ImmersivePlayerNew = () => {
              }
            }, 100);
          } else if (!realIsPlaying) {
-           // 如果场景相同但当前没响，立即补发一个 play() 指令，确保“进门就响”
            console.log('▶️ [ImmersivePlayer] Scene matched but not playing, forcing play');
            AudioService.play();
          }
@@ -490,47 +462,37 @@ const ImmersivePlayerNew = () => {
      const index = getSafeIndex(rawIndex);
      
      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-     // 增加‘稳定期’：使用 400ms 延迟，确保 PagerView 完成物理滑动、动画彻底停稳
-     debounceTimer.current = setTimeout(() => {
-        InteractionManager.runAfterInteractions(() => {
-          if (isFrozen || isExiting.current) return;
-          const safeIdx = Math.max(0, Math.min(index, displayScenes.length - 1));
+    debounceTimer.current = setTimeout(() => {
+       InteractionManager.runAfterInteractions(() => {
+         if (isFrozen || isExiting.current) return;
+         const safeIdx = Math.max(0, Math.min(index, displayScenes.length - 1));
 
-          // 停稳后才同步一次背景索引，减少滑动中的渲染压力
-          setActiveIndex(safeIdx);
+         setActiveIndex(safeIdx);
 
-          const targetScene = displayScenes[safeIdx] || DEFAULT_SCENE;
-          if (targetScene && targetScene.id !== currentScene?.id) {
-            AudioService.switchSoundscape(targetScene);
-          }
-          
-          // 持久化记录：存储最后查看的场景 ID
-          if (targetScene) {
-            AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', targetScene.id).catch(() => {});
-          }
-        });
-     }, 400);
-   };
+         const targetScene = displayScenes[safeIdx] || DEFAULT_SCENE;
+         if (targetScene && targetScene.id !== currentScene?.id) {
+           AudioService.switchSoundscape(targetScene);
+         }
+         
+         if (targetScene) {
+           AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', targetScene.id).catch(() => {});
+         }
+       });
+    }, 400);
+  };
 
   const handleToggle = async () => {
-    console.log('--- [PAUSE_TEST] BUTTON CLICKED ---');
     try {
-      // 别管 Service 了，直接调底层，看它死不死
       const state = await TrackPlayer.getState();
-      console.log('--- [PAUSE_TEST] CURRENT STATE:', state);
       
       if (state === State.Playing) {
         await TrackPlayer.pause();
-        console.log('--- [PAUSE_TEST] TrackPlayer.pause() CALLED ---');
-        // 手动同步状态，确保UI能实时更新
         await AudioService.syncNativeStatus();
-        console.log('--- [PAUSE_TEST] State synchronized ---');
       } else {
         await AudioService.play();
-        // 播放时AudioService.play()内部会自动更新状态
       }
     } catch (e) {
-      console.error('--- [PAUSE_TEST] ERROR:', e);
+      console.error('Error in handleToggle:', e);
     }
   };
 
@@ -539,13 +501,10 @@ const ImmersivePlayerNew = () => {
   };
 
   const handleBack = () => {
-    // 第一步：同步执行 setIsFrozen(true) 开启断路器
     setIsFrozen(true);
 
-    // 拦截退出瞬间的 UI 更新
     isExiting.current = true;
 
-    // 立即触发返回导航 (最高优先级)
     navigation.goBack();
   };
 
@@ -581,18 +540,15 @@ const ImmersivePlayerNew = () => {
        />
      );
    };
-   // -----------------------
 
   const renderHeader = () => {
-    // 冗余函数，逻辑已迁移至主渲染块
+    // Redundant function, logic migrated to main render block
     return null;
   };
 
   const renderScenePage = (scene: Scene, index: number) => {
-    // 关键修复：判断当前页面场景是否正在播放，使用全局实时状态
     const isThisScenePlaying = isPlaying && currentBaseSceneId === scene.id;
 
-    // 获取 7 大全局氛围音，用于悬浮图标 (按 SMALL_SCENE_IDS 顺序排序)
     const globalAmbientScenes = useMemo(() => {
       return SMALL_SCENE_IDS.map(id => SCENES.find(s => s.id === id)).filter(Boolean) as Scene[];
     }, []);
@@ -600,15 +556,13 @@ const ImmersivePlayerNew = () => {
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: 'transparent' }]}>
         <SafeAreaView style={[styles.overlay, { backgroundColor: 'transparent' }]}>
-          {/* 占位符，保持布局一致性 */}
           <View style={styles.headerPlaceholder} />
 
-          {/* 悬浮图标容器 - 动态生成 */}
           <View style={styles.floatingIconsContainer} pointerEvents="box-none">
             {showGuide && (
               <Animated.View style={[styles.guideBubble, { opacity: guideOpacity }]}>
                 <View style={styles.bubbleArrow} />
-                <Text style={styles.guideText}>试试点击这些图标，有惊喜音效</Text>
+                <Text style={styles.guideText}>{t('player.guide.text')}</Text>
               </Animated.View>
             )}
             {globalAmbientScenes.map((ambient, idx) => {
@@ -624,7 +578,6 @@ const ImmersivePlayerNew = () => {
                   column={column}
                   row={row}
                   onPress={() => {
-                    console.log(`[Floating Icon Click] ID: ${ambient.id}, isActive: ${isActive}`);
                     toggleAmbience(ambient, 'Floating Icon');
                   }}
                 />
@@ -653,7 +606,6 @@ const ImmersivePlayerNew = () => {
             </Animated.View>
           </View>
 
-          {/* 底部占位，防止内容被固定的 footer 遮挡 */}
           <View style={{ height: 160 }} />
         </SafeAreaView>
       </View>
@@ -685,7 +637,7 @@ const ImmersivePlayerNew = () => {
             ))}
           </View>
           <Text style={styles.statusText}>
-            {isPlaying ? '正在疗愈中...' : '已暂停'}
+            {isPlaying ? t('player.status.playing') : t('player.status.paused')}
           </Text>
         </View>
       </View>
@@ -719,9 +671,6 @@ const ImmersivePlayerNew = () => {
                 useNativeDriver: true,
                 listener: (e: any) => {
                   if (isFrozen || isExiting.current) return;
-                  // 拦截多余渲染：在滑动过程中完全禁用背景索引的同步更新
-                  // 只有在 handlePageSelected 停稳后，才通过其逻辑进行必要的更新（如果需要）
-                  // 目前逻辑下，背景层将通过 memo 化的渲染保证性能
                 }
               }
             )}
@@ -731,7 +680,6 @@ const ImmersivePlayerNew = () => {
 
           {renderFixedFooter()}
 
-          {/* 正式大标题：保持 zIndex: 99999 活命层级 */}
           <View style={{ 
             position: 'absolute', 
             top: 80, 
@@ -740,20 +688,17 @@ const ImmersivePlayerNew = () => {
             zIndex: 99999, 
             elevation: 100,
             alignItems: 'center',
-            pointerEvents: 'none' // 点击穿透，不影响下方按钮
+            pointerEvents: 'none'
           }}> 
             {MAIN_CATEGORIES.map((category, rawIndex) => {
-              // 索引越界硬保护
               const index = Math.max(0, Math.min(rawIndex, displayScenes.length - 1));
               const activeScene = displayScenes[index] || DEFAULT_SCENE;
-              // 标题滑动渐变：200ms 对应的滑动区间大约是 0.5 左右
               const opacity = scrollProgress.interpolate({
                 inputRange: [index - 0.5, index, index + 0.5],
                 outputRange: [0, 1, 0],
                 extrapolate: 'clamp',
               });
 
-              // Floating Animation: translateY 从 10 到 0 再到 10
               const translateY = scrollProgress.interpolate({
                 inputRange: [index - 0.5, index, index + 0.5],
                 outputRange: [10, 0, 10],
@@ -770,7 +715,6 @@ const ImmersivePlayerNew = () => {
                     transform: [{ translateY }]
                   }}
                 >
-                  {/* 主标题：24px 加粗 */}
                   <Text style={{ 
                     color: 'white', 
                     fontSize: 24, 
@@ -782,7 +726,6 @@ const ImmersivePlayerNew = () => {
                   }}> 
                     {CATEGORY_MAP[category] || category} 
                   </Text> 
-                  {/* 副标题：16px, 0.75 透明度 */}
                   <Text style={{ 
                     color: 'white', 
                     fontSize: 16, 
@@ -793,14 +736,13 @@ const ImmersivePlayerNew = () => {
                     textShadowOffset: {width: 0, height: 2}, 
                     textShadowRadius: 4 
                   }}>
-                    {activeScene?.title || ''}
+                    {activeScene ? t(`scenes.${activeScene.id}.title`) : ''}
                   </Text>
                 </Animated.View>
               );
             })}
           </View>
 
-          {/* 顶部固定按钮层 */}
           <View style={{
             position: 'absolute',
             top: insets.top,
@@ -811,13 +753,11 @@ const ImmersivePlayerNew = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingHorizontal: 16,
-            zIndex: 100000, // 按钮层级更高
+            zIndex: 100000,
           }}>
             <TouchableOpacity 
               onPress={() => { 
-                // 1. 立即触发原生导航返回，抢占主线程动画优先级 
                 navigation.goBack(); 
-                // 2. 彻底切断任何可能在退出时触发的 UI 更新 
                 setIsFrozen(true); 
               }} 
               style={{ padding: 8 }}
@@ -825,23 +765,6 @@ const ImmersivePlayerNew = () => {
               <Icon name="chevron-down" size={32} color="#fff" />
             </TouchableOpacity>
             
-            {/* 混音实验室入口临时屏蔽：逻辑清理中 */}
-            {/* 
-            <TouchableOpacity 
-              onPress={toggleAmbientSheet}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 20,
-              }}
-            >
-              <Icon name="options-outline" size={20} color="#fff" />
-              <Text style={{ color: '#fff', marginLeft: 6, fontSize: 13 }}>氛围点缀</Text>
-            </TouchableOpacity>
-            */}
           </View>
 
           <AmbientPickerSheet
@@ -898,7 +821,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 10,
-    zIndex: 10000, // 比 wrapper 更高
+    zIndex: 10000, // Higher than wrapper
   },
   absoluteHeader: {
     position: 'absolute',
@@ -912,22 +835,22 @@ const styles = StyleSheet.create({
     zIndex: 10001,
   },
   categoryTitle: { 
-    color: '#FFFFFF', // 暴力纯白
+    color: '#FFFFFF', // Pure white
     fontSize: 24, 
     fontWeight: '600', 
     letterSpacing: 2,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)', // 增加投影防止背景干扰
+    textShadowColor: 'rgba(0, 0, 0, 0.75)', // Add shadow to prevent background interference
     textShadowOffset: {width: -1, height: 1},
     textShadowRadius: 10
   },
   sceneTitle: { 
-    color: '#FFFFFF', // 暴力纯白
+    color: '#FFFFFF', // Pure white
     fontSize: 14, 
     marginTop: 4, 
     letterSpacing: 1,
     textAlign: 'center',
-    opacity: 0.8, // 稍微降点透明度区分主次，但颜色还是纯白
+    opacity: 0.8, // Slightly lower opacity to distinguish primary/secondary, but still pure white
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: {width: -1, height: 1},
     textShadowRadius: 10

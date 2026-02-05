@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import AudioService from '../services/AudioService';
 import { State } from 'react-native-track-player';
@@ -20,6 +21,7 @@ import { Scene } from '../constants/scenes';
 const { width } = Dimensions.get('window');
 
 const MiniPlayer = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const [currentScene, setCurrentScene] = useState<Scene | null>(null);
@@ -229,8 +231,10 @@ const MiniPlayer = () => {
           />
           
           <View style={styles.textContainer}>
-            <Text style={styles.title} numberOfLines={1}>{currentScene.title}</Text>
-            <Text style={styles.subtitle} numberOfLines={1}>正在播放</Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {currentScene ? t(`scenes.${currentScene.id}.title`) : ''}
+            </Text>
+            <Text style={styles.subtitle} numberOfLines={1}>{t('miniPlayer.nowPlaying')}</Text>
           </View>
 
           <TouchableOpacity 

@@ -14,12 +14,12 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { State } from 'react-native-track-player';
+import { useTranslation } from 'react-i18next';
 import AudioService from '../services/AudioService';
 import ToastUtil from '../utils/ToastUtil';
 
 const { width } = Dimensions.get('window');
 
-// 助手函数：安全获取原生模块引用
 const getNativeAudioModule = () => {
   return NativeModules && NativeModules.NativeAudioModule ? NativeModules.NativeAudioModule : null;
 };
@@ -33,6 +33,7 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
   visible,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(visible);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -115,48 +116,43 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
   }, [visible, fadeAnim, scaleAnim]);
 
   const handleRestartAudio = async () => {
-    ToastUtil.info('正在重启音频引擎...');
+    ToastUtil.info(t('debug.restarting'));
     try {
-      // 1. JS 层停止
       await AudioService.stop();
       
-      // 2. 物理杀掉所有原生 ExoPlayer
       const mod = getNativeAudioModule();
       if (mod) {
         try {
-          // 调用 Native 层物理清理接口
           if (typeof mod.stop === 'function') {
             await mod.stop();
           }
           
-          // 如果有 getPlayerCount，验证是否归零
           if (typeof mod.getPlayerCount === 'function') {
             const count = await mod.getPlayerCount();
-            console.log(`[Restart] 原生播放器计数: ${count}`);
+            console.log(`[Restart] Native player count: ${count}`);
           }
         } catch (nativeError) {
           console.warn('Native cleanup failed', nativeError);
         }
       }
 
-      // 3. 强制延迟，确保底层资源释放
       await new Promise<void>(resolve => setTimeout(resolve, 1200));
 
-      // 4. 重新初始化 JS Player
       await AudioService.setupPlayer();
       
-      ToastUtil.success('音频引擎已彻底重置');
-      onClose(); // 重启成功后关闭面板
+      ToastUtil.success(t('debug.restartSuccess'));
+      onClose(); 
     } catch (e) {
       console.error('Restart audio failed', e);
-      ToastUtil.error('重启失败: ' + (e instanceof Error ? e.message : '未知错误'));
+      const errorMessage = e instanceof Error ? e.message : t('debug.unknownError');
+      ToastUtil.error(t('debug.restartFailed', { error: errorMessage }));
     }
   };
 
   const toggleDebugLog = async (value: boolean) => {
     setDebugLogEnabled(value);
     await AsyncStorage.setItem('@debug_log_enabled', value ? 'true' : 'false');
-    ToastUtil.info(value ? '调试日志已开启' : '调试日志已关闭');
+    ToastUtil.info(value ? t('debug.logEnabled') : t('debug.logDisabled'));
   };
 
   if (!showModal) return null;
@@ -180,35 +176,32 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
                 },
               ]}
             >
-              <Text style={styles.title}>高级调试</Text>
+              <Text style={styles.title}>{t('debug.title')}</Text>
 
-              {/* 1. 一键音频重启 */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>救命功能</Text>
+                <Text style={styles.sectionTitle}>{t('debug.restartTitle')}</Text>
                 <TouchableOpacity 
                   style={styles.restartButton}
                   onPress={handleRestartAudio}
                 >
-                  <Text style={styles.restartButtonText}>🚀 一键音频重启</Text>
+                  <Text style={styles.restartButtonText}>{t('debug.restartButton')}</Text>
                 </TouchableOpacity>
-                <Text style={styles.hint}>声音卡死或逻辑异常时点此复活</Text>
+                <Text style={styles.hint}>{t('debug.restartHint')}</Text>
               </View>
 
-              {/* 2. 原生状态监视器 */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>原生状态监视器</Text>
+                <Text style={styles.sectionTitle}>{t('debug.monitorTitle')}</Text>
                 <View style={styles.statsContainer}>
-                  <Text style={styles.statsText}>Active Scene: <Text style={styles.statsValue}>{currentSceneId}</Text></Text>
-                  <Text style={styles.statsText}>Native Players: <Text style={styles.statsValue}>{allPlayersCount}</Text></Text>
+                  <Text style={styles.statsText}>{t('debug.activeScene')}: <Text style={styles.statsValue}>{currentSceneId}</Text></Text>
+                  <Text style={styles.statsText}>{t('debug.nativePlayers')}: <Text style={styles.statsValue}>{allPlayersCount}</Text></Text>
                 </View>
               </View>
 
-              {/* 3. 日志开关 */}
               <View style={styles.section}>
                 <View style={styles.row}>
                   <View>
-                    <Text style={styles.sectionTitle}>日志开关</Text>
-                    <Text style={styles.hint}>开启后显示 RENDER_CHECK 日志</Text>
+                    <Text style={styles.sectionTitle}>{t('debug.logToggle')}</Text>
+                    <Text style={styles.hint}>{t('debug.logHint')}</Text>
                   </View>
                   <Switch
                     value={debugLogEnabled}
@@ -223,7 +216,7 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
                 style={styles.closeButton}
                 onPress={onClose}
               >
-                <Text style={styles.closeButtonText}>关闭</Text>
+                <Text style={styles.closeButtonText}>{t('debug.close')}</Text>
               </TouchableOpacity>
             </Animated.View>
           </TouchableWithoutFeedback>

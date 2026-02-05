@@ -15,17 +15,19 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import { Typography } from '../theme/Typography';
+import { useTranslation } from 'react-i18next';
 
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 const NameEntryScreen: React.FC = () => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleStart = async () => {
     const finalName = name.trim();
     if (finalName) {
-      // 触觉反馈
+      // Haptic feedback
       ReactNativeHapticFeedback.trigger('impactMedium');
       
       await AsyncStorage.setItem('USER_NAME', finalName);
@@ -46,13 +48,13 @@ const NameEntryScreen: React.FC = () => {
     >
       <StatusBar barStyle="light-content" />
       <View style={styles.content}>
-        <Text style={styles.title}>如何称呼您？</Text>
-        <Text style={styles.subtitle}>让我们为您开启专属的治愈之旅</Text>
+        <Text style={styles.title}>{t('nameEntry.title')}</Text>
+        <Text style={styles.subtitle}>{t('nameEntry.subtitle')}</Text>
         
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="请输入您的名称"
+            placeholder={t('nameEntry.placeholder')}
             placeholderTextColor="rgba(255, 255, 255, 0.3)"
             value={name}
             onChangeText={setName}
@@ -68,11 +70,11 @@ const NameEntryScreen: React.FC = () => {
           onPress={handleStart}
           disabled={!name.trim()}
         >
-          <Text style={styles.buttonText}>开启之旅</Text>
+          <Text style={styles.buttonText}>{t('nameEntry.button')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipText}>暂时跳过</Text>
+          <Text style={styles.skipText}>{t('nameEntry.skip')}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

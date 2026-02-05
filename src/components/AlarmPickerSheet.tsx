@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useTranslation } from 'react-i18next';
 import { Typography } from '../theme/Typography';
 
 type Props = {
@@ -31,6 +32,7 @@ export const AlarmPickerSheet: React.FC<Props> = ({
   onSave,
   onClear,
 }) => {
+  const { t } = useTranslation();
   const { height: screenHeight } = useWindowDimensions();
   const SHEET_HEIGHT = 420;
   
@@ -194,17 +196,17 @@ export const AlarmPickerSheet: React.FC<Props> = ({
             <View style={styles.handleContainer}>
               <View style={styles.handle} />
             </View>
-            <Text style={styles.headerTitle}>清晨唤醒</Text>
+            <Text style={styles.headerTitle}>{t('alarm.title')}</Text>
           </Animated.View>
         </PanGestureHandler>
         
         <View style={styles.content}>
           <View style={styles.pickerContainer}>
-            {renderNumberControl(selectedHour, adjustHour, '时')}
+            {renderNumberControl(selectedHour, adjustHour, t('alarm.hour'))}
             <View style={styles.colonContainer}>
               <Text style={styles.colon}>:</Text>
             </View>
-            {renderNumberControl(selectedMinute, adjustMinute, '分')}
+            {renderNumberControl(selectedMinute, adjustMinute, t('alarm.minute'))}
           </View>
 
           <View style={styles.footer}>
@@ -216,7 +218,7 @@ export const AlarmPickerSheet: React.FC<Props> = ({
                 onClose();
               }}
             >
-              <Text style={styles.clearButtonText}>清除</Text>
+              <Text style={styles.clearButtonText}>{t('alarm.clear')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -227,7 +229,7 @@ export const AlarmPickerSheet: React.FC<Props> = ({
                 onClose();
               }}
             >
-              <Text style={styles.confirmButtonText}>开启闹钟</Text>
+              <Text style={styles.confirmButtonText}>{t('alarm.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>

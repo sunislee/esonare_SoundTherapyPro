@@ -7,6 +7,7 @@ import {
   Pressable,
   Switch,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,6 +18,8 @@ import { EditNameModal } from '../components/EditNameModal';
 import { AdvancedDebugModal } from '../components/AdvancedDebugModal';
 import { HistoryService } from '../services/HistoryService';
 import ToastUtil from '../utils/ToastUtil';
+import { useTranslation } from 'react-i18next';
+import { changeLanguage } from '../i18n';
 import { RootStackParamList } from '../navigation/MainNavigator';
 
 type SettingsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Settings'>;
@@ -44,6 +47,7 @@ const DEVELOPER_MODE_KEY = '@settings_developer_mode';
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<SettingsNavigationProp>();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const [fadeOutOnTimer, setFadeOutOnTimer] = useState(false);
   const [highQualityAudio, setHighQualityAudio] = useState(false);
@@ -52,6 +56,8 @@ const SettingsScreen: React.FC = () => {
   const [clearHistoryVisible, setClearHistoryVisible] = useState(false);
   const [clearPresetsVisible, setClearPresetsVisible] = useState(false);
   const [advancedDebugVisible, setAdvancedDebugVisible] = useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [languageMode, setLanguageMode] = useState<'zh' | 'en' | 'ja' | 'system'>('system');
   const [isDeveloperMode, setIsDeveloperMode] = useState(false);
   const [devClickCount, setDevClickCount] = useState(0);
   const devClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,6 +69,7 @@ const SettingsScreen: React.FC = () => {
         const highQualityValue = await AsyncStorage.getItem(HIGH_QUALITY_KEY);
         const devModeValue = await AsyncStorage.getItem(DEVELOPER_MODE_KEY);
         const savedName = await AsyncStorage.getItem('USER_NAME');
+        const savedLanguage = await AsyncStorage.getItem('@settings_language');
         
         if (fadeOutValue !== null) {
           setFadeOutOnTimer(fadeOutValue === 'true');
@@ -75,6 +82,11 @@ const SettingsScreen: React.FC = () => {
         }
         if (savedName) {
           setUserName(savedName);
+        }
+        if (savedLanguage) {
+          setLanguageMode(savedLanguage as any);
+        } else {
+          setLanguageMode('system');
         }
       } catch (e) {}
     };
@@ -89,21 +101,24 @@ const SettingsScreen: React.FC = () => {
     const newCount = devClickCount + 1;
     setDevClickCount(newCount);
 
-    // 从第 3 次点击开始弹出动态计数提示 (无论开启还是关闭)
+    // Show dynamic count prompt starting from the 3rd click (regardless of enabled/disabled state)
     if (newCount >= 3 && newCount < 7) {
       const remaining = 7 - newCount;
-      ToastUtil.info(isDeveloperMode ? `还需点击 ${remaining} 次关闭调试` : `还需点击 ${remaining} 次开启调试`);
+      ToastUtil.info(t('settings.toast.devClick', { 
+        count: remaining, 
+        action: isDeveloperMode ? t('settings.toast.devActionClose') : t('settings.toast.devActionOpen') 
+      }));
     }
 
     if (newCount >= 7) {
       if (!isDeveloperMode) {
         setIsDeveloperMode(true);
         AsyncStorage.setItem(DEVELOPER_MODE_KEY, 'true').catch(() => {});
-        ToastUtil.success('开发者模式已开启');
+        ToastUtil.success(t('settings.toast.devOn'));
       } else {
         setIsDeveloperMode(false);
         AsyncStorage.removeItem(DEVELOPER_MODE_KEY).catch(() => {});
-        ToastUtil.info('开发者模式已关闭');
+        ToastUtil.info(t('settings.toast.devOff'));
       }
       setDevClickCount(0);
     } else {
@@ -131,9 +146,15 @@ const SettingsScreen: React.FC = () => {
     if (newName) {
       setUserName(newName);
       await AsyncStorage.setItem('USER_NAME', newName);
-      ToastUtil.success('昵称已更新');
+      ToastUtil.success(t('settings.toast.nameUpdated'));
     }
     setEditNameVisible(false);
+  };
+
+  const handleSelectLanguage = async (lang: 'zh' | 'en' | 'ja' | 'system') => {
+    await changeLanguage(lang);
+    setLanguageMode(lang);
+    setLanguageModalVisible(false);
   };
 
   const handleClearHistoryConfirm = async () => {
@@ -150,71 +171,87 @@ const SettingsScreen: React.FC = () => {
 
   const sections: SettingsSection[] = useMemo(
     () => {
+      const getLanguageLabel = (lang: string) => {
+        switch (lang) {
+          case 'zh': return t('settings.zh');
+          case 'en': return t('settings.en');
+          case 'ja': return t('settings.ja');
+          default: return t('settings.followSystem');
+        }
+      };
+
       const baseSections: SettingsSection[] = [
         {
-          title: '个人',
+          title: t('settings.personal'),
           data: [
             {
               key: 'editName',
               icon: '👤',
-              title: '修改昵称',
-              subtitle: userName || '朋友',
+              title: t('settings.editName'),
+              subtitle: userName || t('settings.defaultName'),
+              type: 'action',
+            },
+            {
+              key: 'language',
+              icon: '🌐',
+              title: t('settings.language'),
+              subtitle: getLanguageLabel(languageMode),
               type: 'action',
             },
           ],
         },
         {
-          title: '音频',
+          title: t('settings.audio'),
           data: [
             {
               key: 'fadeOutOnTimer',
               icon: '🌙',
-              title: '定时结束淡出',
-              subtitle: '睡眠定时结束时淡出当前音轨',
+              title: t('settings.fadeOut'),
+              subtitle: t('settings.fadeOutDesc'),
               type: 'switch',
             },
             {
               key: 'highQualityAudio',
               icon: '🎧',
-              title: '高质量音频',
-              subtitle: '启用更高比特率的音频播放',
+              title: t('settings.highQuality'),
+              subtitle: t('settings.highQualityDesc'),
               type: 'switch',
             },
           ],
         },
         {
-          title: '存储',
+          title: t('settings.storage'),
           data: [
             {
               key: 'clearHistory',
               icon: '🧹',
-              title: '清除播放历史',
-              subtitle: '删除所有历史记录',
+              title: t('settings.clearHistory'),
+              subtitle: t('settings.clearHistoryDesc'),
               type: 'action',
             },
             {
               key: 'clearPresets',
               icon: '📁',
-              title: '清除所有混音方案',
-              subtitle: '删除本地保存的混音方案',
+              title: t('settings.clearPresets'),
+              subtitle: t('settings.clearPresetsDesc'),
               type: 'action',
             },
           ],
         },
         {
-          title: '关于',
+          title: t('settings.about'),
           data: [
             {
               key: 'version',
               icon: '📦',
-              title: '版本',
+              title: t('settings.version'),
               subtitle: 'v1.1.0 (Pro)',
               type: 'static',
             },
             {
               key: 'developer',
               icon: '👨‍💻',
-              title: '开发者',
+              title: t('settings.developer'),
               subtitle: 'fakecoder',
               type: 'static',
             },
@@ -224,13 +261,13 @@ const SettingsScreen: React.FC = () => {
 
       if (isDeveloperMode) {
         baseSections.push({
-          title: '开发者选项',
+          title: t('settings.devOptions'),
           data: [
             {
               key: 'devMenu',
               icon: '🛠️',
-              title: '高级调试',
-              subtitle: '查看应用调试信息',
+              title: t('settings.advancedDebug'),
+              subtitle: t('settings.advancedDebugDesc'),
               type: 'action',
             },
           ],
@@ -239,7 +276,7 @@ const SettingsScreen: React.FC = () => {
 
       return baseSections;
     },
-    [fadeOutOnTimer, highQualityAudio, isDeveloperMode]
+    [fadeOutOnTimer, highQualityAudio, isDeveloperMode, userName, t]
   );
 
   const renderItem = ({ item }: { item: SettingsItem }) => {
@@ -274,6 +311,8 @@ const SettingsScreen: React.FC = () => {
         setClearHistoryVisible(true);
       } else if (item.key === 'clearPresets') {
         setClearPresetsVisible(true);
+      } else if (item.key === 'language') {
+        setLanguageModalVisible(true);
       } else if (item.key === 'devMenu') {
         setAdvancedDebugVisible(true);
       }
@@ -329,9 +368,9 @@ const SettingsScreen: React.FC = () => {
           style={styles.backButton}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         >
-          <Text style={styles.backText}>{'< 返回'}</Text>
+          <Text style={styles.backText}>{`< ${t('settings.back')}`}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>设置</Text>
+        <Text style={styles.headerTitle}>{t('settings.header')}</Text>
       </View>
 
       <SectionList
@@ -354,10 +393,10 @@ const SettingsScreen: React.FC = () => {
 
       <ConfirmationModal
         visible={clearHistoryVisible}
-        title="清除播放历史"
-        message="确定要删除所有播放历史吗？此操作无法撤销。"
-        confirmText="清除"
-        cancelText="取消"
+        title={t('settings.modals.clearHistoryTitle')}
+        message={t('settings.modals.clearHistoryMsg')}
+        confirmText={t('settings.modals.confirm')}
+        cancelText={t('settings.modals.cancel')}
         onConfirm={handleClearHistoryConfirm}
         onCancel={() => setClearHistoryVisible(false)}
         isDestructive
@@ -365,10 +404,10 @@ const SettingsScreen: React.FC = () => {
 
       <ConfirmationModal
         visible={clearPresetsVisible}
-        title="清除所有混音方案"
-        message="确定要删除所有已保存的混音方案吗？此操作无法撤销。"
-        confirmText="清除"
-        cancelText="取消"
+        title={t('settings.modals.clearPresetsTitle')}
+        message={t('settings.modals.clearPresetsMsg')}
+        confirmText={t('settings.modals.confirm')}
+        cancelText={t('settings.modals.cancel')}
         onConfirm={handleClearPresetsConfirm}
         onCancel={() => setClearPresetsVisible(false)}
         isDestructive
@@ -378,6 +417,39 @@ const SettingsScreen: React.FC = () => {
         visible={advancedDebugVisible}
         onClose={() => setAdvancedDebugVisible(false)}
       />
+
+      <Modal
+        visible={languageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={styles.languageModalContent}>
+            <Text style={styles.languageModalTitle}>{t('settings.language')}</Text>
+            {(['system', 'zh', 'en', 'ja'] as const).map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={styles.languageOption}
+                onPress={() => handleSelectLanguage(lang)}
+              >
+                <Text style={[
+                  styles.languageOptionText,
+                  languageMode === lang && styles.languageOptionActiveText
+                ]}>
+                  {lang === 'system' ? t('settings.followSystem') : 
+                   lang === 'zh' ? t('settings.zh') : 
+                   lang === 'en' ? t('settings.en') : t('settings.ja')}
+                </Text>
+                {languageMode === lang && <Text style={styles.checkIcon}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
@@ -473,7 +545,51 @@ const styles = StyleSheet.create({
   },
   staticValue: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.4)',
+    marginRight: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  languageModalContent: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: '#1C1E2D',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  languageModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  languageOptionText: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  languageOptionActiveText: {
+    color: '#6C5DD3',
+    fontWeight: '600',
+  },
+  checkIcon: {
+    fontSize: 18,
+    color: '#6C5DD3',
   },
 });
 

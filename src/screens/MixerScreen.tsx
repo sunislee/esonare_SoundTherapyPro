@@ -20,6 +20,7 @@ import Video from 'react-native-video';
 import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL } from '../constants/audioAssets';
 import ToastUtil from '../utils/ToastUtil';
 import { BlurView } from '@react-native-community/blur';
+import { useTranslation } from 'react-i18next';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -44,12 +45,13 @@ interface SavedPreset {
 }
 
 export const MixerScreen = () => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const presetId = route.params?.presetId;
 
-  // 强制隐藏底部 TabBar
+
   useEffect(() => {
     const parent = navigation.getParent();
     if (parent) {
@@ -84,7 +86,7 @@ export const MixerScreen = () => {
     }))
   );
 
-  // 初始加载预设
+  // Initial load preset
   useEffect(() => {
     if (presetId) {
       loadPresetFromId(presetId);
@@ -106,7 +108,7 @@ export const MixerScreen = () => {
             }
             return { ...t, isActive: false };
           }));
-          ToastUtil.success(`已加载预设: ${preset.name}`);
+          ToastUtil.success(t('mixer.presetLoaded', { name: preset.name }));
         }
       }
     } catch (e) {
@@ -118,10 +120,10 @@ export const MixerScreen = () => {
   const [timeLeft, setTimeLeft] = useState<number | null>(null); // seconds
   const timerRef = useRef<any>(null);
   const [presetName, setPresetName] = useState('');
-  const [currentSceneName, setCurrentSceneName] = useState('PRO 混音实验室');
+  const [currentSceneName, setCurrentSceneName] = useState<string>(() => t('mixer.labTitle'));
   const [showSaveModal, setShowSaveModal] = useState(false);
 
-  // 睡眠定时器逻辑
+
   useEffect(() => {
     if (timeLeft !== null && timeLeft > 0) {
       timerRef.current = setInterval(() => {
@@ -131,7 +133,7 @@ export const MixerScreen = () => {
       stopAllTracks();
       setTimeLeft(null);
       setSleepTimer(null);
-      ToastUtil.success('睡眠定时结束，已停止播放');
+      ToastUtil.success(t('player.sleepTimer.finished'));
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -156,7 +158,7 @@ export const MixerScreen = () => {
 
   const savePreset = async () => {
     if (!presetName.trim()) {
-      Alert.alert('提示', '请输入预设名称');
+      Alert.alert(t('common.error'), t('mixer.presetNamePlaceholder'));
       return;
     }
 
@@ -166,7 +168,7 @@ export const MixerScreen = () => {
         .map(t => ({ id: t.id, volume: t.volume, isActive: true }));
       
       if (activeTracks.length === 0) {
-        Alert.alert('提示', '请至少开启一个音轨再保存');
+        Alert.alert(t('common.error'), t('mixer.emptyTracksError'));
         return;
       }
 
@@ -185,11 +187,11 @@ export const MixerScreen = () => {
         JSON.stringify([newPreset, ...existingPresets])
       );
 
-      ToastUtil.success('预设保存成功');
+      ToastUtil.success(t('common.success'));
       setShowSaveModal(false);
       setPresetName('');
     } catch (e) {
-      ToastUtil.error('保存失败');
+      ToastUtil.error(t('common.error'));
     }
   };
 
@@ -240,7 +242,7 @@ export const MixerScreen = () => {
         )}
         <View style={styles.trackHeader}>
           <Text style={[styles.trackTitle, track.isActive && { color: GOLD }]}>
-            {track.title}
+            {t(track.title)}
           </Text>
           <TouchableOpacity 
             onPress={() => toggleTrack(track.id)}
@@ -291,22 +293,22 @@ export const MixerScreen = () => {
       paddingTop: Platform.OS === 'ios' ? 50 : 30, 
     }}> 
       <ScrollView bounces={false} style={{ flex: 1 }}> 
-         {/* 顶部 Header：强制给高度，不要让它浮动 */} 
+ 
          <View style={{ height: 60, justifyContent: 'center', paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' }}> 
             <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 15 }}>
               <Icon name="chevron-left" size={28} color="#fff" />
             </TouchableOpacity>
-            <Text style={{ color: '#fff', fontSize: 18 }}>氛围点缀</Text> 
+            <Text style={{ color: '#fff', fontSize: 18 }}>{t('mixer.title')}</Text> 
          </View> 
   
-         {/* 场景名：强制 margin，绝对不准用 negative margin */} 
+ 
          <View style={{ marginTop: 40, paddingHorizontal: 20 }}> 
             <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#fff' }}> 
                {currentSceneName} 
             </Text> 
          </View> 
-
-         {/* 保存按钮：强制 marginTop，绝对不准重叠 */} 
+ 
+ 
          <TouchableOpacity 
            onPress={() => setShowSaveModal(true)}
            style={{ 
@@ -319,25 +321,25 @@ export const MixerScreen = () => {
              justifyContent: 'center' 
            }}
          > 
-            <Text style={{ color: '#000', fontWeight: 'bold' }}>点击保存当前混音</Text> 
+            <Text style={{ color: '#000', fontWeight: 'bold' }}>{t('mixer.saveConfig')}</Text> 
          </TouchableOpacity> 
-
-         {/* 混音列表区 */} 
+ 
+ 
          <View style={{ marginTop: 30, paddingHorizontal: 20, paddingBottom: 50 }}> 
             <View style={styles.tracksGrid}>
               {tracks.map(renderTrackCard)}
             </View>
          </View> 
       </ScrollView> 
-
+ 
       {showSaveModal && (
         <View style={styles.modalOverlay}>
           <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={10} />
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>保存当前配置</Text>
+            <Text style={styles.modalTitle}>{t('mixer.saveConfig')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="输入预设名称"
+              placeholder={t('mixer.presetNamePlaceholder')}
               placeholderTextColor="#555"
               value={presetName}
               onChangeText={setPresetName}
@@ -348,13 +350,13 @@ export const MixerScreen = () => {
                 onPress={() => setShowSaveModal(false)}
                 style={styles.modalBtn}
               >
-                <Text style={styles.modalBtnText}>取消</Text>
+                <Text style={styles.modalBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={savePreset}
                 style={[styles.modalBtn, styles.modalBtnPrimary]}
               >
-                <Text style={styles.modalBtnTextPrimary}>保存</Text>
+                <Text style={styles.modalBtnTextPrimary}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>
