@@ -20,17 +20,31 @@ const getSystemLanguage = (): string => {
       locale = NativeModules.SettingsManager?.settings?.AppleLanguages?.[0];
     } else {
       // Android
-      locale = (I18nManager as any).localeIdentifier;
-      // 备选方案
-      if (!locale) {
-        locale = (NativeModules.I18nManager as any)?.localeIdentifier || 
-                 (NativeModules.I18nManager as any)?.getConstants?.()?.localeIdentifier;
-      }
+      locale = NativeModules.I18nManager?.localeIdentifier || 
+               (I18nManager as any).localeIdentifier ||
+               NativeModules.I18nManager?.getConstants?.()?.localeIdentifier ||
+               NativeModules.SettingsManager?.settings?.localeIdentifier; // 有时 Android 也会在这个位置
     }
+
+    // 如果还是获取不到，尝试通过系统原生接口（部分版本可能需要）
+    if (!locale && Platform.OS === 'android') {
+      locale = NativeModules.Configuration?.locale || 
+               NativeModules.I18nUtil?.localeIdentifier;
+    }
+
+    // 最后的挣扎：从 I18nManager.getConstants() 再次尝试
+    if (!locale && Platform.OS === 'android') {
+      try {
+        const constants = (I18nManager as any).getConstants?.();
+        locale = constants?.localeIdentifier;
+      } catch (e) {}
+    }
+
+    console.log('[i18n] Detected raw locale:', locale);
 
     if (!locale) return 'en';
     
-    const lowerLocale = locale.toLowerCase();
+    const lowerLocale = locale.toLowerCase().replace('_', '-');
     if (lowerLocale.includes('zh')) return 'zh';
     if (lowerLocale.includes('ja')) return 'ja';
     return 'en';
