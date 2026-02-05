@@ -1,6 +1,14 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+    ext {
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 23
+        compileSdkVersion = 35
+        targetSdkVersion = 35
+        ndkVersion = "25.1.8937393"
+        kotlinVersion = "1.8.10"
+    }
   repositories {
     google()
     mavenCentral()
@@ -16,6 +24,15 @@ buildscript {
     classpath('com.facebook.react:react-native-gradle-plugin:0.73.5')
     classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10')
   }
+}
+
+// 强制所有任务禁用警告转错误，包括 buildscript 阶段
+allprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            allWarningsAsErrors = false
+        }
+    }
 }
 
 allprojects {

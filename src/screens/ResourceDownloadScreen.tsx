@@ -83,8 +83,8 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       
       <View style={styles.content}>
-        <Text style={styles.title}>{t('player.download.title')}</Text>
-        <Text style={styles.subtitle}>{t('player.download.subtitle')}</Text>
+        <Text style={styles.title}>{t('download.title')}</Text>
+        <Text style={styles.subtitle}>{t('download.subtitle')}</Text>
 
 
                 <View style={styles.progressBarContainer}>
@@ -103,12 +103,12 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
                         {formatMB(downloadInfo.receivedBytes)}MB / {formatMB(downloadInfo.totalBytes)}MB
                       </Text>
                     ) : (
-                      <Text style={styles.progressBytes}>{t('player.download.calculating')}</Text>
+                      <Text style={styles.progressBytes}>{t('download.calculating')}</Text>
                     )}
                   </View>
                 </View>
-
-                <Text style={styles.tip}>{t('player.download.tip')}</Text>
+  
+                <Text style={styles.tip}>{t('download.tip')}</Text>
               </View>
     </View> 
   ); 
