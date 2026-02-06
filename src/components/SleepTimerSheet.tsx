@@ -135,7 +135,7 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
           <View style={styles.handle} />
           
           <View style={styles.header}>
-            <Text style={styles.title}>{t('sleepTimer.title')}</Text>
+            <Text style={styles.title}>{t('player.sleepTimer.title')}</Text>
           </View>
 
           {remainingTime !== null ? (
@@ -168,12 +168,12 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
                 </Svg>
                 <View style={styles.timerTextContainer}>
                   <Text style={styles.timerValue}>{formatRemaining(remainingTime)}</Text>
-                  <Text style={styles.timerLabel}>{t('sleepTimer.remaining')}</Text>
+                  <Text style={styles.timerLabel}>{t('player.sleepTimer.remaining')}</Text>
                 </View>
               </View>
 
               <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTimer}>
-                <Text style={styles.cancelButtonText}>{t('sleepTimer.stop')}</Text>
+                <Text style={styles.cancelButtonText}>{t('player.sleepTimer.stop')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -184,14 +184,14 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
                   style={styles.optionButton}
                   onPress={() => handleSetTimer(mins)}
                 >
-                  <Text style={styles.optionLabel}>{t('sleepTimer.minutes', { count: mins })}</Text>
+                  <Text style={styles.optionLabel}>{t('player.sleepTimer.minutes', { count: mins })}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
           
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>{t('sleepTimer.close')}</Text>
+            <Text style={styles.closeButtonText}>{t('player.sleepTimer.close')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

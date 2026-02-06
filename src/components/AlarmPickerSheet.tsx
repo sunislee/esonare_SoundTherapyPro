@@ -196,17 +196,17 @@ export const AlarmPickerSheet: React.FC<Props> = ({
             <View style={styles.handleContainer}>
               <View style={styles.handle} />
             </View>
-            <Text style={styles.headerTitle}>{t('alarm.title')}</Text>
+            <Text style={styles.headerTitle}>{t('player.alarm.title')}</Text>
           </Animated.View>
         </PanGestureHandler>
         
         <View style={styles.content}>
           <View style={styles.pickerContainer}>
-            {renderNumberControl(selectedHour, adjustHour, t('alarm.hour'))}
+            {renderNumberControl(selectedHour, adjustHour, t('player.alarm.hour'))}
             <View style={styles.colonContainer}>
               <Text style={styles.colon}>:</Text>
             </View>
-            {renderNumberControl(selectedMinute, adjustMinute, t('alarm.minute'))}
+            {renderNumberControl(selectedMinute, adjustMinute, t('player.alarm.minute'))}
           </View>
 
           <View style={styles.footer}>
@@ -218,7 +218,7 @@ export const AlarmPickerSheet: React.FC<Props> = ({
                 onClose();
               }}
             >
-              <Text style={styles.clearButtonText}>{t('alarm.clear')}</Text>
+              <Text style={styles.clearButtonText}>{t('player.alarm.clear')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -229,7 +229,7 @@ export const AlarmPickerSheet: React.FC<Props> = ({
                 onClose();
               }}
             >
-              <Text style={styles.confirmButtonText}>{t('alarm.confirm')}</Text>
+              <Text style={styles.confirmButtonText}>{t('player.alarm.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>

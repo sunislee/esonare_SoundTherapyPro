@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import LottiePlayer from './LottiePlayer';
 
 interface ConfirmationModalProps {
   visible: boolean;
@@ -20,6 +21,7 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   isDestructive?: boolean; // If true, confirm button is red
+  showSuccessAnimation?: boolean; // If true, show meditation_success animation
 }
 
 const { width } = Dimensions.get('window');
@@ -33,6 +35,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   onCancel,
   isDestructive = false,
+  showSuccessAnimation = false,
 }) => {
   const { t } = useTranslation();
   const [showModal, setShowModal] = useState(visible);
@@ -97,6 +100,15 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 },
               ]}
             >
+              {showSuccessAnimation && (
+                <LottiePlayer
+                  source={require('../assets/animations/meditation_success.json')}
+                  style={styles.successAnimation}
+                  autoPlay={true}
+                  loop={false}
+                  hardwareAcceleration={true}
+                />
+              )}
               <Text style={styles.title}>{title}</Text>
               <Text style={styles.message}>{message}</Text>
 
@@ -159,6 +171,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 20,
     elevation: 10,
+  },
+  successAnimation: {
+    width: 120,
+    height: 120,
+    marginBottom: 8,
   },
   title: {
     fontSize: 18,
