@@ -203,6 +203,24 @@
       "minuteUnit": "分钟",
       "set_success": "定时器已设置：{{minutes}}分钟后停止播放",
       "finished": "定时结束，已停止播放"
+    },
+    "history": {
+      "title": "播放历史",
+      "lastPlayed": "上次播放: {{time}}",
+      "empty": "暂无播放记录"
+    },
+    "remix": {
+      "title": "我的混音",
+      "count": "已保存 {{count}} 个方案",
+      "deleteTitle": "删除方案",
+      "deleteMsg": "确定要删除这个混音方案吗？此操作无法撤销。",
+      "renameTitle": "重命名方案",
+      "date": "{{month}}月{{day}}日",
+      "types": {
+        "none": "纯净",
+        "rain": "雨声",
+        "fire": "篝火"
+      }
     }
   },
   "soundscape": {
@@ -217,6 +235,11 @@
   },
   "miniPlayer": {
     "nowPlaying": "正在播放"
+  },
+  "meditation": {
+    "success_title": "恭喜完成冥想",
+    "success_message": "您已成功完成本次音频疗愈之旅，愿您内心常驻平静。",
+    "success_confirm": "太棒了"
   },
   "error": {
     "boundaryTitle": "出错了",
@@ -258,19 +281,6 @@
     "calculating": "正在计算资源大小...",
     "tip": "初次使用请保持网络畅通，正在为您同步高品质音频"
   },
-  "remix": {
-    "title": "我的混音",
-    "count": "已保存 {{count}} 个方案",
-    "deleteTitle": "删除方案",
-    "deleteMsg": "确定要删除这个混音方案吗？此操作无法撤销。",
-    "renameTitle": "重命名方案",
-    "date": "{{month}}月{{day}}日",
-    "types": {
-      "none": "纯净",
-      "rain": "雨声",
-      "fire": "篝火"
-    }
-  },
   "nameEntry": {
     "title": "如何称呼您？",
     "subtitle": "让我们为您开启专属的治愈之旅",
@@ -289,13 +299,7 @@
   "landing": {
     "loading": "正在进入心灵空间..."
   },
-  "history": {
-    "title": "播放历史",
-    "lastPlayed": "上次播放: {{time}}",
-    "empty": "暂无播放记录"
-  },
   "settings": {
-    "header": "设置",
     "back": "返回",
     "language": "语言",
     "followSystem": "跟随系统",

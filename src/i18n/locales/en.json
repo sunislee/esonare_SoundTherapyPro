@@ -203,6 +203,24 @@
       "minuteUnit": "Minutes",
       "set_success": "Timer set: stopped playing after {{minutes}} minutes",
       "finished": "Timer ended, playback stopped"
+    },
+    "history": {
+      "title": "Playback History",
+      "lastPlayed": "Last played: {{time}}",
+      "empty": "No playback history"
+    },
+    "remix": {
+      "title": "My Mixes",
+      "count": "{{count}} Presets Saved",
+      "deleteTitle": "Delete Preset",
+      "deleteMsg": "Are you sure you want to delete this mix preset? This cannot be undone.",
+      "renameTitle": "Rename Preset",
+      "date": "{{month}}/{{day}}",
+      "types": {
+        "none": "Pure",
+        "rain": "Rain",
+        "fire": "Fire"
+      }
     }
   },
   "soundscape": {
@@ -217,6 +235,11 @@
   },
   "miniPlayer": {
     "nowPlaying": "Now Playing"
+  },
+  "meditation": {
+    "success_title": "Congratulations",
+    "success_message": "You have successfully completed this healing journey. May peace be with you.",
+    "success_confirm": "Great"
   },
   "error": {
     "boundaryTitle": "Oops!",
@@ -258,19 +281,6 @@
     "calculating": "Calculating resource size...",
     "tip": "Please stay connected for the first time, syncing high-quality audio"
   },
-  "remix": {
-    "title": "My Mixes",
-    "count": "{{count}} Presets Saved",
-    "deleteTitle": "Delete Preset",
-    "deleteMsg": "Are you sure you want to delete this mix preset? This cannot be undone.",
-    "renameTitle": "Rename Preset",
-    "date": "{{month}}/{{day}}",
-    "types": {
-      "none": "Pure",
-      "rain": "Rain",
-      "fire": "Fire"
-    }
-  },
   "nameEntry": {
     "title": "What's your name?",
     "subtitle": "Let's begin your exclusive healing journey",
@@ -288,11 +298,6 @@
   },
   "landing": {
     "loading": "Entering mind space..."
-  },
-  "history": {
-    "title": "Playback History",
-    "lastPlayed": "Last played: {{time}}",
-    "empty": "No playback history"
   },
   "settings": {
     "header": "Settings",

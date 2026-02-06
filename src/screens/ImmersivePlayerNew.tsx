@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { AmbientPickerSheet } from '../components/AmbientPickerSheet';
 import { BlurView } from '@react-native-community/blur';
 import TrackPlayer, { State } from 'react-native-track-player';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
@@ -300,6 +301,7 @@ const ImmersivePlayerNew = () => {
   const scrollProgress = useRef(Animated.add(position, scrollOffset)).current;
   
   const [ambientSheetVisible, setAmbientSheetVisible] = useState(false); // Default Hidden
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [currentAmbient, setCurrentAmbient] = useState<'none' | 'fireplace' | 'summer'>('none');
   const [showGuide, setShowGuide] = useState(false);
   const guideOpacity = useRef(new Animated.Value(0)).current;
@@ -409,7 +411,13 @@ const ImmersivePlayerNew = () => {
     };
     syncStatus();
 
+    // Listen for meditation completion (sleep timer finish)
+    const unsubscribeFinished = AudioService.addSleepTimerFinishedListener(() => {
+      setShowSuccessModal(true);
+    });
+
     return () => {
+      unsubscribeFinished();
       setTimeout(() => {
         // AudioService.stop();
       }, 800);
@@ -776,6 +784,16 @@ const ImmersivePlayerNew = () => {
             onRestoreMix={(mix) => {
               handleAmbientSelect(mix.ambientType as any);
             }}
+          />
+
+          <ConfirmationModal
+            visible={showSuccessModal}
+            title={t('meditation.success_title')}
+            message={t('meditation.success_message')}
+            confirmText={t('meditation.success_confirm')}
+            onConfirm={() => setShowSuccessModal(false)}
+            onCancel={() => setShowSuccessModal(false)}
+            showSuccessAnimation={true}
           />
         </>
       )}

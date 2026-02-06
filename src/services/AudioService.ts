@@ -33,6 +33,7 @@ class AudioService {
   private sleepEndTime: number | null = null;
   private initialSleepSeconds: number | null = null;
   private sleepTimerListeners = new Set<(remaining: number | null) => void>();
+  private sleepTimerFinishedListeners = new Set<() => void>();
   private sleepFadeEnabled = false;
   private sleepFadeStarted = false;
   
@@ -1021,6 +1022,7 @@ class AudioService {
           } catch (e) {}
         }
         ToastUtil.info(i18n.t('player.timer.finished'));
+        this.sleepTimerFinishedListeners.forEach(l => l());
       }
     }, 1000);
   }
@@ -1130,6 +1132,13 @@ class AudioService {
     
     return () => {
       this.sleepTimerListeners.delete(listener);
+    };
+  }
+
+  public addSleepTimerFinishedListener(listener: () => void): () => void {
+    this.sleepTimerFinishedListeners.add(listener);
+    return () => {
+      this.sleepTimerFinishedListeners.delete(listener);
     };
   }
 
@@ -1419,6 +1428,9 @@ class AudioService {
       
       this.currentScene = newScene; 
       this.currentBaseSceneId = newScene.id;
+
+      // Add to history
+      HistoryService.addToHistory(newScene.id);
 
       let resolvedUri = '';
       

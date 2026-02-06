@@ -116,7 +116,7 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
   }, [visible, fadeAnim, scaleAnim]);
 
   const handleRestartAudio = async () => {
-    ToastUtil.info(t('debug.restarting'));
+    ToastUtil.info(t('player.debug.restarting'));
     try {
       await AudioService.stop();
       
@@ -140,19 +140,19 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
 
       await AudioService.setupPlayer();
       
-      ToastUtil.success(t('debug.restartSuccess'));
+      ToastUtil.success(t('player.debug.restartSuccess'));
       onClose(); 
     } catch (e) {
       console.error('Restart audio failed', e);
-      const errorMessage = e instanceof Error ? e.message : t('debug.unknownError');
-      ToastUtil.error(t('debug.restartFailed', { error: errorMessage }));
+      const errorMessage = e instanceof Error ? e.message : t('player.debug.unknownError');
+      ToastUtil.error(t('player.debug.restartFailed', { error: errorMessage }));
     }
   };
 
   const toggleDebugLog = async (value: boolean) => {
     setDebugLogEnabled(value);
     await AsyncStorage.setItem('@debug_log_enabled', value ? 'true' : 'false');
-    ToastUtil.info(value ? t('debug.logEnabled') : t('debug.logDisabled'));
+    ToastUtil.info(value ? t('player.debug.logEnabled') : t('player.debug.logDisabled'));
   };
 
   if (!showModal) return null;
@@ -176,32 +176,32 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
                 },
               ]}
             >
-              <Text style={styles.title}>{t('debug.title')}</Text>
+              <Text style={styles.title}>{t('player.debug.title')}</Text>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('debug.restartTitle')}</Text>
+                <Text style={styles.sectionTitle}>{t('player.debug.restartTitle')}</Text>
                 <TouchableOpacity 
                   style={styles.restartButton}
                   onPress={handleRestartAudio}
                 >
-                  <Text style={styles.restartButtonText}>{t('debug.restartButton')}</Text>
+                  <Text style={styles.restartButtonText}>{t('player.debug.restartButton')}</Text>
                 </TouchableOpacity>
-                <Text style={styles.hint}>{t('debug.restartHint')}</Text>
+                <Text style={styles.hint}>{t('player.debug.restartHint')}</Text>
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('debug.monitorTitle')}</Text>
+                <Text style={styles.sectionTitle}>{t('player.debug.monitorTitle')}</Text>
                 <View style={styles.statsContainer}>
-                  <Text style={styles.statsText}>{t('debug.activeScene')}: <Text style={styles.statsValue}>{currentSceneId}</Text></Text>
-                  <Text style={styles.statsText}>{t('debug.nativePlayers')}: <Text style={styles.statsValue}>{allPlayersCount}</Text></Text>
+                  <Text style={styles.statsText}>{t('player.debug.activeScene')}: <Text style={styles.statsValue}>{currentSceneId}</Text></Text>
+                  <Text style={styles.statsText}>{t('player.debug.nativePlayers')}: <Text style={styles.statsValue}>{allPlayersCount}</Text></Text>
                 </View>
               </View>
 
               <View style={styles.section}>
                 <View style={styles.row}>
                   <View>
-                    <Text style={styles.sectionTitle}>{t('debug.logToggle')}</Text>
-                    <Text style={styles.hint}>{t('debug.logHint')}</Text>
+                    <Text style={styles.sectionTitle}>{t('player.debug.logToggle')}</Text>
+                    <Text style={styles.hint}>{t('player.debug.logHint')}</Text>
                   </View>
                   <Switch
                     value={debugLogEnabled}
@@ -216,7 +216,7 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
                 style={styles.closeButton}
                 onPress={onClose}
               >
-                <Text style={styles.closeButtonText}>{t('debug.close')}</Text>
+                <Text style={styles.closeButtonText}>{t('player.debug.close')}</Text>
               </TouchableOpacity>
             </Animated.View>
           </TouchableWithoutFeedback>

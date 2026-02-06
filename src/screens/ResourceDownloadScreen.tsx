@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, StatusBar, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
+import LottiePlayer from '../components/LottiePlayer';
 import { DownloadService, DownloadProgress } from '../services/DownloadService'; 
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
@@ -83,6 +84,13 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       
       <View style={styles.content}>
+        <LottiePlayer 
+          source={require('../assets/animations/download_loading.json')} 
+          style={styles.lottieLoader}
+          autoPlay={true}
+          loop={true}
+          hardwareAcceleration={true}
+        />
         <Text style={styles.title}>{t('download.title')}</Text>
         <Text style={styles.subtitle}>{t('download.subtitle')}</Text>
 
@@ -124,6 +132,11 @@ const styles = StyleSheet.create({
   content: {
     width: '80%',
     alignItems: 'center',
+  },
+  lottieLoader: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
   },
   title: {
     color: '#FFFFFF',
