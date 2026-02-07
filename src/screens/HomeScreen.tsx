@@ -25,6 +25,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
+import { BreathingLoader } from '../components/BreathingLoader';
 
 interface RainDropConfig {
   id: number;
@@ -131,7 +132,13 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
                   await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
                   // Explicitly call switchSoundscape with autoPlay: true to ensure playback on entry
                   AudioService.switchSoundscape(item, true);
-                  navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
+                  
+                  // Specific navigation for breathing scenes
+                  if (item.id === 'nature_deep_sea' || item.id === 'nature_misty_forest') {
+                    navigation.navigate('BreathDetail' as any, { sceneId: item.id });
+                  } else {
+                    navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
+                  }
                 }, 50);
               }}
           >
@@ -305,6 +312,7 @@ export const HomeScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
+            <BreathingLoader size={100} style={styles.headerLoader} />
             <Text style={styles.title}>{t('appTitle')}</Text>
             <Animated.View style={{ opacity: greetingFadeAnim }}>
               <Text style={styles.subtitle}>
@@ -367,6 +375,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     marginBottom: 40,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
+  },
+  headerLoader: {
+    marginBottom: 10,
   },
   title: { 
     fontSize: 32, 
