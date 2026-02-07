@@ -1534,10 +1534,20 @@ class AudioService {
   }
 
   public async syncNativeStatus(): Promise<void> {
-    const state = await TrackPlayer.getPlaybackState();
-    const activeTrack = await TrackPlayer.getActiveTrack();
-    if (activeTrack) {
-      this.updateAudioState(activeTrack.id as string, state.state);
+    try {
+      // 只有在初始化完成后才尝试同步，避免冷启动时的 unhandled promise rejection
+      if (!this.isInitialized) {
+        // console.log('[AudioService] Skipping syncNativeStatus: Player not initialized');
+        return;
+      }
+      const state = await TrackPlayer.getPlaybackState();
+      const activeTrack = await TrackPlayer.getActiveTrack();
+      if (activeTrack) {
+        this.updateAudioState(activeTrack.id as string, state.state);
+      }
+    } catch (e) {
+      // 静默处理同步错误，防止崩溃
+      // console.warn('[AudioService] syncNativeStatus failed:', e);
     }
   }
 
