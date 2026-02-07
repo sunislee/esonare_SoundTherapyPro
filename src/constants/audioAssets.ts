@@ -30,6 +30,8 @@ export const AMBIENT_RESOURCES = {
 export const AUDIO_MANIFEST = [ 
   { id: 'nature_ocean', filename: 'base/ocean.mp3', category: 'nature', title: 'scenes.nature_ocean.title', description: 'scenes.nature_ocean.desc', size: 5242880 }, 
   { id: 'nature_forest', filename: 'base/forest.mp3', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 4194304 }, 
+  { id: 'nature_deep_sea', filename: 'base/deep_sea.mp3', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 5242880 },
+  { id: 'nature_misty_forest', filename: 'base/forest.mp3', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 4194304 },
   { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 4194304 }, 
   { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 4194304 }, 
 

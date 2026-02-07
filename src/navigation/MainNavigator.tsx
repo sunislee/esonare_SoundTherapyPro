@@ -8,6 +8,7 @@ import { ResourceDownloadScreen } from '../screens/ResourceDownloadScreen';
 import NameEntryScreen from '../screens/NameEntryScreen';
 import { MainTabNavigator } from './MainTabNavigator';
 import ImmersivePlayerNew from '../screens/ImmersivePlayerNew';
+import BreathDetailScreen from '../screens/BreathDetailScreen';
 // import RemixSchemeManagerScreen from '../screens/RemixSchemeManagerScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -20,6 +21,7 @@ export type RootStackParamList = {
   NameEntry: undefined;
   MainTabs: undefined;
   ImmersivePlayer: { sceneId?: string } | undefined;
+  BreathDetail: { sceneId?: string } | undefined;
   RemixSchemeManager: undefined;
   History: undefined;
   Settings: undefined;
@@ -57,6 +59,15 @@ export function MainNavigator() {
       <Stack.Screen 
         name="ImmersivePlayer" 
         component={ImmersivePlayerNew} 
+        options={{
+          animation: 'slide_from_bottom',
+          gestureEnabled: true,
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
+        name="BreathDetail" 
+        component={BreathDetailScreen} 
         options={{
           animation: 'slide_from_bottom',
           gestureEnabled: true,
