@@ -39,3 +39,7 @@ temp/
 clean_source/
 audio_engine/
 exported_assets/
+
+# Local CocoaPods cache
+.cocoapods/
+ios/.cocoapods/

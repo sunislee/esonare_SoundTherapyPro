@@ -15,17 +15,18 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const TabIcon = ({ focused, source, routeName }: { focused: boolean; source: any; routeName: string }) => {
+const TabIcon = React.memo(({ focused, source, routeName }: { focused: boolean; source: any; routeName: string }) => {
   const animationRef = useRef<LottieView>(null);
 
   useEffect(() => {
     if (focused) {
-      // 物理级修复：执行 0-20 帧精华动效
-      animationRef.current?.play(0, 20);
+      console.log(`[Tab Debug] ${routeName} Focused, playing 0-30 frames!`);
+      // 强行激活交互反馈：执行 0-30 帧动画
+      animationRef.current?.play(0, 30);
     } else {
       animationRef.current?.reset();
     }
-  }, [focused]);
+  }, [focused, routeName]);
 
   // 根据路由定义需要上色的核心图层
   const iconLayers = routeName === 'HomeTab' 
@@ -62,7 +63,7 @@ const TabIcon = ({ focused, source, routeName }: { focused: boolean; source: any
       colorFilters={colorFilters}
     />
   );
-};
+});
 
 export const MainTabNavigator: React.FC = () => {
   const { t } = useTranslation();
