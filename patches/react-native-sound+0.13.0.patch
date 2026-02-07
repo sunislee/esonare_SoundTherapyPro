@@ -1353,7 +1353,7 @@ index 749ea14..3316eab 100644
  import com.facebook.react.bridge.ReactApplicationContext
  
 diff --git a/node_modules/react-native-sound/ios/RNSound.mm b/node_modules/react-native-sound/ios/RNSound.mm
-index 94b2335..4e78520 100644
+index 94b2335..b559b79 100644
 --- a/node_modules/react-native-sound/ios/RNSound.mm
 +++ b/node_modules/react-native-sound/ios/RNSound.mm
 @@ -98,6 +98,10 @@ - (NSString *)getDirectory:(NSSearchPathDirectory)directory {
@@ -1367,6 +1367,15 @@ index 94b2335..4e78520 100644
      return @{
          @"IsAndroid": @NO,
          @"MainBundlePath": [[NSBundle mainBundle] bundlePath],
+@@ -142,7 +146,7 @@ - (NSString *)modeForName:(NSString *)modeName {
+     return modes[modeName];
+ }
+ 
+-RCT_EXPORT_METHOD(setCategory:(NSString *)categoryName mixWithOthers:(NSNumber *)mixWithOthers) {
++RCT_EXPORT_METHOD(setCategory:(NSString *)categoryName mixWithOthers:(nonnull NSNumber *)mixWithOthers) {
+     AVAudioSession *session = [AVAudioSession sharedInstance];
+     NSString *category = [self categoryForName:categoryName];
+     
 @@ -177,7 +181,11 @@ - (NSString *)categoryForName:(NSString *)categoryName {
  
  #pragma mark - Audio Control Methods
