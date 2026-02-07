@@ -13,7 +13,6 @@ import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 // import AboutScreen from '../screens/AboutScreen';
-import AnimationTestScreen from '../screens/AnimationTestScreen';
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -26,7 +25,6 @@ export type RootStackParamList = {
   Settings: undefined;
   About: undefined;
   Mixer: { presetId?: string } | undefined;
-  AnimationTest: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -82,10 +80,6 @@ export function MainNavigator() {
       <Stack.Screen 
         name="About" 
         component={AboutScreen} 
-      />
-      <Stack.Screen 
-        name="AnimationTest" 
-        component={AnimationTestScreen} 
       />
       {/* 
       <Stack.Screen 
