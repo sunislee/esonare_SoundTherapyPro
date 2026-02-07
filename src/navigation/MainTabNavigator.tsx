@@ -4,13 +4,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
-import AnimationTestScreen from '../screens/AnimationTestScreen';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export type MainTabParamList = {
   HomeTab: undefined;
   ProfileTab: undefined;
-  TestTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -26,10 +24,8 @@ export const MainTabNavigator: React.FC = () => {
 
           if (route.name === 'HomeTab') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'ProfileTab') {
-            iconName = focused ? 'person' : 'person-outline';
           } else {
-            iconName = focused ? 'flask' : 'flask-outline';
+            iconName = focused ? 'person' : 'person-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -55,13 +51,6 @@ export const MainTabNavigator: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: t('tabs.profile'),
-        }}
-      />
-      <Tab.Screen
-        name="TestTab"
-        component={AnimationTestScreen}
-        options={{
-          tabBarLabel: '120Hz Test',
         }}
       />
     </Tab.Navigator>
