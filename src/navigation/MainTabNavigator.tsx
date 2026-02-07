@@ -5,10 +5,12 @@ import LottieView from 'lottie-react-native';
 import { useTranslation } from 'react-i18next';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import AnimationTestScreen from '../screens/AnimationTestScreen';
 
 export type MainTabParamList = {
   HomeTab: undefined;
   ProfileTab: undefined;
+  TestTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -73,8 +75,10 @@ export const MainTabNavigator: React.FC = () => {
 
           if (route.name === 'HomeTab') {
             source = require('../assets/animations/home_animation.json');
-          } else {
+          } else if (route.name === 'ProfileTab') {
             source = require('../assets/animations/profile_animation.json');
+          } else {
+            source = require('../assets/animations/download_loading.json');
           }
 
           return <TabIcon focused={focused} source={source} routeName={route.name} />;
@@ -100,6 +104,13 @@ export const MainTabNavigator: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: t('tabs.profile'),
+        }}
+      />
+      <Tab.Screen
+        name="TestTab"
+        component={AnimationTestScreen}
+        options={{
+          tabBarLabel: '120Hz Test',
         }}
       />
     </Tab.Navigator>
