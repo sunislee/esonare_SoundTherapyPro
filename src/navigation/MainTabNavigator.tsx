@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import LottieView from 'lottie-react-native';
 import { useTranslation } from 'react-i18next';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import AnimationTestScreen from '../screens/AnimationTestScreen';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export type MainTabParamList = {
   HomeTab: undefined;
@@ -15,74 +15,24 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const TabIcon = React.memo(({ focused, source, routeName }: { focused: boolean; source: any; routeName: string }) => {
-  const animationRef = useRef<LottieView>(null);
-
-  useEffect(() => {
-    if (focused) {
-      console.log(`[Tab Debug] ${routeName} Focused, playing 0-30 frames!`);
-      // 强行激活交互反馈：执行 0-30 帧动画
-      animationRef.current?.play(0, 30);
-    } else {
-      animationRef.current?.reset();
-    }
-  }, [focused, routeName]);
-
-  // 根据路由定义需要上色的核心图层
-  const iconLayers = routeName === 'HomeTab' 
-    ? ['Door', 'Bottom', 'Top'] 
-    : ['Layer 3 Outlines'];
-
-  const colorFilters = [
-    {
-      keypath: '**',
-      color: focused ? '#6C5DD3' : '#A1A1A1',
-    },
-    ...iconLayers.map(layer => ({
-      keypath: layer,
-      color: focused ? '#6C5DD3' : '#A1A1A1',
-    })),
-    {
-      keypath: 'Shape Layer 1', // 强制切除扩散背景大圆圈，放在最后确保覆盖 **
-      color: 'transparent',
-    }
-  ];
-
-  return (
-    <LottieView
-      ref={animationRef}
-      source={source}
-      style={{
-        width: 24,
-        height: 24,
-      }}
-      autoPlay={false}
-      loop={false}
-      progress={focused ? undefined : 0.8} // 未选中固定在第 20 帧（总帧数 25）
-      resizeMode="contain"
-      colorFilters={colorFilters}
-    />
-  );
-});
-
 export const MainTabNavigator: React.FC = () => {
   const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused }) => {
-          let source;
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: string;
 
           if (route.name === 'HomeTab') {
-            source = require('../assets/animations/home_animation.json');
+            iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'ProfileTab') {
-            source = require('../assets/animations/profile_animation.json');
+            iconName = focused ? 'person' : 'person-outline';
           } else {
-            source = require('../assets/animations/download_loading.json');
+            iconName = focused ? 'flask' : 'flask-outline';
           }
 
-          return <TabIcon focused={focused} source={source} routeName={route.name} />;
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#6C5DD3',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.4)',
