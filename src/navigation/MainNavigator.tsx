@@ -12,7 +12,8 @@ import ImmersivePlayerNew from '../screens/ImmersivePlayerNew';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
-// import { MixerScreen } from '../screens/MixerScreen';
+// import AboutScreen from '../screens/AboutScreen';
+import AnimationTestScreen from '../screens/AnimationTestScreen';
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -25,6 +26,7 @@ export type RootStackParamList = {
   Settings: undefined;
   About: undefined;
   Mixer: { presetId?: string } | undefined;
+  AnimationTest: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -32,7 +34,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function MainNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="Landing"
+      initialRouteName="MainTabs"
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
@@ -80,6 +82,10 @@ export function MainNavigator() {
       <Stack.Screen 
         name="About" 
         component={AboutScreen} 
+      />
+      <Stack.Screen 
+        name="AnimationTest" 
+        component={AnimationTestScreen} 
       />
       {/* 
       <Stack.Screen 

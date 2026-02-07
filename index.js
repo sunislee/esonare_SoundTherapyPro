@@ -8,9 +8,13 @@ import { name as appName } from './app.json';
 import { AudioProvider } from './src/context/AudioContext';
 import TrackPlayer from 'react-native-track-player';
 import PlaybackService from './src/services/PlaybackService';
+import EngineControl from './src/constants/EngineControl';
 
 // 导入国际化配置
 import './src/i18n';
+
+// 开发环境下或跳过 Landing 时强制允许引擎运行
+EngineControl.allow();
 
 function App() {
   return (
