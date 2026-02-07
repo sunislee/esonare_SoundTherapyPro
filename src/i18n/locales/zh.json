@@ -7,6 +7,18 @@
   },
   "categories": {
     "nature": "自然力量",
+    "nature_ocean": {
+      "title": "深海之蓝",
+      "desc": "沉入海底，听见内心的声音"
+    },
+    "nature_deep_sea": {
+      "title": "深海呼吸",
+      "desc": "伴随海浪节律，找回深度呼吸"
+    },
+    "nature_misty_forest": {
+      "title": "迷雾森林",
+      "desc": "漫步晨间森林，吸入纯净氧气"
+    },
     "healing": "深度疗愈",
     "brainwave": "脑波专注",
     "life": "生活角落"
