@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="SplashScreenTheme" parent="AppTheme">
+        <!-- 核心：锁定背景色 -->
+        <item name="android:windowSplashScreenBackground">@color/splashscreen_background</item>
+        <!-- 核心：强制指定动画图标为透明，避免显示默认图标或之前的“线圈” -->
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <!-- 核心：锁定行为 -->
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+    </style>
+</resources>

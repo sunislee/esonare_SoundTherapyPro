@@ -1,4 +1,4 @@
-package com.esonare.soundtherapypro.test
+package com.anonymous.soundtherapyapp
 
 import android.app.Application
 import android.content.res.Configuration
@@ -12,6 +12,8 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
+import com.google.firebase.FirebaseApp
+import com.tencent.bugly.crashreport.CrashReport
 
 class MainApplication : Application(), ReactApplication {
 
@@ -19,7 +21,7 @@ class MainApplication : Application(), ReactApplication {
     override fun getPackages(): List<ReactPackage> = 
         PackageList(this).packages.apply {
           // Packages that cannot be autolinked yet can be added manually here, for example:
-          // add(MyReactNativePackage())
+          add(CrashReportPackage())
         }
 
       override fun getJSMainModuleName(): String = "index"
@@ -38,6 +40,19 @@ class MainApplication : Application(), ReactApplication {
     SoLoader.init(this, false)
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       load()
+    }
+    initCrashReport()
+  }
+
+  private fun initCrashReport() {
+    val channel = BuildConfig.CHANNEL
+    if (channel == "googlePlay") {
+      // Firebase will auto-init if google-services.json exists, 
+      // but explicit init ensures it's ready
+      FirebaseApp.initializeApp(this)
+    } else if (channel == "domestic") {
+      // Initialize Bugly (Replace with your actual APP ID)
+      CrashReport.initCrashReport(applicationContext, "de02ce9158", BuildConfig.DEBUG)
     }
   }
 

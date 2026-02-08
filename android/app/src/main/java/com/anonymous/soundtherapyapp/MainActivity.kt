@@ -1,4 +1,4 @@
-package com.esonare.soundtherapypro.test
+package com.anonymous.soundtherapyapp
 
 import android.os.Build
 import android.os.Bundle
@@ -10,10 +10,7 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
-    // Set the theme to AppTheme BEFORE onCreate to support
-    // coloring the background, status bar, and navigation bar.
-    setTheme(R.style.AppTheme);
-    super.onCreate(savedInstanceState)
+    super.onCreate(null)
   }
 
   /**

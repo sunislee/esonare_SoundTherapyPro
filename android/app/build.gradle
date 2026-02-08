@@ -1,6 +1,10 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "com.google.gms.google-services"
+apply plugin: "com.google.firebase.crashlytics"
+
+apply from: new File(["node", "--print", "require.resolve('expo/package.json')"].execute(null, rootDir).text.trim(), "../scripts/autolinking.gradle")
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
@@ -62,7 +66,7 @@ react {
 /**
  * Set this to true in release builds to optimize the app using [R8](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization).
  */
-def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBuilds') ?: false).toBoolean()
+def enableMinifyInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -83,16 +87,30 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.esonare.soundtherapypro.test"
+    namespace "com.anonymous.soundtherapyapp"
     defaultConfig {
-        applicationId "com.soundtherapyapp"
+        applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 106
-        versionName "1.0.6"
+        versionCode 1
+        versionName "1.0.0"
         resConfigs "en", "zh", "ja"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
+    }
+
+    flavorDimensions "channel"
+    productFlavors {
+        googlePlay {
+            dimension "channel"
+            applicationIdSuffix ".google"
+            buildConfigField "String", "CHANNEL", "\"googlePlay\""
+        }
+        domestic {
+            dimension "channel"
+            applicationIdSuffix ".domestic"
+            buildConfigField "String", "CHANNEL", "\"domestic\""
+        }
     }
     signingConfigs {
         debug {
@@ -102,7 +120,7 @@ android {
             keyPassword 'android'
         }
         release {
-            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE') && file(MYAPP_RELEASE_STORE_FILE).exists()) {
                 storeFile file(MYAPP_RELEASE_STORE_FILE)
                 storePassword MYAPP_RELEASE_STORE_PASSWORD
                 keyAlias MYAPP_RELEASE_KEY_ALIAS
@@ -160,6 +178,15 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // Firebase for googlePlay flavor
+    googlePlayImplementation platform('com.google.firebase:firebase-bom:32.7.2')
+    googlePlayImplementation 'com.google.firebase:firebase-crashlytics'
+    googlePlayImplementation 'com.google.firebase:firebase-analytics'
+
+    // Bugly for domestic flavor
+    domesticImplementation 'com.tencent.bugly:crashreport:latest.release'
+    domesticImplementation 'com.tencent.bugly:nativecrashreport:latest.release'
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
