@@ -12,8 +12,6 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
-import com.google.firebase.FirebaseApp
-import com.tencent.bugly.crashreport.CrashReport
 
 class MainApplication : Application(), ReactApplication {
 
@@ -47,12 +45,21 @@ class MainApplication : Application(), ReactApplication {
   private fun initCrashReport() {
     val channel = BuildConfig.CHANNEL
     if (channel == "googlePlay") {
-      // Firebase will auto-init if google-services.json exists, 
-      // but explicit init ensures it's ready
-      FirebaseApp.initializeApp(this)
+      try {
+        val clazz = Class.forName("com.google.firebase.FirebaseApp")
+        val method = clazz.getMethod("initializeApp", android.content.Context::class.java)
+        method.invoke(null, this)
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
     } else if (channel == "domestic") {
-      // Initialize Bugly (Replace with your actual APP ID)
-      CrashReport.initCrashReport(applicationContext, "de02ce9158", BuildConfig.DEBUG)
+      try {
+        val clazz = Class.forName("com.tencent.bugly.crashreport.CrashReport")
+        val method = clazz.getMethod("initCrashReport", android.content.Context::class.java, String::class.java, Boolean::class.java)
+        method.invoke(null, applicationContext, "de02ce9158", BuildConfig.DEBUG)
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
     }
   }
 
