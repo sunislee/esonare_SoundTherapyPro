@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.esonare.soundtherapypro.test">
+  package="com.esonare.soundtherapypro">
 
   <uses-permission android:name="android.permission.INTERNET"/>
   <!-- OPTIONAL PERMISSIONS, REMOVE WHATEVER YOU DO NOT NEED -->

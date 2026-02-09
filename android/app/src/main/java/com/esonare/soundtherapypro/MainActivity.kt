@@ -1,4 +1,4 @@
-package com.esonare.soundtherapypro.test
+package com.esonare.soundtherapypro
 
 import android.os.Build
 import android.os.Bundle
