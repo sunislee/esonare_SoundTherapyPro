@@ -1,4 +1,4 @@
-package com.anonymous.soundtherapyapp
+package com.esonare.soundtherapypro.test
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
