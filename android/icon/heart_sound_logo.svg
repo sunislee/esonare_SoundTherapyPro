@@ -1,0 +1,28 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="paint0_linear" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF8C42"/>
+      <stop offset="100%" stop-color="#FF6B6B"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Circle -->
+  <circle cx="512" cy="512" r="480" fill="url(#paint0_linear)"/>
+  
+  <!-- Meditation Silhouette (Simplified) -->
+  <g stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Head -->
+    <circle cx="512" cy="380" r="50"/>
+    <!-- Body and Arms in Meditation Pose -->
+    <path d="M512 440V580M512 480L420 540L512 620L604 540L512 480Z" />
+    <!-- Crossed Legs -->
+    <path d="M420 620C380 620 340 650 340 680C340 710 400 730 512 730C624 730 684 710 684 680C684 650 644 620 604 620" />
+  </g>
+
+  <!-- Heartbeat / Sound Waves -->
+  <g stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Left Side -->
+    <path d="M150 512H240L260 460L290 564L320 420L350 600L380 512H440" />
+    <!-- Right Side -->
+    <path d="M584 512H644L674 420L704 600L734 460L764 564L784 512H874" />
+  </g>
+</svg>
