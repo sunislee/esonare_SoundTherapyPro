@@ -91,9 +91,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.anonymous.soundtherapyapp"
+    namespace "com.esonare.soundtherapypro.test"
     defaultConfig {
-        applicationId "com.anonymous.soundtherapyapp"
+        applicationId "com.esonare.soundtherapypro.test"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

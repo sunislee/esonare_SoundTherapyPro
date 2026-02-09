@@ -1,4 +1,4 @@
-package com.anonymous.soundtherapyapp
+package com.esonare.soundtherapypro.test
 
 import android.app.Application
 import android.content.res.Configuration

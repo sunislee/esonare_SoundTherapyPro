@@ -1,4 +1,4 @@
-package com.anonymous.soundtherapyapp
+package com.esonare.soundtherapypro.test
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
