@@ -1,1 +1,0 @@
-../../../../../node_modules/react-native-track-player/ios/RNTrackPlayer/RNTrackPlayerBridge.h
