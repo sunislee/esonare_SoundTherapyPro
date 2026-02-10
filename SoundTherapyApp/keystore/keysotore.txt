@@ -1,7 +1,0 @@
-文件本身：/android/app/my-release-key.keystore
-
-别名 (Alias)：my-key-alias
-
-密钥库密码 (Store Password)：esonare123
-
-密钥密码 (Key Password)：esonare123

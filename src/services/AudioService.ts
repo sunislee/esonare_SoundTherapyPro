@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import { State } from 'react-native-track-player';
-import { Scene, SCENES } from '../constants/scenes';
+import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 
 class AudioService {
   private static instance: AudioService;
@@ -191,14 +191,15 @@ class AudioService {
       await this.stopAll();
       this.activeSmallScenes.clear();
 
-      // 2. 联动激活逻辑：如果是呼吸类场景，强制激活交互按钮
+      // 2. 联动激活逻辑：如果是呼吸类场景，强制激活 8 个互动按钮
       const isBreathScene = scene.id.includes('breath') || (scene.title && scene.title.includes('呼吸'));
-      if (isBreathScene && scene.id !== 'interactive_breath') {
-        const breathInteractive = SCENES.find(s => s.id === 'interactive_breath');
-        if (breathInteractive) {
-          console.log('[AudioService] Auto-activating interactive_breath for context');
-          // 确保它被加入 activeSmallScenes，并开始播放
-          await this.toggleAmbience(breathInteractive, true);
+      if (isBreathScene) {
+        console.log('[AudioService] Auto-activating 8 interactive buttons for breath context');
+        for (const smallId of SMALL_SCENE_IDS) {
+          const smallScene = SCENES.find(s => s.id === smallId);
+          if (smallScene) {
+            await this.toggleAmbience(smallScene, true);
+          }
         }
       }
 
