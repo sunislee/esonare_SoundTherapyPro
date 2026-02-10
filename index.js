@@ -13,8 +13,7 @@ import EngineControl from './src/constants/EngineControl';
 // 导入国际化配置
 import './src/i18n';
 
-// 开发环境下或跳过 Landing 时强制允许引擎运行
-EngineControl.allow();
+// EngineControl.allow(); // 移除此处的手动允许，由 LandingScreen 控制
 
 function App() {
   return (

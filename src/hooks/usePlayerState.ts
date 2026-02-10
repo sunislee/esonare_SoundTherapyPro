@@ -14,7 +14,6 @@ export const usePlayerState = () => {
   useEffect(() => {
     // 订阅全局音频状态变化
     const unsubscribe = AudioService.addAudioStateListener((state) => {
-      console.log('[usePlayerState] Global State Update:', state);
       setIsPlaying(state.state === State.Playing || state.state === State.Buffering);
       setCurrentState(state.state);
       setCurrentTrackId(state.id);
@@ -24,11 +23,6 @@ export const usePlayerState = () => {
     const syncInitialState = async () => {
       try {
         const realIsPlaying = await AudioService.getRealIsPlaying();
-        const activeTrack = await AudioService.getCurrentActiveTrack();
-        console.log('[usePlayerState] Initial Sync:', {
-          realIsPlaying,
-          activeTrack: activeTrack?.id
-        });
         setIsPlaying(realIsPlaying);
       } catch (error) {
         console.error('[usePlayerState] Initial Sync Error:', error);
@@ -48,11 +42,9 @@ export const usePlayerState = () => {
     currentTrackId,
     // 提供直接操作全局播放器的方法
     pause: async () => {
-      console.log('[usePlayerState] Direct pause command');
       await AudioService.pause();
     },
     play: async () => {
-      console.log('[usePlayerState] Direct play command');
       await AudioService.play();
     },
     getRealIsPlaying: () => AudioService.getRealIsPlaying()

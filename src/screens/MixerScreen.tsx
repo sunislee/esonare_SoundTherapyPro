@@ -112,7 +112,7 @@ export const MixerScreen = () => {
         }
       }
     } catch (e) {
-      console.log('Failed to load preset', e);
+      // Failed to load preset
     }
   };
 

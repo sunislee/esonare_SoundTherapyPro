@@ -68,7 +68,7 @@ export class NotificationService {
       try {
         activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
       } catch (e) {
-        console.log('[NotificationService] Failed to get active track index');
+        // [NotificationService] Failed to get active track index
         return;
       }
       
@@ -91,7 +91,6 @@ export class NotificationService {
       });
     } catch (e) {
       // Swallow all notification bar update errors, do not allow affecting main UI thread
-      console.log('[NotificationService] Silent error:', e);
     }
   }
 }

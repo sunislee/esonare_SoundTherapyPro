@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,15 +11,14 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import LottieView from 'lottie-react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
 import AudioService from '../services/AudioService';
-import { SCENES, Scene } from '../constants/scenes';
-import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-track-player';
+import { SCENES } from '../constants/scenes';
+import { Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { RootStackParamList } from '../navigation/MainNavigator';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const events = [
   Event.PlaybackQueueEnded,
@@ -33,14 +32,12 @@ const events = [
   const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<BreathDetailRouteProp>();
-  const { isPlaying, currentState } = usePlayerState();
+  const { isPlaying } = usePlayerState();
   
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const lottieRef = useRef<LottieView>(null);
-  const successLottieRef = useRef<LottieView>(null);
 
   const sceneId = route.params?.sceneId || 'nature_deep_sea';
   const scene = SCENES.find(s => s.id === sceneId) || SCENES[0];
@@ -76,18 +73,8 @@ const events = [
     };
   }, []);
 
-  useEffect(() => {
-    if (isPlaying) {
-      lottieRef.current?.play();
-    } else {
-      lottieRef.current?.pause();
-    }
-  }, [isPlaying]);
-
   const handleMeditationComplete = () => {
     setShowSuccess(true);
-    // 播放成功动画
-    successLottieRef.current?.play();
     
     // 3秒后可以考虑自动返回或留在页面
     setTimeout(() => {
@@ -128,23 +115,17 @@ const events = [
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           <View style={styles.breathingContainer}>
             {isLoading ? (
-              <LottieView
-                source={require('../assets/animations/download_loading.json')}
-                autoPlay
-                loop
-                speed={1.5}
-                style={styles.loader}
-              />
+              <View style={styles.loaderPlaceholder}>
+                <Icon name="sync" size={40} color="rgba(255,255,255,0.4)" />
+              </View>
             ) : (
-              <LottieView
-                ref={lottieRef}
-                source={require('../assets/animations/download_loading.json')}
-                autoPlay={isPlaying}
-                loop
-                speed={0.8}
-                style={styles.breathingBall}
-                hardwareAccelerationAndroid
-              />
+              <View style={[styles.breathingCircle, isPlaying && styles.breathingCircleActive]}>
+                <Icon 
+                  name={scene.id.includes('nature') ? 'leaf' : 'heart'} 
+                  size={60} 
+                  color="#FFF" 
+                />
+              </View>
             )}
             {!isLoading && (
               <Text style={styles.guideText}>
@@ -171,19 +152,11 @@ const events = [
         </Animated.View>
       </SafeAreaView>
 
-      {/* 成功反馈全屏动效 */}
+      {/* 成功反馈全屏 */}
       {showSuccess && (
         <View style={styles.successOverlay}>
-          <LottieView
-            ref={successLottieRef}
-            source={require('../assets/animations/meditation_success.json')}
-            autoPlay
-            loop={false}
-            onAnimationFinish={() => {
-              // 动画结束后可以执行某些操作
-            }}
-            style={styles.successLottie}
-          />
+          <Icon name="checkmark-circle" size={100} color="#6C5DD3" />
+          <Text style={styles.successText}>{t('meditation.success_title')}</Text>
           <TouchableOpacity 
             style={styles.successCloseBtn}
             onPress={() => setShowSuccess(false)}
@@ -237,13 +210,25 @@ const styles = StyleSheet.create({
     width: width * 0.8,
     height: width * 0.8,
   },
-  breathingBall: {
-    width: '100%',
-    height: '100%',
-  },
-  loader: {
+  loaderPlaceholder: {
     width: 120,
     height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  breathingCircle: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  breathingCircleActive: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.5)',
   },
   guideText: {
     marginTop: 40,
@@ -272,9 +257,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 999,
   },
-  successLottie: {
-    width: width,
-    height: width,
+  successText: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 20,
   },
   successCloseBtn: {
     marginTop: 40,
