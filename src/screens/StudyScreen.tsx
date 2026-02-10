@@ -152,7 +152,7 @@ const StudyScreen: React.FC = () => {
 
         await AudioService.play();
       } catch (error) {
-        console.error('StudyScreen: Setup failed', error);
+        // StudyScreen: Setup failed
       } finally {
         setIsLoading(false);
       }
@@ -285,10 +285,7 @@ const StudyScreen: React.FC = () => {
                 {...({ pointerEvents: 'auto' } as any)}
                 style={styles.buttonContainer}
                 hitSlop={{ top: 30, bottom: 30, left: 30, right: 30 }}
-                onPress={() => {
-                  console.log('--- UI Clicked ---');
-                  togglePlayback();
-                }}
+                onPress={togglePlayback}
                 disabled={isLoading || isBuffering}>
               <Animated.View 
                 style={[styles.buttonOuterRing, {

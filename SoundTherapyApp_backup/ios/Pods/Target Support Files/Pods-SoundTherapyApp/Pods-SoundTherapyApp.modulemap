@@ -1,0 +1,6 @@
+module Pods_SoundTherapyApp {
+  umbrella header "Pods-SoundTherapyApp-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react'; 
-import { View, Text, StyleSheet, StatusBar, Dimensions } from 'react-native'; 
+import { View, Text, StyleSheet, StatusBar, Dimensions, Animated, Easing } from 'react-native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
-import LottiePlayer from '../components/LottiePlayer';
 import { DownloadService, DownloadProgress } from '../services/DownloadService'; 
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
@@ -19,14 +18,32 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   });
   
   const hapticFlags = useRef({ p25: false, p50: false, p75: false, p100: false });
+  const breathAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathAnim, {
+          toValue: 1,
+          duration: 2500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(breathAnim, {
+          toValue: 0,
+          duration: 2500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+
     const startDownload = async () => { 
       try { 
         await DownloadService.checkAndDownload((info) => { 
           setDownloadInfo(info);
           
-
           const p = Math.floor(info.progress * 100);
           if (p >= 25 && p < 50 && !hapticFlags.current.p25) {
             ReactNativeHapticFeedback.trigger('impactLight');
@@ -43,7 +60,6 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           }
         }); 
         
-
         setTimeout(async () => {
           await enterMainApp();
         }, 800);
@@ -71,7 +87,18 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     };
 
     startDownload(); 
+    return () => loop.stop();
   }, []); 
+
+  const iconScale = breathAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.1],
+  });
+
+  const iconOpacity = breathAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.7, 1],
+  });
 
   const formatMB = (bytes: number) => {
     return (bytes / (1024 * 1024)).toFixed(2);
@@ -84,13 +111,13 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       
       <View style={styles.content}>
-        <LottiePlayer 
-          source={require('../assets/animations/download_loading.json')} 
-          style={styles.lottieLoader}
-          autoPlay={true}
-          loop={true}
-          hardwareAcceleration={true}
-        />
+        <Animated.View style={{
+          transform: [{ scale: iconScale }],
+          opacity: iconOpacity,
+          marginBottom: 30
+        }}>
+          <Text style={{ fontSize: 100 }}>🧘‍♂️</Text>
+        </Animated.View>
         <Text style={styles.title}>{t('download.title')}</Text>
         <Text style={styles.subtitle}>{t('download.subtitle')}</Text>
 
@@ -133,10 +160,10 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
   },
-  lottieLoader: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+  loadingIcon: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
   },
   title: {
     color: '#FFFFFF',

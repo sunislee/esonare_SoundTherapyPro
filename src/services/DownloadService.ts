@@ -25,7 +25,6 @@ export const DownloadService = {
   async isResourceReady(): Promise<boolean> { 
     try { 
       const ready = await AsyncStorage.getItem(READY_KEY); 
-      console.log('--- [Startup Check] 1.0.7 Status:', ready); 
       return ready === 'true'; 
     } catch (e) { 
       return false; 
@@ -38,7 +37,6 @@ export const DownloadService = {
   async markAsReady() { 
     try {
       await AsyncStorage.setItem(READY_KEY, 'true'); 
-      console.log('--- [Save] 1.0.7 Resource ready flag saved ---'); 
     } catch (e) {
       console.error('Failed to save ready state', e);
     }
@@ -49,7 +47,6 @@ export const DownloadService = {
    */
   async checkAndDownload(onProgress: (p: DownloadProgress) => void) { 
     try { 
-      console.log('--- [Validate] Starting resource manifest check ---'); 
       
       let totalBytes = 0;
       let currentReceivedBytes = 0;
@@ -134,7 +131,6 @@ export const DownloadService = {
           await RNFS.mkdir(dirPath);
         }
 
-        console.log(`--- [Downloading] ${asset.filename} ---`);
         let lastFileReceived = 0;
 
         await RNFS.downloadFile({
@@ -198,7 +194,6 @@ export const DownloadService = {
           await RNFS.mkdir(dirPath);
         }
         
-        console.log(`[DownloadService] Downloading (${i + 1}/${retries}): ${asset.filename}`);
         await RNFS.downloadFile({
           fromUrl: url || `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`,
           toFile: localPath,

@@ -7,21 +7,10 @@
   },
   "categories": {
     "nature": "自然力量",
-    "nature_ocean": {
-      "title": "深海之蓝",
-      "desc": "沉入海底，听见内心的声音"
-    },
-    "nature_deep_sea": {
-      "title": "深海呼吸",
-      "desc": "伴随海浪节律，找回深度呼吸"
-    },
-    "nature_misty_forest": {
-      "title": "迷雾森林",
-      "desc": "漫步晨间森林，吸入纯净氧气"
-    },
     "healing": "深度疗愈",
     "brainwave": "脑波专注",
-    "life": "生活角落"
+    "life": "生活角落",
+    "interactive": "氛围点缀"
   },
   "actions": {
     "play": "播放",
@@ -66,10 +55,12 @@
     "artistDescription": "🎵 {{userName}}，正在深度疗愈"
   },
   "about": {
-    "header": "关于",
-    "kernelVersion": "内核版本",
-    "copyright": "© 2024 疗愈音泉. 保留所有权利。"
-  },
+      "header": "关于",
+      "kernelVersion": "内核版本",
+      "copyright": "© 2024 疗愈音泉. 保留所有权利。",
+      "privacy": "隐私政策",
+      "terms": "用户协议"
+    },
   "profile": {
     "loading": "加载中...",
     "defaultUser": "疗愈音泉用户",
@@ -357,6 +348,8 @@
   "scenes": {
     "nature_ocean": { "title": "深海", "desc": "深蓝色的宁静" },
     "nature_forest": { "title": "迷雾森林", "desc": "林间漫步" },
+    "nature_deep_sea": { "title": "深海呼吸", "desc": "伴随海浪节律，找回深度呼吸" },
+    "nature_misty_forest": { "title": "林间迷雾", "desc": "漫步晨间森林，吸入纯净氧气" },
     "nature_river": { "title": "晨间河畔", "desc": "清泉石上流" },
     "nature_night": { "title": "静谧部落", "desc": "远古的呼唤" },
     "life_rain_boat": { "title": "舟上雨", "desc": "微雨落孤舟" },

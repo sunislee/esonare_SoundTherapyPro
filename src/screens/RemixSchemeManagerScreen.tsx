@@ -196,13 +196,11 @@ const RemixSchemeManagerScreen: React.FC = () => {
 
   const saveSchemeName = async (newName: string) => {
     if (editingScheme && newName) {
-      console.log(`[RemixSchemeManager] Renaming scheme '${editingScheme.name}' to '${newName}'`);
       const newData = data.map((item) =>
         item.id === editingScheme.id ? { ...item, name: newName } : item
       );
       setData(newData);
       await AsyncStorage.setItem('@mix_presets', JSON.stringify(newData));
-      console.log('[RemixSchemeManager] Saved new name to AsyncStorage');
     }
     setEditModalVisible(false);
     setEditingScheme(null);

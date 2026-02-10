@@ -10,7 +10,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import LottiePlayer from './LottiePlayer';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface ConfirmationModalProps {
   visible: boolean;
@@ -101,13 +101,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               ]}
             >
               {showSuccessAnimation && (
-                <LottiePlayer
-                  source={require('../assets/animations/meditation_success.json')}
-                  style={styles.successAnimation}
-                  autoPlay={true}
-                  loop={false}
-                  hardwareAcceleration={true}
-                />
+                <View style={styles.successIconContainer}>
+                  <Icon name="checkmark-circle" size={80} color="#6C5DD3" />
+                </View>
               )}
               <Text style={styles.title}>{title}</Text>
               <Text style={styles.message}>{message}</Text>
@@ -172,10 +168,10 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  successAnimation: {
-    width: 120,
-    height: 120,
-    marginBottom: 8,
+  successIconContainer: {
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 18,
