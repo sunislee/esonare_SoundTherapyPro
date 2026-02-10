@@ -134,7 +134,13 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
   .map((item) => {
     const category = getCategory(item.category);
     const bg = backgrounds[category];
-    const resolvedBg = Image.resolveAssetSource(bg.source);
+    let resolvedBgUri = '';
+    try {
+      const resolved = Image.resolveAssetSource(bg.source);
+      resolvedBgUri = resolved ? resolved.uri : '';
+    } catch (e) {
+      console.warn(`[Scenes] Failed to resolve asset source for ${item.id}`, e);
+    }
     
     // 2. Explicitly specified big scene IDs (isBaseScene: true)
     const baseSceneIds = [
@@ -166,7 +172,7 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       id: item.id,
       title: item.title,
       audioUrl: `${REMOTE_RESOURCE_BASE_URL}${item.filename}`,
-      backgroundUrl: resolvedBg.uri,
+      backgroundUrl: resolvedBgUri,
       primaryColor: bg.color,
       audioSource: item.id,
       audioFile: null,

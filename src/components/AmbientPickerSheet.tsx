@@ -212,7 +212,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     await setAmbient(null);
 
     if (type === 'none') {
-      console.log(`[UI Click] Action: Stop Ambient Sound`);
       onSelect('none');
       return;
     }
@@ -225,8 +224,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     const targetId = idMap[type];
     
     if (targetId) {
-      const asset = AudioService.getAssetById(targetId);
-      console.log(`[UI Click] Title: ${asset?.title || type} -> Attempting to play ID: ${targetId} -> File: ${asset?.filename}`);
       await setAmbient(targetId);
     }
     
@@ -370,7 +367,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop: 10}}>
                 {savedMixes.map(mix => (
                   <TouchableOpacity key={mix.id} style={styles.presetItem} onPress={() => {
-                    console.log(`[UI Click] Applying Preset: ${mix.name} -> Ambient: ${mix.ambientType}`);
                     onRestoreMix(mix);
                     setMainVolume(mix.mainVolume); 
                     setFireplaceVolume(mix.fireVolume); 

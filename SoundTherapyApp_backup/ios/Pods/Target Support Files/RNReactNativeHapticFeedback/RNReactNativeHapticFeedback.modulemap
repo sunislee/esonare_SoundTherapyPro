@@ -1,0 +1,6 @@
+framework module RNReactNativeHapticFeedback {
+  umbrella header "RNReactNativeHapticFeedback-umbrella.h"
+
+  export *
+  module * { export * }
+}

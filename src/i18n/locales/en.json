@@ -9,7 +9,8 @@
     "nature": "Natural Power",
     "healing": "Deep Healing",
     "brainwave": "Focus Brainwaves",
-    "life": "Life Corners"
+    "life": "Life Corners",
+    "interactive": "Ambient Decor"
   },
   "actions": {
     "play": "Play",
@@ -346,6 +347,8 @@
   "scenes": {
     "nature_ocean": { "title": "Deep Ocean", "desc": "Deep blue tranquility" },
     "nature_forest": { "title": "Mist Forest", "desc": "A walk through the woods" },
+    "nature_deep_sea": { "title": "Deep Sea Breath", "desc": "Follow the waves to find your breath" },
+    "nature_misty_forest": { "title": "Forest Mist", "desc": "Morning forest walk with fresh oxygen" },
     "nature_river": { "title": "Morning River", "desc": "Clear stream over stones" },
     "nature_night": { "title": "Quiet Tribe", "desc": "Ancient callings" },
     "life_rain_boat": { "title": "Rain on Boat", "desc": "Light rain on a lonely boat" },

@@ -71,20 +71,17 @@ class AudioManagerService {
 
   private async handleEnterBackground() {
     if (this.backgroundPlaybackEnabled) {
-      console.log('[AudioManagerService] App entering background, continuing playback');
       // Ensure TrackPlayer continues playing in the background
       const currentState = await TrackPlayer.getState();
       if (currentState === State.Playing) {
         await this.ensureBackgroundPlayback();
       }
     } else {
-      console.log('[AudioManagerService] App entering background, pausing playback');
       await this.pauseAll();
     }
   }
 
   private async handleEnterForeground() {
-    console.log('[AudioManagerService] App entering foreground');
     // Restore playback state
     if (this.lastPlayedItem) {
       const currentState = await TrackPlayer.getState();
@@ -115,10 +112,8 @@ class AudioManagerService {
 
       this.setupTrackPlayerListeners();
       this.isInitialized = true;
-      console.log('[AudioManagerService] Initialized successfully');
-    } catch (error) {
-      console.error('[AudioManagerService] Initialization failed:', error);
-      throw error;
+    } catch (e) {
+      // Failed to initialize AudioManagerService
     }
   }
 

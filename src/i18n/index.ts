@@ -40,8 +40,6 @@ const getSystemLanguage = (): string => {
       } catch (e) {}
     }
 
-    console.log('[i18n] Detected raw locale:', locale);
-
     if (!locale) return 'en';
     
     const lowerLocale = locale.toLowerCase().replace('_', '-');

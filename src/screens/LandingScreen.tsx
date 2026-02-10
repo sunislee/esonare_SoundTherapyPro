@@ -63,14 +63,19 @@ export const LandingScreen = ({ navigation }: any) => {
           } else if (!userName && hasSkipped !== 'true') {
             navigation.replace('NameEntry');
           } else {
+            // 引擎权限必须在 setupPlayer 之前开启
             EngineControl.allow();
-            try { await AudioService.setupPlayer(); } catch (e) {}
+            
+            try { 
+              await AudioService.setupPlayer(); 
+            } catch (e) {
+              console.error('[Landing] AudioService init failed:', e);
+            }
             
 
             if (AudioService.isPlaying()) {
               const scene = AudioService.getCurrentScene();
               if (scene) {
-                console.log('[Landing] Audio is playing, jumping to ImmersivePlayer:', scene.id);
                 navigation.replace('ImmersivePlayer', { sceneId: scene.id });
                 return;
               }

@@ -34,7 +34,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function MainNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="MainTabs"
+      initialRouteName="Landing"
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,

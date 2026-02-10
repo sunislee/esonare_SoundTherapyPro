@@ -100,7 +100,7 @@ export const ProfileScreen = () => {
 
       setStats({ count: 12, duration: '4.5h' });
     } catch (e) {
-      console.log('Failed to load profile', e);
+      // Failed to load profile
     }
   };
 
@@ -111,7 +111,7 @@ export const ProfileScreen = () => {
         setSavedPresets(JSON.parse(presetsJson));
       }
     } catch (e) {
-      console.log('Failed to load presets', e);
+      // Failed to load presets
     }
   };
 

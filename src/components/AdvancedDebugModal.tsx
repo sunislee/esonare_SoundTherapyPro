@@ -55,25 +55,25 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
 
       // Update stats immediately and then periodically
       const updateStats = async () => {
-        const scene = AudioService.getCurrentScene();
-        setCurrentSceneId(scene?.id || 'none');
-        
-        const mod = getNativeAudioModule();
-        try {
-          if (mod && typeof mod.getPlayerCount === 'function') {
-            const count = await mod.getPlayerCount();
-            setAllPlayersCount(count);
-          } else {
-            // Fallback estimate
-            let count = 0;
-            if (AudioService.getCurrentState() === State.Playing) count++;
-            if ((AudioService as any).ambientSound) count++;
-            setAllPlayersCount(count);
-          }
-        } catch (e) {
-          console.error('Failed to get player count', e);
-        }
-      };
+    const scene = AudioService.getCurrentScene();
+    setCurrentSceneId(scene?.id || 'none');
+    
+    const mod = getNativeAudioModule();
+    try {
+      if (mod && typeof mod.getPlayerCount === 'function') {
+        const count = await mod.getPlayerCount();
+        setAllPlayersCount(count);
+      } else {
+        // Fallback estimate
+        let count = 0;
+        if (AudioService.getCurrentState() === State.Playing) count++;
+        if ((AudioService as any).ambientSound) count++;
+        setAllPlayersCount(count);
+      }
+    } catch (e) {
+      // Failed to get player count
+    }
+  };
 
       updateStats();
       interval = setInterval(updateStats, 2000);
@@ -129,7 +129,7 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
           
           if (typeof mod.getPlayerCount === 'function') {
             const count = await mod.getPlayerCount();
-            console.log(`[Restart] Native player count: ${count}`);
+            setAllPlayersCount(count);
           }
         } catch (nativeError) {
           console.warn('Native cleanup failed', nativeError);

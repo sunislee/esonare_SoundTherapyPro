@@ -5,7 +5,8 @@
     "nature": "自然の力",
     "healing": "深いヒーリング",
     "brainwave": "脳波集中",
-    "life": "生活の片隅"
+    "life": "生活の片隅",
+    "interactive": "環境音"
   },
   "actions": {
     "play": "再生",
@@ -86,5 +87,29 @@
       "confirm": "消去",
       "cancel": "キャンセル"
     }
+  },
+  "scenes": {
+    "nature_ocean": { "title": "深海", "desc": "深い青の静寂" },
+    "nature_forest": { "title": "霧の森", "desc": "森の中の散歩" },
+    "nature_deep_sea": { "title": "深海の呼吸", "desc": "波の音に合わせて、深い呼吸を取り戻す" },
+    "nature_misty_forest": { "title": "森の霧", "desc": "朝の森を歩き、澄んだ空気を吸い込む" },
+    "nature_river": { "title": "朝の川辺", "desc": "石の上を流れる清流" },
+    "nature_night": { "title": "静かな部族", "desc": "太古の呼び声" },
+    "life_rain_boat": { "title": "舟の上の雨", "desc": "小舟に落ちる微かな雨" },
+    "life_bookstore": { "title": "午後の書店", "desc": "紙と静寂" },
+    "life_fireplace": { "title": "暖炉", "desc": "温かい冬の夜" },
+    "life_summer": { "title": "夏の打ち上げ花火", "desc": "輝く瞬間" },
+    "healing_zen_bowl": { "title": "シンギングボウル", "desc": "一瞬の静寂" },
+    "healing_clean_space": { "title": "清らかな空間", "desc": "水のように流れる" },
+    "healing_crystal": { "title": "クリスタルボウル", "desc": "高周波エネルギーの共鳴" },
+    "brainwave_alpha": { "title": "アルファ波集中", "desc": "集中とリラックス" },
+    "brainwave_delta": { "title": "デルタ波入眠", "desc": "左右脳の同期" },
+    "interactive_white_noise": { "title": "ホワイトノイズ", "desc": "深い集中" },
+    "interactive_wind_chime": { "title": "風鈴", "desc": "空霊の響き" },
+    "interactive_breath": { "title": "呼吸", "desc": "マインドフルネスガイド" },
+    "interactive_apple": { "title": "リンゴをかじる", "desc": "ストレス解消音" },
+    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" },
+    "interactive_rain": { "title": "雨を聴く", "desc": "窓の外の雨" },
+    "interactive_ocean": { "title": "海を眺める", "desc": "波の音" }
   }
 }

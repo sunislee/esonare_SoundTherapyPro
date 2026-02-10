@@ -13,12 +13,10 @@ class EngineControl {
   }
 
   public allow() {
-    console.log('[EngineControl] Engine execution is now ALLOWED');
     this.allowed = true;
   }
 
   public disallow() {
-    console.log('[EngineControl] Engine execution is now BLOCKED');
     this.allowed = false;
   }
 

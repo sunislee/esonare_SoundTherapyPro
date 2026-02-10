@@ -55,7 +55,6 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Sync state from AudioService
   useEffect(() => {
     const unsubscribeState = AudioService.addAudioStateListener((state) => {
-      console.log('[AudioContext] State Update:', state);
       setActiveSoundId(state.id);
       setPlaybackState(state.state);
       setCurrentScene(AudioService.getCurrentScene());
@@ -64,7 +63,6 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
 
     const unsubscribeSmallScenes = AudioService.addSmallScenesListener((ids) => {
-      console.log('[AudioContext] Small Scenes Update:', ids);
       setActiveSmallSceneIds(ids);
     });
 
@@ -96,7 +94,6 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const setAmbient = useCallback(async (id: string | null) => {
-    console.log('🔴 PHYSICAL_DEBUG: FINAL_NUCLEAR_FIX - Context atomic transition start:', id);
     if (id) {
       await AudioService.playAmbient(id);
     } else {
@@ -108,8 +105,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return AudioService.getAmbientVolumeById(id);
   }, []);
 
-  const toggleAmbience = useCallback(async (scene: Scene) => {
-    console.log(`[AudioContext] toggleAmbience: ${scene.id}`);
+  const toggleAmbience = useCallback(async (scene: Scene, fromSource: 'Floating Icon' | 'Bottom List' = 'Floating Icon') => {
     await AudioService.toggleAmbience(scene);
   }, []);
 

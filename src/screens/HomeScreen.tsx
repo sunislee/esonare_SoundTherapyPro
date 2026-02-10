@@ -25,7 +25,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
-import { BreathingLoader } from '../components/BreathingLoader';
 
 interface RainDropConfig {
   id: number;
@@ -146,8 +145,12 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
               <View style={[styles.cardBg, { backgroundColor: item.primaryColor }]} />
               <View style={styles.cardContent}>
                 <View>
-                  <Text style={styles.cardTitle}>{t(`scenes.${item.id}.title`)}</Text>
-                  <Text style={styles.cardSubtitle}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
+                  <Text style={styles.cardTitle}>
+                    {t(`scenes.${item.id}.title`, { defaultValue: item.title || item.id.split('_').pop()?.replace(/^\w/, (c: string) => c.toUpperCase()) || '神秘深海' })}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>
+                    {t(`categories.${item.category.toLowerCase()}`, { defaultValue: item.category })}
+                  </Text>
                 </View>
                 <TouchableOpacity
                   style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]}
@@ -269,17 +272,17 @@ export const HomeScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Singleton instance check
-    console.log('🔄 [HomeScreen] AudioService Instance Check: Using default exported instance');
-    console.log('🔄 [HomeScreen] AudioService Instance Type:', typeof AudioService);
-    console.log('🔄 [HomeScreen] AudioService Has Pause Method:', typeof AudioService.pause === 'function');
-
     // Initialize Audio
     const init = async () => {
       try {
         await AudioService.setupPlayer();
-        await AudioService.loadAudio(SCENES[0], false);
-      } finally {
+        
+        // 如果当前没有在播放，则预加载第一个场景（不自动播放）
+        if (!AudioService.isPlaying()) {
+          await AudioService.loadAudio(SCENES[0], false);
+        }
+      } catch (e) {
+        console.warn('[HomeScreen] Audio init failed:', e);
       }
     };
     init().catch(() => {});
@@ -312,7 +315,7 @@ export const HomeScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <BreathingLoader size={100} style={styles.headerLoader} />
+            <Icon name="leaf-outline" size={40} color="rgba(255,255,255,0.4)" style={styles.headerIcon} />
             <Text style={styles.title}>{t('appTitle')}</Text>
             <Animated.View style={{ opacity: greetingFadeAnim }}>
               <Text style={styles.subtitle}>
@@ -376,7 +379,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
   },
-  headerLoader: {
+  headerIcon: {
     marginBottom: 10,
   },
   title: { 
