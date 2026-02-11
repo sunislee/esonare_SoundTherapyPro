@@ -1,6 +1,6 @@
 import { AppRegistry } from 'react-native';
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { MainNavigator } from './src/navigation/MainNavigator';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -13,6 +13,15 @@ import EngineControl from './src/constants/EngineControl';
 // 导入国际化配置
 import './src/i18n';
 
+// 自定义主题，强制背景色为黑色，防止白屏闪烁
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#000000',
+  },
+};
+
 // EngineControl.allow(); // 移除此处的手动允许，由 LandingScreen 控制
 
 function App() {
@@ -20,7 +29,7 @@ function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AudioProvider>
-          <NavigationContainer>
+          <NavigationContainer theme={MyTheme}>
             <MainNavigator />
           </NavigationContainer>
         </AudioProvider>
@@ -29,5 +38,5 @@ function App() {
   );
 }
 
-AppRegistry.registerComponent("SoundTherapyPro", () => App);
+AppRegistry.registerComponent(appName, () => App);
 TrackPlayer.registerPlaybackService(() => PlaybackService);

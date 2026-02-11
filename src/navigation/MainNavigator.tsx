@@ -9,6 +9,7 @@ import NameEntryScreen from '../screens/NameEntryScreen';
 import { MainTabNavigator } from './MainTabNavigator';
 import ImmersivePlayerNew from '../screens/ImmersivePlayerNew';
 import BreathDetailScreen from '../screens/BreathDetailScreen';
+import MiniPlayer from '../components/MiniPlayer';
 // import RemixSchemeManagerScreen from '../screens/RemixSchemeManagerScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -33,76 +34,79 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function MainNavigator() {
   return (
-    <Stack.Navigator
-      initialRouteName="Landing"
-      screenOptions={{
-        headerShown: false,
-        gestureEnabled: true,
-      }}
-    >
-      <Stack.Screen 
-        name="Landing" 
-        component={LandingScreen} 
-      />
-      <Stack.Screen 
-        name="Download" 
-        component={ResourceDownloadScreen} 
-      />
-      <Stack.Screen 
-        name="NameEntry" 
-        component={NameEntryScreen} 
-      />
-      <Stack.Screen 
-        name="MainTabs" 
-        component={MainTabNavigator} 
-      />
-      <Stack.Screen 
-        name="ImmersivePlayer" 
-        component={ImmersivePlayerNew} 
-        options={{
-          animation: 'slide_from_bottom',
+    <>
+      <Stack.Navigator
+        initialRouteName="Landing"
+        screenOptions={{
+          headerShown: false,
           gestureEnabled: true,
-          headerShown: false,
         }}
-      />
-      <Stack.Screen 
-        name="BreathDetail" 
-        component={BreathDetailScreen} 
-        options={{
-          animation: 'slide_from_bottom',
-          gestureEnabled: true,
-          headerShown: false,
-        }}
-      />
-      {/* 
-      <Stack.Screen 
-        name="RemixSchemeManager" 
-        component={RemixSchemeManagerScreen} 
-      />
-      */}
-      <Stack.Screen 
-        name="History" 
-        component={HistoryScreen} 
-      />
-      <Stack.Screen 
-        name="Settings" 
-        component={SettingsScreen} 
-      />
-      <Stack.Screen 
-        name="About" 
-        component={AboutScreen} 
-      />
-      {/* 
-      <Stack.Screen 
-        name="Mixer" 
-        component={MixerScreen} 
-        options={{
-          headerShown: false,
-          presentation: 'modal',
-          tabBarStyle: { display: 'none' }, // 物理隔离 TabBar，防止穿透
-        }}
-      />
-      */}
-    </Stack.Navigator>
+      >
+        <Stack.Screen 
+          name="Landing" 
+          component={LandingScreen} 
+        />
+        <Stack.Screen 
+          name="Download" 
+          component={ResourceDownloadScreen} 
+        />
+        <Stack.Screen 
+          name="NameEntry" 
+          component={NameEntryScreen} 
+        />
+        <Stack.Screen 
+          name="MainTabs" 
+          component={MainTabNavigator} 
+        />
+        <Stack.Screen 
+          name="ImmersivePlayer" 
+          component={ImmersivePlayerNew} 
+          options={{
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="BreathDetail" 
+          component={BreathDetailScreen} 
+          options={{
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            headerShown: false,
+          }}
+        />
+        {/* 
+        <Stack.Screen 
+          name="RemixSchemeManager" 
+          component={RemixSchemeManagerScreen} 
+        />
+        */}
+        <Stack.Screen 
+          name="History" 
+          component={HistoryScreen} 
+        />
+        <Stack.Screen 
+          name="Settings" 
+          component={SettingsScreen} 
+        />
+        <Stack.Screen 
+          name="About" 
+          component={AboutScreen} 
+        />
+        {/* 
+        <Stack.Screen 
+          name="Mixer" 
+          component={MixerScreen} 
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+            tabBarStyle: { display: 'none' }, // 物理隔离 TabBar，防止穿透
+          }}
+        />
+        */}
+      </Stack.Navigator>
+      <MiniPlayer />
+    </>
   );
 }
