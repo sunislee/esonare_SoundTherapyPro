@@ -149,26 +149,35 @@ export const ProfileScreen = () => {
 
   const openGallery = async () => {
     try {
-      AudioService.setPickingFile(true);
       const result = await launchImageLibrary({
         mediaType: 'photo',
         selectionLimit: 1,
         quality: 0.8,
       });
 
-      if (result.assets?.[0]?.uri) {
-        saveAvatar(result.assets[0].uri);
+      if (result.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (result.errorCode) {
+        console.log('ImagePicker Error: ', result.errorMessage);
+      } else if (result.assets?.[0]?.uri) {
+        const selectedUri = result.assets[0].uri;
+        saveAvatar(selectedUri);
+        // 如果有上传逻辑，可以在这里调用 uploadAvatar(selectedUri);
       }
     } catch (error) {
       console.error('Pick image error:', error);
-    } finally {
-      AudioService.setPickingFile(false);
     }
   };
 
   const saveAvatar = async (uri: string) => {
-    setAvatarUri(uri);
-    await AsyncStorage.setItem('USER_AVATAR', uri);
+    try {
+      setAvatarUri(uri);
+      await AsyncStorage.setItem('USER_AVATAR', uri);
+      ToastUtil.success(t('actions.updateSuccess'));
+    } catch (e) {
+      console.error('Save avatar error:', e);
+      ToastUtil.error(t('actions.saveFailed'));
+    }
   };
 
   const handleOpenRename = () => {
@@ -297,7 +306,6 @@ export const ProfileScreen = () => {
 
   const openBackgroundPicker = async () => {
     try {
-      AudioService.setPickingFile(true);
       const result = await launchImageLibrary({
         mediaType: 'photo',
         selectionLimit: 1,
@@ -315,8 +323,6 @@ export const ProfileScreen = () => {
     } catch (error) {
       console.error('Pick image error:', error);
       ToastUtil.error(t('settings.toast.saveFailed'));
-    } finally {
-      AudioService.setPickingFile(false);
     }
   };
 
