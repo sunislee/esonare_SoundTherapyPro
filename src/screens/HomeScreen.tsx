@@ -44,43 +44,58 @@ const ITEM_WIDTH = width - 40;
 const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused }: any) => {
   // ... (keep existing implementation for big cards)
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const breathAnim = useRef(new Animated.Value(0)).current;
+  const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
   
   const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
   const { t } = useTranslation();
 
-  const combinedScale = Animated.multiply(
-    scaleAnim,
-    breathAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [1, 1.05],
-    })
-  );
+  // 基础缩放动画
+  const combinedScale = scaleAnim;
 
   useEffect(() => {
     if (isFocused) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(breathAnim, {
-            toValue: 1,
-            duration: 800,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(breathAnim, {
-            toValue: 0,
-            duration: 800,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ]),
-        { iterations: 2 }
-      ).start();
+      // 执行 2 次缩放动画（1 -> 1.05 -> 1）
+      Animated.sequence([
+        Animated.timing(highlightAnim, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 0,
+          duration: 800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 0,
+          duration: 800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
-      breathAnim.setValue(0);
+      highlightAnim.setValue(0);
     }
   }, [isFocused]);
+
+  const highlightScale = highlightAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.05],
+  });
+
+  const highlightOpacity = highlightAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.6],
+  });
 
   const handlePressIn = () => {
     setIsPressed(true);
@@ -102,11 +117,6 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
     }).start();
   };
 
-  const focusGlowOpacity = breathAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 0.4],
-  });
-
   return (
     <View style={styles.cardWrapper}>
       <Animated.View 
@@ -115,7 +125,15 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
       >
         <View style={styles.cardClip}>
           {isFocused && (
-            <Animated.View style={[styles.focusGlow, { opacity: focusGlowOpacity }]} />
+            <Animated.View 
+              style={[
+                styles.memoryHighlight, 
+                { 
+                  opacity: highlightOpacity,
+                  transform: [{ scale: highlightScale }]
+                }
+              ]} 
+            />
           )}
           
           {isPressed && <View style={styles.pressOverlay} />}
@@ -205,6 +223,25 @@ export const HomeScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
 
+  useFocusEffect(
+    useCallback(() => {
+      const checkLastViewed = async () => {
+        try {
+          const lastId = await AsyncStorage.getItem('LAST_VIEWED_SCENE_ID');
+          if (lastId) {
+            setFocusedSceneId(lastId);
+            // 3秒后清除高亮状态，确保下次进入或刷新时逻辑正确
+            setTimeout(() => setFocusedSceneId(null), 3000);
+          }
+        } catch (e) {
+          console.error('Failed to load last viewed scene', e);
+        }
+      };
+      
+      checkLastViewed();
+    }, [])
+  );
+
   // 1. Category logic definition
   const categories = ['Nature', 'Life', 'Healing', 'Brainwave'];
   const categoryLabels: Record<string, string> = {
@@ -274,7 +311,7 @@ export const HomeScreen: React.FC = () => {
   // Cold start sync
   useEffect(() => {
     syncNativeStatus();
-  }, [syncNativeStatus]);
+  }, []);
 
   useEffect(() => {
     // Initialize RainDrops configuration
@@ -452,6 +489,18 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 20,
     backgroundColor: 'transparent',
+  },
+  memoryHighlight: {
+    position: 'absolute',
+    top: 10,
+    bottom: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 50, // 椭圆效果
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+    zIndex: 3,
   },
   focusGlow: {
     position: 'absolute',
