@@ -9,7 +9,9 @@ import {
   Dimensions,
   Platform,
   InteractionManager,
-  Easing
+  Easing,
+  Image,
+  Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -25,6 +27,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 interface RainDropConfig {
   id: number;
@@ -129,14 +132,12 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             onPress={() => {
                 setTimeout(async () => {
                   await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
-                  // Explicitly call switchSoundscape with autoPlay: true to ensure playback on entry
-                  AudioService.switchSoundscape(item, true);
                   
                   // Specific navigation for breathing scenes
-                  if (item.id === 'nature_deep_sea' || item.id === 'nature_misty_forest') {
-                    navigation.navigate('BreathDetail' as any, { sceneId: item.id });
+                  if (item.id === 'nature_deep_sea' || item.id === 'nature_misty_forest' || item.id.includes('breath')) {
+                    navigation.navigate('BreathDetail', { sceneId: item.id });
                   } else {
-                    navigation.navigate('ImmersivePlayer' as any, { sceneId: item.id });
+                    navigation.navigate('ImmersivePlayer', { sceneId: item.id });
                   }
                 }, 50);
               }}
@@ -175,6 +176,28 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isPlaying, currentBaseSceneId, togglePlayback, syncNativeStatus } = useAudio();
   const { t } = useTranslation();
+
+  // 1. 强制尽早预加载核心背景图
+  useMemo(() => {
+    const prefetchIds = ['nature_deep_sea', 'nature_misty_forest', 'nature_ocean', 'nature_forest'];
+    const prefetchScenes = SCENES.filter(s => prefetchIds.includes(s.id));
+    
+    prefetchScenes.forEach(scene => {
+      let uri = '';
+      if (scene.backgroundSource && scene.backgroundSource.uri) {
+        uri = scene.backgroundSource.uri;
+      } else if (typeof scene.backgroundSource === 'number') {
+        const asset = Image.resolveAssetSource(scene.backgroundSource);
+        uri = asset ? asset.uri : '';
+      }
+
+      if (uri) {
+        Image.prefetch(uri)
+          .then(() => console.log(`[HomeScreen] Prefetch Success: ${scene.id} (${uri})`))
+          .catch(err => console.warn(`[HomeScreen] Prefetch Failed: ${scene.id}`, err));
+      }
+    });
+  }, []);
   
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');

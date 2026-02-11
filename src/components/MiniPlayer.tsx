@@ -27,11 +27,11 @@ const MiniPlayer = () => {
   const [currentScene, setCurrentScene] = useState<Scene | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
-  // Use navigation state to hide MiniPlayer on ImmersivePlayerScreen
+  // Use navigation state to hide MiniPlayer on ImmersivePlayerScreen and BreathDetailScreen
   const isPlayerScreen = useNavigationState((state) => {
     if (!state) return false;
     const currentRoute = state.routes[state.index];
-    return currentRoute.name === 'ImmersivePlayer';
+    return currentRoute.name === 'ImmersivePlayer' || currentRoute.name === 'BreathDetail';
   });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -51,7 +51,7 @@ const MiniPlayer = () => {
     Animated.timing(autoHideAnim, {
       toValue: 1,
       duration: 300,
-      useNativeDriver: true,
+      useNativeDriver: true, // Now only transform/opacity
     }).start();
 
     // Start timer to hide
@@ -61,7 +61,7 @@ const MiniPlayer = () => {
         Animated.timing(autoHideAnim, {
           toValue: 0,
           duration: 500,
-          useNativeDriver: true,
+          useNativeDriver: true, // Now only transform/opacity
         }).start();
       }
     }, 5000);
@@ -95,7 +95,9 @@ const MiniPlayer = () => {
       setIsPlaying(AudioService.getCurrentState() === State.Playing);
     }
 
-    return sub;
+    return () => {
+      sub();
+    };
   }, []);
 
   useEffect(() => {
@@ -107,7 +109,7 @@ const MiniPlayer = () => {
     Animated.timing(fadeAnim, {
       toValue: shouldShow ? 1 : 0,
       duration: 300,
-      useNativeDriver: true,
+      useNativeDriver: true, // Now only transform/opacity
     }).start();
     
     if (shouldShow) {
@@ -138,7 +140,7 @@ const MiniPlayer = () => {
     
     Animated.spring(widthAnim, {
       toValue: targetValue,
-      useNativeDriver: false, // width change needs JS driver or LayoutAnimation
+      useNativeDriver: true, // Now using transform: scaleX, so native driver is supported
       friction: 8,
       tension: 40
     }).start();
@@ -149,8 +151,15 @@ const MiniPlayer = () => {
     if (isCollapsed) {
       // If collapsed, expand first instead of navigating
       toggleCollapse({ stopPropagation: () => {} });
-    } else {
-      navigation.navigate('ImmersivePlayer');
+    } else if (currentScene) {
+      // Determine destination based on scene type
+      if (currentScene.id === 'nature_deep_sea' || 
+          currentScene.id === 'nature_misty_forest' || 
+          currentScene.id.includes('breath')) {
+        navigation.navigate('BreathDetail', { sceneId: currentScene.id });
+      } else {
+        navigation.navigate('ImmersivePlayer', { sceneId: currentScene.id });
+      }
     }
   };
 
@@ -164,7 +173,7 @@ const MiniPlayer = () => {
     resetAutoHideTimer();
   };
 
-  if (!currentScene) return null; // Render nothing if no track loaded ever
+  if (!currentScene || isPlayerScreen) return null; // Render nothing if no track loaded ever or on detail screens
 
   // Calculate dynamic styles
   const containerWidth = widthAnim.interpolate({
@@ -189,10 +198,8 @@ const MiniPlayer = () => {
         {
           opacity: Animated.multiply(fadeAnim, autoHideAnim),
           bottom: insets.bottom + 16, // Safe area + margin
-          width: '90%', // Base width constraint
           alignSelf: 'center',
-          maxWidth: containerWidth,
-          // If fadeAnim is 0, we want to disable pointer events
+          // Use transform scale instead of maxWidth for better native performance
           transform: [
             {
               translateY: fadeAnim.interpolate({
@@ -200,6 +207,12 @@ const MiniPlayer = () => {
                 outputRange: [100, 0], // Slide up/down effect
               }),
             },
+            {
+              scaleX: containerWidth.interpolate({
+                inputRange: [60, 340],
+                outputRange: [60 / 340, 1],
+              })
+            }
           ],
         },
       ]}
@@ -207,11 +220,12 @@ const MiniPlayer = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <TouchableOpacity 
-        style={[styles.content, isCollapsed && styles.collapsedContent]} 
-        onPress={handlePress}
-        activeOpacity={0.9}
-      >
+      <View style={{ width: 340, height: '100%' }}>
+        <TouchableOpacity 
+          style={[styles.content, isCollapsed && styles.collapsedContent]} 
+          onPress={handlePress}
+          activeOpacity={0.9}
+        >
         {/* Collapsed View (Pill) */}
         <Animated.View style={[styles.collapsedView, { opacity: collapsedOpacity }]}>
            <TouchableOpacity 
@@ -255,6 +269,7 @@ const MiniPlayer = () => {
           <Text style={styles.collapseIcon}>{isCollapsed ? '⤢' : '—'}</Text>
         </TouchableOpacity>
       </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 };
@@ -262,8 +277,6 @@ const MiniPlayer = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: '5%', // Center horizontally
-    right: '5%', // Center horizontally
     height: 64,
     borderRadius: 32, // More rounded pill shape
     shadowColor: '#000',
@@ -273,8 +286,9 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 8, // Softer shadow
-    elevation: 8,
-    backgroundColor: 'rgba(28, 30, 45, 0.85)', // Increased transparency
+    elevation: 10,
+    zIndex: 9999,
+    backgroundColor: 'rgba(28, 30, 45, 0.95)', // Increased opacity for better visibility
     overflow: 'hidden', // Ensure content respects border radius
     borderWidth: 0, // Remove hard border
   },

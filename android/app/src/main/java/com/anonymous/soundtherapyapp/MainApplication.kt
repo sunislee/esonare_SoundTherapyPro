@@ -43,7 +43,7 @@ class MainApplication : Application(), ReactApplication {
   }
 
   private fun initCrashReport() {
-    val channel = BuildConfig.CHANNEL
+    val channel = "official"
     if (channel == "googlePlay") {
       try {
         val clazz = Class.forName("com.google.firebase.FirebaseApp")

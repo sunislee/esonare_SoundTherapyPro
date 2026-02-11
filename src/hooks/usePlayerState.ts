@@ -20,10 +20,27 @@ export const usePlayerState = () => {
     });
 
     // 初始同步：获取当前状态
-    const syncInitialState = async () => {
+    const syncInitialState = () => {
       try {
-        const realIsPlaying = await AudioService.getRealIsPlaying();
-        setIsPlaying(realIsPlaying);
+        // 1. 尝试从 AudioService 获取即时状态
+        const currentIsPlaying = AudioService.isPlaying();
+        const currentState = AudioService.getCurrentState();
+        const currentScene = AudioService.getCurrentScene();
+        
+        // 2. 如果 Service 状态有效，立即更新本地 state
+        setIsPlaying(currentIsPlaying);
+        setCurrentState(currentState);
+        setCurrentTrackId(currentScene?.id || null);
+        
+        console.log(`[usePlayerState] Immediate sync: isPlaying=${currentIsPlaying}, id=${currentScene?.id}`);
+
+        // 3. 异步检查作为兜底
+        AudioService.getRealIsPlaying().then(realIsPlaying => {
+          if (realIsPlaying !== currentIsPlaying) {
+            console.log(`[usePlayerState] Async sync corrected isPlaying to ${realIsPlaying}`);
+            setIsPlaying(realIsPlaying);
+          }
+        });
       } catch (error) {
         console.error('[usePlayerState] Initial Sync Error:', error);
       }

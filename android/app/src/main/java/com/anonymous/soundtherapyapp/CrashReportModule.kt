@@ -12,7 +12,7 @@ class CrashReportModule(reactContext: ReactApplicationContext) : ReactContextBas
 
     @ReactMethod
     fun logException(message: String) {
-        val channel = BuildConfig.CHANNEL
+        val channel = "official"
         if (channel == "googlePlay") {
             try {
                 val clazz = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics")
@@ -36,7 +36,7 @@ class CrashReportModule(reactContext: ReactApplicationContext) : ReactContextBas
 
     @ReactMethod
     fun setUserId(userId: String) {
-        val channel = BuildConfig.CHANNEL
+        val channel = "official"
         if (channel == "googlePlay") {
             try {
                 val clazz = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics")

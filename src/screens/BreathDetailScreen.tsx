@@ -1,86 +1,100 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Animated,
   Dimensions,
   StatusBar,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
+import { useAudio } from '../context/AudioContext';
 import AudioService from '../services/AudioService';
-import { SCENES } from '../constants/scenes';
+import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { RootStackParamList } from '../navigation/MainNavigator';
+import AnimatedFloatingButton from '../components/AnimatedFloatingButton';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const events = [
   Event.PlaybackQueueEnded,
   Event.PlaybackTrackChanged,
   Event.PlaybackState,
- ];
- 
- type BreathDetailRouteProp = RouteProp<RootStackParamList, 'BreathDetail'>;
- 
- const BreathDetailScreen: React.FC = () => {
+];
+
+type BreathDetailRouteProp = RouteProp<RootStackParamList, 'BreathDetail'>;
+
+const BreathDetailScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<BreathDetailRouteProp>();
+  const insets = useSafeAreaInsets();
   const { isPlaying } = usePlayerState();
+  const { activeSmallSceneIds, toggleAmbience } = useAudio();
   
-  const [showSuccess, setShowSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const bgFadeAnim = useRef(new Animated.Value(0)).current;
+  const contentFadeAnim = useRef(new Animated.Value(0)).current;
 
   const sceneId = route.params?.sceneId || 'nature_deep_sea';
   const scene = SCENES.find(s => s.id === sceneId) || SCENES[0];
 
+  // 占位背景色：深海给 #001a33，森林给 #1a2e1a，其他默认深灰
+  const placeholderColor = useMemo(() => {
+    if (scene.id.includes('ocean') || scene.id.includes('deep_sea')) return '#001a33';
+    if (scene.id.includes('forest')) return '#1a2e1a';
+    return '#121212';
+  }, [scene.id]);
+
+  // 固定的 8 个交互按钮数据
+  const globalAmbientScenes = useMemo(() => 
+    SMALL_SCENE_IDS.map(id => SCENES.find(s => s.id === id)).filter(Boolean) as Scene[]
+  , []);
+
   useTrackPlayerEvents(events, (event) => {
     if (event.type === Event.PlaybackQueueEnded) {
-      handleMeditationComplete();
+      console.log('[BreathDetail] Playback queue ended');
     }
   });
 
   useEffect(() => {
-    // 初始进入，先加载音频
-    const loadAudio = async () => {
-      setIsLoading(true);
-      await AudioService.switchSoundscape(scene, true);
-      setIsLoading(false);
-      Animated.timing(fadeAnim, {
+    // 初始进入逻辑 - 优化：不等待音频初始化即渲染页面架构
+    const initPage = async () => {
+      // 内容稍后浮现
+      Animated.timing(contentFadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 500,
         useNativeDriver: true,
       }).start();
+
+      setIsLoading(true);
+      const currentPlayingId = AudioService.getCurrentScene()?.id;
+      
+      if (currentPlayingId !== scene.id) {
+        console.log(`[BreathDetail] Switching to scene ${scene.id}.`);
+        await AudioService.switchSoundscape(scene);
+      }
+      
+      setIsLoading(false);
     };
 
-    loadAudio();
-
-    // 监听播放结束
-    const unsubscribeFinished = AudioService.addSleepTimerFinishedListener(() => {
-      handleMeditationComplete();
-    });
+    initPage();
 
     return () => {
-      unsubscribeFinished();
+      // 状态同步检查：退出页面时立即停止所有互动音效
+      console.log('[BreathDetail] Stopping all ambient sounds on exit.');
+      AudioService.stopAllAmbient();
     };
-  }, []);
-
-  const handleMeditationComplete = () => {
-    setShowSuccess(true);
-    
-    // 3秒后可以考虑自动返回或留在页面
-    setTimeout(() => {
-      // setShowSuccess(false);
-    }, 5000);
-  };
+  }, [scene.id]); // Add scene.id to dependency array to handle navigation between breath scenes
 
   const togglePlayback = async () => {
     if (isPlaying) {
@@ -95,47 +109,63 @@ const events = [
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: scene.primaryColor }]}>
+    <View style={[styles.container, { backgroundColor: placeholderColor }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      {/* 背景装饰 */}
-      <View style={styles.bgOverlay} />
+      {/* 背景图片层 */}
+      <Animated.Image 
+        source={scene.backgroundSource} 
+        style={[StyleSheet.absoluteFill, { opacity: bgFadeAnim }]}
+        resizeMode="cover"
+        onLoad={() => {
+          console.log(`[BreathDetail] Image Loaded: ${scene.id}`);
+          Animated.timing(bgFadeAnim, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }).start();
+        }}
+      />
+      
+      {/* 背景装饰/遮罩 - 统一为 0.3 透明度 */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
 
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
+      <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
+        {/* Header - 统一使用 chevron-down */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Icon name="chevron-back" size={28} color="#FFF" />
+            <Icon name="chevron-down" size={32} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t(`scenes.${scene.id}.title`)}</Text>
-          <View style={{ width: 44 }} />
         </View>
 
-        {/* Content */}
-        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          <View style={styles.breathingContainer}>
-            {isLoading ? (
-              <View style={styles.loaderPlaceholder}>
-                <Icon name="sync" size={40} color="rgba(255,255,255,0.4)" />
-              </View>
-            ) : (
-              <View style={[styles.breathingCircle, isPlaying && styles.breathingCircleActive]}>
-                <Icon 
-                  name={scene.id.includes('nature') ? 'leaf' : 'heart'} 
-                  size={60} 
-                  color="#FFF" 
+        {/* Content - 移除呼吸球，保持中间留白或仅显示互动图标 */}
+        <Animated.View style={[styles.content, { opacity: contentFadeAnim }]}>
+          {/* 交互按钮容器 - 强制显示互动层 */}
+          <View style={styles.floatingIconsContainer} pointerEvents="box-none">
+            {globalAmbientScenes.map((ambient, idx) => {
+              const isActive = activeSmallSceneIds.includes(ambient.id);
+              const column = idx % 2;
+              const row = Math.floor(idx / 2);
+
+              return (
+                <AnimatedFloatingButton
+                  key={`floating-${ambient.id}`}
+                  ambient={ambient}
+                  isActive={isActive}
+                  column={column}
+                  row={row}
+                  onPress={() => toggleAmbience(ambient, 'Floating Icon')}
                 />
-              </View>
-            )}
-            {!isLoading && (
-              <Text style={styles.guideText}>
-                {isPlaying ? t('player.status.playing') : t('player.status.paused')}
-              </Text>
-            )}
+              );
+            })}
           </View>
 
-          {/* Controls */}
-          <View style={styles.controls}>
+          {/* 底部控制区 - 统一布局：标题 + 播放按钮 */}
+          <View style={styles.bottomSection}>
+            <Text style={styles.sceneTitle}>
+              {t(`scenes.${scene.id}.title`)}
+            </Text>
+            
             <TouchableOpacity 
               style={styles.playButton} 
               onPress={togglePlayback}
@@ -150,21 +180,7 @@ const events = [
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </SafeAreaView>
-
-      {/* 成功反馈全屏 */}
-      {showSuccess && (
-        <View style={styles.successOverlay}>
-          <Icon name="checkmark-circle" size={100} color="#6C5DD3" />
-          <Text style={styles.successText}>{t('meditation.success_title')}</Text>
-          <TouchableOpacity 
-            style={styles.successCloseBtn}
-            onPress={() => setShowSuccess(false)}
-          >
-            <Text style={styles.successCloseText}>{t('common.confirm')}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      </View>
     </View>
   );
 };
@@ -172,20 +188,17 @@ const events = [
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
-  bgOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  },
-  safeArea: {
+  mainContainer: {
     flex: 1,
+    zIndex: 10,
+    justifyContent: 'space-between',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
     height: 60,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
   },
   backButton: {
     width: 44,
@@ -193,52 +206,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFF',
-    letterSpacing: 1,
-  },
   content: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
-  breathingContainer: {
+  floatingIconsContainer: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 20,
+    position: 'relative',
+    minHeight: 200,
+  },
+  bottomSection: {
+    paddingBottom: 60,
     alignItems: 'center',
-    justifyContent: 'center',
-    width: width * 0.8,
-    height: width * 0.8,
+    width: '100%',
   },
-  loaderPlaceholder: {
-    width: 120,
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  breathingCircle: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  breathingCircleActive: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    borderColor: 'rgba(255,255,255,0.5)',
-  },
-  guideText: {
-    marginTop: 40,
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
-    letterSpacing: 2,
-  },
-  controls: {
-    marginTop: 60,
-    marginBottom: 40,
+  sceneTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginBottom: 30,
   },
   playButton: {
     width: 80,
@@ -249,31 +239,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
-  },
-  successOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-  },
-  successText: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 20,
-  },
-  successCloseBtn: {
-    marginTop: 40,
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-    backgroundColor: '#6C5DD3',
-  },
-  successCloseText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 
