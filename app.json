@@ -1,10 +1,10 @@
 {
   "name": "EsonareSound",
   "displayName": "心声冥想",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "china_compliance": {
     "icp_beian": "粤ICP备XXXXXXXX号-1",
-    "privacy_policy_url": "https://esonare.com/privacy"
+    "privacy_policy_url": "https://sunis_fakecoder.com/privacy"
   },
   "android": {
     "package": "com.anonymous.soundtherapyapp"
