@@ -124,23 +124,11 @@ const ImmersivePlayerNew: React.FC = () => {
     ).filter(Boolean) as Scene[];
 
     return (
-      <View key={scene.id} style={[styles.page, { backgroundColor: placeholderColor }]}>
-        {/* 背景图片层 - 替代 LottieView */}
-        <Animated.Image 
-          source={scene.backgroundSource} 
-          style={[StyleSheet.absoluteFill, { opacity: bgFadeAnim }]}
-          resizeMode="cover"
-          onLoad={() => {
-            console.log(`[ImmersivePlayer] Image Loaded: ${scene.id}`);
-            Animated.timing(bgFadeAnim, {
-              toValue: 1,
-              duration: 400,
-              useNativeDriver: true,
-            }).start();
-          }}
-        />
-        {/* 深色渐变遮罩层，提升 UI 层次感 */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
+      <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
+        {/* 背景图片层已移除 */}
+        
+        {/* 深色渐变遮罩层 */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
 
         <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
           <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />

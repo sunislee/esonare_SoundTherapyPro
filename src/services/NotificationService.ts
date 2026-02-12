@@ -87,7 +87,7 @@ export class NotificationService {
       await TrackPlayer.updateMetadataForTrack(activeTrackIndex, {
         title: i18n.t(`scenes.${scene.id}.title`),
         artist: i18n.t('notification.artistDescription', { userName }),
-        artwork: scene.backgroundUrl,
+        artwork: scene.backgroundSource,
       });
     } catch (e) {
       // Swallow all notification bar update errors, do not allow affecting main UI thread

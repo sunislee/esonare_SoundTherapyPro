@@ -114,26 +114,13 @@ const BreathDetailScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: placeholderColor }]}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      {/* 背景图片层 */}
-      <Animated.Image 
-        source={scene.backgroundSource} 
-        style={[StyleSheet.absoluteFill, { opacity: bgFadeAnim }]}
-        resizeMode="cover"
-        onLoad={() => {
-          console.log(`[BreathDetail] Image Loaded: ${scene.id}`);
-          Animated.timing(bgFadeAnim, {
-            toValue: 1,
-            duration: 400,
-            useNativeDriver: true,
-          }).start();
-        }}
-      />
-      
-      {/* 背景装饰/遮罩 - 统一为 0.3 透明度 */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        
+        {/* 背景图片层已移除 */}
+        
+        {/* 背景装饰/遮罩 */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.8)' }]} />
 
       <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
         {/* Header - 统一使用 chevron-down */}

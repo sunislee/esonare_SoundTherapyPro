@@ -29,7 +29,7 @@ export class Scene {
     this.audioFile = data.audioFile;
     this.filename = data.filename || '';
     this.baseVolume = data.baseVolume ?? 1.0;
-    this.backgroundSource = data.backgroundSource || { uri: '' };
+    this.backgroundSource = null;
     this.category = data.category || 'Nature';
     this.isBaseScene = data.isBaseScene ?? true;
   }
@@ -71,21 +71,21 @@ export class Scene {
   }
 }
 
-const backgrounds: Record<SceneCategory, { source: ImageSourcePropType; color: string }> = {
+const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
   'Nature': {
-    source: require('../assets/images/ocean_scene_final_v7.webp'),
+    source: null,
     color: '#0047AB',
   },
   'Healing': {
-    source: require('../assets/images/forest_scene_final_v7.webp'),
+    source: null,
     color: '#4a7a5a',
   },
   'Brainwave': {
-    source: require('../assets/images/fire_scene_final_v7.webp'),
+    source: null,
     color: '#1a1a2e',
   },
   'Life': {
-    source: require('../assets/images/rain_scene_final_v7.webp'),
+    source: null,
     color: '#3b5c99',
   },
 };
@@ -135,12 +135,6 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
     const category = getCategory(item.category);
     const bg = backgrounds[category];
     let resolvedBgUri = '';
-    try {
-      const resolved = Image.resolveAssetSource(bg.source);
-      resolvedBgUri = resolved ? resolved.uri : '';
-    } catch (e) {
-      console.warn(`[Scenes] Failed to resolve asset source for ${item.id}`, e);
-    }
     
     // 2. Explicitly specified big scene IDs (isBaseScene: true)
     const baseSceneIds = [
@@ -172,13 +166,13 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       id: item.id,
       title: item.title,
       audioUrl: `${REMOTE_RESOURCE_BASE_URL}${item.filename}`,
-      backgroundUrl: resolvedBgUri,
+      backgroundUrl: '',
       primaryColor: bg.color,
       audioSource: item.id,
       audioFile: null,
       filename: item.filename,
       baseVolume: 1.0,
-      backgroundSource: bg.source,
+      backgroundSource: null,
       category: category,
       isBaseScene: isBase,
     });
