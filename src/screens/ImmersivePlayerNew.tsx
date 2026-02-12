@@ -9,6 +9,7 @@ import {
   Image,
   StatusBar,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
@@ -79,6 +80,9 @@ const ImmersivePlayerNew: React.FC = () => {
       setIsLoading(true);
       const currentPlayingId = AudioService.getCurrentScene()?.id;
       
+      // 保存最后播放的场景 ID，用于首页高亮记忆
+      AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', targetScene.id).catch(() => {});
+
       if (currentPlayingId === targetScene.id) {
         console.log(`[ImmersivePlayer] Scene ${targetScene.id} is already playing.`);
       } else {

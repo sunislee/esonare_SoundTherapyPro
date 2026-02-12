@@ -28,7 +28,7 @@ const AboutScreen = () => {
             <Text style={styles.logoText}>S</Text>
           </View>
           <Text style={styles.appName}>{t('appTitle')}</Text>
-          <Text style={styles.version}>{t('settings.version')} 1.0.1</Text>
+          <Text style={styles.version}>{t('settings.version')} 1.0.2</Text>
         </View>
 
         <View style={styles.infoContainer}>
