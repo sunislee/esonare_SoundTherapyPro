@@ -15,29 +15,8 @@ export const getLocalPath = (category: string, filename: string) => {
     return Platform.OS === 'ios' ? `file://${rawPath}` : rawPath; 
 }; 
 
-// 静态资源映射表
-export const AUDIO_MAP: Record<string, any> = {
-  'base/ocean.mp3': require('../assets/audio/base/ocean.mp3'),
-  'base/forest.mp3': require('../assets/audio/base/forest.mp3'),
-  'base/deep_sea.mp3': require('../assets/audio/base/deep_sea.mp3'),
-  'base/morning_river.mp3': require('../assets/audio/base/morning_river.mp3'),
-  'base/night_tribe.mp3': require('../assets/audio/base/night_tribe.mp3'),
-  'base/rain_boat.mp3': require('../assets/audio/base/rain_boat.mp3'),
-  'base/fire.mp3': require('../assets/audio/base/fire.mp3'),
-  'base/summer_fireworks.m4a': require('../assets/audio/base/summer_fireworks.m4a'),
-  'base/final_healing_rain.m4a': require('../assets/audio/base/final_healing_rain.m4a'),
-  'base/liquid_peace.m4a': require('../assets/audio/base/liquid_peace.m4a'),
-  'base/crystal_bowl.m4a': require('../assets/audio/base/crystal_bowl.m4a'),
-  'base/alpha_wave.m4a': require('../assets/audio/base/alpha_wave.m4a'),
-  'base/binaural_beat.mp3': require('../assets/audio/base/binaural_beat.mp3'),
-  'fx/library_vibe.m4a': require('../assets/audio/fx/library_vibe.m4a'),
-  'fx/zen_bowl.m4a': require('../assets/audio/fx/zen_bowl.m4a'),
-  'interactive/white_noise.m4a': require('../assets/audio/interactive/white_noise.m4a'),
-  'interactive/wind-chime.m4a': require('../assets/audio/interactive/wind-chime.m4a'),
-  'interactive/breath.m4a': require('../assets/audio/interactive/breath.m4a'),
-  'interactive/apple_crunch.m4a': require('../assets/audio/interactive/apple_crunch.m4a'),
-  'interactive/match_strike.wav': require('../assets/audio/interactive/match_strike.wav'),
-};
+// 静态资源映射表 - 1.0.2 版本已全面切换为远端加载，不再引用本地 assets/audio
+export const AUDIO_MAP: Record<string, any> = {};
 
 export const AMBIENT_RESOURCES = {
   WHITE_NOISE: 'interactive/white_noise.m4a',

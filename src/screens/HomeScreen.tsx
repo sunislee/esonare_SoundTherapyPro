@@ -11,7 +11,8 @@ import {
   InteractionManager,
   Easing,
   Image,
-  Alert
+  Alert,
+  findNodeHandle
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -41,51 +42,66 @@ const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40;
 
 // 1. Extract SceneItem component to manage independent animation states
-const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused }: any) => {
-  // ... (keep existing implementation for big cards)
+const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused, scrollOffset, scrollViewRef }: any) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
+  const [itemY, setItemY] = useState<number | null>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const viewRef = useRef<View>(null);
   
   const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
   const { t } = useTranslation();
+  const windowHeight = Dimensions.get('window').height;
 
   // 基础缩放动画
   const combinedScale = scaleAnim;
 
   useEffect(() => {
-    if (isFocused) {
-      // 执行 2 次缩放动画（1 -> 1.05 -> 1）
-      Animated.sequence([
-        Animated.timing(highlightAnim, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(highlightAnim, {
-          toValue: 0,
-          duration: 800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(highlightAnim, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(highlightAnim, {
-          toValue: 0,
-          duration: 800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
+    // 重置动画标记
+    if (!isFocused) {
+      setHasAnimated(false);
       highlightAnim.setValue(0);
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    if (isFocused && !hasAnimated && itemY !== null) {
+      // 检查是否在视口内（增加一点缓冲区）
+      const isVisible = scrollOffset + windowHeight > itemY + 20 && scrollOffset < itemY + 110;
+      
+      if (isVisible) {
+        setHasAnimated(true);
+        // 执行 2 次缩放动画（1 -> 1.05 -> 1）
+        Animated.sequence([
+          Animated.timing(highlightAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(highlightAnim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(highlightAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(highlightAnim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    }
+  }, [isFocused, hasAnimated, itemY, scrollOffset]);
 
   const highlightScale = highlightAnim.interpolate({
     inputRange: [0, 1],
@@ -118,7 +134,25 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   };
 
   return (
-    <View style={styles.cardWrapper}>
+    <View 
+      ref={viewRef}
+      style={styles.cardWrapper}
+      onLayout={() => {
+         if (viewRef.current && scrollViewRef.current) {
+           const scrollNode = findNodeHandle(scrollViewRef.current);
+           if (scrollNode) {
+             // 获取 item 相对于 ScrollView 内容容器的绝对位置
+             viewRef.current.measureLayout(
+               scrollNode,
+               (_x, y) => {
+                 setItemY(y);
+               },
+               () => {}
+             );
+           }
+         }
+       }}
+    >
       <Animated.View 
         renderToHardwareTextureAndroid={true}
         style={[styles.cardContainer, { transform: [{ scale: combinedScale }] }]}
@@ -126,6 +160,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
         <View style={styles.cardClip}>
           {isFocused && (
             <Animated.View 
+              pointerEvents="none"
               style={[
                 styles.memoryHighlight, 
                 { 
@@ -148,6 +183,11 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             onPressOut={handlePressOut}
             delayLongPress={150}
             onPress={() => {
+                // 如果动画正在播放，立即停止并重置
+                highlightAnim.stopAnimation();
+                highlightAnim.setValue(0);
+                setHasAnimated(true);
+
                 setTimeout(async () => {
                   await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
                   
@@ -222,6 +262,7 @@ export const HomeScreen: React.FC = () => {
   const greetingFadeAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
+  const [scrollOffset, setScrollOffset] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -230,8 +271,8 @@ export const HomeScreen: React.FC = () => {
           const lastId = await AsyncStorage.getItem('LAST_VIEWED_SCENE_ID');
           if (lastId) {
             setFocusedSceneId(lastId);
-            // 3秒后清除高亮状态，确保下次进入或刷新时逻辑正确
-            setTimeout(() => setFocusedSceneId(null), 3000);
+            // 移除 3 秒自动清除，让用户滑到对应位置时依然能看到高亮
+            // setTimeout(() => setFocusedSceneId(null), 3000);
           }
         } catch (e) {
           console.error('Failed to load last viewed scene', e);
@@ -239,6 +280,9 @@ export const HomeScreen: React.FC = () => {
       };
       
       checkLastViewed();
+      
+      // 退出页面时重置，确保下次进入重新触发
+      return () => setFocusedSceneId(null);
     }, [])
   );
 
@@ -373,6 +417,8 @@ export const HomeScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={100}
+          onScroll={(e) => setScrollOffset(e.nativeEvent.contentOffset.y)}
         >
           <View style={styles.header}>
             <Icon name="leaf-outline" size={40} color="rgba(255,255,255,0.4)" style={styles.headerIcon} />
@@ -401,6 +447,8 @@ export const HomeScreen: React.FC = () => {
                   togglePlayback={togglePlayback} 
                   navigation={navigation} 
                   isFocused={focusedSceneId === scene.id}
+                  scrollOffset={scrollOffset}
+                  scrollViewRef={scrollViewRef}
                 />
               ))}
             </View>

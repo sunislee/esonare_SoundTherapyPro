@@ -2,30 +2,11 @@ import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 import { State } from 'react-native-track-player';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
+import { getLocalPath } from '../constants/audioAssets';
+import RNFS from 'react-native-fs';
 
-// 显式 require 映射表，避免动态拼接
-const AUDIO_REQUIRE_MAP: Record<string, any> = {
-  'base/ocean.mp3': require('../assets/audio/base/ocean.mp3'),
-  'base/forest.mp3': require('../assets/audio/base/forest.mp3'),
-  'base/deep_sea.mp3': require('../assets/audio/base/deep_sea.mp3'),
-  'base/morning_river.mp3': require('../assets/audio/base/morning_river.mp3'),
-  'base/night_tribe.mp3': require('../assets/audio/base/night_tribe.mp3'),
-  'base/rain_boat.mp3': require('../assets/audio/base/rain_boat.mp3'),
-  'base/fire.mp3': require('../assets/audio/base/fire.mp3'),
-  'base/summer_fireworks.m4a': require('../assets/audio/base/summer_fireworks.m4a'),
-  'base/final_healing_rain.m4a': require('../assets/audio/base/final_healing_rain.m4a'),
-  'base/liquid_peace.m4a': require('../assets/audio/base/liquid_peace.m4a'),
-  'base/crystal_bowl.m4a': require('../assets/audio/base/crystal_bowl.m4a'),
-  'base/alpha_wave.m4a': require('../assets/audio/base/alpha_wave.m4a'),
-  'base/binaural_beat.mp3': require('../assets/audio/base/binaural_beat.mp3'),
-  'fx/library_vibe.m4a': require('../assets/audio/fx/library_vibe.m4a'),
-  'fx/zen_bowl.m4a': require('../assets/audio/fx/zen_bowl.m4a'),
-  'interactive/white_noise.m4a': require('../assets/audio/interactive/white_noise.m4a'),
-  'interactive/wind-chime.m4a': require('../assets/audio/interactive/wind-chime.m4a'),
-  'interactive/breath.m4a': require('../assets/audio/interactive/breath.m4a'),
-  'interactive/apple_crunch.m4a': require('../assets/audio/interactive/apple_crunch.m4a'),
-  'interactive/match_strike.wav': require('../assets/audio/interactive/match_strike.wav'),
-};
+// 1.0.2 版本已全面切换为远端下载+本地缓存加载模式，不再使用 require 静态映射
+const AUDIO_REQUIRE_MAP: Record<string, any> = {};
 
 class AudioService {
   private static instance: AudioService;
@@ -93,17 +74,13 @@ class AudioService {
 
       console.log(`[AudioService] Preloading scene: ${scene.id} (shouldPlay: ${shouldPlay})`);
       
-      const source = AUDIO_REQUIRE_MAP[scene.filename];
+      // 1.0.2 逻辑：优先从本地缓存加载
+      const localPath = getLocalPath(scene.category, scene.filename);
+      const isLocal = await RNFS.exists(localPath.replace('file://', ''));
+      
+      const source = isLocal ? { uri: localPath } : { uri: scene.audioUrl };
 
-      if (!source) {
-        const errorMsg = `[AudioService] No audio source mapping found for filename: "${scene.filename}" in SCENE: ${scene.id}`;
-        console.warn(errorMsg);
-        return;
-      }
-
-      // 获取 require 的原始路径信息（如果可能）
-      const assetInfo = typeof source === 'number' ? `Asset ID: ${source}` : 'Resolved Source';
-      console.log(`[AudioService] Loading source for ${scene.filename}: ${assetInfo}`);
+      console.log(`[AudioService] Loading source for ${scene.filename}: ${isLocal ? 'Local Cache' : 'Remote URL'}`);
 
       const { sound } = await Audio.Sound.createAsync(
         source,
@@ -245,14 +222,12 @@ class AudioService {
         return;
       }
 
-      const source = AUDIO_REQUIRE_MAP[scene.filename];
+      // 1.0.2 逻辑：优先从本地缓存加载
+      const localPath = getLocalPath(scene.category, scene.filename);
+      const isLocal = await RNFS.exists(localPath.replace('file://', ''));
+      const source = isLocal ? { uri: localPath } : { uri: scene.audioUrl };
 
-      // Defensive check for source
-      if (!source) {
-        throw new Error(`Invalid audio source for scene ${scene.id} (file: ${scene.filename}). Mapping missing in AUDIO_REQUIRE_MAP.`);
-      }
-
-      console.log(`[AudioService] Loading and playing scene ${scene.id} from mapping: ${scene.filename}`);
+      console.log(`[AudioService] Loading and playing scene ${scene.id} from ${isLocal ? 'Local Cache' : 'Remote URL'}`);
 
       const { sound } = await Audio.Sound.createAsync(
         source,
@@ -262,36 +237,59 @@ class AudioService {
       this.isActuallyPlaying = true;
       this.notifyListeners();
     } catch (error: any) {
-      const source = AUDIO_REQUIRE_MAP[scene.filename];
       console.error(`[AudioService] CRITICAL: Failed to play scene ${scene.id}.`, {
         filename: scene.filename,
         error: error.message,
-        source: source
       });
-      console.warn(`[AudioService] 🚨 FILE ERROR: The audio file "${scene.filename}" failed to load! Check if it's 0-byte or corrupted in android/app/src/main/assets/audio/`);
     }
   }
 
   async pause() {
-    console.log('[AudioService] Pausing all sounds');
-    for (const sound of this.soundObjects.values()) {
-      await sound.pauseAsync();
+    try {
+      console.log('[AudioService] Pausing all sounds');
+      for (const [id, sound] of this.soundObjects.entries()) {
+        try {
+          if (sound) {
+            const status = await sound.getStatusAsync();
+            if (status.isLoaded) {
+              await sound.pauseAsync();
+            }
+          }
+        } catch (err) {
+          console.warn(`[AudioService] Failed to pause sound ${id}:`, err);
+        }
+      }
+      this.isActuallyPlaying = false;
+      this.notifyListeners();
+    } catch (e) {
+      console.error('[AudioService] Global pause error:', e);
     }
-    this.isActuallyPlaying = false;
-    this.notifyListeners();
   }
 
   async play() {
-    console.log('[AudioService] Resuming all sounds');
-    if (this.soundObjects.size === 0 && this.currentBaseScene) {
-      await this.playScene(this.currentBaseScene);
-    } else {
-      for (const sound of this.soundObjects.values()) {
-        await sound.playAsync();
+    try {
+      console.log('[AudioService] Resuming all sounds');
+      if (this.soundObjects.size === 0 && this.currentBaseScene) {
+        await this.playScene(this.currentBaseScene);
+      } else {
+        for (const [id, sound] of this.soundObjects.entries()) {
+          try {
+            if (sound) {
+              const status = await sound.getStatusAsync();
+              if (status.isLoaded) {
+                await sound.playAsync();
+              }
+            }
+          } catch (err) {
+            console.warn(`[AudioService] Failed to play sound ${id}:`, err);
+          }
+        }
       }
+      this.isActuallyPlaying = true;
+      this.notifyListeners();
+    } catch (e) {
+      console.error('[AudioService] Global play error:', e);
     }
-    this.isActuallyPlaying = true; // 强制设为 true，既然已经执行了 play
-    this.notifyListeners();
   }
 
   async getRealIsPlaying(): Promise<boolean> {
@@ -305,19 +303,27 @@ class AudioService {
   }
 
   async stopScene(sceneId: string) {
-    const sound = this.soundObjects.get(sceneId);
-    if (sound) {
-      await sound.stopAsync();
-      await sound.unloadAsync();
-      this.soundObjects.delete(sceneId);
+    try {
+      const sound = this.soundObjects.get(sceneId);
+      if (sound) {
+        try {
+          const status = await sound.getStatusAsync();
+          if (status.isLoaded) {
+            await sound.stopAsync();
+            await sound.unloadAsync();
+          }
+        } catch (err) {
+          console.warn(`[AudioService] Error stopping sound ${sceneId}:`, err);
+        } finally {
+          this.soundObjects.delete(sceneId);
+        }
+      }
+      if (this.soundObjects.size === 0) {
+        this.isActuallyPlaying = false;
+      }
+    } catch (e) {
+      console.error(`[AudioService] stopScene failed for ${sceneId}:`, e);
     }
-    if (this.soundObjects.size === 0) {
-      this.isActuallyPlaying = false;
-    }
-    // 不要在这里调用 notifyListeners，因为 stopScene 经常被 stopAll 批量调用，
-    // 为了性能和避免 UI 抖动，我们让调用者决定何时通知。
-    // 但如果这是单次调用，或者调用者没有后续通知，这里还是得加个保险。
-    // 观察发现 switchSoundscape 和 toggleAmbience 都会在调用后补 notifyListeners。
   }
 
   // --- 核心优化位置 ---
@@ -333,10 +339,9 @@ class AudioService {
       this.activeSmallScenes.clear();
 
       // 2. 联动激活逻辑：如果是呼吸类场景，仅同步状态但不播放音效，实现“开场静默”
-      const isBreathScene = scene.id === 'nature_deep_sea' || scene.id === 'nature_misty_forest' || scene.id.includes('breath');
+      const isBreathScene = scene.id === 'nature_deep_sea' || scene.id === 'nature_misty_forest' || scene.id?.includes('breath');
       if (isBreathScene) {
         console.log('[AudioService] Breath context detected. Ensuring interaction sounds are silent on start.');
-        // 按照用户要求，初始化时不自动播放任何互动音效
         this.activeSmallScenes.clear(); 
       }
 
@@ -345,44 +350,58 @@ class AudioService {
       await this.playScene(scene);
       
       this.notifyListeners();
+    } catch (e) {
+      console.error(`[AudioService] switchSoundscape failed for ${scene?.id}:`, e);
     } finally {
       this.isSwitching = false;
     }
   }
 
   async toggleAmbience(scene: Scene, forceState?: boolean) {
-    const isCurrentlyActive = this.activeSmallScenes.has(scene.id);
-    const targetState = forceState !== undefined ? forceState : !isCurrentlyActive;
+    try {
+      const isCurrentlyActive = this.activeSmallScenes.has(scene.id);
+      const targetState = forceState !== undefined ? forceState : !isCurrentlyActive;
 
-    if (isCurrentlyActive === targetState) return;
+      if (isCurrentlyActive === targetState) return;
 
-    if (targetState) {
-      this.activeSmallScenes.add(scene.id);
-      await this.playScene(scene);
-    } else {
-      this.activeSmallScenes.delete(scene.id);
-      await this.stopScene(scene.id);
+      if (targetState) {
+        this.activeSmallScenes.add(scene.id);
+        await this.playScene(scene);
+      } else {
+        this.activeSmallScenes.delete(scene.id);
+        await this.stopScene(scene.id);
+      }
+      this.notifyListeners();
+    } catch (e) {
+      console.error(`[AudioService] toggleAmbience failed for ${scene?.id}:`, e);
     }
-    // playScene/stopScene 内部已经调用了 notifyListeners，但这里为了确保 smallScenesListeners 触发，再补一次
-    this.notifyListeners();
   }
 
   async togglePlayback(scene: Scene) {
-    if (this.currentBaseScene?.id === scene.id && this.isActuallyPlaying) {
-      await this.pause();
-    } else {
-      await this.switchSoundscape(scene);
+    try {
+      if (this.currentBaseScene?.id === scene.id && this.isActuallyPlaying) {
+        await this.pause();
+      } else {
+        await this.switchSoundscape(scene);
+      }
+    } catch (e) {
+      console.error(`[AudioService] togglePlayback failed for ${scene?.id}:`, e);
     }
   }
 
   async stopAll() {
-    for (const sceneId of this.soundObjects.keys()) {
-      await this.stopScene(sceneId);
+    try {
+      const sceneIds = Array.from(this.soundObjects.keys());
+      for (const sceneId of sceneIds) {
+        await this.stopScene(sceneId);
+      }
+      this.activeSmallScenes.clear();
+      this.currentBaseScene = null;
+      this.isActuallyPlaying = false;
+      this.notifyListeners();
+    } catch (e) {
+      console.error('[AudioService] stopAll failed:', e);
     }
-    this.activeSmallScenes.clear();
-    this.currentBaseScene = null;
-    this.isActuallyPlaying = false;
-    this.notifyListeners();
   }
 
   updateAmbientVolume(volume: number) {

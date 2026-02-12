@@ -245,7 +245,7 @@ const SettingsScreen: React.FC = () => {
               key: 'version',
               icon: '📦',
               title: t('settings.version'),
-              subtitle: 'v1.0.1 (Pro)',
+              subtitle: 'v1.0.2',
               type: 'static',
             },
             {

@@ -33,6 +33,11 @@ buildscript {
 
 // 强制所有任务禁用警告转错误，包括 buildscript 阶段
 allprojects {
+    configurations.all {
+        resolutionStrategy {
+            force "com.swmansion.rnscreens:react-native-screens:3.31.1"
+        }
+    }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             allWarningsAsErrors = false
