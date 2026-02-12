@@ -91,13 +91,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.anonymous.soundtherapyapp"
+    namespace "com.anonymous.soundtherapyapp.google"
     defaultConfig {
-        applicationId "com.anonymous.soundtherapyapp"
+        applicationId "com.anonymous.soundtherapyapp.google"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "1.0.5"
+        versionCode 5
+        versionName "1.0.3"
         resConfigs "en", "zh", "ja"
 
         ndk {
