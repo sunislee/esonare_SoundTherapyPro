@@ -235,28 +235,6 @@ export const HomeScreen: React.FC = () => {
   const { isPlaying, currentBaseSceneId, togglePlayback, syncNativeStatus } = useAudio();
   const { t } = useTranslation();
 
-  // 1. 强制尽早预加载核心背景图
-  useMemo(() => {
-    const prefetchIds = ['nature_deep_sea', 'nature_misty_forest', 'nature_ocean', 'nature_forest'];
-    const prefetchScenes = SCENES.filter(s => prefetchIds.includes(s.id));
-    
-    prefetchScenes.forEach(scene => {
-      let uri = '';
-      if (scene.backgroundSource && scene.backgroundSource.uri) {
-        uri = scene.backgroundSource.uri;
-      } else if (typeof scene.backgroundSource === 'number') {
-        const asset = Image.resolveAssetSource(scene.backgroundSource);
-        uri = asset ? asset.uri : '';
-      }
-
-      if (uri) {
-        Image.prefetch(uri)
-          .then(() => console.log(`[HomeScreen] Prefetch Success: ${scene.id} (${uri})`))
-          .catch(err => console.warn(`[HomeScreen] Prefetch Failed: ${scene.id}`, err));
-      }
-    });
-  }, []);
-  
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
   const greetingFadeAnim = useRef(new Animated.Value(0)).current;

@@ -39,10 +39,10 @@ export const ProfileScreen = () => {
   // @ts-ignore
   const navigation = useNavigation<any>();
   const BACKGROUND_OPTIONS = [
-    { id: '1', name: t('profile.background.fire'), source: require('../assets/images/fire_scene_final_v7.webp') },
-    { id: '2', name: t('profile.background.forest'), source: require('../assets/images/forest_scene_final_v7.webp') },
-    { id: '3', name: t('profile.background.rain'), source: require('../assets/images/rain_scene_final_v7.webp') },
-    { id: '4', name: t('profile.background.ocean'), source: require('../assets/images/ocean_scene_final_v7.webp') },
+    { id: '1', name: '火焰', source: null },
+    { id: '2', name: '森林', source: null },
+    { id: '3', name: '雨水', source: null },
+    { id: '4', name: '大海', source: null },
   ];
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>(t('profile.loading'));
@@ -368,32 +368,22 @@ export const ProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
   
         
-        <ImageBackground
-          source={(backgroundImage && typeof backgroundImage === 'string' && isProUser) ? { uri: backgroundImage } : BACKGROUND_OPTIONS[selectedBackgroundIndex]?.source || BACKGROUND_OPTIONS[0].source}
-          style={styles.headerBackground}
-          imageStyle={styles.headerBackgroundImage}
-        >
-          <TouchableOpacity 
+        <View style={[styles.headerBackground, { backgroundColor: '#1A1A1A' }]}>
+          {/* 背景更换按钮已封锁 */}
+          {/* <TouchableOpacity 
             style={styles.backgroundChangeButton} 
             onPress={handleChangeBackground}
             activeOpacity={0.7}
           >
             <MaterialIcons name="photo-camera" size={18} color="#fff" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <View style={styles.headerOverlay}>
             <View style={styles.header}>
-              <TouchableOpacity style={styles.avatarWrapper} onPress={handleAvatarPress}>
-                {(() => {
-                  const avatarSource = (avatarUri && typeof avatarUri === 'string') ? { uri: avatarUri } : require('../assets/images/fire_scene_final_v7.webp');
-                  return (
-                    <Image 
-                      source={avatarSource} 
-                      style={styles.avatarImage} 
-                      key={avatarUri} 
-                    />
-                  );
-                })()}
-              </TouchableOpacity>
+              <View style={styles.avatarWrapper}>
+                <View style={[styles.avatarImage, { backgroundColor: '#1A1A1A', justifyContent: 'center', alignItems: 'center' }]}>
+                  <Icon name="user" size={40} color="#6C5DD3" />
+                </View>
+              </View>
               
               <TouchableOpacity 
                 style={styles.nameContainer} 
@@ -419,7 +409,7 @@ export const ProfileScreen = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </ImageBackground>
+        </View>
 
         <Modal
           visible={isNameModalVisible}
@@ -483,7 +473,7 @@ export const ProfileScreen = () => {
           <MenuItem icon="log-out" title={t('profile.menu.logout')} onPress={handleLogout} color="#FF4D4F" showArrow={false} />
         </View>
 
-        <Text style={styles.versionText}>Version 1.0.2</Text>
+        <Text style={styles.versionText}>Version 1.0.3</Text>
       </ScrollView>
 
       <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} />
@@ -520,10 +510,9 @@ export const ProfileScreen = () => {
                       }}
                       activeOpacity={0.7}
                     >
-                      <Image 
-                        source={bg.source} 
-                        style={styles.presetBackgroundThumbnail}
-                      />
+                      <View style={[styles.presetBackgroundThumbnail, { backgroundColor: '#2C2C2E', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Icon name="image" size={24} color="#444" />
+                      </View>
                       <Text style={styles.presetBackgroundName}>{bg.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -749,7 +738,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 8,
   },
-  versionText: { color: '#333', fontSize: 12, textAlign: 'center', marginTop: 10 },
+  versionText: {
+    color: '#444',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  beianText: {
+    color: '#333',
+    fontSize: 10,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
   backgroundChangeButton: {
     position: 'absolute',
     top: 16,
@@ -811,15 +812,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 24
   },
-  presetBackgroundItem: {
-    flex: 1,
-    marginHorizontal: 4
-  },
   presetBackgroundThumbnail: {
     width: '100%',
-    height: 100,
+    height: '100%',
     borderRadius: 12,
-    marginBottom: 8
+  },
+  presetBackgroundItem: {
+    flex: 1,
+    marginHorizontal: 4,
+    height: 100,
+    marginBottom: 20,
   },
   presetBackgroundName: {
     color: '#ddd',
