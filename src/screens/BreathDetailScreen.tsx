@@ -1,15 +1,17 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   Animated,
-  Dimensions,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+  Platform,
   Image,
-  ActivityIndicator,
+  InteractionManager
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -79,6 +81,9 @@ const BreathDetailScreen: React.FC = () => {
       setIsLoading(true);
       const currentPlayingId = AudioService.getCurrentScene()?.id;
       
+      // 保存最后播放的场景 ID，用于首页高亮记忆
+      AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', scene.id).catch(() => {});
+
       if (currentPlayingId !== scene.id) {
         console.log(`[BreathDetail] Switching to scene ${scene.id}.`);
         await AudioService.switchSoundscape(scene);

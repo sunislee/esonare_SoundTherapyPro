@@ -38,11 +38,11 @@ export const ProfileScreen = () => {
   const { t } = useTranslation();
   // @ts-ignore
   const navigation = useNavigation<any>();
-  const DEFAULT_BGS = [
-    { id: '1', name: t('profile.background.fire'), source: require('../assets/images/fire_bg.jpg') },
-    { id: '2', name: t('profile.background.forest'), source: require('../assets/images/forest_bg.jpg') },
-    { id: '3', name: t('profile.background.rain'), source: require('../assets/images/rain_bg.jpg') },
-    { id: '4', name: t('profile.background.ocean'), source: require('../assets/images/sea_bg.jpg') },
+  const BACKGROUND_OPTIONS = [
+    { id: '1', name: t('profile.background.fire'), source: require('../assets/images/fire_scene_final_v7.webp') },
+    { id: '2', name: t('profile.background.forest'), source: require('../assets/images/forest_scene_final_v7.webp') },
+    { id: '3', name: t('profile.background.rain'), source: require('../assets/images/rain_scene_final_v7.webp') },
+    { id: '4', name: t('profile.background.ocean'), source: require('../assets/images/ocean_scene_final_v7.webp') },
   ];
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>(t('profile.loading'));
@@ -155,17 +155,23 @@ export const ProfileScreen = () => {
         quality: 0.8,
       });
 
+      if (!result) {
+        console.warn('ImagePicker returned null result');
+        return;
+      }
+
       if (result.didCancel) {
         console.log('User cancelled image picker');
       } else if (result.errorCode) {
         console.log('ImagePicker Error: ', result.errorMessage);
-      } else if (result.assets?.[0]?.uri) {
+        ToastUtil.error(t('profile.modals.error'));
+      } else if (result.assets && result.assets.length > 0 && result.assets[0].uri) {
         const selectedUri = result.assets[0].uri;
         saveAvatar(selectedUri);
-        // 如果有上传逻辑，可以在这里调用 uploadAvatar(selectedUri);
       }
     } catch (error) {
       console.error('Pick image error:', error);
+      ToastUtil.error(t('profile.modals.error'));
     }
   };
 
@@ -289,7 +295,7 @@ export const ProfileScreen = () => {
 
   const selectPresetBackground = async (id: string) => {
     try {
-      const selectedIndex = DEFAULT_BGS.findIndex(bg => bg.id === id);
+      const selectedIndex = BACKGROUND_OPTIONS.findIndex((bg: any) => bg.id === id);
       if (selectedIndex !== -1) {
         await AsyncStorage.setItem('PRO_DEFAULT_BACKGROUND_INDEX', selectedIndex.toString());
         await AsyncStorage.removeItem('PRO_CUSTOM_BACKGROUND');
@@ -312,16 +318,27 @@ export const ProfileScreen = () => {
         quality: 0.8,
       });
 
-      if (result.assets?.[0]?.uri) {
-        await AsyncStorage.setItem('PRO_CUSTOM_BACKGROUND', result.assets[0].uri);
+      if (!result) {
+        console.warn('Background picker returned null result');
+        return;
+      }
+
+      if (result.didCancel) {
+        console.log('User cancelled background picker');
+      } else if (result.errorCode) {
+        console.log('Background picker Error: ', result.errorMessage);
+        ToastUtil.error(t('settings.toast.saveFailed'));
+      } else if (result.assets && result.assets.length > 0 && result.assets[0].uri) {
+        const uri = result.assets[0].uri;
+        await AsyncStorage.setItem('PRO_CUSTOM_BACKGROUND', uri);
         await AsyncStorage.removeItem('PRO_DEFAULT_BACKGROUND_INDEX');
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(uri);
         setSelectedBackgroundIndex(0); 
         ToastUtil.success(t('profile.background.updateSuccess'));
         triggerHaptic('notificationSuccess');
       }
     } catch (error) {
-      console.error('Pick image error:', error);
+      console.error('Pick background image error:', error);
       ToastUtil.error(t('settings.toast.saveFailed'));
     }
   };
@@ -352,7 +369,7 @@ export const ProfileScreen = () => {
   
         
         <ImageBackground
-          source={(backgroundImage && typeof backgroundImage === 'string' && isProUser) ? { uri: backgroundImage } : DEFAULT_BGS[selectedBackgroundIndex]?.source || DEFAULT_BGS[0].source}
+          source={(backgroundImage && typeof backgroundImage === 'string' && isProUser) ? { uri: backgroundImage } : BACKGROUND_OPTIONS[selectedBackgroundIndex]?.source || BACKGROUND_OPTIONS[0].source}
           style={styles.headerBackground}
           imageStyle={styles.headerBackgroundImage}
         >
@@ -367,7 +384,7 @@ export const ProfileScreen = () => {
             <View style={styles.header}>
               <TouchableOpacity style={styles.avatarWrapper} onPress={handleAvatarPress}>
                 {(() => {
-                  const avatarSource = (avatarUri && typeof avatarUri === 'string') ? { uri: avatarUri } : require('../assets/images/fire_bg.jpg');
+                  const avatarSource = (avatarUri && typeof avatarUri === 'string') ? { uri: avatarUri } : require('../assets/images/fire_scene_final_v7.webp');
                   return (
                     <Image 
                       source={avatarSource} 
@@ -466,7 +483,7 @@ export const ProfileScreen = () => {
           <MenuItem icon="log-out" title={t('profile.menu.logout')} onPress={handleLogout} color="#FF4D4F" showArrow={false} />
         </View>
 
-        <Text style={styles.versionText}>Version 1.1.0 (Build 40112)</Text>
+        <Text style={styles.versionText}>Version 1.0.2</Text>
       </ScrollView>
 
       <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} />
@@ -493,7 +510,7 @@ export const ProfileScreen = () => {
 
                 <Text style={styles.backgroundModalSubtitle}>{t('profile.background.recommended')}</Text>
                 <View style={styles.presetBackgroundsGrid}>
-                  {DEFAULT_BGS.map((bg) => (
+                  {BACKGROUND_OPTIONS.map((bg) => (
                     <TouchableOpacity
                       key={bg.id}
                       style={styles.presetBackgroundItem}

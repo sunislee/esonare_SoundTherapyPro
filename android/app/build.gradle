@@ -4,6 +4,10 @@ apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
 apply plugin: "com.google.firebase.crashlytics"
 
+project.ext.vectoricons = [
+    iconFontNames: [ 'Ionicons.ttf', 'Feather.ttf', 'MaterialIcons.ttf' ]
+]
+
 apply from: new File(["node", "--print", "require.resolve('expo/package.json')"].execute(null, rootDir).text.trim(), "../scripts/autolinking.gradle")
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
@@ -92,9 +96,13 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 4
+        versionName "1.0.2"
         resConfigs "en", "zh", "ja"
+
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
