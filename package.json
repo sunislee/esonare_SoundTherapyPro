@@ -27,7 +27,7 @@
     "i18next": "^25.8.0",
     "react": "18.2.0",
     "react-i18next": "^16.5.4",
-    "react-native": "0.73.6",
+    "react-native": "^0.73.6",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "~2.14.0",
     "react-native-haptic-feedback": "^2.3.3",

@@ -24,7 +24,7 @@ buildscript {
   }
   dependencies {
         classpath('com.android.tools.build:gradle:8.2.1')
-        classpath('com.facebook.react:react-native-gradle-plugin:0.73.5')
+        classpath('com.facebook.react:react-native-gradle-plugin:0.73.4')
         classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22')
         classpath('com.google.gms:google-services:4.4.1')
         classpath('com.google.firebase:firebase-crashlytics-gradle:2.9.9')
@@ -35,7 +35,7 @@ buildscript {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force "com.swmansion.rnscreens:react-native-screens:3.29.0"
+            force "com.swmansion.rnscreens:react-native-screens:3.31.1"
         }
     }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
