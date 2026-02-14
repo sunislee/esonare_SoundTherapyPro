@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -39,10 +39,10 @@ export const ProfileScreen = () => {
   // @ts-ignore
   const navigation = useNavigation<any>();
   const BACKGROUND_OPTIONS = [
-    { id: '1', name: '火焰', source: null },
-    { id: '2', name: '森林', source: null },
-    { id: '3', name: '雨水', source: null },
-    { id: '4', name: '大海', source: null },
+    { id: '1', name: '火焰', source: require('../assets/images/fire_bg.jpg') },
+    { id: '2', name: '森林', source: require('../assets/images/forest_bg.jpg') },
+    { id: '3', name: '雨水', source: require('../assets/images/rain_bg.jpg') },
+    { id: '4', name: '大海', source: require('../assets/images/sea_bg.jpg') },
   ];
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>(t('profile.loading'));
@@ -55,6 +55,13 @@ export const ProfileScreen = () => {
   const [backgroundImage, setBackgroundImage] = useState<string>(''); 
   const [selectedBackgroundIndex, setSelectedBackgroundIndex] = useState<number>(0); 
   const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false); 
+  const resolvedBackgroundSource = useMemo(() => {
+    if (backgroundImage) {
+      return { uri: backgroundImage };
+    }
+    const preset = BACKGROUND_OPTIONS[selectedBackgroundIndex];
+    return preset?.source || null;
+  }, [backgroundImage, selectedBackgroundIndex]);
 
   useEffect(() => {
     loadProfile();
@@ -361,6 +368,21 @@ export const ProfileScreen = () => {
       {showArrow && <Icon name="chevron-right" size={18} color="#444" />}
     </TouchableOpacity>
   );
+  const renderAvatar = () => (
+    <TouchableOpacity
+      style={styles.avatarWrapper}
+      onPress={handleAvatarPress}
+      activeOpacity={0.8}
+    >
+      {avatarUri ? (
+        <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+      ) : (
+        <View style={[styles.avatarImage, styles.placeholderAvatar, { backgroundColor: '#1A1A1A' }]}>
+          <Icon name="user" size={40} color="#6C5DD3" />
+        </View>
+      )}
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -368,48 +390,97 @@ export const ProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
   
         
-        <View style={[styles.headerBackground, { backgroundColor: '#1A1A1A' }]}>
-          {/* 背景更换按钮已封锁 */}
-          {/* <TouchableOpacity 
-            style={styles.backgroundChangeButton} 
-            onPress={handleChangeBackground}
-            activeOpacity={0.7}
+        {resolvedBackgroundSource ? (
+          <ImageBackground
+            source={resolvedBackgroundSource}
+            style={styles.headerBackground}
+            imageStyle={styles.headerBackgroundImage}
           >
-            <MaterialIcons name="photo-camera" size={18} color="#fff" />
-          </TouchableOpacity> */}
-          <View style={styles.headerOverlay}>
-            <View style={styles.header}>
-              <View style={styles.avatarWrapper}>
-                <View style={[styles.avatarImage, { backgroundColor: '#1A1A1A', justifyContent: 'center', alignItems: 'center' }]}>
-                  <Icon name="user" size={40} color="#6C5DD3" />
-                </View>
+            <TouchableOpacity
+              style={styles.backgroundTouchArea}
+              onPress={handleChangeBackground}
+              activeOpacity={0.9}
+            />
+            <TouchableOpacity 
+              style={styles.backgroundChangeButton} 
+              onPress={handleChangeBackground}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="photo-camera" size={18} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.headerOverlay} pointerEvents="box-none">
+              <View style={styles.header}>
+                {renderAvatar()}
+                
+                <TouchableOpacity 
+                  style={styles.nameContainer} 
+                  onPress={handleOpenRename}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.nameText}>{userName}</Text>
+                  <Icon name="edit-2" size={14} color="rgba(255, 255, 255, 0.8)" style={styles.editIcon} />
+                </TouchableOpacity>
+
+                <Text style={styles.idText}>ID: 88293401</Text>
               </View>
-              
-              <TouchableOpacity 
-                style={styles.nameContainer} 
-                onPress={handleOpenRename}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.nameText}>{userName}</Text>
-                <Icon name="edit-2" size={14} color="rgba(255, 255, 255, 0.8)" style={styles.editIcon} />
-              </TouchableOpacity>
 
-              <Text style={styles.idText}>ID: 88293401</Text>
+              <View style={styles.statsContainer}>
+                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.focusCount'))}>
+                  <Text style={styles.statNumber}>{stats.count}</Text>
+                  <Text style={styles.statLabel}>{t('profile.stats.focusCount')}</Text>
+                </TouchableOpacity>
+                <View style={styles.statDivider} />
+                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.totalDuration'))}>
+                  <Text style={styles.statNumber}>{stats.duration}</Text>
+                  <Text style={styles.statLabel}>{t('profile.stats.totalDuration')}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+          </ImageBackground>
+        ) : (
+          <View style={[styles.headerBackground, { backgroundColor: '#1A1A1A' }]}>
+            <TouchableOpacity
+              style={styles.backgroundTouchArea}
+              onPress={handleChangeBackground}
+              activeOpacity={0.9}
+            />
+            <TouchableOpacity 
+              style={styles.backgroundChangeButton} 
+              onPress={handleChangeBackground}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="photo-camera" size={18} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.headerOverlay} pointerEvents="box-none">
+              <View style={styles.header}>
+                {renderAvatar()}
+                
+                <TouchableOpacity 
+                  style={styles.nameContainer} 
+                  onPress={handleOpenRename}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.nameText}>{userName}</Text>
+                  <Icon name="edit-2" size={14} color="rgba(255, 255, 255, 0.8)" style={styles.editIcon} />
+                </TouchableOpacity>
 
-            <View style={styles.statsContainer}>
-              <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.focusCount'))}>
-                <Text style={styles.statNumber}>{stats.count}</Text>
-                <Text style={styles.statLabel}>{t('profile.stats.focusCount')}</Text>
-              </TouchableOpacity>
-              <View style={styles.statDivider} />
-              <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.totalDuration'))}>
-                <Text style={styles.statNumber}>{stats.duration}</Text>
-                <Text style={styles.statLabel}>{t('profile.stats.totalDuration')}</Text>
-              </TouchableOpacity>
+                <Text style={styles.idText}>ID: 88293401</Text>
+              </View>
+
+              <View style={styles.statsContainer}>
+                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.focusCount'))}>
+                  <Text style={styles.statNumber}>{stats.count}</Text>
+                  <Text style={styles.statLabel}>{t('profile.stats.focusCount')}</Text>
+                </TouchableOpacity>
+                <View style={styles.statDivider} />
+                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.totalDuration'))}>
+                  <Text style={styles.statNumber}>{stats.duration}</Text>
+                  <Text style={styles.statLabel}>{t('profile.stats.totalDuration')}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         <Modal
           visible={isNameModalVisible}
@@ -510,9 +581,7 @@ export const ProfileScreen = () => {
                       }}
                       activeOpacity={0.7}
                     >
-                      <View style={[styles.presetBackgroundThumbnail, { backgroundColor: '#2C2C2E', justifyContent: 'center', alignItems: 'center' }]}>
-                        <Icon name="image" size={24} color="#444" />
-                      </View>
+                      <Image source={bg.source} style={styles.presetBackgroundThumbnail} />
                       <Text style={styles.presetBackgroundName}>{bg.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -556,12 +625,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#161618'
   },
+  backgroundTouchArea: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
   headerBackgroundImage: {
     borderRadius: 24
   },
   headerOverlay: {
     backgroundColor: 'rgba(0,0,0,0.2)',
-    paddingVertical: 20
+    paddingVertical: 20,
+    zIndex: 1
   },
   headerBackgroundNormal: {
     marginHorizontal: 20,
