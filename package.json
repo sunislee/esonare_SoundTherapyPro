@@ -13,6 +13,7 @@
     "android:domesticDebug": "react-native run-android --tasks installDomesticDebug --appId com.anonymous.soundtherapyapp"
   },
   "dependencies": {
+    "@babel/runtime": "7.28.6",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/blur": "^4.4.1",
     "@react-native-community/slider": "4.4.2",
