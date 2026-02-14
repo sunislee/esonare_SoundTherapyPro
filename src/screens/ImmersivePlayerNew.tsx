@@ -55,7 +55,6 @@ const ImmersivePlayerNew: React.FC = () => {
     SCENES.find(s => s.id === targetSceneId) || SCENES[0]
   , [targetSceneId]);
 
-  // 占位背景色：深海给 #001a33，森林给 #1a2e1a，其他默认深灰
   const placeholderColor = useMemo(() => {
     if (targetScene.id.includes('ocean') || targetScene.id.includes('deep_sea')) return '#001a33';
     if (targetScene.id.includes('forest')) return '#1a2e1a';
@@ -125,9 +124,12 @@ const ImmersivePlayerNew: React.FC = () => {
 
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
-        {/* 背景图片层已移除 */}
-        
-        {/* 深色渐变遮罩层 */}
+        {scene.backgroundSource ? (
+          <Image source={scene.backgroundSource} style={styles.backgroundImage} />
+        ) : (
+          <View style={[styles.backgroundFallback, { backgroundColor: placeholderColor }]} />
+        )}
+
         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
 
         <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
@@ -199,6 +201,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   page: {
+    width: width,
+    height: height,
+  },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: width,
+    height: height,
+    resizeMode: 'cover',
+  },
+  backgroundFallback: {
+    ...StyleSheet.absoluteFillObject,
     width: width,
     height: height,
   },

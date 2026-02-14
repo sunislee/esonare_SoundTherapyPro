@@ -29,7 +29,7 @@ export class Scene {
     this.audioFile = data.audioFile;
     this.filename = data.filename || '';
     this.baseVolume = data.baseVolume ?? 1.0;
-    this.backgroundSource = null;
+    this.backgroundSource = data.backgroundSource ?? null;
     this.category = data.category || 'Nature';
     this.isBaseScene = data.isBaseScene ?? true;
   }
@@ -73,19 +73,19 @@ export class Scene {
 
 const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
   'Nature': {
-    source: null,
+    source: require('../assets/images/forest_bg.jpg'),
     color: '#0047AB',
   },
   'Healing': {
-    source: null,
+    source: require('../assets/images/fire_bg.jpg'),
     color: '#4a7a5a',
   },
   'Brainwave': {
-    source: null,
+    source: require('../assets/images/sea_bg.jpg'),
     color: '#1a1a2e',
   },
   'Life': {
-    source: null,
+    source: require('../assets/images/rain_bg.jpg'),
     color: '#3b5c99',
   },
 };
@@ -172,7 +172,7 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       audioFile: null,
       filename: item.filename,
       baseVolume: 1.0,
-      backgroundSource: null,
+      backgroundSource: bg.source,
       category: category,
       isBaseScene: isBase,
     });

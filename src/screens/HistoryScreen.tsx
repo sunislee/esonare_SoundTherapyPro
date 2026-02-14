@@ -44,7 +44,11 @@ const HistoryScreen = () => {
 
   const renderItem = ({ item }: { item: HistoryItemData }) => (
     <TouchableOpacity style={styles.item} onPress={() => handlePlay(item)}>
-      <Image source={item.backgroundSource} style={styles.thumbnail} />
+      {item.backgroundSource ? (
+        <Image source={item.backgroundSource} style={styles.thumbnail} />
+      ) : (
+        <View style={[styles.thumbnail, { backgroundColor: item.primaryColor }]} />
+      )}
       <View style={styles.info}>
         <Text style={styles.title}>{t(`scenes.${item.id}.title`) || item.title}</Text>
         <Text style={styles.time}>{t('player.history.lastPlayed', { time: formatTime(item.playedAt) })}</Text>

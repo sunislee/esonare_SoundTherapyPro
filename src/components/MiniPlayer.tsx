@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import AudioService from '../services/AudioService';
 import { State } from 'react-native-track-player';
@@ -233,16 +234,25 @@ const MiniPlayer = () => {
              onPress={handlePlayPause}
              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
            >
-             <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
+             <Ionicons
+               name={isPlaying ? 'pause' : 'play'}
+               size={20}
+               color="#FFF"
+               style={[styles.playIcon, !isPlaying && styles.playIconOffset]}
+             />
            </TouchableOpacity>
         </Animated.View>
 
         {/* Expanded View */}
         <Animated.View style={[styles.expandedView, { opacity: contentOpacity }]}>
-          <Image 
-            source={currentScene.backgroundSource} 
-            style={styles.thumbnail} 
-          />
+          {currentScene.backgroundSource ? (
+            <Image 
+              source={currentScene.backgroundSource} 
+              style={styles.thumbnail} 
+            />
+          ) : (
+            <View style={[styles.thumbnail, { backgroundColor: currentScene.primaryColor }]} />
+          )}
           
           <View style={styles.textContainer}>
             <Text style={styles.title} numberOfLines={1}>
@@ -256,7 +266,12 @@ const MiniPlayer = () => {
             onPress={handlePlayPause}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
+            <Ionicons
+              name={isPlaying ? 'pause' : 'play'}
+              size={18}
+              color="#FFF"
+              style={[styles.playIcon, !isPlaying && styles.playIconOffset]}
+            />
           </TouchableOpacity>
         </Animated.View>
 
@@ -343,6 +358,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
+    overflow: 'hidden',
   },
   miniPlayButton: {
     width: 40,
@@ -350,11 +366,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   playIcon: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    lineHeight: 20, // Adjust vertical alignment
+    marginTop: 1,
+  },
+  playIconOffset: {
+    marginLeft: 2,
   },
   collapseButton: {
     position: 'absolute',
