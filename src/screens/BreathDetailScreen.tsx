@@ -50,7 +50,6 @@ const BreathDetailScreen: React.FC = () => {
   const sceneId = route.params?.sceneId || 'nature_deep_sea';
   const scene = SCENES.find(s => s.id === sceneId) || SCENES[0];
 
-  // 占位背景色：深海给 #001a33，森林给 #1a2e1a，其他默认深灰
   const placeholderColor = useMemo(() => {
     if (scene.id.includes('ocean') || scene.id.includes('deep_sea')) return '#001a33';
     if (scene.id.includes('forest')) return '#1a2e1a';
@@ -117,9 +116,12 @@ const BreathDetailScreen: React.FC = () => {
       <View style={styles.container}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
         
-        {/* 背景图片层已移除 */}
-        
-        {/* 背景装饰/遮罩 */}
+        {scene.backgroundSource ? (
+          <Image source={scene.backgroundSource} style={styles.backgroundImage} />
+        ) : (
+          <View style={[styles.backgroundFallback, { backgroundColor: placeholderColor }]} />
+        )}
+
         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.8)' }]} />
 
       <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
@@ -181,6 +183,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: width,
+    height: height,
+    resizeMode: 'cover',
+  },
+  backgroundFallback: {
+    ...StyleSheet.absoluteFillObject,
+    width: width,
+    height: height,
   },
   mainContainer: {
     flex: 1,
