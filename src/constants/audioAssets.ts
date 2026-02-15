@@ -1,7 +1,7 @@
 import { Platform } from 'react-native'; 
 import * as RNFS from 'react-native-fs'; 
 
-export const IS_GOOGLE_PLAY_VERSION = false;
+export const IS_GOOGLE_PLAY_VERSION = true;
 
 const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/master/';
 const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
