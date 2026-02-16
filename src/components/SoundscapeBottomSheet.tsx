@@ -20,7 +20,6 @@ type Props = {
   visible: boolean;
   soundscapes: Scene[];
   selectedId: string;
-  isLoading?: boolean;
   onClose: () => void;
   onSelect: (soundscape: Scene) => void;
 };
@@ -33,7 +32,6 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
   visible,
   soundscapes,
   selectedId,
-  isLoading = false,
   onClose,
   onSelect,
 }) => {
@@ -42,9 +40,8 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
   const SHEET_HEIGHT = screenHeight * 0.65;
   
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
-  const lastGestureDy = useRef(0);
+  const listRef = useRef<FlatList<Scene>>(null);
 
-  const [isDragging, setIsDragging] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SceneCategory>('Nature');
 
   useEffect(() => {
@@ -143,37 +140,42 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
 
   const renderItem = ({ item }: { item: Scene }) => {
     const isSelected = item.id === selectedId;
+    const localizedTitle = t(item.title, {
+      defaultValue: item.shortName || item.id,
+    });
+    const localizedDesc = t(`scenes.${item.id}.desc`, {
+      defaultValue: t('soundscape.description'),
+    });
     return (
       <TouchableOpacity
         style={[
           styles.item,
           isSelected && styles.itemSelected,
-          isLoading && { opacity: 0.5 },
         ]}
-        disabled={isLoading}
         onPress={() => {
           triggerHaptic();
-          const AudioService = require('../services/AudioService').default;
-          AudioService.switchSoundscape(item, true);
-          onSelect(item);
+          onClose();
+          Promise.resolve(onSelect(item)).catch(() => {});
         }}
         activeOpacity={0.7}>
         <View style={[styles.colorDot, { backgroundColor: item.primaryColor }]} />
         <View style={styles.itemInfo}>
-          <Text style={[styles.itemTitle, isSelected && styles.itemTitleSelected]}>
-            {item.title}
+          <Text
+            style={[styles.itemTitle, isSelected && styles.itemTitleSelected]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {localizedTitle}
           </Text>
-          <Text style={styles.itemDesc}>{t('player.soundscape.description')}</Text>
+          <Text style={styles.itemDesc} numberOfLines={1} ellipsizeMode="tail">
+            {localizedDesc}
+          </Text>
         </View>
-        {isSelected && (
+        {isSelected ? (
           <View style={styles.checkIcon}>
-            {isLoading ? (
-              <Text style={styles.loadingText}>...</Text>
-            ) : (
-              <Text style={styles.checkText}>✓</Text>
-            )}
+            <Text style={styles.checkText}>✓</Text>
           </View>
-        )}
+        ) : null}
       </TouchableOpacity>
     );
   };
@@ -192,7 +194,7 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
         <TouchableOpacity
           style={styles.backdrop}
           activeOpacity={1}
-          onPress={isLoading ? undefined : onClose}
+          onPress={onClose}
         />
       </Animated.View>
 
@@ -206,40 +208,49 @@ export const SoundscapeBottomSheet: React.FC<Props> = ({
         <PanGestureHandler
           onGestureEvent={onGestureEvent}
           onHandlerStateChange={onHandlerStateChange}
+          simultaneousHandlers={listRef}
         >
-          <Animated.View>
+          <Animated.View style={styles.gestureContent}>
             <View style={styles.handleContainer}>
               <View style={styles.handle} />
             </View>
-            <Text style={styles.headerTitle}>{t('player.soundscape.pickerTitle')}</Text>
+            <Text style={styles.headerTitle}>{t('soundscape.pickerTitle')}</Text>
+
+            <View style={styles.categoryRow}>
+              {CATEGORIES.map((cat) => {
+                const isActive = cat === selectedCategory;
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.categoryButton, isActive && styles.categoryButtonActive]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      triggerHaptic();
+                      setSelectedCategory(cat);
+                    }}
+                  >
+                    <Text style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}>
+                      {t(`soundscape.categories.${cat}`)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.listWrapper}>
+              <FlatList
+                ref={listRef}
+                data={filteredSoundscapes}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled
+                style={styles.list}
+              />
+            </View>
           </Animated.View>
         </PanGestureHandler>
-
-        <View style={styles.categoryRow}>
-          {CATEGORIES.map((cat) => {
-            const isActive = cat === selectedCategory;
-            return (
-              <TouchableOpacity
-                key={cat}
-                style={[styles.categoryButton, isActive && styles.categoryButtonActive]}
-                activeOpacity={0.8}
-                onPress={() => setSelectedCategory(cat)}
-              >
-                <Text style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}>
-                  {t(`player.soundscape.categories.${cat}`)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <FlatList
-          data={filteredSoundscapes}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
       </Animated.View>
     </View>
   );
@@ -282,6 +293,9 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: 'rgba(255,255,255,0.3)',
   },
+  gestureContent: {
+    flex: 1,
+  },
   headerTitle: {
     fontFamily: Typography.fontFamily,
     fontSize: 16,
@@ -318,11 +332,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  listWrapper: {
+    flex: 1,
+  },
+  list: {
+    flex: 1,
+  },
   listContent: { paddingHorizontal: 20 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 16,
     marginBottom: 10,
@@ -335,16 +355,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   colorDot: { width: 40, height: 40, borderRadius: 20, marginRight: 16 },
-  itemInfo: { flex: 1 },
+  itemInfo: { flex: 1, paddingRight: 12 },
   itemTitle: {
     fontFamily: Typography.fontFamily,
-    fontSize: 16,
+    fontSize: 15,
     color: 'rgba(255,255,255,0.7)',
-    marginBottom: 4,
+    marginBottom: 2,
+    lineHeight: 20,
   },
   itemTitleSelected: { color: '#fff', fontWeight: '600' },
-  itemDesc: { fontFamily: Typography.fontFamily, fontSize: 13, color: 'rgba(255,255,255,0.4)' },
-  checkIcon: { marginLeft: 10 },
+  itemDesc: { fontFamily: Typography.fontFamily, fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 16 },
+  checkIcon: { marginLeft: 10, minWidth: 18, alignItems: 'center' },
   checkText: { color: '#fff', fontSize: 16 },
   loadingText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 'bold' },
 });

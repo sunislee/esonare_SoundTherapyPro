@@ -215,10 +215,19 @@ export const DownloadService = {
   async downloadAudio(id: string, urls?: string[], retries = 3): Promise<string | null> {
     const asset = AUDIO_MANIFEST.find(a => a.id === id);
     if (!asset) return null;
+    const isDeepSea = id.includes('deep_sea') || asset.filename.includes('deep_sea');
     const localPath = getLocalPathHelper(asset.category, asset.filename);
     const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
     
     const targetUrls = urls && urls.length > 0 ? urls : getDownloadUrl(id);
+    if (isDeepSea) {
+      console.log('[DeepSeaDebug][DownloadService] Start', {
+        id,
+        filename: asset.filename,
+        localPath,
+        targetUrls
+      });
+    }
     for (let u = 0; u < targetUrls.length; u++) {
       const url = targetUrls[u];
       for (let i = 0; i < retries; i++) {
@@ -235,10 +244,16 @@ export const DownloadService = {
           }).promise;
           
           if (await RNFS.exists(localPath)) {
+            if (isDeepSea) {
+              console.log('[DeepSeaDebug][DownloadService] Download ok', { id, url, localPath });
+            }
             return localPath;
           }
         } catch (e) {
           console.error(`[DownloadService] Download failed (Attempt ${i + 1}) ${id}:`, e);
+          if (isDeepSea) {
+            console.log('[DeepSeaDebug][DownloadService] Download error', { id, url, attempt: i + 1 });
+          }
           if (i < retries - 1) {
             await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
           }
@@ -247,6 +262,9 @@ export const DownloadService = {
       if (u === 0 && targetUrls.length > 1) {
         console.warn('[DownloadService] Primary failed, switching to secondary', { id, url });
       }
+    }
+    if (isDeepSea) {
+      console.log('[DeepSeaDebug][DownloadService] All sources failed', { id, localPath });
     }
     return null;
   }
