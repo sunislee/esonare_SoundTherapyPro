@@ -1,12 +1,19 @@
-import { Platform } from 'react-native'; 
+import { NativeModules, Platform } from 'react-native'; 
 import * as RNFS from 'react-native-fs'; 
 
-export const IS_GOOGLE_PLAY_VERSION = true;
+const nativeChannel =
+  Platform.OS === 'android' && NativeModules?.CrashReport?.getChannel
+    ? NativeModules.CrashReport.getChannel()
+    : null;
+
+export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googlePlay' : true;
 
 const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/master/';
 const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 
-export const REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITHUB_URL : GITEE_URL;
+export const PRIMARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITHUB_URL : GITEE_URL;
+export const SECONDARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITEE_URL : GITHUB_URL;
+export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 
 export const LOCAL_RESOURCE_PATH = `${RNFS.DocumentDirectoryPath}/audio_resources`; 
 
@@ -15,8 +22,26 @@ export const getLocalPath = (category: string, filename: string) => {
     return Platform.OS === 'ios' ? `file://${rawPath}` : rawPath; 
 }; 
 
-// 静态资源映射表 - 1.0.2 版本已全面切换为远端加载，不再引用本地 assets/audio
-export const AUDIO_MAP: Record<string, any> = {};
+export const DEFAULT_FALLBACK_SOURCE = require('../../android/app/src/main/res/raw/src_assets_audio_base_forest.mp3');
+
+const BUILT_IN_FALLBACK_FILENAMES = [
+  'interactive/match_strike.wav',
+  'interactive/apple_crunch.m4a',
+  'interactive/wind-chime.m4a',
+  'interactive/breath.m4a',
+  'base/summer_fireworks.m4a',
+  'base/final_healing_rain.m4a',
+  'base/ocean.mp3',
+  'base/fire.mp3',
+];
+
+export const AUDIO_MAP: Record<string, any> = BUILT_IN_FALLBACK_FILENAMES.reduce(
+  (acc, filename) => {
+    acc[filename] = DEFAULT_FALLBACK_SOURCE;
+    return acc;
+  },
+  {} as Record<string, any>
+);
 
 export const AMBIENT_RESOURCES = {
   WHITE_NOISE: 'interactive/white_noise.m4a',
@@ -58,3 +83,15 @@ export const AUDIO_MANIFEST = [
   { id: 'interactive_rain', filename: AMBIENT_RESOURCES.RAIN, category: 'interactive', title: 'scenes.interactive_rain.title', description: 'scenes.interactive_rain.desc', size: 4194304 },
   { id: 'interactive_ocean', filename: AMBIENT_RESOURCES.OCEAN, category: 'interactive', title: 'scenes.interactive_ocean.title', description: 'scenes.interactive_ocean.desc', size: 5242880 },
 ]; 
+
+export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {
+  const primary = isGooglePlay ? GITHUB_URL : GITEE_URL;
+  const secondary = isGooglePlay ? GITEE_URL : GITHUB_URL;
+  return [primary, secondary].map(base => `${base}${filename}`);
+};
+
+export const getDownloadUrl = (assetIdOrFilename: string) => {
+  const asset = AUDIO_MANIFEST.find(a => a.id === assetIdOrFilename);
+  const filename = asset ? asset.filename : assetIdOrFilename;
+  return getDownloadUrlByChannel(IS_GOOGLE_PLAY_VERSION, filename);
+};

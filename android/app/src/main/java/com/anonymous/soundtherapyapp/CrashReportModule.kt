@@ -12,7 +12,7 @@ class CrashReportModule(reactContext: ReactApplicationContext) : ReactContextBas
 
     @ReactMethod
     fun logException(message: String) {
-        val channel = "official"
+        val channel = BuildConfig.DISTRIBUTION_CHANNEL
         android.util.Log.d("CrashReport", "Logging exception: $message")
         if (channel == "googlePlay") {
             try {
@@ -44,7 +44,7 @@ class CrashReportModule(reactContext: ReactApplicationContext) : ReactContextBas
 
     @ReactMethod
     fun setUserId(userId: String) {
-        val channel = "official"
+        val channel = BuildConfig.DISTRIBUTION_CHANNEL
         if (channel == "googlePlay") {
             try {
                 val clazz = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics")
@@ -64,5 +64,10 @@ class CrashReportModule(reactContext: ReactApplicationContext) : ReactContextBas
                 e.printStackTrace()
             }
         }
+    }
+
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun getChannel(): String {
+        return BuildConfig.DISTRIBUTION_CHANNEL
     }
 }

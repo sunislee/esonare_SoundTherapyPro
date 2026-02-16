@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs'; 
 import { 
   AUDIO_MANIFEST, 
-  REMOTE_RESOURCE_BASE_URL, 
   IS_GOOGLE_PLAY_VERSION,
+  getDownloadUrl,
   getLocalPath as getLocalPathHelper 
 } from '../constants/audioAssets';
 
@@ -77,35 +77,42 @@ export const DownloadService = {
       // 异步校准：在后台通过 HEAD 请求获取更精准的远程文件大小，但不阻塞主流程
       // 如果校准成功，会更新 totalBytes，从而让进度条更准
       const calibrateSizes = async () => {
-        // 标记是否有变化
         let hasChanges = false;
         
         for (const asset of filesToDownload) {
-          try {
-            // 增加超时控制和更健壮的请求
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            
-            const response = await fetch(`${REMOTE_RESOURCE_BASE_URL}${asset.filename}`, { 
-              method: 'HEAD',
-              signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+          const urls = getDownloadUrl(asset.id);
+          for (let i = 0; i < urls.length; i++) {
+            const url = urls[i];
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 5000);
+              
+              const response = await fetch(url, { 
+                method: 'HEAD',
+                signal: controller.signal
+              });
+              clearTimeout(timeoutId);
 
-            const remoteSize = Number(response.headers.get('content-length'));
-            if (remoteSize && remoteSize > 0 && remoteSize !== fileSizes[asset.id]) {
-              const diff = remoteSize - fileSizes[asset.id];
-              fileSizes[asset.id] = remoteSize;
-              totalBytes += diff; // Calibrate total size
-              hasChanges = true;
+              const remoteSize = Number(response.headers.get('content-length'));
+              if (remoteSize && remoteSize > 0 && remoteSize !== fileSizes[asset.id]) {
+                const diff = remoteSize - fileSizes[asset.id];
+                fileSizes[asset.id] = remoteSize;
+                totalBytes += diff;
+                hasChanges = true;
+              }
+              break;
+            } catch (e) {
+              if (i === 0 && urls.length > 1) {
+                console.warn('[Calibrate] Primary failed, switching to secondary', { id: asset.id, url });
+              }
+              if (i === urls.length - 1) {
+                console.warn(`[Calibrate] Unable to get ${asset.filename} size`, e);
+              }
             }
-          } catch (e) {
-            console.warn(`[Calibrate] Unable to get ${asset.filename} size`, e);
           }
         }
 
         if (hasChanges) {
-          // 只要有变化，立即触发一次进度更新以反映最新的总大小
           onProgress({
             progress: totalBytes > 0 ? currentReceivedBytes / totalBytes : 0,
             receivedBytes: currentReceivedBytes,
@@ -123,6 +130,43 @@ export const DownloadService = {
       });
 
       // 2. 第二步：下载缺失文件
+      const failedAssets: string[] = [];
+      const downloadWithFallback = async (asset: any) => {
+        const urls = getDownloadUrl(asset.id);
+        for (let i = 0; i < urls.length; i++) {
+          const url = urls[i];
+          if (i === 1) {
+            console.warn('[DownloadService] Primary failed, switching to secondary', { id: asset.id, url });
+          }
+          let lastFileReceived = 0;
+          try {
+            await RNFS.downloadFile({
+              fromUrl: url,
+              toFile: getLocalPathHelper(asset.category, asset.filename),
+              progressDivider: 5,
+              progress: (res) => {
+                const delta = res.bytesWritten - lastFileReceived;
+                lastFileReceived = res.bytesWritten;
+                currentReceivedBytes += delta;
+
+                const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
+                onProgress({
+                  progress: Math.min(0.999, rawProgress),
+                  receivedBytes: Math.min(currentReceivedBytes, totalBytes),
+                  totalBytes: totalBytes
+                });
+              }
+            }).promise;
+            return true;
+          } catch (e) {
+            if (i === urls.length - 1) {
+              console.warn('[DownloadService] All sources failed', { id: asset.id, url });
+            }
+          }
+        }
+        return false;
+      };
+
       for (const asset of filesToDownload) {
         const localPath = getLocalPathHelper(asset.category, asset.filename);
         const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
@@ -131,27 +175,10 @@ export const DownloadService = {
           await RNFS.mkdir(dirPath);
         }
 
-        let lastFileReceived = 0;
-
-        await RNFS.downloadFile({
-          fromUrl: `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`,
-          toFile: localPath,
-          progressDivider: 5, // Reduce callback frequency
-          progress: (res) => {
-            const delta = res.bytesWritten - lastFileReceived;
-            lastFileReceived = res.bytesWritten;
-            currentReceivedBytes += delta;
-
-            // Reflect progress in download stage
-            // UI Protection: Ensure progress does not exceed 100%
-            const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
-            onProgress({
-              progress: Math.min(0.999, rawProgress),
-              receivedBytes: Math.min(currentReceivedBytes, totalBytes),
-              totalBytes: totalBytes
-            });
-          }
-        }).promise;
+        const success = await downloadWithFallback(asset);
+        if (!success) {
+          failedAssets.push(asset.id);
+        }
       }
       
       // 3. Step 3: All complete, force 100%
@@ -161,6 +188,9 @@ export const DownloadService = {
         totalBytes: totalBytes
       });
 
+      if (failedAssets.length > 0) {
+        console.warn('[DownloadService] Failed assets', { ids: failedAssets });
+      }
     } catch (e) {
       console.error('--- [Validation Error] ---', e);
     } finally { 
@@ -182,34 +212,40 @@ export const DownloadService = {
   /**
    * Download a single audio file (with retry mechanism)
    */
-  async downloadAudio(id: string, url: string, retries = 3): Promise<string | null> {
+  async downloadAudio(id: string, urls?: string[], retries = 3): Promise<string | null> {
     const asset = AUDIO_MANIFEST.find(a => a.id === id);
     if (!asset) return null;
     const localPath = getLocalPathHelper(asset.category, asset.filename);
     const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
     
-    for (let i = 0; i < retries; i++) {
-      try {
-        if (!(await RNFS.exists(dirPath))) {
-          await RNFS.mkdir(dirPath);
+    const targetUrls = urls && urls.length > 0 ? urls : getDownloadUrl(id);
+    for (let u = 0; u < targetUrls.length; u++) {
+      const url = targetUrls[u];
+      for (let i = 0; i < retries; i++) {
+        try {
+          if (!(await RNFS.exists(dirPath))) {
+            await RNFS.mkdir(dirPath);
+          }
+          
+          await RNFS.downloadFile({
+            fromUrl: url,
+            toFile: localPath,
+            connectionTimeout: 15000,
+            readTimeout: 30000,
+          }).promise;
+          
+          if (await RNFS.exists(localPath)) {
+            return localPath;
+          }
+        } catch (e) {
+          console.error(`[DownloadService] Download failed (Attempt ${i + 1}) ${id}:`, e);
+          if (i < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+          }
         }
-        
-        await RNFS.downloadFile({
-          fromUrl: url || `${REMOTE_RESOURCE_BASE_URL}${asset.filename}`,
-          toFile: localPath,
-          connectionTimeout: 15000,
-          readTimeout: 30000,
-        }).promise;
-        
-        if (await RNFS.exists(localPath)) {
-          return localPath;
-        }
-      } catch (e) {
-        console.error(`[DownloadService] Download failed (Attempt ${i + 1}) ${id}:`, e);
-        if (i < retries - 1) {
-          // Exponential backoff retry
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-        }
+      }
+      if (u === 0 && targetUrls.length > 1) {
+        console.warn('[DownloadService] Primary failed, switching to secondary', { id, url });
       }
     }
     return null;
