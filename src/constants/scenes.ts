@@ -1,5 +1,5 @@
 import { Platform, ImageSourcePropType, Image } from 'react-native';
-import { AUDIO_MANIFEST, REMOTE_RESOURCE_BASE_URL } from './audioAssets';
+import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL } from './audioAssets';
 
 export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life';
 
@@ -165,7 +165,7 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
     return new Scene({
       id: item.id,
       title: item.title,
-      audioUrl: `${REMOTE_RESOURCE_BASE_URL}${item.filename}`,
+      audioUrl: `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${item.filename}`,
       backgroundUrl: '',
       primaryColor: bg.color,
       audioSource: item.id,
