@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 export type MainTabParamList = {
   HomeTab: undefined;
@@ -15,6 +16,12 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainTabNavigator: React.FC = () => {
   const { t } = useTranslation();
+  const triggerHaptic = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -38,6 +45,11 @@ export const MainTabNavigator: React.FC = () => {
           <View style={styles.tabBarBackground} />
         ),
       })}
+      screenListeners={{
+        tabPress: () => {
+          triggerHaptic();
+        },
+      }}
     >
       <Tab.Screen
         name="HomeTab"

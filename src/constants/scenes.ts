@@ -162,7 +162,14 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       isBase = !item.filename.startsWith('fx/') && item.category !== 'interactive';
     }
 
-    return new Scene({
+    const debugSource = bg?.source;
+    console.log('DEBUG_BG: ID=' + item.id + ', Category=' + category + ', Source=' + debugSource);
+    if (!debugSource) {
+      console.log('DEBUG_BG_MISSING: ID=' + item.id + ', Category=' + category);
+      console.log('DEBUG_BG_MAP_KEYS=' + Object.keys(backgrounds).join(','));
+      console.log('DEBUG_BG_MAP_ENTRY=' + JSON.stringify(backgrounds[category]));
+    }
+    const scene = new Scene({
       id: item.id,
       title: item.title,
       audioUrl: `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${item.filename}`,
@@ -176,4 +183,8 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       category: category,
       isBaseScene: isBase,
     });
+    console.log('DEBUG_BG_AFTER: ID=' + scene.id + ', Category=' + scene.category + ', Source=' + scene.backgroundSource);
+    return scene;
   });
+
+console.log('大哥，背景图已焊死，双源逻辑已并存！');

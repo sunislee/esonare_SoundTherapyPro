@@ -29,6 +29,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
 import crashlytics from '@react-native-firebase/crashlytics';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 interface RainDropConfig {
   id: number;
@@ -49,6 +50,12 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   const [itemY, setItemY] = useState<number | null>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
   const viewRef = useRef<View>(null);
+  const triggerHaptic = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
   
   const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
   const { t } = useTranslation();
@@ -183,6 +190,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             onPressOut={handlePressOut}
             delayLongPress={150}
             onPress={() => {
+                triggerHaptic();
                 // 如果动画正在播放，立即停止并重置
                 highlightAnim.stopAnimation();
                 highlightAnim.setValue(0);
@@ -192,7 +200,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
                   await AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', item.id);
                   
                   // Specific navigation for breathing scenes
-                  if (item.id === 'nature_deep_sea' || item.id === 'nature_misty_forest' || item.id.includes('breath')) {
+                  if (item.id.includes('breath')) {
                     navigation.navigate('BreathDetail', { sceneId: item.id });
                   } else {
                     navigation.navigate('ImmersivePlayer', { sceneId: item.id });
@@ -203,17 +211,18 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             <View style={styles.cardInner}>
               <View style={[styles.cardBg, { backgroundColor: item.primaryColor }]} />
               <View style={styles.cardContent}>
-                <View>
-                  <Text style={styles.cardTitle}>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>
                     {t(`scenes.${item.id}.title`, { defaultValue: item.title || item.id.split('_').pop()?.replace(/^\w/, (c: string) => c.toUpperCase()) || '神秘深海' })}
                   </Text>
-                  <Text style={styles.cardSubtitle}>
+                  <Text style={styles.cardSubtitle} numberOfLines={1}>
                     {t(`categories.${item.category.toLowerCase()}`, { defaultValue: item.category })}
                   </Text>
                 </View>
                 <TouchableOpacity
                   style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]}
                   onPress={async () => {
+                    triggerHaptic();
                     await togglePlayback(item);
                   }}
                 >
@@ -579,6 +588,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
+  },
+  cardText: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: 16,
   },
   cardTitle: {
     fontSize: 20,

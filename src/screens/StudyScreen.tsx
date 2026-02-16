@@ -8,6 +8,7 @@ import {
   Animated,
   Alert,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -18,6 +19,8 @@ import { useTranslation } from 'react-i18next';
 import { RainDrop } from '../components/RainDrop';
 import AudioService from '../services/AudioService';
 import { Typography } from '../theme/Typography';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { SCENES } from '../constants/scenes';
 
 
 interface RainDropConfig {
@@ -36,6 +39,12 @@ const StudyScreen: React.FC = () => {
   const statusAnim = useRef(new Animated.Value(0)).current;
   const breathAnim = useRef(new Animated.Value(1)).current;
   const [volume, _setVolume] = useState(0.5);
+  const triggerHaptic = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
   
   // Raindrop animation state
   const rainDrops = useRef<RainDropConfig[]>([]);
@@ -43,7 +52,7 @@ const StudyScreen: React.FC = () => {
   
 
   useEffect(() => {
-    AudioService.setVolume(volume).catch(() => {});
+    AudioService.updateAmbientVolume(volume);
   }, [volume]);
   
 
@@ -65,11 +74,11 @@ const StudyScreen: React.FC = () => {
 
   const getPlaybackStatus = () => {
 
-    const currentState = typeof playbackState === 'object' && 'state' in playbackState 
+    const currentState = (typeof playbackState === 'object' && 'state' in playbackState 
       ? playbackState.state 
-      : playbackState;
+      : playbackState) as any;
 
-    switch (currentState) {
+    switch (currentState as any) {
       case State.Playing:
         return {
           isPlaying: true,
@@ -93,8 +102,10 @@ const StudyScreen: React.FC = () => {
         };
       case State.Buffering:
       case State.Loading:
+      case (State as any).Connecting:
       case 'buffering':
       case 'loading':
+      case 'connecting':
         return {
           isPlaying: false,
           isBuffering: true,
@@ -114,6 +125,11 @@ const StudyScreen: React.FC = () => {
   };
 
   const { isPlaying, isBuffering, statusText, buttonIcon, buttonText } = getPlaybackStatus();
+  const currentState: any = (typeof playbackState === 'object' && 'state' in playbackState 
+    ? playbackState.state 
+    : playbackState) as any;
+  const isConnecting = currentState === (State as any).Connecting || currentState === 'connecting';
+  const isButtonLoading = isLoading || isBuffering || isConnecting;
 
 
   useEffect(() => {
@@ -148,7 +164,10 @@ const StudyScreen: React.FC = () => {
       setIsLoading(true);
       try {
         await AudioService.setupPlayer();
-        await AudioService.loadAudio();
+        const targetScene = AudioService.getCurrentScene() || SCENES.find((s) => s.isBaseScene) || SCENES[0];
+        if (targetScene) {
+          await AudioService.loadAudio(targetScene);
+        }
 
         await AudioService.play();
       } catch (error) {
@@ -203,6 +222,7 @@ const StudyScreen: React.FC = () => {
 
   const togglePlayback = async () => {
     try {
+      triggerHaptic();
       if (isPlaying) {
         await AudioService.pause();
       } else {
@@ -283,10 +303,10 @@ const StudyScreen: React.FC = () => {
             <View style={{ zIndex: 999, elevation: 999 }} pointerEvents="auto">
               <TouchableOpacity
                 {...({ pointerEvents: 'auto' } as any)}
-                style={styles.buttonContainer}
+                style={[styles.buttonContainer, isButtonLoading && styles.buttonDisabled]}
                 hitSlop={{ top: 30, bottom: 30, left: 30, right: 30 }}
                 onPress={togglePlayback}
-                disabled={isLoading || isBuffering}>
+                disabled={isButtonLoading}>
               <Animated.View 
                 style={[styles.buttonOuterRing, {
                   transform: [{ scale: breathAnim }]
@@ -305,21 +325,28 @@ const StudyScreen: React.FC = () => {
                   }
                 ]}
               >
+                {isButtonLoading ? (
+                  <ActivityIndicator size="small" color="#4a90e2" />
+                ) : (
+                  <Text style={[
+                    styles.playButtonText, 
+                    isPlaying && styles.playingButtonText,
+                    isBuffering && styles.bufferingButtonText
+                  ]}>
+                    {buttonIcon}
+                  </Text>
+                )}
+              </Animated.View>
+              <View style={styles.buttonLabelContainer}>
+                <View style={{ height: 12 }} />
                 <Text style={[
-                  styles.playButtonText, 
+                  styles.buttonLabel,
                   isPlaying && styles.playingButtonText,
                   isBuffering && styles.bufferingButtonText
                 ]}>
-                  {buttonIcon}
+                  {isButtonLoading ? t('player.status.loading') : buttonText}
                 </Text>
-              </Animated.View>
-              <Text style={[
-                styles.buttonLabel,
-                isPlaying && styles.playingButtonText,
-                isBuffering && styles.bufferingButtonText
-              ]}>
-                {isLoading ? t('player.status.loading') : buttonText}
-              </Text>
+              </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -369,7 +396,7 @@ const styles = StyleSheet.create({
   breathBackground: {
     position: 'absolute',
     width: 250,
-    height: 250,
+    minHeight: 250,
     borderRadius: 125,
     backgroundColor: '#4a90e2',
     opacity: 0.1,
@@ -377,23 +404,23 @@ const styles = StyleSheet.create({
   },
   controlArea: { alignItems: 'center', zIndex: 10 },
   statusRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#444', marginRight: 10 },
+  statusDot: { width: 8, minHeight: 8, borderRadius: 4, backgroundColor: '#444', marginRight: 10 },
   statusDotActive: { backgroundColor: '#4a90e2' },
   statusDotBuffering: { backgroundColor: '#f5a623' },
   statusText: { color: '#aaa', fontSize: 14, letterSpacing: 1 },
-  
-  buttonContainer: { alignItems: 'center', justifyContent: 'center', width: 100, height: 100 },
+  buttonContainer: { alignItems: 'center', justifyContent: 'flex-start', width: 140, paddingVertical: 6 },
+  buttonDisabled: { opacity: 0.7 },
   buttonOuterRing: {
     position: 'absolute',
     width: 90,
-    height: 90,
+    minHeight: 90,
     borderRadius: 45,
     borderWidth: 1,
     borderColor: 'rgba(74, 144, 226, 0.3)',
   },
   playButton: {
     width: 70,
-    height: 70,
+    minHeight: 70,
     borderRadius: 35,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
@@ -421,11 +448,15 @@ const styles = StyleSheet.create({
   bufferingButtonText: {
     color: '#f5a623',
   },
+  buttonLabelContainer: {
+    alignItems: 'center',
+  },
   buttonLabel: {
-    position: 'absolute',
-    bottom: -25,
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
+    textAlign: 'center',
+    flexWrap: 'wrap',
+    maxWidth: 100,
   },
   
   footer: {

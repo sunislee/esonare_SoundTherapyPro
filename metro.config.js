@@ -19,11 +19,37 @@ const gestureHandlerPath = fs.realpathSync(
 );
 const screensPath = fs.realpathSync(path.dirname(require.resolve('react-native-screens/package.json')));
 const defaultResolveRequest = config.resolver.resolveRequest;
+const findPnpmPackagePath = (packageName) => {
+  try {
+    const entries = fs.readdirSync(pnpmStore);
+    const match = entries.find((entry) => entry.startsWith(`${packageName}@`));
+    if (!match) return null;
+    const candidate = path.join(pnpmStore, match, 'node_modules', packageName);
+    if (fs.existsSync(candidate)) {
+      return fs.realpathSync(candidate);
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+};
+const regeneratorRuntimePath =
+  findPnpmPackagePath('regenerator-runtime') ||
+  (() => {
+    try {
+      return fs.realpathSync(
+        path.dirname(require.resolve('regenerator-runtime/package.json', { paths: [__dirname] }))
+      );
+    } catch (error) {
+      return null;
+    }
+  })();
 
 config.resolver.assetExts.push('mp3', 'wav', 'flac', 'aiff', 'm4a');
-config.resolver.nodeModulesPaths = [rootNodeModules];
+config.resolver.nodeModulesPaths = [rootNodeModules, pnpmStore];
 config.resolver.useWatchman = false;
 config.resolver.unstable_enableSymlinks = true;
+config.resolver.disableHierarchicalLookup = true;
 config.watchFolders = [__dirname, rootNodeModules, pnpmStore];
 config.resolver.extraNodeModules = {
   '@babel/runtime': babelRuntimeRoot,
@@ -33,6 +59,7 @@ config.resolver.extraNodeModules = {
   'react-native-safe-area-context': safeAreaPath,
   'react-native-gesture-handler': gestureHandlerPath,
   'react-native-screens': screensPath,
+  ...(regeneratorRuntimePath ? { 'regenerator-runtime': regeneratorRuntimePath } : {}),
 };
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName.startsWith('@babel/runtime/')) {
@@ -42,6 +69,24 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       return { type: 'sourceFile', filePath: fileCandidate };
     }
     const indexCandidate = path.resolve(babelRuntimeRoot, subPath, 'index.js');
+    if (fs.existsSync(indexCandidate)) {
+      return { type: 'sourceFile', filePath: indexCandidate };
+    }
+  }
+  if (
+    regeneratorRuntimePath &&
+    (moduleName === 'regenerator-runtime/runtime' || moduleName === 'regenerator-runtime/runtime.js')
+  ) {
+    return { type: 'sourceFile', filePath: path.resolve(regeneratorRuntimePath, 'runtime.js') };
+  }
+  if (regeneratorRuntimePath && moduleName.startsWith('regenerator-runtime/')) {
+    const subPath = moduleName.replace('regenerator-runtime/', '');
+    const normalizedSubPath = subPath.endsWith('.js') ? subPath : `${subPath}.js`;
+    const fileCandidate = path.resolve(regeneratorRuntimePath, normalizedSubPath);
+    if (fs.existsSync(fileCandidate)) {
+      return { type: 'sourceFile', filePath: fileCandidate };
+    }
+    const indexCandidate = path.resolve(regeneratorRuntimePath, subPath, 'index.js');
     if (fs.existsSync(indexCandidate)) {
       return { type: 'sourceFile', filePath: indexCandidate };
     }

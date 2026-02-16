@@ -18,6 +18,7 @@ import { RootStackParamList } from '../navigation/MainNavigator';
 import AudioService from '../services/AudioService';
 import { State } from 'react-native-track-player';
 import { Scene } from '../constants/scenes';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 const { width } = Dimensions.get('window');
 
@@ -41,6 +42,12 @@ const MiniPlayer = () => {
   const [isInteracting, setIsInteracting] = useState(false);
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoHideAnim = useRef(new Animated.Value(1)).current;
+  const triggerHaptic = () => {
+    ReactNativeHapticFeedback.trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  };
 
   // Auto-hide logic
   const resetAutoHideTimer = () => {
@@ -121,6 +128,7 @@ const MiniPlayer = () => {
   const handlePlayPause = async (e: any) => {
     e.stopPropagation();
     resetAutoHideTimer();
+    triggerHaptic();
     try {
       if (isPlaying) {
         await AudioService.pause();
@@ -135,6 +143,7 @@ const MiniPlayer = () => {
   const toggleCollapse = (e: any) => {
     e.stopPropagation();
     resetAutoHideTimer();
+    triggerHaptic();
     
     const targetValue = isCollapsed ? 1 : 0;
     setIsCollapsed(!isCollapsed);
@@ -149,14 +158,13 @@ const MiniPlayer = () => {
 
   const handlePress = () => {
     resetAutoHideTimer();
+    triggerHaptic();
     if (isCollapsed) {
       // If collapsed, expand first instead of navigating
       toggleCollapse({ stopPropagation: () => {} });
     } else if (currentScene) {
       // Determine destination based on scene type
-      if (currentScene.id === 'nature_deep_sea' || 
-          currentScene.id === 'nature_misty_forest' || 
-          currentScene.id.includes('breath')) {
+      if (currentScene.id.includes('breath')) {
         navigation.navigate('BreathDetail', { sceneId: currentScene.id });
       } else {
         navigation.navigate('ImmersivePlayer', { sceneId: currentScene.id });
@@ -321,14 +329,14 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 24, // Make room for collapse button
+    paddingRight: 36,
   },
   collapsedView: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    paddingRight: 24, // Make room for expand button
+    paddingRight: 36,
   },
   thumbnail: {
     width: 48,
@@ -339,6 +347,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     justifyContent: 'center',
+    minWidth: 0,
   },
   title: {
     color: '#FFFFFF',

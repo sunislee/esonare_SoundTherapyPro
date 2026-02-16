@@ -131,6 +131,9 @@ const BreathDetailScreen: React.FC = () => {
             <Icon name="chevron-down" size={32} color="#FFF" />
           </TouchableOpacity>
         </View>
+        <Text style={styles.sceneTitle}>
+          {t(`scenes.${scene.id}.title`, { defaultValue: scene.title })}
+        </Text>
 
         {/* Content - 移除呼吸球，保持中间留白或仅显示互动图标 */}
         <Animated.View style={[styles.content, { opacity: contentFadeAnim }]}>
@@ -156,10 +159,6 @@ const BreathDetailScreen: React.FC = () => {
 
           {/* 底部控制区 - 统一布局：标题 + 播放按钮 */}
           <View style={styles.bottomSection}>
-            <Text style={styles.sceneTitle}>
-              {t(`scenes.${scene.id}.title`)}
-            </Text>
-            
             <TouchableOpacity 
               style={styles.playButton} 
               onPress={togglePlayback}
@@ -230,10 +229,13 @@ const styles = StyleSheet.create({
   },
   sceneTitle: {
     color: '#fff',
-    fontSize: 24,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginBottom: 30,
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    marginTop: 12,
+    marginBottom: 12,
+    textAlign: 'center',
+    width: '100%',
   },
   playButton: {
     width: 80,

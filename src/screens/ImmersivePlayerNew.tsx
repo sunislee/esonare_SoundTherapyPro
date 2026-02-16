@@ -8,6 +8,7 @@ import {
   Animated,
   Image,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,12 +16,15 @@ import { useTranslation } from 'react-i18next';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { useAudio } from '../context/AudioContext';
 import AnimatedFloatingButton from '../components/AnimatedFloatingButton';
+import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import AudioService from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { Event, useTrackPlayerEvents } from 'react-native-track-player';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,13 +39,15 @@ type ImmersivePlayerRouteProp = RouteProp<RootStackParamList, 'ImmersivePlayer'>
 const ImmersivePlayerNew: React.FC = () => {
   const { t } = useTranslation();
   const route = useRoute<ImmersivePlayerRouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { isPlaying } = usePlayerState();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
+  const pendingSceneIdRef = useRef<string | null>(null);
 
   const {
     currentBaseSceneId,
@@ -49,11 +55,23 @@ const ImmersivePlayerNew: React.FC = () => {
     toggleAmbience,
   } = useAudio();
 
+  const triggerHaptic = () => {
+    const options = {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    };
+    ReactNativeHapticFeedback.trigger('impactLight', options);
+  };
+
   // 获取目标场景
-  const targetSceneId = route.params?.sceneId || currentBaseSceneId || SCENES[0].id;
+  const targetSceneId = currentBaseSceneId || route.params?.sceneId || SCENES[0].id;
   const targetScene = useMemo(() => 
     SCENES.find(s => s.id === targetSceneId) || SCENES[0]
   , [targetSceneId]);
+  const titleSceneId = currentBaseSceneId || targetScene.id;
+  const titleScene = useMemo(() => 
+    SCENES.find(s => s.id === titleSceneId) || targetScene
+  , [titleSceneId, targetScene]);
 
   const placeholderColor = useMemo(() => {
     if (targetScene.id.includes('ocean') || targetScene.id.includes('deep_sea')) return '#001a33';
@@ -68,6 +86,19 @@ const ImmersivePlayerNew: React.FC = () => {
   });
 
   useEffect(() => {
+    const unsubscribeLoading = AudioService.addLoadingListener(({ loading, id }) => {
+      setIsLoading(loading);
+      if (!loading && pendingSceneIdRef.current && id === pendingSceneIdRef.current) {
+        setIsSoundscapeVisible(false);
+        pendingSceneIdRef.current = null;
+      }
+    });
+    return () => {
+      unsubscribeLoading();
+    };
+  }, []);
+
+  useEffect(() => {
     const initPage = async () => {
       // 内容同步浮现 (或稍晚)
       Animated.timing(contentFadeAnim, {
@@ -76,7 +107,6 @@ const ImmersivePlayerNew: React.FC = () => {
         useNativeDriver: true,
       }).start();
 
-      setIsLoading(true);
       const currentPlayingId = AudioService.getCurrentScene()?.id;
       
       // 保存最后播放的场景 ID，用于首页高亮记忆
@@ -88,8 +118,6 @@ const ImmersivePlayerNew: React.FC = () => {
         console.log(`[ImmersivePlayer] Switching to scene ${targetScene.id}.`);
         await AudioService.switchSoundscape(targetScene);
       }
-      
-      setIsLoading(false);
     };
 
     initPage();
@@ -102,10 +130,45 @@ const ImmersivePlayerNew: React.FC = () => {
   }, [targetScene.id]);
 
   const togglePlayback = async () => {
+    triggerHaptic();
     if (isPlaying) {
       await AudioService.pause();
     } else {
       await AudioService.play();
+    }
+  };
+
+  const handleBack = () => {
+    triggerHaptic();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('MainTabs');
+    }
+  };
+
+  const openSoundscapeSheet = () => {
+    triggerHaptic();
+    setIsSoundscapeVisible(true);
+  };
+
+  const closeSoundscapeSheet = () => {
+    setIsSoundscapeVisible(false);
+  };
+
+  const handleSelectSoundscape = async (scene: Scene) => {
+    if (scene.id === currentBaseSceneId) {
+      setIsSoundscapeVisible(false);
+      return;
+    }
+    setIsSoundscapeVisible(false);
+    console.log(`Target ID: ${scene.id}, Current UI ID: ${currentBaseSceneId ?? 'null'}`);
+    pendingSceneIdRef.current = scene.id;
+    try {
+      await AudioService.switchSoundscape(scene);
+    } catch (error) {
+      pendingSceneIdRef.current = null;
+      throw error;
     }
   };
 
@@ -130,16 +193,22 @@ const ImmersivePlayerNew: React.FC = () => {
           <View style={[styles.backgroundFallback, { backgroundColor: placeholderColor }]} />
         )}
 
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
+        <View style={styles.backgroundOverlay} />
 
         <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
           <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={handleBack}
+              style={styles.backButton}
+            >
               <Icon name="chevron-down" size={32} color="#FFF" />
             </TouchableOpacity>
           </View>
+          <Text key={titleSceneId} style={styles.sceneTitle}>
+            {t(`scenes.${titleScene.id}.title`, { defaultValue: titleScene.title })}
+          </Text>
 
           {/* 交互按钮容器 */}
           <View style={styles.floatingIconsContainer} pointerEvents="box-none">
@@ -157,7 +226,10 @@ const ImmersivePlayerNew: React.FC = () => {
                   isActive={isActive}
                   column={column}
                   row={row}
-                  onPress={() => toggleAmbience(ambient, 'Floating Icon')}
+                  onPress={() => {
+                    triggerHaptic();
+                    toggleAmbience(ambient, 'Floating Icon');
+                  }}
                 />
               );
             })}
@@ -165,21 +237,30 @@ const ImmersivePlayerNew: React.FC = () => {
 
           {/* 底部控制区 - 统一布局：标题 + 播放按钮 */}
           <View style={styles.bottomSection}>
-            <Text style={styles.sceneTitle}>
-              {t(`scenes.${scene.id}.title`, { defaultValue: scene.title })}
-            </Text>
-            
+            <TouchableOpacity
+              style={styles.scenePickerButton}
+              onPress={openSoundscapeSheet}
+              activeOpacity={0.8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon name="grid-outline" size={20} color="#FFF" />
+            </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.playButton} 
+              style={[styles.playButton, isLoading && styles.playButtonDisabled]} 
               onPress={togglePlayback}
               activeOpacity={0.8}
+              disabled={isLoading}
             >
-              <Icon 
-                name={isPlaying ? "pause" : "play"} 
-                size={40} 
-                color="#FFF" 
-                style={!isPlaying && { marginLeft: 5 }}
-              />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Icon 
+                  name={isPlaying ? "pause" : "play"} 
+                  size={40} 
+                  color="#FFF" 
+                  style={!isPlaying && { marginLeft: 5 }}
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -191,6 +272,13 @@ const ImmersivePlayerNew: React.FC = () => {
     <Animated.View style={[styles.container, { opacity: contentFadeAnim }]}>
       {/* 实际项目中这里通常配合 PagerView 使用 */}
       {renderScenePage(targetScene, 0)}
+      <SoundscapeBottomSheet
+        visible={isSoundscapeVisible}
+        soundscapes={displayScenes}
+        selectedId={currentBaseSceneId || targetScene.id}
+        onClose={closeSoundscapeSheet}
+        onSelect={handleSelectSoundscape}
+      />
     </Animated.View>
   );
 };
@@ -202,31 +290,39 @@ const styles = StyleSheet.create({
   },
   page: {
     width: width,
-    height: height,
+    minHeight: height,
   },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
     width: width,
-    height: height,
+    minHeight: height,
     resizeMode: 'cover',
+    zIndex: 0,
   },
   backgroundFallback: {
     ...StyleSheet.absoluteFillObject,
     width: width,
-    height: height,
+    minHeight: height,
+    zIndex: 0,
+  },
+  backgroundOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 1,
   },
   mainContainer: {
     flex: 1,
     justifyContent: 'space-between',
+    zIndex: 2,
   },
   header: {
-    height: 60,
+    minHeight: 60,
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
   backButton: {
     width: 44,
-    height: 44,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -237,24 +333,45 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     paddingBottom: 60,
+    paddingHorizontal: 24,
+    flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    width: '100%',
+    zIndex: 3,
   },
   sceneTitle: {
     color: '#fff',
-    fontSize: 24,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginBottom: 30,
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    marginTop: 12,
+    marginBottom: 14,
+    textAlign: 'center',
+    width: '100%',
+  },
+  scenePickerButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   playButton: {
     width: 80,
-    height: 80,
+    minHeight: 80,
     borderRadius: 40,
+    marginTop: 8,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
+  },
+  playButtonDisabled: {
+    opacity: 0.7,
   },
 });
 

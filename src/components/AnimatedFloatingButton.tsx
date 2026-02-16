@@ -69,7 +69,7 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
   // Position calculation
   // 2 columns, 4 rows
   const left = column === 0 ? 20 : CONTAINER_WIDTH - BUTTON_SIZE - 20;
-  const top = row * 100 + 40;
+  const top = row * 130 + 40;
 
   return (
     <Animated.View
@@ -112,6 +112,7 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
           color={isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)'}
         />
       </TouchableOpacity>
+      <View style={{ height: 15 }} />
       <Text style={[styles.label, isActive && styles.activeLabel]}>
         {t(ambient.title)}
       </Text>
@@ -123,7 +124,9 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     alignItems: 'center',
-    width: BUTTON_SIZE + 20,
+    width: BUTTON_SIZE + 40,
+    overflow: 'visible',
+    paddingBottom: 20,
   },
   button: {
     width: BUTTON_SIZE,
@@ -152,11 +155,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(108, 93, 211, 0.4)',
   },
   label: {
-    marginTop: 8,
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 12,
     fontWeight: '500',
     textAlign: 'center',
+    flexWrap: 'wrap',
+    maxWidth: 100,
   },
   activeLabel: {
     color: '#fff',
