@@ -2,11 +2,8 @@ import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 import { State } from 'react-native-track-player';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
-import { getLocalPath } from '../constants/audioAssets';
+import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getLocalPath } from '../constants/audioAssets';
 import RNFS from 'react-native-fs';
-
-// 1.0.2 版本已全面切换为远端下载+本地缓存加载模式，不再使用 require 静态映射
-const AUDIO_REQUIRE_MAP: Record<string, any> = {};
 
 class AudioService {
   private static instance: AudioService;
@@ -92,11 +89,30 @@ class AudioService {
         this.notifyListeners();
       }
     } catch (e: any) {
-      const source = AUDIO_REQUIRE_MAP[scene.filename];
+      const fallbackSource = AUDIO_MAP[scene.filename] || DEFAULT_FALLBACK_SOURCE;
+      if (fallbackSource) {
+        try {
+          const { sound } = await Audio.Sound.createAsync(
+            fallbackSource,
+            { shouldPlay: shouldPlay, isLooping: true, volume: this.ambientVolume }
+          );
+          this.soundObjects.set(scene.id, sound);
+          if (shouldPlay) {
+            this.isActuallyPlaying = true;
+            this.notifyListeners();
+          }
+          return;
+        } catch (fallbackError: any) {
+          console.error(`[AudioService] Fallback preload failed: ${scene.id}`, {
+            error: fallbackError.message,
+            stack: fallbackError.stack,
+          });
+        }
+      }
       console.error(`[AudioService] 🚨 PRELOAD FAILED: ${scene.id}. File: ${scene.filename}`, {
         error: e.message,
         stack: e.stack,
-        source: source
+        source: fallbackSource
       });
     }
   }
@@ -237,6 +253,24 @@ class AudioService {
       this.isActuallyPlaying = true;
       this.notifyListeners();
     } catch (error: any) {
+      const fallbackSource = AUDIO_MAP[scene.filename] || DEFAULT_FALLBACK_SOURCE;
+      if (fallbackSource) {
+        try {
+          const { sound } = await Audio.Sound.createAsync(
+            fallbackSource,
+            { shouldPlay: true, isLooping: true, volume: this.ambientVolume }
+          );
+          this.soundObjects.set(scene.id, sound);
+          this.isActuallyPlaying = true;
+          this.notifyListeners();
+          return;
+        } catch (fallbackError: any) {
+          console.error(`[AudioService] Fallback play failed: ${scene.id}`, {
+            filename: scene.filename,
+            error: fallbackError.message,
+          });
+        }
+      }
       console.error(`[AudioService] CRITICAL: Failed to play scene ${scene.id}.`, {
         filename: scene.filename,
         error: error.message,

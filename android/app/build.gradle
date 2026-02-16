@@ -106,6 +106,7 @@ android {
         }
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
+        buildConfigField "String", "DISTRIBUTION_CHANNEL", "\"${findProperty('distributionChannel') ?: 'googlePlay'}\""
     }
 
     signingConfigs {
