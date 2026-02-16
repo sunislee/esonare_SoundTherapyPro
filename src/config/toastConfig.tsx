@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, Platform } from 'react-native';
+import { StyleSheet, View, Text, Platform, TextStyle } from 'react-native';
 import { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-message';
 
 const commonToastStyle: any = {
@@ -23,14 +23,14 @@ const commonToastStyle: any = {
   alignSelf: 'center',
 };
 
-const text1Style = {
+const text1Style: TextStyle = {
   fontSize: 16,
   fontWeight: '600',
   color: '#FFFFFF',
   textAlign: 'center',
 };
 
-const text2Style = {
+const text2Style: TextStyle = {
   fontSize: 13,
   color: 'rgba(255, 255, 255, 0.8)',
   marginTop: 4,

@@ -2,7 +2,7 @@ import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 import { State } from 'react-native-track-player';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
-import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getLocalPath } from '../constants/audioAssets';
+import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
 import RNFS from 'react-native-fs';
 
 class AudioService {
@@ -12,6 +12,7 @@ class AudioService {
   private currentBaseScene: Scene | null = null;
   private listeners: Set<() => void> = new Set();
   private audioStateListeners: Set<(state: { id: string | null; state: State }) => void> = new Set();
+  private loadingListeners: Set<(state: { id: string | null; loading: boolean }) => void> = new Set();
   private smallScenesListeners: Set<(ids: string[]) => void> = new Set();
   private volumeListeners: Set<(vol: number) => void> = new Set();
   private timerListeners: Set<(remaining: number | null) => void> = new Set();
@@ -20,6 +21,9 @@ class AudioService {
   private sleepEndTime: number | null = null;
   private initialSleepSeconds: number | null = null;
   private sleepTimer: any = null;
+  private loadingSceneId: string | null = null;
+  private loadingTimeout: any = null;
+  private loadingTimeoutMs = 20000;
 
   private constructor() {}
 
@@ -69,20 +73,36 @@ class AudioService {
 
       if (this.soundObjects.has(scene.id)) return;
 
+      const isDeepSea = scene.id.includes('deep_sea') || scene.filename.includes('deep_sea');
       console.log(`[AudioService] Preloading scene: ${scene.id} (shouldPlay: ${shouldPlay})`);
       
-      // 1.0.2 逻辑：优先从本地缓存加载
       const localPath = getLocalPath(scene.category, scene.filename);
       const isLocal = await RNFS.exists(localPath.replace('file://', ''));
-      
-      const source = isLocal ? { uri: localPath } : { uri: scene.audioUrl };
+      const sources = isLocal ? [{ uri: localPath }] : getDownloadUrl(scene.id).map(url => ({ uri: url }));
 
+      if (isDeepSea) {
+        console.log('[DeepSeaDebug][AudioService] loadAudio source', {
+          id: scene.id,
+          filename: scene.filename,
+          isLocal,
+          source: sources[0]?.uri
+        });
+      }
       console.log(`[AudioService] Loading source for ${scene.filename}: ${isLocal ? 'Local Cache' : 'Remote URL'}`);
-
-      const { sound } = await Audio.Sound.createAsync(
-        source,
-        { shouldPlay: shouldPlay, isLooping: true, volume: this.ambientVolume }
-      );
+      let sound: Audio.Sound | null = null;
+      let lastError: any = null;
+      for (const source of sources) {
+        try {
+          const result = await this.createSoundWithTimeout(source, shouldPlay);
+          sound = result.sound;
+          break;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (!sound) {
+        throw lastError ?? new Error('LOAD_FAILED');
+      }
       this.soundObjects.set(scene.id, sound);
       if (shouldPlay) {
         this.isActuallyPlaying = true;
@@ -90,6 +110,13 @@ class AudioService {
       }
     } catch (e: any) {
       const fallbackSource = AUDIO_MAP[scene.filename] || DEFAULT_FALLBACK_SOURCE;
+      if (scene?.id?.includes('deep_sea') || scene?.filename?.includes('deep_sea')) {
+        console.log('[DeepSeaDebug][AudioService] loadAudio fallback', {
+          id: scene?.id,
+          filename: scene?.filename,
+          fallback: Boolean(fallbackSource)
+        });
+      }
       if (fallbackSource) {
         try {
           const { sound } = await Audio.Sound.createAsync(
@@ -161,6 +188,14 @@ class AudioService {
     return this.ambientVolume;
   }
 
+  getVolume(): number {
+    return this.ambientVolume;
+  }
+
+  getAmbientVolumeById(_: string): number {
+    return this.ambientVolume;
+  }
+
   getSleepEndTime(): number | null {
     return this.sleepEndTime;
   }
@@ -181,6 +216,11 @@ class AudioService {
   addAudioStateListener(listener: (state: { id: string | null; state: State }) => void) {
     this.audioStateListeners.add(listener);
     return () => { this.audioStateListeners.delete(listener); };
+  }
+
+  addLoadingListener(listener: (state: { id: string | null; loading: boolean }) => void) {
+    this.loadingListeners.add(listener);
+    return () => { this.loadingListeners.delete(listener); };
   }
 
   addSmallScenesListener(listener: (ids: string[]) => void) {
@@ -217,6 +257,45 @@ class AudioService {
     this.smallScenesListeners.forEach(l => l(this.getActiveSmallSceneIds()));
   }
 
+  private notifyLoading(loading: boolean, id: string | null) {
+    this.loadingListeners.forEach(l => l({ id, loading }));
+  }
+
+  private startLoadingTimeout(sceneId: string) {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+    }
+    this.loadingTimeout = setTimeout(() => {
+      if (this.loadingSceneId === sceneId) {
+        this.loadingSceneId = null;
+        this.notifyLoading(false, sceneId);
+      }
+    }, this.loadingTimeoutMs);
+  }
+
+  private clearLoadingTimeout() {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+  }
+
+  private async createSoundWithTimeout(source: any, shouldPlay: boolean) {
+    return new Promise<{ sound: Audio.Sound }>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('LOAD_TIMEOUT')), this.loadingTimeoutMs);
+      Audio.Sound.createAsync(
+        source,
+        { shouldPlay, isLooping: true, volume: this.ambientVolume }
+      ).then((result) => {
+        clearTimeout(timer);
+        resolve(result);
+      }).catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
   getActiveSmallSceneIds(): string[] {
     return Array.from(this.activeSmallScenes);
   }
@@ -225,35 +304,90 @@ class AudioService {
     return this.currentBaseScene?.id || null;
   }
 
-  async playScene(scene: Scene) {
+  async playScene(scene: Scene, options?: { triggerLoading?: boolean }) {
+    const shouldTriggerLoading = options?.triggerLoading !== false;
     try {
       if (!scene || !scene.filename) {
         console.error(`[AudioService] Scene or filename is null for ${scene?.id}`);
         return;
       }
 
+      if (shouldTriggerLoading && this.loadingSceneId !== scene.id) {
+        this.loadingSceneId = scene.id;
+        this.notifyLoading(true, scene.id);
+        this.startLoadingTimeout(scene.id);
+      }
+
+      const finishLoading = () => {
+        if (!shouldTriggerLoading) return;
+        if (this.loadingSceneId !== scene.id) return;
+        this.loadingSceneId = null;
+        this.clearLoadingTimeout();
+        this.notifyLoading(false, scene.id);
+      };
+
+      const handlePlaybackStart = (status: any) => {
+        if (!status || !status.isLoaded) return;
+        if (status.isPlaying) {
+          this.isActuallyPlaying = true;
+          this.notifyListeners();
+          finishLoading();
+        }
+      };
+
       if (this.soundObjects.has(scene.id)) {
         const sound = this.soundObjects.get(scene.id);
-        await sound?.playAsync();
+        if (sound) {
+          sound.setOnPlaybackStatusUpdate(handlePlaybackStart);
+          await sound.playAsync();
+          const status = await sound.getStatusAsync();
+          handlePlaybackStart(status);
+        }
         return;
       }
 
-      // 1.0.2 逻辑：优先从本地缓存加载
+      const isDeepSea = scene.id.includes('deep_sea') || scene.filename.includes('deep_sea');
       const localPath = getLocalPath(scene.category, scene.filename);
       const isLocal = await RNFS.exists(localPath.replace('file://', ''));
-      const source = isLocal ? { uri: localPath } : { uri: scene.audioUrl };
+      const sources = isLocal ? [{ uri: localPath }] : getDownloadUrl(scene.id).map(url => ({ uri: url }));
 
+      if (isDeepSea) {
+        console.log('[DeepSeaDebug][AudioService] playScene source', {
+          id: scene.id,
+          filename: scene.filename,
+          isLocal,
+          source: sources[0]?.uri
+        });
+      }
       console.log(`[AudioService] Loading and playing scene ${scene.id} from ${isLocal ? 'Local Cache' : 'Remote URL'}`);
 
-      const { sound } = await Audio.Sound.createAsync(
-        source,
-        { shouldPlay: true, isLooping: true, volume: this.ambientVolume }
-      );
+      let sound: Audio.Sound | null = null;
+      let lastError: any = null;
+      for (const source of sources) {
+        try {
+          const result = await this.createSoundWithTimeout(source, true);
+          sound = result.sound;
+          break;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (!sound) {
+        throw lastError ?? new Error('LOAD_FAILED');
+      }
       this.soundObjects.set(scene.id, sound);
-      this.isActuallyPlaying = true;
-      this.notifyListeners();
+      sound.setOnPlaybackStatusUpdate(handlePlaybackStart);
+      const status = await sound.getStatusAsync();
+      handlePlaybackStart(status);
     } catch (error: any) {
       const fallbackSource = AUDIO_MAP[scene.filename] || DEFAULT_FALLBACK_SOURCE;
+      if (scene?.id?.includes('deep_sea') || scene?.filename?.includes('deep_sea')) {
+        console.log('[DeepSeaDebug][AudioService] playScene fallback', {
+          id: scene?.id,
+          filename: scene?.filename,
+          fallback: Boolean(fallbackSource)
+        });
+      }
       if (fallbackSource) {
         try {
           const { sound } = await Audio.Sound.createAsync(
@@ -261,8 +395,25 @@ class AudioService {
             { shouldPlay: true, isLooping: true, volume: this.ambientVolume }
           );
           this.soundObjects.set(scene.id, sound);
-          this.isActuallyPlaying = true;
-          this.notifyListeners();
+          sound.setOnPlaybackStatusUpdate((status) => {
+            if (status.isLoaded && status.isPlaying) {
+              this.isActuallyPlaying = true;
+              this.notifyListeners();
+              if (shouldTriggerLoading && this.loadingSceneId === scene.id) {
+                this.loadingSceneId = null;
+                this.notifyLoading(false, scene.id);
+              }
+            }
+          });
+          const status = await sound.getStatusAsync();
+          if (status.isLoaded && status.isPlaying) {
+            this.isActuallyPlaying = true;
+            this.notifyListeners();
+            if (shouldTriggerLoading && this.loadingSceneId === scene.id) {
+              this.loadingSceneId = null;
+              this.notifyLoading(false, scene.id);
+            }
+          }
           return;
         } catch (fallbackError: any) {
           console.error(`[AudioService] Fallback play failed: ${scene.id}`, {
@@ -275,6 +426,11 @@ class AudioService {
         filename: scene.filename,
         error: error.message,
       });
+      if (shouldTriggerLoading && this.loadingSceneId === scene.id) {
+        this.loadingSceneId = null;
+        this.clearLoadingTimeout();
+        this.notifyLoading(false, scene.id);
+      }
     }
   }
 
@@ -304,7 +460,7 @@ class AudioService {
     try {
       console.log('[AudioService] Resuming all sounds');
       if (this.soundObjects.size === 0 && this.currentBaseScene) {
-        await this.playScene(this.currentBaseScene);
+        await this.playScene(this.currentBaseScene, { triggerLoading: true });
       } else {
         for (const [id, sound] of this.soundObjects.entries()) {
           try {
@@ -324,6 +480,10 @@ class AudioService {
     } catch (e) {
       console.error('[AudioService] Global play error:', e);
     }
+  }
+
+  async stop() {
+    await this.stopAll();
   }
 
   async getRealIsPlaying(): Promise<boolean> {
@@ -364,28 +524,38 @@ class AudioService {
   async switchSoundscape(scene: Scene) {
     if (this.isSwitching) return;
     this.isSwitching = true;
-    
+
     console.log(`[AudioService] Switching to soundscape: ${scene.id} (${scene.title})`);
-    
+    const previousScene = this.currentBaseScene;
+
     try {
+      this.currentBaseScene = scene;
+      this.notifyListeners();
+
       // 1. 停止当前所有音频并清空激活列表
-      await this.stopAll();
+      if (this.loadingSceneId !== scene.id) {
+        this.loadingSceneId = scene.id;
+        this.notifyLoading(true, scene.id);
+        this.startLoadingTimeout(scene.id);
+      }
+      await this.stopAll({ keepBaseScene: true });
       this.activeSmallScenes.clear();
 
       // 2. 联动激活逻辑：如果是呼吸类场景，仅同步状态但不播放音效，实现“开场静默”
-      const isBreathScene = scene.id === 'nature_deep_sea' || scene.id === 'nature_misty_forest' || scene.id?.includes('breath');
+      const isBreathScene = scene.id?.includes('breath');
       if (isBreathScene) {
         console.log('[AudioService] Breath context detected. Ensuring interaction sounds are silent on start.');
         this.activeSmallScenes.clear(); 
       }
 
       // 3. 设置并播放新的主场景
-      this.currentBaseScene = scene;
-      await this.playScene(scene);
+      await this.playScene(scene, { triggerLoading: true });
       
       this.notifyListeners();
     } catch (e) {
       console.error(`[AudioService] switchSoundscape failed for ${scene?.id}:`, e);
+      this.currentBaseScene = previousScene;
+      this.notifyListeners();
     } finally {
       this.isSwitching = false;
     }
@@ -400,7 +570,7 @@ class AudioService {
 
       if (targetState) {
         this.activeSmallScenes.add(scene.id);
-        await this.playScene(scene);
+        await this.playScene(scene, { triggerLoading: false });
       } else {
         this.activeSmallScenes.delete(scene.id);
         await this.stopScene(scene.id);
@@ -423,14 +593,16 @@ class AudioService {
     }
   }
 
-  async stopAll() {
+  async stopAll(options?: { keepBaseScene?: boolean }) {
     try {
       const sceneIds = Array.from(this.soundObjects.keys());
       for (const sceneId of sceneIds) {
         await this.stopScene(sceneId);
       }
       this.activeSmallScenes.clear();
-      this.currentBaseScene = null;
+      if (!options?.keepBaseScene) {
+        this.currentBaseScene = null;
+      }
       this.isActuallyPlaying = false;
       this.notifyListeners();
     } catch (e) {
@@ -449,6 +621,10 @@ class AudioService {
         console.warn('[AudioService] Failed to set volume', e);
       }
     });
+  }
+
+  setVolume(volume: number) {
+    this.updateAmbientVolume(volume);
   }
 
   async playAmbient(id: string) {
