@@ -25,6 +25,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { Event, useTrackPlayerEvents } from 'react-native-track-player';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useBackHandler } from '../hooks/useBackHandler';
 
 const { width, height } = Dimensions.get('window');
 
@@ -72,6 +73,9 @@ const ImmersivePlayerNew: React.FC = () => {
   const titleScene = useMemo(() => 
     SCENES.find(s => s.id === titleSceneId) || targetScene
   , [titleSceneId, targetScene]);
+
+  // 使用全局返回键处理逻辑（非首页）
+  useBackHandler(false, navigation);
 
   const placeholderColor = useMemo(() => {
     if (targetScene.id.includes('ocean') || targetScene.id.includes('deep_sea')) return '#001a33';

@@ -30,6 +30,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import ToastUtil from '../utils/ToastUtil';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
+import { useBackHandler } from '../hooks/useBackHandler';
 
 // @ts-ignore
 type ProfileScreenNavigationProp = StackNavigationProp<any, 'Profile'>;
@@ -38,6 +39,9 @@ export const ProfileScreen = () => {
   const { t } = useTranslation();
   // @ts-ignore
   const navigation = useNavigation<any>();
+  
+  // 使用全局返回键处理逻辑（非首页）
+  useBackHandler(false, navigation);
   const BACKGROUND_OPTIONS = [
     { id: '1', name: '火焰', source: require('../assets/images/fire_bg.jpg') },
     { id: '2', name: '森林', source: require('../assets/images/forest_bg.jpg') },
