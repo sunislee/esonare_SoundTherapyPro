@@ -3,11 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useBackHandler } from '../hooks/useBackHandler';
 
 const AboutScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+
+  // 使用全局返回键处理逻辑（非首页）
+  useBackHandler(false, navigation);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

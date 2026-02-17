@@ -30,6 +30,7 @@ import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
 import crashlytics from '@react-native-firebase/crashlytics';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useBackHandler } from '../hooks/useBackHandler';
 
 interface RainDropConfig {
   id: number;
@@ -250,6 +251,9 @@ export const HomeScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
+
+  // 使用全局返回键处理逻辑
+  useBackHandler(true, navigation);
 
   useFocusEffect(
     useCallback(() => {
