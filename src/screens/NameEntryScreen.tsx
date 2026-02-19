@@ -22,17 +22,23 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 const NameEntryScreen: React.FC = () => {
   const { t } = useTranslation();
   const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleStart = async () => {
     const finalName = name.trim();
-    if (finalName) {
+    if (finalName && !isLoading) {
+      setIsLoading(true);
       // Haptic feedback
       ReactNativeHapticFeedback.trigger('impactMedium');
       
       await AsyncStorage.setItem('USER_NAME', finalName);
       await AsyncStorage.setItem('HAS_SET_NAME', 'true');
-      navigation.replace('MainTabs');
+      
+      // Add small delay to ensure proper initialization
+      setTimeout(() => {
+        navigation.replace('MainTabs');
+      }, 100);
     }
   };
 
@@ -66,11 +72,13 @@ const NameEntryScreen: React.FC = () => {
         </View>
 
         <TouchableOpacity 
-          style={[styles.button, !name.trim() && styles.buttonDisabled]} 
+          style={[styles.button, (!name.trim() || isLoading) && styles.buttonDisabled]} 
           onPress={handleStart}
-          disabled={!name.trim()}
+          disabled={!name.trim() || isLoading}
         >
-          <Text style={styles.buttonText}>{t('nameEntry.button')}</Text>
+          <Text style={styles.buttonText}>
+            {isLoading ? 'Loading...' : t('nameEntry.button')}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>

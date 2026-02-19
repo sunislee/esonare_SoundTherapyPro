@@ -1,6 +1,10 @@
 {
   "welcome": "サウンドセラピーアプリへようこそ",
   "appTitle": "サウンドセラピー",
+  "tabs": {
+    "scenes": "シーン",
+    "profile": "マイページ"
+  },
   "categories": {
     "nature": "自然の力",
     "healing": "深いヒーリング",
@@ -78,14 +82,55 @@
       "devActionOpen": "有効に",
       "devActionClose": "無効に",
       "nameUpdated": "ニックネームが更新されました"
+    }
+  },
+  "profile": {
+    "loading": "読み込み中...",
+    "defaultUser": "サウンドセラピーユーザー",
+    "stats": {
+      "focusCount": "集中回数",
+      "totalDuration": "総時間"
+    },
+    "menu": {
+      "coreFeatures": "コア機能",
+      "sleepTimer": "スリープタイマー",
+      "myPresets": "マイプリセット",
+      "settings": "設定",
+      "clearCache": "キャッシュをクリア",
+      "logout": "ログアウト",
+      "comingSoon": "{{feature}} は開発中です",
+      "comingSoonDesc": "次のバージョンをお楽しみに",
+      "resources": "リソースと記録",
+      "history": "再生履歴",
+      "about": "について",
+      "aboutUs": "私たちについて",
+      "proMember": "プロメンバー",
+      "editNickname": "ニックネームを編集",
+      "nicknamePlaceholder": "ニックネームを入力してください"
     },
     "modals": {
-      "clearHistoryTitle": "履歴を消去",
-      "clearHistoryMsg": "すべての履歴を消去してもよろしいですか？この操作は取り消せません。",
-      "clearPresetsTitle": "プリセットを消去",
-      "clearPresetsMsg": "保存されたすべてのプリセットを消去してもよろしいですか？この操作は取り消せません。",
-      "confirm": "消去",
-      "cancel": "キャンセル"
+      "renameTitle": "ニックネームを変更",
+      "renamePlaceholder": "新しいニックネームを入力してください",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "deletePresetTitle": "プリセットを削除",
+      "deletePresetMsg": "この混音プリセットを削除してもよろしいですか？",
+      "logoutTitle": "ログアウト",
+      "logoutMsg": "現在のアカウントからログアウトし、すべてのローカル設定をクリアしてもよろしいですか？",
+      "clearCacheTitle": "キャッシュをクリア",
+      "clearCacheMsg": "これにより、すべてのダウンロード済みオーディオリソースが削除されます。次回使用時に再ダウンロードが必要になります。",
+      "clearCacheSuccess": "キャッシュがクリアされました。アプリを再起動してください。",
+      "confirmLogout": "ログアウトを確認",
+      "confirmClear": "クリアを確認",
+      "confirmDelete": "削除",
+      "prompt": "プロンプト",
+      "nameEmpty": "名前を入力してください",
+      "error": "エラー",
+      "saveFailed": "保存に失敗しました",
+      "exitTitle": "アプリを終了",
+      "exitMsg": "SoundTherapyを終了してもよろしいですか？",
+      "exitConfirm": "確認",
+      "confirm": "確認"
     }
   },
   "scenes": {

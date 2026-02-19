@@ -103,7 +103,11 @@
       "prompt": "提示",
       "nameEmpty": "名字不能为空",
       "error": "错误",
-      "saveFailed": "保存失败"
+      "saveFailed": "保存失败",
+      "exitTitle": "退出应用",
+      "exitMsg": "确定要离开心声冥想吗？",
+      "exitConfirm": "确定",
+      "confirm": "确定"
     },
     "background": {
       "selectTitle": "选择背景",
