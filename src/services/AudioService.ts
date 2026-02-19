@@ -330,7 +330,10 @@ class AudioService {
         if (!status || !status.isLoaded) return;
         if (status.isPlaying) {
           this.isActuallyPlaying = true;
-          this.notifyListeners();
+          // Use setImmediate to avoid blocking the main thread
+          setImmediate(() => {
+            this.notifyListeners();
+          });
           finishLoading();
         }
       };
@@ -530,7 +533,10 @@ class AudioService {
 
     try {
       this.currentBaseScene = scene;
-      this.notifyListeners();
+      // Use setImmediate to avoid blocking the main thread
+      setImmediate(() => {
+        this.notifyListeners();
+      });
 
       // 1. 停止当前所有音频并清空激活列表
       if (this.loadingSceneId !== scene.id) {
@@ -551,11 +557,17 @@ class AudioService {
       // 3. 设置并播放新的主场景
       await this.playScene(scene, { triggerLoading: true });
       
-      this.notifyListeners();
+      // Use setImmediate to avoid blocking the main thread
+      setImmediate(() => {
+        this.notifyListeners();
+      });
     } catch (e) {
       console.error(`[AudioService] switchSoundscape failed for ${scene?.id}:`, e);
       this.currentBaseScene = previousScene;
-      this.notifyListeners();
+      // Use setImmediate to avoid blocking the main thread
+      setImmediate(() => {
+        this.notifyListeners();
+      });
     } finally {
       this.isSwitching = false;
     }
@@ -604,7 +616,10 @@ class AudioService {
         this.currentBaseScene = null;
       }
       this.isActuallyPlaying = false;
-      this.notifyListeners();
+      // Use setImmediate to avoid blocking the main thread
+      setImmediate(() => {
+        this.notifyListeners();
+      });
     } catch (e) {
       console.error('[AudioService] stopAll failed:', e);
     }

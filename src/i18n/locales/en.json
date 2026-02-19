@@ -101,7 +101,11 @@
       "prompt": "Prompt",
       "nameEmpty": "Name cannot be empty",
       "error": "Error",
-      "saveFailed": "Save failed"
+      "saveFailed": "Save failed",
+      "exitTitle": "Exit App",
+      "exitMsg": "Are you sure you want to leave SoundTherapy?",
+      "exitConfirm": "Confirm",
+      "confirm": "Confirm"
     },
     "background": {
       "selectTitle": "Select Background",

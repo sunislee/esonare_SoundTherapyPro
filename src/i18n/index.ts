@@ -52,29 +52,47 @@ const getSystemLanguage = (): string => {
   }
 };
 
-// 配置 i18next
-i18n
-  .use(initReactI18next)
-  .init({
-    resources: {
-      zh: {
-        translation: zh,
+// 配置 i18next - 增加错误保护
+try {
+  i18n
+    .use(initReactI18next)
+    .init({
+      resources: {
+        zh: {
+          translation: zh,
+        },
+        en: {
+          translation: en,
+        },
+        ja: {
+          translation: ja,
+        },
       },
-      en: {
-        translation: en,
+      lng: getSystemLanguage(), // 初始使用系统语言
+      fallbackLng: 'en', // 回退语言设为英文
+      interpolation: {
+        escapeValue: false, // React 已经处理了转义
       },
-      ja: {
-        translation: ja,
+    });
+} catch (error) {
+  console.error('[i18n] i18next initialization failed:', error);
+  // 紧急回退：使用最基本的配置
+  try {
+    i18n.init({
+      resources: {
+        en: {
+          translation: { tabs: { scenes: 'Scenes', profile: 'Profile' } },
+        },
       },
-    },
-    lng: getSystemLanguage(), // 初始使用系统语言
-    fallbackLng: 'en', // 回退语言设为英文
-    interpolation: {
-      escapeValue: false, // React 已经处理了转义
-    },
-  });
+      lng: 'en',
+      fallbackLng: 'en',
+    });
+  } catch (fallbackError) {
+    console.error('[i18n] Emergency fallback failed:', fallbackError);
+  }
+}
 
-// 初始化语言
+// 初始化语言 - 增加错误保护
 export const initLanguage = async () => {
   try {
     const savedLanguage = await AsyncStorage.getItem('@settings_language');
@@ -85,7 +103,13 @@ export const initLanguage = async () => {
       await i18n.changeLanguage(systemLng);
     }
   } catch (error) {
-    console.error('[i18n] Init failed:', error);
+    console.error('[i18n] Language initialization failed:', error);
+    // 紧急回退到英文
+    try {
+      await i18n.changeLanguage('en');
+    } catch (fallbackError) {
+      console.error('[i18n] Emergency language fallback failed:', fallbackError);
+    }
   }
 };
 

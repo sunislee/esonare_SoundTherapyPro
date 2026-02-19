@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react';
+import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +9,8 @@ import {
   Image,
   StatusBar,
   ActivityIndicator,
+  Modal,
+  BackHandler,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +19,7 @@ import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { useAudio } from '../context/AudioContext';
 import AnimatedFloatingButton from '../components/AnimatedFloatingButton';
 import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
-import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import AudioService from '../services/AudioService';
@@ -46,6 +48,7 @@ const ImmersivePlayerNew: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
+  const [isExitModalVisible, setIsExitModalVisible] = useState(false);
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
   const pendingSceneIdRef = useRef<string | null>(null);
@@ -64,7 +67,7 @@ const ImmersivePlayerNew: React.FC = () => {
     ReactNativeHapticFeedback.trigger('impactLight', options);
   };
 
-  // 获取目标场景
+  // DO NOT TOUCH: Stable logic for scene switching - 获取目标场景
   const targetSceneId = currentBaseSceneId || route.params?.sceneId || SCENES[0].id;
   const targetScene = useMemo(() => 
     SCENES.find(s => s.id === targetSceneId) || SCENES[0]
@@ -74,14 +77,47 @@ const ImmersivePlayerNew: React.FC = () => {
     SCENES.find(s => s.id === titleSceneId) || targetScene
   , [titleSceneId, targetScene]);
 
-  // 使用全局返回键处理逻辑（非首页）
-  useBackHandler(false, navigation);
+  // 条件分支返回逻辑
+  const handleBackPress = () => {
+    triggerHaptic();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return true; // 已消费事件
+    }
+    // 已在主页，无页面可退 → 弹出退出确认
+    setIsExitModalVisible(true);
+    return true;
+  };
 
+  const confirmExit = () => {
+    setIsExitModalVisible(false);
+    navigation.navigate('MainTabs');
+  };
+  const cancelExit = () => setIsExitModalVisible(false);
+
+  // 注册系统返回键拦截，并在卸载时移除
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      return () => sub.remove();
+    }, [handleBackPress])
+  );
+
+  // DO NOT TOUCH: Stable logic for scene switching - 背景颜色计算
   const placeholderColor = useMemo(() => {
     if (targetScene.id.includes('ocean') || targetScene.id.includes('deep_sea')) return '#001a33';
     if (targetScene.id.includes('forest')) return '#1a2e1a';
     return '#121212';
   }, [targetScene.id]);
+
+  // DO NOT TOUCH: Stable logic for scene switching - 路由参数变化时重新初始化播放器
+  useEffect(() => {
+    const sceneIdFromRoute = route.params?.sceneId;
+    if (sceneIdFromRoute && sceneIdFromRoute !== currentBaseSceneId) {
+      console.log(`[ImmersivePlayer] Route param changed -> ${sceneIdFromRoute}, reloading scene.`);
+      AudioService.switchSoundscape(SCENES.find(s => s.id === sceneIdFromRoute) || SCENES[0]);
+    }
+  }, [route.params?.sceneId]);
 
   useTrackPlayerEvents(events, (event) => {
     if (event.type === Event.PlaybackQueueEnded) {
@@ -102,9 +138,9 @@ const ImmersivePlayerNew: React.FC = () => {
     };
   }, []);
 
+  // DO NOT TOUCH: Stable logic for scene switching - 页面初始化
   useEffect(() => {
     const initPage = async () => {
-      // 内容同步浮现 (或稍晚)
       Animated.timing(contentFadeAnim, {
         toValue: 1,
         duration: 500,
@@ -112,8 +148,6 @@ const ImmersivePlayerNew: React.FC = () => {
       }).start();
 
       const currentPlayingId = AudioService.getCurrentScene()?.id;
-      
-      // 保存最后播放的场景 ID，用于首页高亮记忆
       AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', targetScene.id).catch(() => {});
 
       if (currentPlayingId === targetScene.id) {
@@ -127,7 +161,6 @@ const ImmersivePlayerNew: React.FC = () => {
     initPage();
 
     return () => {
-      // 状态同步检查：退出页面时立即停止所有互动音效
       console.log('[ImmersivePlayer] Stopping all ambient sounds on exit.');
       AudioService.stopAllAmbient();
     };
@@ -142,15 +175,6 @@ const ImmersivePlayerNew: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    triggerHaptic();
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('MainTabs');
-    }
-  };
-
   const openSoundscapeSheet = () => {
     triggerHaptic();
     setIsSoundscapeVisible(true);
@@ -160,6 +184,7 @@ const ImmersivePlayerNew: React.FC = () => {
     setIsSoundscapeVisible(false);
   };
 
+  // DO NOT TOUCH: Stable logic for scene switching - 场景选择处理
   const handleSelectSoundscape = async (scene: Scene) => {
     if (scene.id === currentBaseSceneId) {
       setIsSoundscapeVisible(false);
@@ -176,21 +201,18 @@ const ImmersivePlayerNew: React.FC = () => {
     }
   };
 
-  // 获取所有基础场景（用于 Pager 轮播）
-  const displayScenes = useMemo(() => {
-    return SCENES.filter(s => s.isBaseScene);
-  }, []);
+  const displayScenes = useMemo(() => SCENES.filter(s => s.isBaseScene), []);
 
   const renderScenePage = (scene: Scene, index: number) => {
     if (!scene) return <View key={`empty-${index}`} style={styles.page} />;
 
-    // 固定的 8 个交互按钮数据
     const globalAmbientScenes = SMALL_SCENE_IDS.map(id =>
       SCENES.find(s => s.id === id)
     ).filter(Boolean) as Scene[];
 
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
+        {/* 背景图：提升 zIndex 避免被 overlay 遮挡 */}
         {scene.backgroundSource ? (
           <Image source={scene.backgroundSource} style={styles.backgroundImage} />
         ) : (
@@ -201,28 +223,24 @@ const ImmersivePlayerNew: React.FC = () => {
 
         <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
           <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity
-              onPress={handleBack}
-              style={styles.backButton}
-            >
+            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
               <Icon name="chevron-down" size={32} color="#FFF" />
             </TouchableOpacity>
           </View>
+
           <Text key={titleSceneId} style={styles.sceneTitle}>
             {t(`scenes.${titleScene.id}.title`, { defaultValue: titleScene.title })}
           </Text>
 
-          {/* 交互按钮容器 */}
+          {/* 交互按钮 */}
           <View style={styles.floatingIconsContainer} pointerEvents="box-none">
             {globalAmbientScenes.map((ambient, idx) => {
-              // 💡 重点：确保 isActive 直接读取自 Context 的 activeSmallSceneIds，实时响应 AudioService 状态变化
               const isActive = activeSmallSceneIds.includes(ambient.id);
-              
               const column = idx % 2;
               const row = Math.floor(idx / 2);
-
               return (
                 <AnimatedFloatingButton
                   key={`floating-${ambient.id}`}
@@ -239,7 +257,7 @@ const ImmersivePlayerNew: React.FC = () => {
             })}
           </View>
 
-          {/* 底部控制区 - 统一布局：标题 + 播放按钮 */}
+          {/* 底部控制：场景切换按钮提升 zIndex */}
           <View style={styles.bottomSection}>
             <TouchableOpacity
               style={styles.scenePickerButton}
@@ -249,6 +267,7 @@ const ImmersivePlayerNew: React.FC = () => {
             >
               <Icon name="grid-outline" size={20} color="#FFF" />
             </TouchableOpacity>
+
             <TouchableOpacity 
               style={[styles.playButton, isLoading && styles.playButtonDisabled]} 
               onPress={togglePlayback}
@@ -274,8 +293,25 @@ const ImmersivePlayerNew: React.FC = () => {
 
   return (
     <Animated.View style={[styles.container, { opacity: contentFadeAnim }]}>
-      {/* 实际项目中这里通常配合 PagerView 使用 */}
       {renderScenePage(targetScene, 0)}
+
+      {/* 二次确认退出弹窗 */}
+      <Modal transparent visible={isExitModalVisible} animationType="fade" onRequestClose={cancelExit}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>确定要退出吗？</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={cancelExit}>
+                <Text style={styles.modalButtonText}>取消</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonPrimary]} onPress={confirmExit}>
+                <Text style={[styles.modalButtonText, styles.modalButtonPrimaryText]}>退出</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <SoundscapeBottomSheet
         visible={isSoundscapeVisible}
         soundscapes={displayScenes}
@@ -288,36 +324,30 @@ const ImmersivePlayerNew: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  page: {
-    width: width,
-    minHeight: height,
-  },
+  container: { flex: 1, backgroundColor: '#000' },
+  page: { width, minHeight: height },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
-    width: width,
+    width,
     minHeight: height,
     resizeMode: 'cover',
-    zIndex: 0,
+    zIndex: 0, // 背景层最底
   },
   backgroundFallback: {
     ...StyleSheet.absoluteFillObject,
-    width: width,
+    width,
     minHeight: height,
     zIndex: 0,
   },
   backgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 1,
+    zIndex: 1, // 遮罩中间层
   },
   mainContainer: {
     flex: 1,
     justifyContent: 'space-between',
-    zIndex: 2,
+    zIndex: 2, // 内容层最上
   },
   header: {
     minHeight: 60,
@@ -342,41 +372,66 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     width: '100%',
-    zIndex: 3,
+    zIndex: 3, // 确保按钮在最上层
   },
   sceneTitle: {
     color: '#fff',
     fontSize: 28,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    marginTop: 12,
-    marginBottom: 14,
+    fontWeight: '600',
     textAlign: 'center',
-    width: '100%',
+    marginTop: 12,
   },
   scenePickerButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 16,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 30,
   },
   playButton: {
     width: 80,
-    minHeight: 80,
+    height: 80,
     borderRadius: 40,
-    marginTop: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
-  playButtonDisabled: {
-    opacity: 0.7,
+  playButtonDisabled: { backgroundColor: 'rgba(255,255,255,0.05)' },
+
+  // 二次确认弹窗样式
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+  modalBox: {
+    backgroundColor: '#1e1e1e',
+    borderRadius: 12,
+    padding: 24,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    marginHorizontal: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalButtonPrimary: { backgroundColor: '#6C5DD3' },
+  modalButtonText: { color: '#fff', fontSize: 16 },
+  modalButtonPrimaryText: { color: '#fff', fontWeight: '600' },
 });
 
 export default ImmersivePlayerNew;

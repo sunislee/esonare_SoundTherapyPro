@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -15,13 +15,28 @@ export type MainTabParamList = {
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainTabNavigator: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [isReady, setIsReady] = React.useState(false);
+  
+  React.useEffect(() => {
+    // Ensure translation is ready before rendering
+    if (i18n && typeof t === 'function') {
+      setIsReady(true);
+    }
+  }, [i18n, t]);
+  
   const triggerHaptic = () => {
     ReactNativeHapticFeedback.trigger('impactLight', {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
   };
+  
+  // Prevent rendering until ready
+  if (!isReady || !t || !i18n) {
+    return null;
+  }
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -44,6 +59,13 @@ export const MainTabNavigator: React.FC = () => {
         tabBarBackground: () => (
           <View style={styles.tabBarBackground} />
         ),
+        tabBarLabel: ({ focused, color }) => {
+          if (route.name === 'HomeTab') {
+            return <Text style={[styles.tabBarLabel, { color }]}>{t('tabs.scenes') || 'Scenes'}</Text>;
+          } else {
+            return <Text style={[styles.tabBarLabel, { color }]}>{t('tabs.profile') || 'Profile'}</Text>;
+          }
+        },
       })}
       screenListeners={{
         tabPress: () => {
@@ -54,16 +76,10 @@ export const MainTabNavigator: React.FC = () => {
       <Tab.Screen
         name="HomeTab"
         component={HomeScreen}
-        options={{
-          tabBarLabel: t('tabs.scenes'),
-        }}
       />
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
-        options={{
-          tabBarLabel: t('tabs.profile'),
-        }}
       />
     </Tab.Navigator>
   );

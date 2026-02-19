@@ -32,7 +32,7 @@ const AboutScreen = () => {
             <Text style={styles.logoText}>S</Text>
           </View>
           <Text style={styles.appName}>{t('appTitle')}</Text>
-          <Text style={styles.version}>{t('settings.version')} {require('../../app.json').version}</Text>
+          <Text style={styles.version}>{t('settings.version')} 1.1.3</Text>
         </View>
 
         <View style={styles.infoContainer}>

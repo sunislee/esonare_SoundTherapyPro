@@ -97,8 +97,8 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 102
-        versionName "1.1.2"
+        versionCode 103
+        versionName "1.1.3"
         resConfigs "en", "zh", "ja"
 
         ndk {
@@ -138,6 +138,24 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
+        }
+    }
+    
+    flavorDimensions "version"
+    productFlavors {
+        google {
+            dimension "version"
+            applicationId "com.anonymous.soundtherapyapp"
+            buildConfigField "String", "UPDATE_CHANNEL", '"google"'
+            buildConfigField "String", "VERSION_CHECK_URL", '"https://raw.githubusercontent.com/sunislee/esonare_SoundTherapyPro/main/version.json"'
+            buildConfigField "String", "APK_DOWNLOAD_BASE_URL", '"https://github.com/sunislee/esonare_SoundTherapyPro/releases/download/"'
+        }
+        domestic {
+            dimension "version"
+            applicationId "com.anonymous.soundtherapyapp"
+            buildConfigField "String", "UPDATE_CHANNEL", '"domestic"'
+            buildConfigField "String", "VERSION_CHECK_URL", '"https://gitee.com/sunislee/esonare_SoundTherapyPro/raw/main/version.json"'
+            buildConfigField "String", "APK_DOWNLOAD_BASE_URL", '"https://gitee.com/sunislee/esonare_SoundTherapyPro/releases/download/"'
         }
     }
     packagingOptions {
