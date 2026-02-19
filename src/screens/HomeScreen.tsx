@@ -59,8 +59,9 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   };
   
   const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(); // 添加 i18n 以监听语言变化
   const windowHeight = Dimensions.get('window').height;
+  const [language, setLanguage] = useState(i18n.language); // 强制监听语言变化
 
   // 基础缩放动画
   const combinedScale = scaleAnim;
@@ -72,6 +73,11 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
       highlightAnim.setValue(0);
     }
   }, [isFocused]);
+
+  // 监听语言变化，强制重新渲染
+  useEffect(() => {
+    setLanguage(i18n.language);
+  }, [i18n.language]);
 
   useEffect(() => {
     if (isFocused && !hasAnimated && itemY !== null) {
@@ -243,7 +249,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isPlaying, currentBaseSceneId, togglePlayback, syncNativeStatus } = useAudio();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
@@ -286,14 +292,14 @@ export const HomeScreen: React.FC = () => {
     'Brainwave': t('categories.brainwave')
   };
 
-  // Grouped data
+  // Grouped data - 添加 t 和 i18n.language 依赖，确保语言切换时重新渲染
   const groupedScenes = useMemo(() => {
     return categories.map(cat => ({
       title: cat,
       label: categoryLabels[cat],
       baseScenes: SCENES.filter(s => s.category === cat && s.isBaseScene),
     }));
-  }, []);
+  }, [t, i18n.language]);
 
   // Use useFocusEffect to ensure the username is re-read every time we return to the home page
   useFocusEffect(
