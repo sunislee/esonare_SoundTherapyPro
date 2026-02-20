@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
+import packageJson from '../../package.json';
 import UpdateService from '../services/UpdateService';
 
 export const ChannelTestComponent: React.FC = () => {
@@ -34,9 +35,9 @@ export const ChannelTestComponent: React.FC = () => {
     setCheckResult('检查中...');
     
     try {
-      const currentVersion = '1.1.3'; // 当前版本
+      const currentVersion = packageJson.version; // 当前版本
       const hasUpdate = await UpdateService.checkForUpdate(currentVersion);
-      const updateUrl = await UpdateService.getUpdateUrl('1.1.3'); // 假设新版本
+      const updateUrl = await UpdateService.getUpdateUrl(packageJson.version); // 假设新版本
       
       setCheckResult(
         `当前版本: ${currentVersion}\n` +
