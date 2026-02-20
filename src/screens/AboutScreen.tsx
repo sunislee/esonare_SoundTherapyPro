@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import packageJson from '../../package.json';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -28,11 +29,13 @@ const AboutScreen = () => {
 
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>S</Text>
-          </View>
+          <Image 
+            source={require('../assets/logo.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.appName}>{t('appTitle')}</Text>
-          <Text style={styles.version}>{t('settings.version')} 1.1.3</Text>
+          <Text style={styles.version}>{t('settings.version')} {packageJson.version}</Text>
         </View>
 
         <View style={styles.infoContainer}>
@@ -103,15 +106,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 60,
   },
-  logoPlaceholder: {
+  logoImage: {
     width: 80,
     height: 80,
     borderRadius: 20,
-    backgroundColor: '#6C5DD3',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#6C5DD3',
+    shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 16,

@@ -14,7 +14,8 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
-  ImageBackground
+  ImageBackground,
+  ToastAndroid
 } from 'react-native';
 
 
@@ -428,17 +429,7 @@ export const ProfileScreen = () => {
                 <Text style={styles.idText}>ID: 88293401</Text>
               </View>
 
-              <View style={styles.statsContainer}>
-                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.focusCount'))}>
-                  <Text style={styles.statNumber}>{stats.count}</Text>
-                  <Text style={styles.statLabel}>{t('profile.stats.focusCount')}</Text>
-                </TouchableOpacity>
-                <View style={styles.statDivider} />
-                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.totalDuration'))}>
-                  <Text style={styles.statNumber}>{stats.duration}</Text>
-                  <Text style={styles.statLabel}>{t('profile.stats.totalDuration')}</Text>
-                </TouchableOpacity>
-              </View>
+              {/* 统计功能已隐藏 - 1.1.4版本调整 */}
             </View>
           </ImageBackground>
         ) : (
@@ -471,17 +462,7 @@ export const ProfileScreen = () => {
                 <Text style={styles.idText}>ID: 88293401</Text>
               </View>
 
-              <View style={styles.statsContainer}>
-                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.focusCount'))}>
-                  <Text style={styles.statNumber}>{stats.count}</Text>
-                  <Text style={styles.statLabel}>{t('profile.stats.focusCount')}</Text>
-                </TouchableOpacity>
-                <View style={styles.statDivider} />
-                <TouchableOpacity style={styles.statItem} onPress={() => handleComingSoon(t('profile.stats.totalDuration'))}>
-                  <Text style={styles.statNumber}>{stats.duration}</Text>
-                  <Text style={styles.statLabel}>{t('profile.stats.totalDuration')}</Text>
-                </TouchableOpacity>
-              </View>
+              {/* 统计功能已隐藏 - 1.1.4版本调整 */}
             </View>
           </View>
         )}
@@ -532,12 +513,26 @@ export const ProfileScreen = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.menu.coreFeatures')}</Text>
-          <MenuItem icon="clock" title={t('profile.menu.sleepTimer')} onPress={() => setIsTimerVisible(true)} />
+          <MenuItem icon="clock" title={t('profile.menu.sleepTimer')} onPress={() => {
+            // 睡眠定时功能开发中提示
+            if (Platform.OS === 'android') {
+              ToastAndroid.show('功能开发中，敬请期待', ToastAndroid.SHORT);
+            } else {
+              Alert.alert('提示', '功能开发中，敬请期待');
+            }
+          }} />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.menu.resources')}</Text>
-          <MenuItem icon="calendar" title={t('profile.menu.history')} onPress={() => navigation.navigate('History')} />
+          <MenuItem icon="calendar" title={t('profile.menu.history')} onPress={() => {
+            // 播放历史功能开发中提示
+            if (Platform.OS === 'android') {
+              ToastAndroid.show('功能开发中，敬请期待', ToastAndroid.SHORT);
+            } else {
+              Alert.alert('提示', '功能开发中，敬请期待');
+            }
+          }} />
           <MenuItem icon="settings" title={t('profile.menu.settings')} onPress={() => navigation.navigate('Settings')} />
           <MenuItem icon="trash-2" title={t('profile.menu.clearCache')} onPress={handleClearCache} />
         </View>
@@ -551,7 +546,7 @@ export const ProfileScreen = () => {
         <Text style={styles.versionText}>Version 1.0.3</Text>
       </ScrollView>
 
-      <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} />
+      {/* SleepTimerSheet已隐藏 - 睡眠定时功能开发中 <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} /> */}
 
       <Modal
         visible={isBackgroundModalVisible}
