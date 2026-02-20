@@ -307,6 +307,7 @@
     "loading": "正在进入心灵空间..."
   },
   "settings": {
+    "header": "设置",
     "back": "返回",
     "language": "语言",
     "followSystem": "跟随系统",

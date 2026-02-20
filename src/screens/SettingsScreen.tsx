@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import packageJson from '../../package.json';
 import {
   View,
   Text,
@@ -245,7 +246,7 @@ const SettingsScreen: React.FC = () => {
               key: 'version',
               icon: '📦',
               title: t('settings.version'),
-              subtitle: 'v1.1.3',
+              subtitle: `v${packageJson.version}`,
               type: 'static',
             },
             {
