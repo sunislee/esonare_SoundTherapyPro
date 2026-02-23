@@ -429,7 +429,7 @@ export const ProfileScreen = () => {
                 <Text style={styles.idText}>ID: 88293401</Text>
               </View>
 
-              {/* 统计功能已隐藏 - 1.1.4版本调整 */}
+              {/* 统计功能已隐藏 - 1.1.5版本调整 */}
             </View>
           </ImageBackground>
         ) : (
@@ -462,7 +462,7 @@ export const ProfileScreen = () => {
                 <Text style={styles.idText}>ID: 88293401</Text>
               </View>
 
-              {/* 统计功能已隐藏 - 1.1.4版本调整 */}
+              {/* 统计功能已隐藏 - 1.1.5版本调整 */}
             </View>
           </View>
         )}
