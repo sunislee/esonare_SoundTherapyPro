@@ -41,9 +41,7 @@ export class UpdateService {
         config.channel = __DEV__ ? 'development' : 'release';
       }
       
-      console.log('[UpdateService] Update channel:', config.channel);
-      console.log('[UpdateService] Version check URL:', config.versionCheckUrl);
-      console.log('[UpdateService] APK download base URL:', config.apkDownloadBaseUrl);
+      // 静默处理：更新服务配置加载完成
       
     } catch (error) {
       console.error('[UpdateService] Failed to get update config:', error);
@@ -66,12 +64,8 @@ export class UpdateService {
     }
     
     try {
-      console.log('[UpdateService] Checking for update from:', config.versionCheckUrl);
       const response = await fetch(config.versionCheckUrl);
       const versionData = await response.json();
-      
-      console.log('[UpdateService] Current version:', currentVersion);
-      console.log('[UpdateService] Latest version:', versionData.version);
       
       return this.compareVersions(currentVersion, versionData.version) < 0;
     } catch (error) {

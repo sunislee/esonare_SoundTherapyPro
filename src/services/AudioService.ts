@@ -80,14 +80,7 @@ class AudioService {
       const isLocal = await RNFS.exists(localPath.replace('file://', ''));
       const sources = isLocal ? [{ uri: localPath }] : getDownloadUrl(scene.id).map(url => ({ uri: url }));
 
-      if (isDeepSea) {
-        console.log('[DeepSeaDebug][AudioService] loadAudio source', {
-          id: scene.id,
-          filename: scene.filename,
-          isLocal,
-          source: sources[0]?.uri
-        });
-      }
+      // 静默处理：加载音频源
       console.log(`[AudioService] Loading source for ${scene.filename}: ${isLocal ? 'Local Cache' : 'Remote URL'}`);
       let sound: Audio.Sound | null = null;
       let lastError: any = null;

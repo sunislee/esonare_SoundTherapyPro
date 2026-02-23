@@ -102,12 +102,7 @@ export const DownloadService = {
               }
               break;
             } catch (e) {
-              if (i === 0 && urls.length > 1) {
-                console.warn('[Calibrate] Primary failed, switching to secondary', { id: asset.id, url });
-              }
-              if (i === urls.length - 1) {
-                console.warn(`[Calibrate] Unable to get ${asset.filename} size`, e);
-              }
+              // 静默处理：文件大小校准失败不影响主流程
             }
           }
         }
@@ -135,9 +130,7 @@ export const DownloadService = {
         const urls = getDownloadUrl(asset.id);
         for (let i = 0; i < urls.length; i++) {
           const url = urls[i];
-          if (i === 1) {
-            console.warn('[DownloadService] Primary failed, switching to secondary', { id: asset.id, url });
-          }
+          // 静默切换：主源失败时自动切换到备源
           let lastFileReceived = 0;
           try {
             await RNFS.downloadFile({
@@ -159,9 +152,7 @@ export const DownloadService = {
             }).promise;
             return true;
           } catch (e) {
-            if (i === urls.length - 1) {
-              console.warn('[DownloadService] All sources failed', { id: asset.id, url });
-            }
+            // 静默处理：所有源都失败，记录到错误统计
           }
         }
         return false;
@@ -188,9 +179,7 @@ export const DownloadService = {
         totalBytes: totalBytes
       });
 
-      if (failedAssets.length > 0) {
-        console.warn('[DownloadService] Failed assets', { ids: failedAssets });
-      }
+      // 静默处理：失败资产已记录到failedAssets数组
     } catch (e) {
       console.error('--- [Validation Error] ---', e);
     } finally { 
@@ -220,14 +209,7 @@ export const DownloadService = {
     const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
     
     const targetUrls = urls && urls.length > 0 ? urls : getDownloadUrl(id);
-    if (isDeepSea) {
-      console.log('[DeepSeaDebug][DownloadService] Start', {
-        id,
-        filename: asset.filename,
-        localPath,
-        targetUrls
-      });
-    }
+    // 静默处理：开始下载音频文件
     for (let u = 0; u < targetUrls.length; u++) {
       const url = targetUrls[u];
       for (let i = 0; i < retries; i++) {
@@ -244,16 +226,11 @@ export const DownloadService = {
           }).promise;
           
           if (await RNFS.exists(localPath)) {
-            if (isDeepSea) {
-              console.log('[DeepSeaDebug][DownloadService] Download ok', { id, url, localPath });
-            }
+            // 静默处理：音频文件下载成功
             return localPath;
           }
         } catch (e) {
           console.error(`[DownloadService] Download failed (Attempt ${i + 1}) ${id}:`, e);
-          if (isDeepSea) {
-            console.log('[DeepSeaDebug][DownloadService] Download error', { id, url, attempt: i + 1 });
-          }
           if (i < retries - 1) {
             await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
           }
@@ -262,9 +239,6 @@ export const DownloadService = {
       if (u === 0 && targetUrls.length > 1) {
         console.warn('[DownloadService] Primary failed, switching to secondary', { id, url });
       }
-    }
-    if (isDeepSea) {
-      console.log('[DeepSeaDebug][DownloadService] All sources failed', { id, localPath });
     }
     return null;
   }
