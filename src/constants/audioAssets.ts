@@ -59,12 +59,12 @@ export const AMBIENT_RESOURCES = {
 };
 
 export const AUDIO_MANIFEST = [ 
-  { id: 'nature_ocean', filename: 'base/ocean.mp3', category: 'nature', title: 'scenes.nature_ocean.title', description: 'scenes.nature_ocean.desc', size: 5242880 }, 
-  { id: 'nature_forest', filename: 'base/forest.mp3', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 4194304 }, 
-  { id: 'nature_deep_sea', filename: 'base/deep_sea.mp3', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 5242880 },
-  { id: 'nature_misty_forest', filename: 'base/forest.mp3', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 4194304 },
+  { id: 'nature_ocean', filename: 'base/deep_ocean_abyss.m4a', category: 'nature', title: 'scenes.nature_ocean.title', description: 'scenes.nature_ocean.desc', size: 5242880 }, 
+  { id: 'nature_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 4194304 }, 
+  { id: 'nature_deep_sea', filename: 'base/deep_sea_breathing_rhythm.m4a', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 5242880 },
+  { id: 'nature_misty_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 4194304 },
   { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 4194304 }, 
-  { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 4194304 }, 
+  { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 4194304 },
 
   { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 4194304 }, 
   { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 3145728 }, 
@@ -88,8 +88,10 @@ export const AUDIO_MANIFEST = [
 ]; 
 
 export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {
-  const primary = isGooglePlay ? GITHUB_URL : GITEE_URL;
-  const secondary = isGooglePlay ? GITEE_URL : GITHUB_URL;
+  // 国内渠道：腾讯云主源 + Gitee备源
+  // 海外渠道：GitHub主源 + 腾讯云备源
+  const primary = isGooglePlay ? GITHUB_URL : TENCENT_CLOUD_URL;
+  const secondary = isGooglePlay ? TENCENT_CLOUD_URL : GITEE_URL;
   return [primary, secondary].map(base => `${base}${filename}`);
 };
 
@@ -97,4 +99,13 @@ export const getDownloadUrl = (assetIdOrFilename: string) => {
   const asset = AUDIO_MANIFEST.find(a => a.id === assetIdOrFilename);
   const filename = asset ? asset.filename : assetIdOrFilename;
   return getDownloadUrlByChannel(IS_GOOGLE_PLAY_VERSION, filename);
+};
+
+export const getRemoteUrl = (filename: string) => {
+  return `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${filename}`;
+};
+
+export const getLocalUri = (filename: string) => {
+  // 本地预设：所有场景的 localUri 必须指向 src/assets/audio/base/ 目录
+  return `asset:///src/assets/audio/base/${filename}`;
 };
