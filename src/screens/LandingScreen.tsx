@@ -50,7 +50,6 @@ export const LandingScreen = ({ navigation }: any) => {
         // 2. 检查资源状态
         const isReady = await DownloadService.isResourceReady();
         
-
         const userName = await AsyncStorage.getItem('USER_NAME');
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
         

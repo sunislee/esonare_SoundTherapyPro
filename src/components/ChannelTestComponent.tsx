@@ -21,9 +21,7 @@ export const ChannelTestComponent: React.FC = () => {
       setVersionCheckUrl(config.versionCheckUrl);
       setApkDownloadUrl(config.apkDownloadBaseUrl);
       
-      console.log('[ChannelTest] Channel loaded:', config.channel);
-      console.log('[ChannelTest] Version check URL:', config.versionCheckUrl);
-      console.log('[ChannelTest] APK download base URL:', config.apkDownloadBaseUrl);
+      // 静默处理：渠道配置加载完成
     } catch (error) {
       console.error('[ChannelTest] Failed to load channel config:', error);
       setChannel('error');
