@@ -145,6 +145,19 @@ export const DownloadService = {
           try {
             const tempPath = `${localPath}.tmp`;
             
+            // 诊断日志：开始下载
+            console.log(`[DownloadService-DIAGNOSE] Starting download: ${asset.id} | URL: ${url} | TempPath: ${tempPath}`);
+            
+            // 检查磁盘写入权限
+            try {
+              const testFile = `${tempPath}.test`;
+              await RNFS.writeFile(testFile, 'test', 'utf8');
+              await RNFS.unlink(testFile);
+              console.log(`[DownloadService-DIAGNOSE] Disk write permission: OK`);
+            } catch (diskError) {
+              console.error(`[DownloadService-DIAGNOSE] Disk write permission: FAILED - ${diskError}`);
+            }
+            
             if (await RNFS.exists(tempPath)) {
               await RNFS.unlink(tempPath);
             }
@@ -154,19 +167,31 @@ export const DownloadService = {
               toFile: tempPath,
               connectionTimeout: 30000,
               readTimeout: 60000,
-              progressDivider: 10,
+              background: false, // 强制禁用后台下载，确保前台模式
+              progressDivider: 1, // 降低进度回调间隔，获取更精确的速度数据
               progress: (res) => {
                 const delta = res.bytesWritten - lastFileReceived;
                 lastFileReceived = res.bytesWritten;
                 currentReceivedBytes += delta;
+                
+                // 诊断日志：强制输出下载进度（即使是Release包）
+                console.log(`[DownloadService-DIAGNOSE] Progress: ${asset.id} | ` +
+                  `Bytes: ${res.bytesWritten}/${res.contentLength} | ` +
+                  `Speed: ${delta > 0 ? Math.round(delta / 1024) : 0} KB/s | ` +
+                  `URL: ${url}`);
               }
             });
             
             await result.promise;
             
             if (await RNFS.exists(tempPath)) {
+              const fileSize = await RNFS.stat(tempPath);
+              console.log(`[DownloadService-DIAGNOSE] Download completed: ${asset.id} | FileSize: ${fileSize.size} bytes`);
               await RNFS.moveFile(tempPath, localPath);
+              console.log(`[DownloadService-DIAGNOSE] File moved to: ${localPath}`);
               return true;
+            } else {
+              console.error(`[DownloadService-DIAGNOSE] Download failed: temp file not found - ${tempPath}`);
             }
           } catch (e) {
             console.warn(`[DownloadService] Download failed for ${asset.id}, trying fallback`);

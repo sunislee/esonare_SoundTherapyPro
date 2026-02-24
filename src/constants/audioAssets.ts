@@ -8,7 +8,7 @@ const nativeChannel =
 
 export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googlePlay' : true;
 
-const TENCENT_CLOUD_URL = 'http://43.138.58.71/';
+const TENCENT_CLOUD_URL = 'https://43.138.58.71/';
 const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/master/';
 const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 
@@ -82,9 +82,7 @@ export const AUDIO_MANIFEST = [
   { id: 'interactive_wind_chime', filename: AMBIENT_RESOURCES.WIND_CHIME, category: 'interactive', title: 'scenes.interactive_wind_chime.title', description: 'scenes.interactive_wind_chime.desc', size: 1048576 }, 
   { id: 'interactive_breath', filename: AMBIENT_RESOURCES.BREATH, category: 'interactive', title: 'scenes.interactive_breath.title', description: 'scenes.interactive_breath.desc', size: 1048576 }, 
   { id: 'interactive_apple', filename: AMBIENT_RESOURCES.APPLE_CRUNCH, category: 'interactive', title: 'scenes.interactive_apple.title', description: 'scenes.interactive_apple.desc', size: 524288 }, 
-  { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: 'scenes.interactive_match.title', description: 'scenes.interactive_match.desc', size: 524288 }, 
-  { id: 'interactive_rain', filename: AMBIENT_RESOURCES.RAIN, category: 'interactive', title: 'scenes.interactive_rain.title', description: 'scenes.interactive_rain.desc', size: 4194304 },
-  { id: 'interactive_ocean', filename: AMBIENT_RESOURCES.OCEAN, category: 'interactive', title: 'scenes.interactive_ocean.title', description: 'scenes.interactive_ocean.desc', size: 5242880 },
+  { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: 'scenes.interactive_match.title', description: 'scenes.interactive_match.desc', size: 524288 },
 ]; 
 
 export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {

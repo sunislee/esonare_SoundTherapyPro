@@ -153,8 +153,6 @@
     "interactive_wind_chime": { "title": "風鈴", "desc": "空霊の響き" },
     "interactive_breath": { "title": "呼吸", "desc": "マインドフルネスガイド" },
     "interactive_apple": { "title": "リンゴをかじる", "desc": "ストレス解消音" },
-    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" },
-    "interactive_rain": { "title": "雨を聴く", "desc": "窓の外の雨" },
-    "interactive_ocean": { "title": "海を眺める", "desc": "波の音" }
+    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" }
   }
 }
