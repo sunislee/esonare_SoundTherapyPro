@@ -124,68 +124,98 @@ export const DownloadService = {
         totalBytes: totalBytes
       });
 
-      // 2. 第二步：下载缺失文件
+      // 2. 第二步：下载缺失文件 - 使用 Promise.all 实现真正的并行下载
       const failedAssets: string[] = [];
-      const downloadWithFallback = async (asset: any) => {
+      let progressUpdateTimer: any = null;
+      
+      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      const downloadSingleFile = async (asset: any): Promise<boolean> => {
         const urls = getDownloadUrl(asset.id);
+        const localPath = getLocalPathHelper(asset.category, asset.filename);
+        const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+        
+        if (!(await RNFS.exists(dirPath))) {
+          await RNFS.mkdir(dirPath);
+        }
+
         for (let i = 0; i < urls.length; i++) {
           const url = urls[i];
-          // 静默切换：主源失败时自动切换到备源
           let lastFileReceived = 0;
           try {
-            await RNFS.downloadFile({
+            const tempPath = `${localPath}.tmp`;
+            
+            if (await RNFS.exists(tempPath)) {
+              await RNFS.unlink(tempPath);
+            }
+            
+            const result = RNFS.downloadFile({
               fromUrl: url,
-              toFile: getLocalPathHelper(asset.category, asset.filename),
-              progressDivider: 5,
+              toFile: tempPath,
+              connectionTimeout: 30000,
+              readTimeout: 60000,
+              progressDivider: 10,
               progress: (res) => {
                 const delta = res.bytesWritten - lastFileReceived;
                 lastFileReceived = res.bytesWritten;
                 currentReceivedBytes += delta;
-
-                const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
-                onProgress({
-                  progress: Math.min(0.999, rawProgress),
-                  receivedBytes: Math.min(currentReceivedBytes, totalBytes),
-                  totalBytes: totalBytes
-                });
               }
-            }).promise;
-            return true;
+            });
+            
+            await result.promise;
+            
+            if (await RNFS.exists(tempPath)) {
+              await RNFS.moveFile(tempPath, localPath);
+              return true;
+            }
           } catch (e) {
-            // 静默处理：所有源都失败，记录到错误统计
+            console.warn(`[DownloadService] Download failed for ${asset.id}, trying fallback`);
+            const tempPath = `${localPath}.tmp`;
+            if (await RNFS.exists(tempPath)) {
+              try { await RNFS.unlink(tempPath); } catch {}
+            }
           }
         }
         return false;
       };
 
-      const MAX_CONCURRENT = 4;
-      const downloadQueue = [...filesToDownload];
-      const activeDownloads: Promise<void>[] = [];
-      
-      const processNext = async (): Promise<void> => {
-        while (downloadQueue.length > 0) {
-          const asset = downloadQueue.shift();
-          if (!asset) break;
-          
-          const localPath = getLocalPathHelper(asset.category, asset.filename);
-          const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-          
-          if (!(await RNFS.exists(dirPath))) {
-            await RNFS.mkdir(dirPath);
-          }
+      const MAX_CONCURRENT = 3;
+      const progressInterval = setInterval(() => {
+        const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
+        onProgress({
+          progress: Math.min(0.999, rawProgress),
+          receivedBytes: Math.min(currentReceivedBytes, totalBytes),
+          totalBytes: totalBytes
+        });
+      }, 200);
 
-          const success = await downloadWithFallback(asset);
-          if (!success) {
-            failedAssets.push(asset.id);
+      const downloadWithConcurrencyLimit = async () => {
+        const queue = [...filesToDownload];
+        const workers: Promise<void>[] = [];
+        
+        const worker = async (workerId: number) => {
+          await sleep(workerId * Math.floor(Math.random() * 500) + 100);
+          
+          while (queue.length > 0) {
+            const asset = queue.shift();
+            if (!asset) break;
+            const success = await downloadSingleFile(asset);
+            if (!success) {
+              failedAssets.push(asset.id);
+            }
+            await sleep(Math.floor(Math.random() * 200) + 50);
           }
+        };
+
+        for (let i = 0; i < Math.min(MAX_CONCURRENT, filesToDownload.length); i++) {
+          workers.push(worker(i));
         }
+
+        await Promise.all(workers);
       };
 
-      for (let i = 0; i < Math.min(MAX_CONCURRENT, filesToDownload.length); i++) {
-        activeDownloads.push(processNext());
-      }
-
-      await Promise.all(activeDownloads);
+      await downloadWithConcurrencyLimit();
+      clearInterval(progressInterval);
       
       // 3. Step 3: All complete, force 100%
       onProgress({
