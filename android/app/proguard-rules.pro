@@ -27,4 +27,19 @@
 
 # Reflection and annotation support
 -keepattributes Signature
--keepattributes *Annotation* 
+-keepattributes *Annotation*
+
+# KotlinPoet library (used by some React Native modules)
+-keep class com.squareup.kotlinpoet.** { *; }
+-keep class javax.lang.model.** { *; }
+-keep class javax.annotation.** { *; }
+-keep class javax.tools.** { *; }
+
+# Java standard library classes needed by KotlinPoet
+-keep class java.lang.** { *; }
+-keep class java.util.** { *; }
+-keep class java.net.** { *; }
+
+# Additional protection for React Native modules
+-keep class expo.modules.** { *; }
+-keep class com.facebook.react.** { *; } 
