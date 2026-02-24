@@ -34,8 +34,7 @@ export const AMBIENT_RESOURCES = {
   BREATH: 'interactive/breath.m4a',
   APPLE_CRUNCH: 'interactive/apple_crunch.m4a',
   MATCH_STRIKE: 'interactive/match_strike.wav',
-  FIREPLACE: 'base/fire.mp3',
-  SUMMER_NIGHT: 'base/summer_fireworks.m4a',
+
   RAIN: 'base/final_healing_rain.m4a',
   OCEAN: 'base/ocean.mp3',
 };
@@ -50,8 +49,6 @@ export const AUDIO_MANIFEST = [
 
   { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 4194304 }, 
   { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 3145728 }, 
-  { id: 'life_fireplace', filename: AMBIENT_RESOURCES.FIREPLACE, category: 'life', title: 'scenes.life_fireplace.title', description: 'scenes.life_fireplace.desc', size: 4194304 }, 
-  { id: 'life_summer', filename: AMBIENT_RESOURCES.SUMMER_NIGHT, category: 'life', title: 'scenes.life_summer.title', description: 'scenes.life_summer.desc', size: 5242880 }, 
 
   { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 2097152 }, 
   { id: 'healing_clean_space', filename: 'base/liquid_peace.m4a', category: 'healing', title: 'scenes.healing_clean_space.title', description: 'scenes.healing_clean_space.desc', size: 4194304 }, 
