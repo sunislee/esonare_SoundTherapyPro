@@ -40,6 +40,10 @@ clean_source/
 audio_engine/
 exported_assets/
 
+# Audio resources (downloaded dynamically)
+src/assets/audio/base/*.m4a
+src/assets/audio/base/*.mp3
+
 # Local CocoaPods cache
 .cocoapods/
 ios/.cocoapods/

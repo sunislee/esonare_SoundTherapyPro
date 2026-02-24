@@ -106,6 +106,7 @@ export const getRemoteUrl = (filename: string) => {
 };
 
 export const getLocalUri = (filename: string) => {
-  // 本地预设：所有场景的 localUri 必须指向 src/assets/audio/base/ 目录
-  return `asset:///src/assets/audio/base/${filename}`;
+  // 更新：指向下载后的本地存储路径
+  const localPath = getLocalPath('base', filename);
+  return localPath;
 };
