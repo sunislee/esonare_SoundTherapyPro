@@ -266,8 +266,8 @@ export const DownloadService = {
           await RNFS.downloadFile({
             fromUrl: url,
             toFile: localPath,
-            connectionTimeout: 15000,
-            readTimeout: 30000,
+            connectionTimeout: 30000,
+            readTimeout: 60000,
           }).promise;
           
           if (await RNFS.exists(localPath)) {

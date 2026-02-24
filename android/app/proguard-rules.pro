@@ -13,4 +13,18 @@
 
 # Add any project specific keep options here:
 -keep class com.facebook.react.views.image.** { *; } 
--keep class **.R$* { *; } 
+-keep class **.R$* { *; }
+
+# Network and file system libraries (critical for download functionality)
+-keep class com.facebook.react.modules.network.** { *; }
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-keep class com.rnfs.** { *; }
+
+# Download and threading related classes
+-keep class * implements java.io.Serializable { *; }
+-keep class * implements java.lang.Runnable { *; }
+
+# Reflection and annotation support
+-keepattributes Signature
+-keepattributes *Annotation* 
