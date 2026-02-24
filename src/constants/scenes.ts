@@ -118,16 +118,13 @@ export const getIconName = (id: string) => {
   return 'musical-notes-outline';
 };
 
-// 1. Explicitly specified small scene IDs (isBaseScene: false) - 7 global ambient sounds
+// 1. Explicitly specified small scene IDs (isBaseScene: false) - 5 real interactive sounds
 export const SMALL_SCENE_IDS = [
   'interactive_match',
   'interactive_apple',
   'interactive_wind_chime',
   'interactive_breath',
-  'life_summer',
-  'interactive_rain',
-  'interactive_ocean',
-  'life_fireplace',
+  'interactive_white_noise',
 ];
 
 export const SCENES: Scene[] = AUDIO_MANIFEST

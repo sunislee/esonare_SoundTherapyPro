@@ -359,8 +359,6 @@
     "nature_night": { "title": "静谧部落", "desc": "远古的呼唤" },
     "life_rain_boat": { "title": "舟上雨", "desc": "微雨落孤舟" },
     "life_bookstore": { "title": "午后书店", "desc": "纸张与宁静" },
-    "life_fireplace": { "title": "炉火", "desc": "温暖的冬夜" },
-    "life_summer": { "title": "夏日烟火", "desc": "灿烂瞬间" },
     "healing_zen_bowl": { "title": "颂钵冥想", "desc": "瞬间定静" },
     "healing_clean_space": { "title": "洁净空间", "desc": "如水般流动" },
     "healing_crystal": { "title": "水晶钵", "desc": "高频能量共振" },
@@ -371,7 +369,8 @@
     "interactive_breath": { "title": "呼吸", "desc": "正念引导" },
     "interactive_apple": { "title": "嚼苹果", "desc": "解压音效" },
     "interactive_match": { "title": "划火柴", "desc": "触发音" },
-    "interactive_rain": { "title": "听雨", "desc": "雨落窗前" },
-    "interactive_ocean": { "title": "观海", "desc": "海浪声声" }
+    "interactive_wind_chime": { "title": "风铃", "desc": "清脆悦耳" },
+    "interactive_breath": { "title": "呼吸", "desc": "深度放松" },
+    "interactive_white_noise": { "title": "白噪音", "desc": "专注屏蔽" }
   }
 }

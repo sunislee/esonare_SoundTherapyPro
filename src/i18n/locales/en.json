@@ -368,8 +368,6 @@
     "interactive_wind_chime": { "title": "Wind Chimes", "desc": "Ethereal sounds" },
     "interactive_breath": { "title": "Breathing", "desc": "Mindfulness guidance" },
     "interactive_apple": { "title": "Apple Crunch", "desc": "Relaxing sound" },
-    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" },
-    "interactive_rain": { "title": "Listening to Rain", "desc": "Rain against the window" },
-    "interactive_ocean": { "title": "Watching the Sea", "desc": "Sound of waves" }
+    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" }
   }
 }
