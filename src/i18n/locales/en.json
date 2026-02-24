@@ -132,10 +132,8 @@
       "ignite": "Ignite",
       "crisp": "Crisp",
       "ethereal": "Ethereal",
-      "summer": "Summer",
       "rain": "Rain",
       "ocean": "Ocean",
-      "fireplace": "Fireplace",
       "breath": "Breath"
     },
     "guide": {
@@ -357,8 +355,6 @@
     "nature_night": { "title": "Quiet Tribe", "desc": "Ancient callings" },
     "life_rain_boat": { "title": "Rain on Boat", "desc": "Light rain on a lonely boat" },
     "life_bookstore": { "title": "Afternoon Bookstore", "desc": "Paper and silence" },
-    "life_fireplace": { "title": "Fireplace", "desc": "Warm winter night" },
-    "life_summer": { "title": "Summer Fireworks", "desc": "Brilliant moments" },
     "healing_zen_bowl": { "title": "Zen Bowl", "desc": "Instant stillness" },
     "healing_clean_space": { "title": "Liquid Peace", "desc": "Flowing like water" },
     "healing_crystal": { "title": "Crystal Bowl", "desc": "High frequency resonance" },

@@ -142,8 +142,6 @@
     "nature_night": { "title": "静かな部族", "desc": "太古の呼び声" },
     "life_rain_boat": { "title": "舟の上の雨", "desc": "小舟に落ちる微かな雨" },
     "life_bookstore": { "title": "午後の書店", "desc": "紙と静寂" },
-    "life_fireplace": { "title": "暖炉", "desc": "温かい冬の夜" },
-    "life_summer": { "title": "夏の打ち上げ花火", "desc": "輝く瞬間" },
     "healing_zen_bowl": { "title": "シンギングボウル", "desc": "一瞬の静寂" },
     "healing_clean_space": { "title": "清らかな空間", "desc": "水のように流れる" },
     "healing_crystal": { "title": "クリスタルボウル", "desc": "高周波エネルギーの共鳴" },

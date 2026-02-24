@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import crashlytics from '@react-native-firebase/crashlytics';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useBackHandler } from '../hooks/useBackHandler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface RainDropConfig {
   id: number;
@@ -250,6 +251,7 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isPlaying, currentBaseSceneId, togglePlayback, syncNativeStatus } = useAudio();
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
@@ -412,7 +414,7 @@ export const HomeScreen: React.FC = () => {
         <ScrollView 
           ref={scrollViewRef}
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={100}
           onScroll={(e) => setScrollOffset(e.nativeEvent.contentOffset.y)}

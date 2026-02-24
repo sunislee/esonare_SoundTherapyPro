@@ -106,8 +106,6 @@ const getCategory = (cat: string): SceneCategory => {
 };
 
 export const getIconName = (id: string) => {
-  if (id.includes('fireplace')) return 'flame-outline';
-  if (id.includes('summer')) return 'sunny-outline';
   if (id.includes('white_noise')) return 'radio-outline';
   if (id.includes('wind_chime')) return 'notifications-outline';
   if (id.includes('breath')) return 'heart-outline';

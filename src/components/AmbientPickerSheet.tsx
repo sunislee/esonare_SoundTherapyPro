@@ -69,7 +69,7 @@ const SimpleJsSlider = ({ value, onValueChange, onSlidingComplete, activeColor =
   );
 };
 
-type AmbientType = 'none' | 'fireplace' | 'summer';
+type AmbientType = 'none';
 type MixPreset = { id: string; name: string; sceneId: string; mainVolume: number; rainVolume: number; fireVolume: number; ambientType: AmbientType; };
 
 type Props = {
@@ -141,8 +141,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
   } = useAudio();
   
   const [mainVolume, setMainVolume] = useState(1.0);
-  const [fireplaceVolume, setFireplaceVolume] = useState(0.3);
-  const [summerVolume, setSummerVolume] = useState(0.3);
   const [isEditing, setIsEditing] = useState(false);
   const [mixName, setMixName] = useState('');
   const [savedMixes, setSavedMixes] = useState<MixPreset[]>([]);
@@ -158,8 +156,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     if (visible) {
       loadMixes();
       setMainVolume(AudioService.getVolume());
-      setFireplaceVolume(getAmbientVolumeById('life_fireplace'));
-      setSummerVolume(getAmbientVolumeById('life_summer'));
       
       dragY.setValue(0); 
       Animated.spring(translateY, {
@@ -182,7 +178,7 @@ export const AmbientPickerSheet: React.FC<Props> = ({
       month: new Date().getMonth() + 1,
       day: new Date().getDate()
     });
-    const newMix = { id: Date.now().toString(), name, sceneId: currentSceneId, mainVolume, rainVolume: 0, fireVolume: fireplaceVolume, ambientType: currentAmbient };
+    const newMix = { id: Date.now().toString(), name, sceneId: currentSceneId, mainVolume, rainVolume: 0, fireVolume: 0, ambientType: currentAmbient };
     const updated = [newMix, ...savedMixes];
     setSavedMixes(updated);
     await AsyncStorage.setItem('@mix_presets', JSON.stringify(updated));
@@ -191,67 +187,29 @@ export const AmbientPickerSheet: React.FC<Props> = ({
     Alert.alert(t('player.ambient.success'), t('player.ambient.saveSuccess'));
   };
 
-  const handleVolumeChange = (type: 'main' | 'fireplace' | 'summer', val: number) => {
-    if (type === 'main') { 
-      setMainVolume(val); 
-      AudioService.setVolume(val); 
-    }
-    else if (type === 'fireplace') { 
-      setFireplaceVolume(val); 
-      if (getIsActive('fireplace')) updateAmbientVolume(val); 
-    }
-    else if (type === 'summer') { 
-      setSummerVolume(val); 
-      if (getIsActive('summer')) updateAmbientVolume(val); 
-    }
+  const handleVolumeChange = (val: number) => {
+    setMainVolume(val); 
+    AudioService.setVolume(val); 
   };
 
   const handleSelect = async (type: AmbientType) => {
     ReactNativeHapticFeedback.trigger('impactLight');
-    
     await setAmbient(null);
-
-    if (type === 'none') {
-      onSelect('none');
-      return;
-    }
-
-    const idMap: Record<string, string | null> = {
-      'fireplace': 'life_fireplace',
-      'summer': 'life_summer'
-    };
-    
-    const targetId = idMap[type];
-    
-    if (targetId) {
-      await setAmbient(targetId);
-    }
-    
-    onSelect(type);
+    onSelect('none');
   };
 
   if (!visible) return null;
 
   const getIsActive = (type: AmbientType) => {
-    if (type === 'fireplace') return (activeSmallSceneIds || []).includes('life_fireplace');
-    if (type === 'summer') return (activeSmallSceneIds || []).includes('life_summer');
     return false;
   };
 
   const getAmbientIcon = (type: AmbientType) => {
-    switch(type) {
-      case 'fireplace': return "flame-outline";
-      case 'summer': return "sunny-outline";
-      default: return "musical-notes-outline";
-    }
+    return "musical-notes-outline";
   };
 
   const getAmbientLabel = (type: AmbientType) => {
-    switch(type) {
-      case 'fireplace': return `  ${t('player.labels.fireplace')}`;
-      case 'summer': return `  ${t('player.labels.summer')}`;
-      default: return "";
-    }
+    return "";
   };
 
   return (
@@ -331,36 +289,8 @@ export const AmbientPickerSheet: React.FC<Props> = ({
 
             <Text style={styles.groupLabel}>{t('player.ambient.mainVolume')}</Text>
             <View style={styles.volumeCard}>
-              <SimpleJsSlider value={mainVolume} onValueChange={(v:any)=>handleVolumeChange('main',v)} onSlidingComplete={()=>{}} activeColor="#fff" />
+              <SimpleJsSlider value={mainVolume} onValueChange={handleVolumeChange} onSlidingComplete={()=>{}} activeColor="#fff" />
             </View>
-
-            <Text style={styles.groupLabel}>{t('player.ambient.ambientOverlay')}</Text>
-            {(['fireplace', 'summer'] as AmbientType[]).map((type) => {
-              const isActive = getIsActive(type);
-              const volume = type === 'fireplace' ? fireplaceVolume : summerVolume;
-              return (
-                <View key={type} style={[styles.volumeCard, isActive && styles.activeCard]}>
-                  <TouchableOpacity style={styles.cardHeader} onPress={() => {
-                    handleSelect(isActive ? 'none' : type);
-                  }}>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                       <Icon name={getAmbientIcon(type)} size={20} color={isActive ? "#D4AF37" : "#666"} />
-                       <Text style={[styles.cardTitle, isActive && {color: '#fff', fontWeight: 'bold'}]}>
-                         {getAmbientLabel(type)}
-                       </Text>
-                    </View>
-                    <Icon name={isActive ? "radio-button-on" : "radio-button-off"} size={22} color={isActive ? "#D4AF37" : "#444"} />
-                  </TouchableOpacity>
-                  
-                  <SimpleJsSlider 
-                    value={volume} 
-                    onValueChange={(v: any) => handleVolumeChange(type as any, v)}
-                    onSlidingComplete={() => {}}
-                    disabled={!isActive}
-                  />
-                </View>
-              );
-            })}
 
             <View style={styles.presetSection}>
               <Text style={styles.groupLabel}>{t('player.ambient.myFavorites')}</Text>
@@ -369,7 +299,6 @@ export const AmbientPickerSheet: React.FC<Props> = ({
                   <TouchableOpacity key={mix.id} style={styles.presetItem} onPress={() => {
                     onRestoreMix(mix);
                     setMainVolume(mix.mainVolume); 
-                    setFireplaceVolume(mix.fireVolume); 
                     ToastUtil.success(t('player.ambient.applied', { name: mix.name }));
                   }}>
                     <Text style={{color: '#fff', fontWeight: 'bold'}} numberOfLines={1}>{mix.name}</Text>
