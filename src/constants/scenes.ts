@@ -73,20 +73,20 @@ export class Scene {
 
 const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
   'Nature': {
-    source: require('../assets/images/forest_bg.jpg'),
-    color: '#0047AB',
+    source: require('../assets/images/categories/category_nature.webp'),
+    color: '#2d5a3d',
   },
   'Healing': {
-    source: require('../assets/images/fire_bg.jpg'),
-    color: '#4a7a5a',
+    source: require('../assets/images/categories/category_therapy.webp'),
+    color: '#6b4c9a',
   },
   'Brainwave': {
-    source: require('../assets/images/sea_bg.jpg'),
-    color: '#1a1a2e',
+    source: require('../assets/images/categories/category_focus.webp'),
+    color: '#1a1a4e',
   },
   'Life': {
-    source: require('../assets/images/rain_bg.jpg'),
-    color: '#3b5c99',
+    source: require('../assets/images/categories/category_life.webp'),
+    color: '#8b7355',
   },
 };
 

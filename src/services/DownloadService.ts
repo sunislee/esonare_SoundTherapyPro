@@ -158,19 +158,34 @@ export const DownloadService = {
         return false;
       };
 
-      for (const asset of filesToDownload) {
-        const localPath = getLocalPathHelper(asset.category, asset.filename);
-        const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-        
-        if (!(await RNFS.exists(dirPath))) {
-          await RNFS.mkdir(dirPath);
-        }
+      const MAX_CONCURRENT = 4;
+      const downloadQueue = [...filesToDownload];
+      const activeDownloads: Promise<void>[] = [];
+      
+      const processNext = async (): Promise<void> => {
+        while (downloadQueue.length > 0) {
+          const asset = downloadQueue.shift();
+          if (!asset) break;
+          
+          const localPath = getLocalPathHelper(asset.category, asset.filename);
+          const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+          
+          if (!(await RNFS.exists(dirPath))) {
+            await RNFS.mkdir(dirPath);
+          }
 
-        const success = await downloadWithFallback(asset);
-        if (!success) {
-          failedAssets.push(asset.id);
+          const success = await downloadWithFallback(asset);
+          if (!success) {
+            failedAssets.push(asset.id);
+          }
         }
+      };
+
+      for (let i = 0; i < Math.min(MAX_CONCURRENT, filesToDownload.length); i++) {
+        activeDownloads.push(processNext());
       }
+
+      await Promise.all(activeDownloads);
       
       // 3. Step 3: All complete, force 100%
       onProgress({

@@ -44,10 +44,10 @@ export const ProfileScreen = () => {
   // 使用全局返回键处理逻辑（非首页）
   useBackHandler(false, navigation);
   const BACKGROUND_OPTIONS = [
-    { id: '1', name: '火焰', source: require('../assets/images/fire_bg.jpg') },
-    { id: '2', name: '森林', source: require('../assets/images/forest_bg.jpg') },
-    { id: '3', name: '雨水', source: require('../assets/images/rain_bg.jpg') },
-    { id: '4', name: '大海', source: require('../assets/images/sea_bg.jpg') },
+    { id: '1', name: '自然', source: require('../assets/images/categories/category_nature.webp') },
+    { id: '2', name: '治疗', source: require('../assets/images/categories/category_therapy.webp') },
+    { id: '3', name: '生活', source: require('../assets/images/categories/category_life.webp') },
+    { id: '4', name: '专注', source: require('../assets/images/categories/category_focus.webp') },
   ];
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>(t('profile.loading'));
