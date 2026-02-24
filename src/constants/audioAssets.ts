@@ -25,26 +25,8 @@ export const getLocalPath = (category: string, filename: string) => {
     return Platform.OS === 'ios' ? `file://${rawPath}` : rawPath; 
 }; 
 
-export const DEFAULT_FALLBACK_SOURCE = require('../../android/app/src/main/res/raw/src_assets_audio_base_forest.mp3');
-
-const BUILT_IN_FALLBACK_FILENAMES = [
-  'interactive/match_strike.wav',
-  'interactive/apple_crunch.m4a',
-  'interactive/wind-chime.m4a',
-  'interactive/breath.m4a',
-  'base/summer_fireworks.m4a',
-  'base/final_healing_rain.m4a',
-  'base/ocean.mp3',
-  'base/fire.mp3',
-];
-
-export const AUDIO_MAP: Record<string, any> = BUILT_IN_FALLBACK_FILENAMES.reduce(
-  (acc, filename) => {
-    acc[filename] = DEFAULT_FALLBACK_SOURCE;
-    return acc;
-  },
-  {} as Record<string, any>
-);
+export const DEFAULT_FALLBACK_SOURCE = null;
+export const AUDIO_MAP: Record<string, any> = {};
 
 export const AMBIENT_RESOURCES = {
   WHITE_NOISE: 'interactive/white_noise.m4a',
