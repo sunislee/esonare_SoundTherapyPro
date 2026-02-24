@@ -429,7 +429,7 @@ export const ProfileScreen = () => {
                 <Text style={styles.idText}>ID: 88293401</Text>
               </View>
 
-              {/* 统计功能已隐藏 - 1.1.5版本调整 */}
+              {/* 统计功能已隐藏 - 1.1.6版本调整 */}
             </View>
           </ImageBackground>
         ) : (
@@ -462,7 +462,7 @@ export const ProfileScreen = () => {
                 <Text style={styles.idText}>ID: 88293401</Text>
               </View>
 
-              {/* 统计功能已隐藏 - 1.1.5版本调整 */}
+              {/* 统计功能已隐藏 - 1.1.6版本调整 */}
             </View>
           </View>
         )}
@@ -543,7 +543,7 @@ export const ProfileScreen = () => {
           <MenuItem icon="log-out" title={t('profile.menu.logout')} onPress={handleLogout} color="#FF4D4F" showArrow={false} />
         </View>
 
-        <Text style={styles.versionText}>Version 1.0.3</Text>
+        <Text style={styles.versionText}>Version 1.1.6</Text>
       </ScrollView>
 
       {/* SleepTimerSheet已隐藏 - 睡眠定时功能开发中 <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} /> */}
