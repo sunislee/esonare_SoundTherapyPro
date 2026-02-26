@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Text, Animated, StatusBar, ActivityIndicator, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
+import NetInfo from '@react-native-community/netinfo';
 import { DownloadService } from '../services/DownloadService';
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
@@ -13,11 +14,24 @@ export const LandingScreen = ({ navigation }: any) => {
   const { t, i18n } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const breathAnim = useRef(new Animated.Value(0)).current;
+  
+  // 【离线状态】网络状态监听
+  const [isOffline, setIsOffline] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   // 强制重新渲染，确保 i18n 初始化后能正确获取文本
   const [, setTick] = React.useState(0);
 
   useEffect(() => {
+    // 【网络监听】监听网络状态变化
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const offline = state.isConnected === false;
+      setIsOffline(offline);
+      if (offline) {
+        console.log('[Network Check] 离线状态，拦截下载！');
+      }
+    });
+
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
 
     const loop = Animated.loop(
@@ -77,6 +91,17 @@ export const LandingScreen = ({ navigation }: any) => {
         // 【强制】判断准则：if (本地总大小 < GLOBAL_TOTAL_SIZE)，则判为未完成，去下载页
         const isReady = localTotalSize >= GLOBAL_TOTAL_SIZE;
         
+        // 【离线拦截】如果没网且资源不足，显示离线提示，禁止跳转
+        const netInfo = await NetInfo.fetch();
+        const currentlyOffline = netInfo.isConnected === false;
+        
+        if (currentlyOffline && !isReady) {
+          console.log('[LandingScreen] 离线状态且资源不足，显示离线提示');
+          setIsOffline(true);
+          setIsChecking(false);
+          return; // 禁止自动跳转，停留在当前页面显示离线提示
+        }
+        
         const userName = await AsyncStorage.getItem('USER_NAME');
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
         
@@ -120,6 +145,7 @@ export const LandingScreen = ({ navigation }: any) => {
 
     return () => {
       loop.stop();
+      unsubscribe();
     };
   }, [navigation, fadeAnim]);
 
@@ -145,7 +171,17 @@ export const LandingScreen = ({ navigation }: any) => {
           <Text style={{ fontSize: 100 }}>🧘‍♂️</Text>
         </Animated.View>
         <Text style={styles.brandName}>ESONARE</Text>
-        <Text style={styles.loadingText}>{t('player.landing.loading')}</Text>
+        
+        {/* 【离线提示】当离线且资源不足时显示 */}
+        {isOffline ? (
+          <View style={styles.offlineContainer}>
+            <Text style={styles.offlineIcon}>📡</Text>
+            <Text style={styles.offlineTitle}>无网络连接</Text>
+            <Text style={styles.offlineText}>请检查网络设置后重试</Text>
+          </View>
+        ) : (
+          <Text style={styles.loadingText}>{t('player.landing.loading')}</Text>
+        )}
       </Animated.View>
     </View>
   );
@@ -158,4 +194,25 @@ const styles = StyleSheet.create({
   content: { alignItems: 'center' },
   brandName: { color: '#FFFFFF', fontSize: 32, fontWeight: 'bold', letterSpacing: 8 },
   loadingText: { color: '#94A3B8', fontSize: 16, marginTop: 20, letterSpacing: 2 },
+  // 【离线提示样式】
+  offlineContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 40,
+  },
+  offlineIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  offlineTitle: {
+    color: '#EF4444',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  offlineText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });

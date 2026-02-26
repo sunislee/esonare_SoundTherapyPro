@@ -1,7 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
-import RNFS from 'react-native-fs'; 
-import { 
-  AUDIO_MANIFEST, 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNFS from 'react-native-fs';
+import NetInfo from '@react-native-community/netinfo';
+import {
+  AUDIO_MANIFEST,
   IS_GOOGLE_PLAY_VERSION,
   getDownloadUrl,
   getLocalPath as getLocalPathHelper,
@@ -47,9 +48,15 @@ export const DownloadService = {
   /**
    * Execute resource validation and download
    */
-  async checkAndDownload(onProgress: (p: DownloadProgress) => void) { 
-    try { 
-      
+  async checkAndDownload(onProgress: (p: DownloadProgress) => void) {
+    try {
+      // 【网络检查】下载开始前检查网络状态
+      const netInfo = await NetInfo.fetch();
+      if (netInfo.isConnected === false) {
+        console.error('[DownloadService] 无网络连接，阻止下载任务启动');
+        throw new Error('No Network');
+      }
+
       let totalBytes = 0;
       let currentReceivedBytes = 0;
       const fileSizes: { [key: string]: number } = {};
