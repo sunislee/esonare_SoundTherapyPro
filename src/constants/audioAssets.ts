@@ -64,12 +64,52 @@ export const AUDIO_MANIFEST = [
   { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: 'scenes.interactive_match.title', description: 'scenes.interactive_match.desc', size: 524288 },
 ]; 
 
+// 【核心】定义 ASSET_LIST，手动写好每个文件的 expectedSize（不可篡改的基准）
+export const ASSET_LIST = [
+  { id: 'nature_ocean', expectedSize: 5242880 },
+  { id: 'nature_forest', expectedSize: 4194304 },
+  { id: 'nature_deep_sea', expectedSize: 5242880 },
+  { id: 'nature_misty_forest', expectedSize: 4194304 },
+  { id: 'nature_river', expectedSize: 4194304 },
+  { id: 'nature_night', expectedSize: 4194304 },
+  { id: 'life_rain_boat', expectedSize: 4194304 },
+  { id: 'life_bookstore', expectedSize: 3145728 },
+  { id: 'healing_zen_bowl', expectedSize: 2097152 },
+  { id: 'healing_clean_space', expectedSize: 4194304 },
+  { id: 'healing_crystal', expectedSize: 5242880 },
+  { id: 'brainwave_alpha', expectedSize: 3145728 },
+  { id: 'brainwave_delta', expectedSize: 3145728 },
+  { id: 'interactive_white_noise', expectedSize: 1048576 },
+  { id: 'interactive_wind_chime', expectedSize: 1048576 },
+  { id: 'interactive_breath', expectedSize: 1048576 },
+  { id: 'interactive_apple', expectedSize: 524288 },
+  { id: 'interactive_match', expectedSize: 524288 },
+];
+
+// 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）
+export const GLOBAL_TOTAL_SIZE = ASSET_LIST.reduce((sum, asset) => sum + asset.expectedSize, 0); // 56,623,104 bytes
+export const GLOBAL_TOTAL_SIZE_MB = GLOBAL_TOTAL_SIZE / 1024 / 1024; // 54.00MB
+
 export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {
   // 国内渠道：腾讯云主源 + Gitee备源
-  // 海外渠道：GitHub主源 + 腾讯云备源
-  const primary = isGooglePlay ? GITHUB_URL : TENCENT_CLOUD_URL;
-  const secondary = isGooglePlay ? TENCENT_CLOUD_URL : GITEE_URL;
-  return [primary, secondary].map(base => `${base}${filename}`);
+  // 海外渠道：ghproxy.net 加速镜像 → mirror.ghproxy.com → GitHub官方 → 腾讯云备源
+  if (isGooglePlay) {
+    // Google渠道：ghproxy.net 加速镜像（主源）→ mirror.ghproxy.com → GitHub官方 → 腾讯云备源
+    const MIRROR_URL = 'https://ghproxy.net/';
+    const MIRROR_URL_2 = 'https://mirror.ghproxy.com/';
+    console.error(`[DownloadService] Google渠道配置双加速源: A= \`${MIRROR_URL}\`, B= \`${MIRROR_URL_2}\``);
+    return [
+      `${MIRROR_URL}${GITHUB_URL}${filename}`,    // ghproxy.net 加速镜像（主源）
+      `${MIRROR_URL_2}${GITHUB_URL}${filename}`,  // mirror.ghproxy.com（备源）
+      `${GITHUB_URL}${filename}`,                  // GitHub官方
+      `${TENCENT_CLOUD_URL}${filename}`            // 腾讯云备源
+    ];
+  }
+  // 国内渠道
+  return [
+    `${TENCENT_CLOUD_URL}${filename}`,
+    `${GITEE_URL}${filename}`
+  ];
 };
 
 export const getDownloadUrl = (assetIdOrFilename: string) => {
