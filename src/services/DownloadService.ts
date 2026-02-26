@@ -4,7 +4,9 @@ import {
   AUDIO_MANIFEST, 
   IS_GOOGLE_PLAY_VERSION,
   getDownloadUrl,
-  getLocalPath as getLocalPathHelper 
+  getLocalPath as getLocalPathHelper,
+  GLOBAL_TOTAL_SIZE,
+  ASSET_LIST
 } from '../constants/audioAssets';
 
 // 核心：版本号必须一致
@@ -204,13 +206,16 @@ export const DownloadService = {
         return false;
       };
 
-      const MAX_CONCURRENT = 3;
+      // 根据渠道设置并发数：Google Play 8线程，国内渠道 5线程
+      const MAX_CONCURRENT = IS_GOOGLE_PLAY_VERSION ? 8 : 5;
+      console.error(`[DownloadService] 当前渠道: ${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, MAX_CONCURRENT: ${MAX_CONCURRENT}`);
       const progressInterval = setInterval(() => {
-        const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
+        // 【强制】分母必须使用 GLOBAL_TOTAL_SIZE，禁止使用 totalBytes
+        const rawProgress = GLOBAL_TOTAL_SIZE > 0 ? currentReceivedBytes / GLOBAL_TOTAL_SIZE : 0;
         onProgress({
           progress: Math.min(0.999, rawProgress),
-          receivedBytes: Math.min(currentReceivedBytes, totalBytes),
-          totalBytes: totalBytes
+          receivedBytes: Math.min(currentReceivedBytes, GLOBAL_TOTAL_SIZE),
+          totalBytes: GLOBAL_TOTAL_SIZE
         });
       }, 200);
 
@@ -245,8 +250,8 @@ export const DownloadService = {
       // 3. Step 3: All complete, force 100%
       onProgress({
         progress: 1,
-        receivedBytes: totalBytes,
-        totalBytes: totalBytes
+        receivedBytes: GLOBAL_TOTAL_SIZE,
+        totalBytes: GLOBAL_TOTAL_SIZE
       });
 
       // 静默处理：失败资产已记录到failedAssets数组

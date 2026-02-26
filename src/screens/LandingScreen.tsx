@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, Animated, StatusBar, ActivityIndicator, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNFS from 'react-native-fs';
 import { DownloadService } from '../services/DownloadService';
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
 import { initLanguage } from '../i18n';
 import { useTranslation } from 'react-i18next';
+import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
 
 export const LandingScreen = ({ navigation }: any) => {
   const { t, i18n } = useTranslation();
@@ -47,8 +49,33 @@ export const LandingScreen = ({ navigation }: any) => {
         // 初始化完成后触发一次强制刷新
         setTick(t => t + 1);
 
-        // 2. 检查资源状态
-        const isReady = await DownloadService.isResourceReady();
+        // 2. 【强制】物理文件校验：只检查本地文件，不联网
+        let localTotalSize = 0;
+        let existingFileCount = 0;
+        
+        for (const asset of ASSET_LIST) {
+          const audioAsset = AUDIO_MANIFEST.find(a => a.id === asset.id);
+          if (!audioAsset) continue;
+          
+          const localPath = getLocalPathHelper(audioAsset.category, audioAsset.filename);
+          const fileExists = await RNFS.exists(localPath);
+          
+          if (fileExists) {
+            try {
+              const fileStat = await RNFS.stat(localPath);
+              const size = Number(fileStat.size);
+              localTotalSize += size;
+              existingFileCount++;
+            } catch (e) {
+              console.log(`[LandingScreen] 文件读取失败: ${asset.id}, ${e}`);
+            }
+          }
+        }
+        
+        console.log(`[LandingScreen] 物理校验: ${existingFileCount}/${ASSET_LIST.length} 文件, ${localTotalSize} bytes / ${GLOBAL_TOTAL_SIZE} bytes`);
+        
+        // 【强制】判断准则：if (本地总大小 < GLOBAL_TOTAL_SIZE)，则判为未完成，去下载页
+        const isReady = localTotalSize >= GLOBAL_TOTAL_SIZE;
         
         const userName = await AsyncStorage.getItem('USER_NAME');
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
