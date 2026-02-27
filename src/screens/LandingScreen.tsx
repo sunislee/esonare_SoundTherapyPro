@@ -79,16 +79,28 @@ export const LandingScreen = ({ navigation }: any) => {
         
         const userName = await AsyncStorage.getItem('USER_NAME');
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
+        const resourceReady = await DownloadService.isResourceReady();
+        
+        // 打印详细日志
+        console.log(`[LandingScreen] 启动检查: Resources: ${isReady && resourceReady}, Name: ${userName ? '存在' : '不存在'}, Skipped: ${hasSkipped === 'true'}`);
+        console.log(`[LandingScreen] 物理校验: ${existingFileCount}/${ASSET_LIST.length} 文件, ${localTotalSize} bytes / ${GLOBAL_TOTAL_SIZE} bytes`);
+        console.log(`[LandingScreen] AsyncStorage: USER_NAME=${userName}, HAS_SET_NAME=${hasSkipped}`);
         
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
 
         setTimeout(async () => {
-          if (!isReady) {
+          // 资源就绪判断：物理文件存在且 AsyncStorage 标记为就绪
+          const resourcesReady = (isReady || resourceReady);
+          
+          if (!resourcesReady) {
+            console.log('[LandingScreen] 资源未就绪，跳转到下载页');
             navigation.replace('Download');
           } else if (!userName && hasSkipped !== 'true') {
+            console.log('[LandingScreen] 资源就绪但未设置名字，跳转到起名页');
             navigation.replace('NameEntry');
           } else {
+            console.log('[LandingScreen] 资源和名字都就绪，跳转到主页');
             // 引擎权限必须在 setupPlayer 之前开启
             EngineControl.allow();
             
@@ -98,7 +110,6 @@ export const LandingScreen = ({ navigation }: any) => {
               console.error('[Landing] AudioService init failed:', e);
             }
             
-
             if (AudioService.isPlaying()) {
               const scene = AudioService.getCurrentScene();
               if (scene) {
