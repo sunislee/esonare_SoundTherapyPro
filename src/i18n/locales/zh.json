@@ -49,7 +49,9 @@
     "comma": "，",
     "period": "。",
     "enter_scheme_name": "请输入方案名称",
-    "friend": "朋友"
+    "friend": "朋友",
+    "comingSoon": "功能开发中，敬请期待",
+    "prompt": "提示"
   },
   "notification": {
     "artistDescription": "🎵 {{userName}}，正在深度疗愈"
