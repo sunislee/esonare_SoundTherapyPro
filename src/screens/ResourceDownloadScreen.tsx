@@ -19,6 +19,81 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   
   const hapticFlags = useRef({ p25: false, p50: false, p75: false, p100: false });
   const breathAnim = useRef(new Animated.Value(0)).current;
+  const animatedProgress = useRef(new Animated.Value(0)).current;
+  
+  // 逻辑脱钩：真实进度与 UI 进度分离
+  const [realProgress, setRealProgress] = useState(0);
+  const [isSmoothSliding, setIsSmoothSliding] = useState(false);
+  const [isDownloadCompleted, setIsDownloadCompleted] = useState(false);
+  const [isUiCompleted, setIsUiCompleted] = useState(false);
+
+  // 逻辑脱钩：真实进度与 UI 进度分离
+  useEffect(() => {
+    const currentProgress = downloadInfo.progress;
+    setRealProgress(currentProgress);
+    
+    // 80% 后的'视觉谎言'：UI 进度条不再实时跟随真实数据
+    if (currentProgress >= 0.8 && !isSmoothSliding) {
+      setIsSmoothSliding(true);
+      
+      // 立即获取当前动画值并开始平滑滑行
+      const currentValue = animatedProgress._value || 0;
+      const startProgress = Math.max(currentValue, 0.8);
+      const remainingProgress = 1.0 - startProgress;
+      const duration = (remainingProgress / 0.05) * 1000; // 每秒 5% 的速度
+      
+      // 停止所有正在进行的动画
+      animatedProgress.stopAnimation();
+      
+      // 开始匀速滑行动画
+      Animated.timing(animatedProgress, {
+        toValue: 1.0,
+        duration: duration,
+        easing: Easing.linear, // 匀速滑行
+        useNativeDriver: false,
+      }).start(({ finished }) => {
+        if (finished) {
+          setIsUiCompleted(true);
+        }
+      });
+    } else if (currentProgress < 0.8 && !isSmoothSliding) {
+      // 80% 之前，UI 进度实时跟随真实进度
+      Animated.timing(animatedProgress, {
+        toValue: currentProgress,
+        duration: 200,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start();
+    }
+    
+    // 标记真实下载完成
+    if (currentProgress >= 1.0) {
+      setIsDownloadCompleted(true);
+    }
+  }, [downloadInfo.progress, isSmoothSliding]);
+
+  // 定义 enterMainApp 函数在组件顶层
+  const enterMainApp = async () => {
+    EngineControl.allow();
+    try {
+      await AudioService.setupPlayer();
+    } catch (e) {}
+    
+    // 直接跳转到 NameEntry，不再跳转到 MainTabs
+    navigation.replace('NameEntry');
+  };
+
+  // 监听 UI 完成和真实下载完成的状态，处理跳转
+  useEffect(() => {
+    if (isUiCompleted && isDownloadCompleted) {
+      // 强制停留：500ms 后跳转
+      const timer = setTimeout(() => {
+        enterMainApp();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isUiCompleted, isDownloadCompleted]);
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -39,8 +114,17 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     );
     loop.start();
 
-    const startDownload = async () => { 
+    const checkAndStart = async () => { 
       try { 
+        // 检查资源是否已经准备就绪
+        const isReady = await DownloadService.isResourceReady();
+        if (isReady) {
+          // 如果资源已存在，立即跳转到 NameEntry
+          navigation.replace('NameEntry');
+          return;
+        }
+        
+        // 资源不存在，开始下载
         await DownloadService.checkAndDownload((info) => { 
           setDownloadInfo(info);
           
@@ -59,34 +143,16 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
             hapticFlags.current.p100 = true;
           }
         }); 
-        
-        setTimeout(async () => {
-          await enterMainApp();
-        }, 800);
+
+        // 不再需要手动 setTimeout，由新的逻辑脱钩机制处理跳转
 
       } catch (err) { 
         console.error('Download error:', err);
         await enterMainApp();
       } 
-    }; 
- 
-    const enterMainApp = async () => {
-      EngineControl.allow();
-      try {
-        await AudioService.setupPlayer();
-      } catch (e) {}
-      
-      const userName = await AsyncStorage.getItem('USER_NAME');
-      const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
-
-      if (!userName && hasSkipped !== 'true') {
-        navigation.replace('NameEntry');
-      } else {
-        navigation.replace('MainTabs');
-      }
     };
 
-    startDownload(); 
+    checkAndStart(); 
     return () => loop.stop();
   }, []); 
 
@@ -106,6 +172,12 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
  
   const progressPercent = Math.round(downloadInfo.progress * 100);
 
+  // 计算动画进度的百分比
+  const animatedProgressPercent = animatedProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
   return ( 
     <View style={styles.container}> 
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
@@ -124,10 +196,10 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
 
                 <View style={styles.progressBarContainer}>
                   <View style={styles.progressBarBackground}>
-                    <View 
+                    <Animated.View 
                       style={[
                         styles.progressBarFill, 
-                        { width: `${progressPercent}%` }
+                        { width: animatedProgressPercent }
                       ]} 
                     />
                   </View>
