@@ -208,7 +208,7 @@ export const DownloadService = {
 
       // 根据渠道设置并发数：Google Play 8线程，国内渠道 5线程
       const MAX_CONCURRENT = IS_GOOGLE_PLAY_VERSION ? 8 : 5;
-      console.error(`[DownloadService] 当前渠道: ${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, MAX_CONCURRENT: ${MAX_CONCURRENT}`);
+      console.log(`[DownloadService] 当前渠道: ${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, MAX_CONCURRENT: ${MAX_CONCURRENT}`);
       const progressInterval = setInterval(() => {
         // 【强制】分母必须使用 GLOBAL_TOTAL_SIZE，禁止使用 totalBytes
         const rawProgress = GLOBAL_TOTAL_SIZE > 0 ? currentReceivedBytes / GLOBAL_TOTAL_SIZE : 0;
