@@ -98,7 +98,7 @@ export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string)
     // Google渠道：ghproxy.net 加速镜像（主源）→ mirror.ghproxy.com → GitHub官方 → 腾讯云备源
     const MIRROR_URL = 'https://ghproxy.net/';
     const MIRROR_URL_2 = 'https://mirror.ghproxy.com/';
-    console.error(`[DownloadService] Google渠道配置双加速源: A= \`${MIRROR_URL}\`, B= \`${MIRROR_URL_2}\``);
+    console.log(`[DownloadService] Google渠道配置双加速源: A= \`${MIRROR_URL}\`, B= \`${MIRROR_URL_2}\``);
     return [
       `${MIRROR_URL}${GITHUB_URL}${filename}`,    // ghproxy.net 加速镜像（主源）
       `${MIRROR_URL_2}${GITHUB_URL}${filename}`,  // mirror.ghproxy.com（备源）
