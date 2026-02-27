@@ -40,7 +40,8 @@ export const LandingScreen = ({ navigation }: any) => {
 
     const checkAndBoot = async () => {
       const startTime = Date.now();
-      const MIN_DISPLAY_TIME = 2500;
+      // 调整为 1.5 秒的视觉停留时间
+      const MIN_DISPLAY_TIME = 1500;
 
       try {
         // 1. 优先初始化多语言设置

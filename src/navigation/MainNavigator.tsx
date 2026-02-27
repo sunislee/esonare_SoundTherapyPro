@@ -85,8 +85,8 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
           console.log('[CheckAndNavigate] 资源就绪但未设置名字，跳转到起名页');
           navigation.replace('NameEntry');
         } else {
-          console.log('[CheckAndNavigate] 资源和名字都就绪，跳转到主页');
-          navigation.replace('MainTabs');
+          console.log('[CheckAndNavigate] 资源和名字都就绪，先跳转到 LandingScreen 保持仪式感');
+          navigation.replace('Landing');
         }
       } catch (e) {
         console.error('[CheckAndNavigate] 检查失败:', e);

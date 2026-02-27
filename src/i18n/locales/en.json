@@ -49,7 +49,9 @@
     "comma": ", ",
     "period": ". ",
     "enter_scheme_name": "Enter scheme name",
-    "friend": "Friend"
+    "friend": "Friend",
+    "comingSoon": "Feature coming soon, stay tuned!",
+    "prompt": "Prompt"
   },
   "notification": {
     "artistDescription": "🎵 {{userName}}, in deep healing"
