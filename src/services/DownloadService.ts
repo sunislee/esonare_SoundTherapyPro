@@ -8,6 +8,7 @@ import {
   GLOBAL_TOTAL_SIZE,
   ASSET_LIST
 } from '../constants/audioAssets';
+import { OfflineService } from './OfflineService';
 
 // 核心：版本号必须一致
 const RESOURCE_VERSION = '1.0.7'; 
@@ -23,25 +24,18 @@ export interface DownloadProgress {
 export const DownloadService = { 
   /**
    * 检查资源是否已经准备就绪（秒开的关键）
+   * 【注意】此方法已弃用，请使用 OfflineService.isResourceReady()
    */
   async isResourceReady(): Promise<boolean> { 
-    try { 
-      const ready = await AsyncStorage.getItem(READY_KEY); 
-      return ready === 'true'; 
-    } catch (e) { 
-      return false; 
-    } 
+    return OfflineService.isResourceReady();
   }, 
  
   /**
    * Mark resource as ready
+   * 【注意】此方法已弃用，请使用 OfflineService.markAsReady()
    */
   async markAsReady() { 
-    try {
-      await AsyncStorage.setItem(READY_KEY, 'true'); 
-    } catch (e) {
-      console.error('Failed to save ready state', e);
-    }
+    return OfflineService.markAsReady();
   }, 
  
   /**
@@ -160,37 +154,101 @@ export const DownloadService = {
               console.error(`[DownloadService-DIAGNOSE] Disk write permission: FAILED - ${diskError}`);
             }
             
-            if (await RNFS.exists(tempPath)) {
-              await RNFS.unlink(tempPath);
+            // 检查是否有未完成的下载（断点续传）
+            let resumeFromByte = 0;
+            const existingTemp = await RNFS.exists(tempPath);
+            if (existingTemp) {
+              try {
+                const tempStat = await RNFS.stat(tempPath);
+                resumeFromByte = Number(tempStat.size);
+                console.log(`[DownloadService] 发现未完成的下载: ${asset.id}, 已下载: ${resumeFromByte} bytes`);
+              } catch (e) {
+                // 无法读取临时文件，删除后重新下载
+                await RNFS.unlink(tempPath);
+                resumeFromByte = 0;
+              }
             }
             
-            const result = RNFS.downloadFile({
+            // 获取预期文件大小
+            const expectedAsset = ASSET_LIST.find(a => a.id === asset.id);
+            const expectedSize = expectedAsset?.expectedSize || 0;
+            
+            const downloadOptions: RNFS.DownloadFileOptions = {
               fromUrl: url,
               toFile: tempPath,
               connectionTimeout: 30000,
               readTimeout: 60000,
-              background: false, // 强制禁用后台下载，确保前台模式
-              progressDivider: 1, // 降低进度回调间隔，获取更精确的速度数据
+              background: false,
+              progressDivider: 1,
+              begin: (res) => {
+                console.log(`[DownloadService] 开始下载: ${asset.id}, 预期大小: ${res.contentLength} bytes`);
+              },
               progress: (res) => {
                 const delta = res.bytesWritten - lastFileReceived;
                 lastFileReceived = res.bytesWritten;
                 currentReceivedBytes += delta;
                 
-                // 诊断日志：强制输出下载进度（即使是Release包）
+                // 保存下载进度（用于断点续传恢复）
+                OfflineService.saveDownloadProgress({
+                  assetId: asset.id,
+                  downloadedBytes: resumeFromByte + res.bytesWritten,
+                  totalBytes: expectedSize || res.contentLength,
+                  isCompleted: false,
+                  timestamp: Date.now()
+                });
+                
                 console.log(`[DownloadService-DIAGNOSE] Progress: ${asset.id} | ` +
                   `Bytes: ${res.bytesWritten}/${res.contentLength} | ` +
                   `Speed: ${delta > 0 ? Math.round(delta / 1024) : 0} KB/s | ` +
                   `URL: ${url}`);
               }
-            });
+            };
             
-            await result.promise;
+            // 如果支持断点续传，添加 Range header
+            if (resumeFromByte > 0) {
+              downloadOptions.headers = {
+                'Range': `bytes=${resumeFromByte}-`
+              };
+            }
+            
+            const result = RNFS.downloadFile(downloadOptions);
+            
+            const downloadResult = await result.promise;
             
             if (await RNFS.exists(tempPath)) {
               const fileSize = await RNFS.stat(tempPath);
               console.log(`[DownloadService-DIAGNOSE] Download completed: ${asset.id} | FileSize: ${fileSize.size} bytes`);
+              
+              // 文件大小校验
+              if (expectedSize > 0) {
+                const actualSize = Number(fileSize.size);
+                const sizeDiff = Math.abs(actualSize - expectedSize);
+                const sizeDiffPercent = sizeDiff / expectedSize;
+                
+                if (sizeDiffPercent > 0.01) {
+                  console.error(`[DownloadService] 文件大小校验失败: ${asset.id}, 实际: ${actualSize}, 预期: ${expectedSize}`);
+                  await RNFS.unlink(tempPath);
+                  return false;
+                }
+                
+                console.log(`[DownloadService] 文件大小校验通过: ${asset.id}`);
+              }
+              
               await RNFS.moveFile(tempPath, localPath);
               console.log(`[DownloadService-DIAGNOSE] File moved to: ${localPath}`);
+              
+              // 清除下载进度记录
+              await OfflineService.clearDownloadProgress(asset.id);
+              
+              // 标记为完成
+              await OfflineService.saveDownloadProgress({
+                assetId: asset.id,
+                downloadedBytes: expectedSize,
+                totalBytes: expectedSize,
+                isCompleted: true,
+                timestamp: Date.now()
+              });
+              
               return true;
             } else {
               console.error(`[DownloadService-DIAGNOSE] Download failed: temp file not found - ${tempPath}`);
