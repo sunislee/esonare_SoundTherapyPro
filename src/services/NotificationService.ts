@@ -1,96 +1,74 @@
-import { Platform } from 'react-native';
-import TrackPlayer, { Capability, AppKilledPlaybackBehavior, State } from 'react-native-track-player';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import i18n from '../i18n';
+import TrackPlayer, { 
+  Capability, 
+  AppKilledPlaybackBehavior, 
+  State, 
+  RepeatMode 
+} from 'react-native-track-player';
 import { Scene } from '../constants/scenes';
 
 export class NotificationService {
   private static isInitialized = false;
 
-  /**
-   * Initialize notification service configuration
-   */
   static async setup() {
     if (this.isInitialized) return;
-
     try {
+      await TrackPlayer.setupPlayer();
       await TrackPlayer.updateOptions({
         android: {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
-          // Enable Android MediaSession management
-          alwaysPauseOnInterruption: true,
+          alwaysShowNotificationCustom: true,
+          handleAudioFocus: false 
         },
-        // Core control capabilities
-        capabilities: [
-          Capability.Play,
-          Capability.Pause,
-          Capability.Stop,
-          Capability.SeekTo,
-        ],
-        // Control buttons displayed in the notification bar
-        notificationCapabilities: [
-          Capability.Play,
-          Capability.Pause,
-          Capability.Stop,
-          Capability.SeekTo,
-        ],
-        // Buttons in compact mode (displayed when notification bar is collapsed)
+        capabilities: [Capability.Play, Capability.Pause],
         compactCapabilities: [Capability.Play, Capability.Pause],
-        // Progress bar update frequency (seconds)
-        progressUpdateEventInterval: 1,
       });
+      
+      await TrackPlayer.add({
+        id: 'esonare_silent_core',
+        url: 'https://github.com/anars/blank-audio/raw/master/10-seconds-of-silence.mp3', 
+        title: '心声冥想',
+        artist: '正在为您营造宁静空间',
+        // 👈 核心：给它一个确定的 1 小时时长，让系统显示进度条
+        duration: 3600, 
+        isLiveStream: false, // 👈 确保这个是 false，否则进度条会乱
+        artwork: require('../assets/logo.png'), 
+      });
+
+      await TrackPlayer.setRepeatMode(RepeatMode.Track);
       this.isInitialized = true;
     } catch (e) {
       console.error('[NotificationService] Setup failed:', e);
     }
   }
 
-  /**
-   * Sync update notification bar info
-   * @param scene Current scene
-   * @param state Playback state
-   */
   static async updateNotification(scene: Scene, state: State) {
+    if (!this.isInitialized) await this.setup();
+
     try {
-      // Ensure initialized
-      if (!this.isInitialized) {
-        await this.setup();
-      }
-
-      if (!scene || state === State.Stopped || state === State.None) {
-        return;
-      }
-
-      const userName = (await AsyncStorage.getItem('USER_NAME')) || i18n.t('settings.defaultName');
-      
-      // Index safety check: get current active track index
-      let activeTrackIndex: number | undefined;
-      try {
-        activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
-      } catch (e) {
-        // [NotificationService] Failed to get active track index
-        return;
-      }
-      
-      // If index is undefined or out of bounds, do not update to avoid throw out of bounds exception
-      if (activeTrackIndex === undefined || activeTrackIndex < 0) {
-        return;
-      }
-
-      // Get current queue, double check
-      const queue = await TrackPlayer.getQueue();
-      if (queue.length === 0 || activeTrackIndex >= queue.length) {
-        return;
-      }
-
-      // Update TrackPlayer metadata
-      await TrackPlayer.updateMetadataForTrack(activeTrackIndex, {
-        title: i18n.t(`scenes.${scene.id}.title`),
-        artist: i18n.t('notification.artistDescription', { userName }),
-        artwork: scene.backgroundSource,
+      await TrackPlayer.updateMetadataForTrack(0, {
+        title: scene.name,
+        artist: '正在深度疗愈中...',
+        duration: 3600, // 保持时长一致
+        artwork: require('../assets/logo.png'), 
       });
+
+      const tpState = await TrackPlayer.getState();
+      if (state === State.Playing && tpState !== State.Playing) {
+        await TrackPlayer.play();
+      } else if (state === State.Paused && tpState !== State.Paused) {
+        await TrackPlayer.pause();
+      }
     } catch (e) {
-      // Swallow all notification bar update errors, do not allow affecting main UI thread
+      console.error('[NotificationService] Update error:', e);
     }
+  }
+
+  static async updatePlaybackState(isPlaying: boolean) {
+    if (!this.isInitialized) return;
+    try {
+      const tpState = await TrackPlayer.getState();
+      if (isPlaying && tpState !== State.Playing) await TrackPlayer.play();
+      else if (!isPlaying && tpState !== State.Paused) await TrackPlayer.pause();
+    } catch (e) {}
   }
 }

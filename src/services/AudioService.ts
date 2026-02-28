@@ -4,6 +4,7 @@ import { State } from 'react-native-track-player';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
 import RNFS from 'react-native-fs';
+import { NotificationService } from './NotificationService';
 
 class AudioService {
   private static instance: AudioService;
@@ -46,19 +47,20 @@ class AudioService {
   }
 
   async setupPlayer() {
-    // expo-av 不需要像 TrackPlayer 那样复杂的 setup
-    // 这里仅作为接口对齐，并确保音频模式正确
     try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
-        interruptionModeIOS: 1, // InterruptionModeIOS.DoNotMix
+        interruptionModeIOS: 1,
         playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
-        interruptionModeAndroid: 1, // InterruptionModeAndroid.DoNotMix
+        interruptionModeAndroid: 1,
         playThroughEarpieceAndroid: false,
       });
       console.log('[AudioService] Player setup completed (Expo AV mode)');
+      
+      await NotificationService.setup();
+      console.log('[AudioService] NotificationService initialized');
     } catch (e) {
       console.error('[AudioService] Failed to setup audio mode', e);
     }
@@ -248,6 +250,11 @@ class AudioService {
     console.log(`[AudioService] Notifying listeners: state=${currentState}, id=${this.getCurrentBaseSceneId()}`);
     this.audioStateListeners.forEach(l => l({ id: this.getCurrentBaseSceneId(), state: currentState }));
     this.smallScenesListeners.forEach(l => l(this.getActiveSmallSceneIds()));
+    
+    if (this.currentBaseScene) {
+      NotificationService.updateNotification(this.currentBaseScene, currentState).catch(() => {});
+      NotificationService.updatePlaybackState(this.isActuallyPlaying).catch(() => {});
+    }
   }
 
   private notifyLoading(loading: boolean, id: string | null) {
@@ -609,7 +616,11 @@ class AudioService {
         this.currentBaseScene = null;
       }
       this.isActuallyPlaying = false;
-      // Use setImmediate to avoid blocking the main thread
+      
+      if (!options?.keepBaseScene) {
+        NotificationService.hideNotification().catch(() => {});
+      }
+      
       setImmediate(() => {
         this.notifyListeners();
       });
