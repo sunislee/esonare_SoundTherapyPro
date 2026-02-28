@@ -71,4 +71,12 @@ export class NotificationService {
       else if (!isPlaying && tpState !== State.Paused) await TrackPlayer.pause();
     } catch (e) {}
   }
+
+  static async hideNotification() {
+    if (!this.isInitialized) return;
+    try {
+      await TrackPlayer.reset();
+      this.isInitialized = false;
+    } catch (e) {}
+  }
 }
