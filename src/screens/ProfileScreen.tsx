@@ -543,7 +543,7 @@ export const ProfileScreen = () => {
           <MenuItem icon="log-out" title={t('profile.menu.logout')} onPress={handleLogout} color="#FF4D4F" showArrow={false} />
         </View>
 
-        <Text style={styles.versionText}>Version 1.1.8</Text>
+        <Text style={styles.versionText}>Version 1.1.9</Text>
       </ScrollView>
 
       {/* SleepTimerSheet已隐藏 - 睡眠定时功能开发中 <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} /> */}
