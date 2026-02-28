@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
 import { DownloadService, DownloadProgress } from '../services/DownloadService'; 
+import { OfflineService } from '../services/OfflineService';
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
 
@@ -36,27 +37,29 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     if (currentProgress >= 0.8 && !isSmoothSliding) {
       setIsSmoothSliding(true);
       
-      // 立即获取当前动画值并开始平滑滑行
-      const currentValue = animatedProgress._value || 0;
-      const startProgress = Math.max(currentValue, 0.8);
-      const remainingProgress = 1.0 - startProgress;
-      const duration = (remainingProgress / 0.05) * 1000; // 每秒 5% 的速度
-      
-      // 停止所有正在进行的动画
-      animatedProgress.stopAnimation();
-      
-      // 开始匀速滑行动画
-      Animated.timing(animatedProgress, {
-        toValue: 1.0,
-        duration: duration,
-        easing: Easing.linear, // 匀速滑行
-        useNativeDriver: false,
-      }).start(({ finished }) => {
-        if (finished) {
-          setIsUiCompleted(true);
-        }
+      // 使用 stopAnimation 回调获取当前动画值
+      animatedProgress.stopAnimation((currentValue) => {
+        const startProgress = Math.max(currentValue, 0.8);
+        const remainingProgress = 1.0 - startProgress;
+        const duration = (remainingProgress / 0.05) * 1000; // 每秒 5% 的速度
+        
+        // 开始匀速滑行动画
+        Animated.timing(animatedProgress, {
+          toValue: 1.0,
+          duration: duration,
+          easing: Easing.linear, // 匀速滑行
+          useNativeDriver: false,
+        }).start(({ finished }) => {
+          if (finished) {
+            setIsUiCompleted(true);
+          }
+        });
       });
-    } else if (currentProgress < 0.8 && !isSmoothSliding) {
+      
+      return;
+    }
+    
+    if (currentProgress < 0.8 && !isSmoothSliding) {
       // 80% 之前，UI 进度实时跟随真实进度
       Animated.timing(animatedProgress, {
         toValue: currentProgress,
@@ -116,11 +119,22 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
 
     const checkAndStart = async () => { 
       try { 
-        // 检查资源是否已经准备就绪
-        const isReady = await DownloadService.isResourceReady();
+        // 使用 OfflineService 检查资源是否已经准备就绪
+        const isReady = await OfflineService.isResourceReady();
         if (isReady) {
           // 如果资源已存在，立即跳转到 NameEntry
+          console.log('[ResourceDownloadScreen] 资源已就绪，跳过下载');
           navigation.replace('NameEntry');
+          return;
+        }
+        
+        // 检查网络状态
+        const isOffline = await OfflineService.isOfflineMode();
+        if (isOffline) {
+          console.warn('[ResourceDownloadScreen] 检测到离线模式，无法下载资源');
+          // 离线模式下显示提示，但仍然尝试进入主应用
+          // 用户可以在有网络时重新下载
+          await enterMainApp();
           return;
         }
         
@@ -144,7 +158,17 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           }
         }); 
 
-        // 不再需要手动 setTimeout，由新的逻辑脱钩机制处理跳转
+        // 下载完成后，进行完整性校验
+        const integrity = await OfflineService.checkResourceIntegrity();
+        if (integrity.isComplete) {
+          await OfflineService.markAsReady();
+          console.log('[ResourceDownloadScreen] 下载完成，资源完整性校验通过');
+        } else {
+          console.warn('[ResourceDownloadScreen] 下载完成，但资源不完整:', {
+            missing: integrity.missingAssets,
+            corrupted: integrity.corruptedAssets
+          });
+        }
 
       } catch (err) { 
         console.error('Download error:', err);
