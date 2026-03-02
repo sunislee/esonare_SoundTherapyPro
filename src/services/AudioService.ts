@@ -1,5 +1,5 @@
 import { Audio } from 'expo-av';
-import { Platform } from 'react-native';
+import { Platform, AppState, AppStateStatus } from 'react-native';
 import { State } from 'react-native-track-player';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
@@ -27,7 +27,25 @@ class AudioService {
   private loadingTimeout: any = null;
   private loadingTimeoutMs = 20000;
 
-  private constructor() {}
+  private constructor() {
+    // 监听 AppState 变化
+    AppState.addEventListener('change', this.handleAppStateChange);
+  }
+
+  private appState: AppStateStatus = 'active';
+  private pendingSetup = false;
+
+  private handleAppStateChange = (nextAppState: AppStateStatus) => {
+    console.log(`[AudioService] AppState changed: ${this.appState} -> ${nextAppState}`);
+    this.appState = nextAppState;
+    
+    // 如果应用回到前台且有挂起的初始化请求，立即执行
+    if (nextAppState === 'active' && this.pendingSetup) {
+      console.log('[AudioService] 应用回到前台，执行挂起的初始化');
+      this.pendingSetup = false;
+      this.performSetup();
+    }
+  };
 
   static getInstance(): AudioService {
     if (!AudioService.instance) {
@@ -50,26 +68,41 @@ class AudioService {
   async setupPlayer() {
     try {
       console.log('[AudioService] ====== 开始设置音频模式 ======');
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        interruptionModeIOS: 1,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        interruptionModeAndroid: 1,
-        playThroughEarpieceAndroid: false,
-      });
-      console.log('[AudioService] ✅ 音频模式设置完成');
+      console.log(`[AudioService] 当前 AppState: ${this.appState}`);
       
-      console.log('[AudioService] 调用 NotificationService.setup()');
-      await NotificationService.setup();
-      console.log('[AudioService] ✅ NotificationService 初始化完成');
-      console.log('[AudioService] ====== 音频服务启动完成 ======');
+      // 【关键】检查是否在后台，如果是则挂起初始化
+      if (this.appState !== 'active') {
+        console.log('[AudioService] ⚠️ 应用在后台，挂起初始化直到回到前台');
+        this.pendingSetup = true;
+        return;
+      }
+      
+      await this.performSetup();
     } catch (e) {
       console.error('[AudioService] ❌ Failed to setup audio mode', e);
       console.error('[AudioService] Error stack:', e.stack);
       throw e;
     }
+  }
+  
+  private async performSetup() {
+    console.log('[AudioService] 执行实际初始化...');
+    
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      staysActiveInBackground: true,
+      interruptionModeIOS: 1,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      interruptionModeAndroid: 1,
+      playThroughEarpieceAndroid: false,
+    });
+    console.log('[AudioService] ✅ 音频模式设置完成');
+    
+    console.log('[AudioService] 调用 NotificationService.setup()');
+    await NotificationService.setup();
+    console.log('[AudioService] ✅ NotificationService 初始化完成');
+    console.log('[AudioService] ====== 音频服务启动完成 ======');
   }
 
   async loadAudio(scene: Scene, shouldPlay: boolean = false) {

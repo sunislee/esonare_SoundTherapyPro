@@ -4,16 +4,32 @@ import TrackPlayer, {
   State, 
   RepeatMode 
 } from 'react-native-track-player';
+import { AppState, AppStateStatus } from 'react-native';
 import { Scene } from '../constants/scenes';
 
 export class NotificationService {
   private static isInitialized = false;
+  private static appState: AppStateStatus = 'active';
+  private static appStateListener: any = null;
+
+  private static initAppStateListener() {
+    if (this.appStateListener) return;
+    // 监听 AppState 变化
+    this.appStateListener = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      console.log(`[NotificationService] AppState changed: ${NotificationService.appState} -> ${nextAppState}`);
+      NotificationService.appState = nextAppState;
+    });
+  }
 
   static async setup() {
     if (this.isInitialized) {
       console.log('[NotificationService] 已经初始化，跳过');
       return;
     }
+    
+    // 初始化 AppState 监听
+    this.initAppStateListener();
+    
     try {
       console.log('[NotificationService] ====== 开始初始化通知服务 ======');
       console.log('[NotificationService] 调用 TrackPlayer.setupPlayer()');
@@ -86,11 +102,25 @@ export class NotificationService {
 
   static async updatePlaybackState(isPlaying: boolean) {
     if (!this.isInitialized) return;
+    
+    // 【关键】后台状态下禁止调用 TrackPlayer.play()，避免 ForegroundServiceStartNotAllowedException
+    if (isPlaying && this.appState !== 'active') {
+      console.log(`[NotificationService] ⚠️ 应用在后台，跳过播放状态更新`);
+      return;
+    }
+    
     try {
       const tpState = await TrackPlayer.getState();
-      if (isPlaying && tpState !== State.Playing) await TrackPlayer.play();
-      else if (!isPlaying && tpState !== State.Paused) await TrackPlayer.pause();
-    } catch (e) {}
+      if (isPlaying && tpState !== State.Playing) {
+        console.log(`[NotificationService] 调用 TrackPlayer.play(), AppState: ${this.appState}`);
+        await TrackPlayer.play();
+      }
+      else if (!isPlaying && tpState !== State.Paused) {
+        await TrackPlayer.pause();
+      }
+    } catch (e) {
+      console.error('[NotificationService] updatePlaybackState error:', e);
+    }
   }
 
   static async hideNotification() {
