@@ -4,6 +4,8 @@ import { State } from 'react-native-track-player';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
 import RNFS from 'react-native-fs';
+import { NotificationService } from './NotificationService';
+import { OfflineService } from './OfflineService';
 
 class AudioService {
   private static instance: AudioService;
@@ -46,21 +48,27 @@ class AudioService {
   }
 
   async setupPlayer() {
-    // expo-av 不需要像 TrackPlayer 那样复杂的 setup
-    // 这里仅作为接口对齐，并确保音频模式正确
     try {
+      console.log('[AudioService] ====== 开始设置音频模式 ======');
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
-        interruptionModeIOS: 1, // InterruptionModeIOS.DoNotMix
+        interruptionModeIOS: 1,
         playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
-        interruptionModeAndroid: 1, // InterruptionModeAndroid.DoNotMix
+        interruptionModeAndroid: 1,
         playThroughEarpieceAndroid: false,
       });
-      console.log('[AudioService] Player setup completed (Expo AV mode)');
+      console.log('[AudioService] ✅ 音频模式设置完成');
+      
+      console.log('[AudioService] 调用 NotificationService.setup()');
+      await NotificationService.setup();
+      console.log('[AudioService] ✅ NotificationService 初始化完成');
+      console.log('[AudioService] ====== 音频服务启动完成 ======');
     } catch (e) {
-      console.error('[AudioService] Failed to setup audio mode', e);
+      console.error('[AudioService] ❌ Failed to setup audio mode', e);
+      console.error('[AudioService] Error stack:', e.stack);
+      throw e;
     }
   }
 
@@ -248,6 +256,11 @@ class AudioService {
     console.log(`[AudioService] Notifying listeners: state=${currentState}, id=${this.getCurrentBaseSceneId()}`);
     this.audioStateListeners.forEach(l => l({ id: this.getCurrentBaseSceneId(), state: currentState }));
     this.smallScenesListeners.forEach(l => l(this.getActiveSmallSceneIds()));
+    
+    if (this.currentBaseScene) {
+      NotificationService.updateNotification(this.currentBaseScene, currentState).catch(() => {});
+      NotificationService.updatePlaybackState(this.isActuallyPlaying).catch(() => {});
+    }
   }
 
   private notifyLoading(loading: boolean, id: string | null) {
@@ -345,17 +358,42 @@ class AudioService {
       const isDeepSea = scene.id.includes('deep_sea') || scene.filename.includes('deep_sea');
       const localPath = getLocalPath(scene.category, scene.filename);
       const isLocal = await RNFS.exists(localPath.replace('file://', ''));
-      const sources = isLocal ? [{ uri: localPath }] : getDownloadUrl(scene.id).map(url => ({ uri: url }));
+      
+      // 离线模式检测
+      const isOffline = await OfflineService.isOfflineMode();
+      const localValid = isLocal ? await OfflineService.validateAsset(scene.id) : false;
+      
+      // 离线模式下，如果本地文件无效，直接报错
+      if (isOffline && !localValid) {
+        console.error(`[AudioService] 离线模式无法播放: ${scene.id}, 本地文件不存在或损坏`);
+        throw new Error('OFFLINE_NO_LOCAL_FILE');
+      }
+      
+      // 构建播放源：优先本地，其次远程
+      const sources: { uri: string }[] = [];
+      if (localValid) {
+        sources.push({ uri: localPath });
+      }
+      if (!isOffline) {
+        const remoteUrls = getDownloadUrl(scene.id).map(url => ({ uri: url }));
+        sources.push(...remoteUrls);
+      }
 
       if (isDeepSea) {
         console.log('[DeepSeaDebug][AudioService] playScene source', {
           id: scene.id,
           filename: scene.filename,
           isLocal,
+          localValid,
+          isOffline,
           source: sources[0]?.uri
         });
       }
-      console.log(`[AudioService] Loading and playing scene ${scene.id} from ${isLocal ? 'Local Cache' : 'Remote URL'}`);
+      console.log(`[AudioService] Loading and playing scene ${scene.id} from ${localValid ? 'Local Cache' : (isOffline ? 'Offline - No Source' : 'Remote URL')}`);
+
+      if (sources.length === 0) {
+        throw new Error('NO_AVAILABLE_SOURCE');
+      }
 
       let sound: Audio.Sound | null = null;
       let lastError: any = null;
@@ -418,15 +456,25 @@ class AudioService {
           });
         }
       }
-      console.error(`[AudioService] CRITICAL: Failed to play scene ${scene.id}.`, {
-        filename: scene.filename,
-        error: error.message,
-      });
+      // 离线模式特殊错误处理
+      if (error.message === 'OFFLINE_NO_LOCAL_FILE') {
+        console.error(`[AudioService] 离线模式错误: ${scene.id} 未下载到本地`);
+        // 可以在这里触发全局事件，让 UI 层显示提示
+      } else {
+        console.error(`[AudioService] CRITICAL: Failed to play scene ${scene.id}.`, {
+          filename: scene.filename,
+          error: error.message,
+        });
+      }
+      
       if (shouldTriggerLoading && this.loadingSceneId === scene.id) {
         this.loadingSceneId = null;
         this.clearLoadingTimeout();
         this.notifyLoading(false, scene.id);
       }
+      
+      // 重新抛出错误，让调用方处理
+      throw error;
     }
   }
 
@@ -609,7 +657,11 @@ class AudioService {
         this.currentBaseScene = null;
       }
       this.isActuallyPlaying = false;
-      // Use setImmediate to avoid blocking the main thread
+      
+      if (!options?.keepBaseScene) {
+        NotificationService.hideNotification().catch(() => {});
+      }
+      
       setImmediate(() => {
         this.notifyListeners();
       });

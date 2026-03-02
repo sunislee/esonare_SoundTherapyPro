@@ -516,9 +516,9 @@ export const ProfileScreen = () => {
           <MenuItem icon="clock" title={t('profile.menu.sleepTimer')} onPress={() => {
             // 睡眠定时功能开发中提示
             if (Platform.OS === 'android') {
-              ToastAndroid.show('功能开发中，敬请期待', ToastAndroid.SHORT);
+              ToastAndroid.show(t('common.comingSoon'), ToastAndroid.SHORT);
             } else {
-              Alert.alert('提示', '功能开发中，敬请期待');
+              Alert.alert(t('common.prompt'), t('common.comingSoon'));
             }
           }} />
         </View>
@@ -528,9 +528,9 @@ export const ProfileScreen = () => {
           <MenuItem icon="calendar" title={t('profile.menu.history')} onPress={() => {
             // 播放历史功能开发中提示
             if (Platform.OS === 'android') {
-              ToastAndroid.show('功能开发中，敬请期待', ToastAndroid.SHORT);
+              ToastAndroid.show(t('common.comingSoon'), ToastAndroid.SHORT);
             } else {
-              Alert.alert('提示', '功能开发中，敬请期待');
+              Alert.alert(t('common.prompt'), t('common.comingSoon'));
             }
           }} />
           <MenuItem icon="settings" title={t('profile.menu.settings')} onPress={() => navigation.navigate('Settings')} />
@@ -543,7 +543,7 @@ export const ProfileScreen = () => {
           <MenuItem icon="log-out" title={t('profile.menu.logout')} onPress={handleLogout} color="#FF4D4F" showArrow={false} />
         </View>
 
-        <Text style={styles.versionText}>Version 1.1.7</Text>
+        <Text style={styles.versionText}>Version 1.1.9</Text>
       </ScrollView>
 
       {/* SleepTimerSheet已隐藏 - 睡眠定时功能开发中 <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} /> */}

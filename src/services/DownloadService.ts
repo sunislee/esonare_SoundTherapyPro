@@ -1,23 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNFS from 'react-native-fs';
-import NetInfo from '@react-native-community/netinfo';
-import {
-  AUDIO_MANIFEST,
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import RNFS from 'react-native-fs'; 
+import { 
+  AUDIO_MANIFEST, 
   IS_GOOGLE_PLAY_VERSION,
   getDownloadUrl,
   getLocalPath as getLocalPathHelper,
   GLOBAL_TOTAL_SIZE,
   ASSET_LIST
 } from '../constants/audioAssets';
+import { OfflineService } from './OfflineService';
 
 // 核心：版本号必须一致
 const RESOURCE_VERSION = '1.0.7'; 
 const SOURCE_ID = IS_GOOGLE_PLAY_VERSION ? 'GITHUB' : 'GITEE';
 const READY_KEY = `RESOURCE_READY_V_${RESOURCE_VERSION}_${SOURCE_ID}`; 
-
-// 【全局状态】下载任务控制器，用于强制中断
-let globalAbortController: AbortController | null = null;
-let isDownloading = false;
 
 export interface DownloadProgress {
   progress: number;
@@ -27,90 +23,27 @@ export interface DownloadProgress {
 
 export const DownloadService = { 
   /**
-   * 【暴力重置】清空所有错误状态和下载任务
-   */
-  reset() {
-    console.log('[DownloadService] ====== 强制重置开始 ======');
-    
-    // 1. 中断当前下载
-    if (globalAbortController) {
-      console.log('[DownloadService] 中断当前下载任务');
-      globalAbortController.abort();
-      globalAbortController = null;
-    }
-    
-    // 2. 重置下载状态
-    isDownloading = false;
-    
-    // 3. 清理临时文件
-    this.cleanTempFiles();
-    
-    console.log('[DownloadService] ====== 强制重置完成 ======');
-  },
-
-  /**
-   * 清理临时文件
-   */
-  async cleanTempFiles() {
-    try {
-      for (const asset of AUDIO_MANIFEST) {
-        const localPath = getLocalPathHelper(asset.category, asset.filename);
-        const tempPath = `${localPath}.tmp`;
-        if (await RNFS.exists(tempPath)) {
-          await RNFS.unlink(tempPath);
-          console.log(`[DownloadService] 清理临时文件: ${tempPath}`);
-        }
-      }
-    } catch (e) {
-      console.error('[DownloadService] 清理临时文件失败:', e);
-    }
-  },
-
-  /**
    * 检查资源是否已经准备就绪（秒开的关键）
+   * 【注意】此方法已弃用，请使用 OfflineService.isResourceReady()
    */
   async isResourceReady(): Promise<boolean> { 
-    try { 
-      const ready = await AsyncStorage.getItem(READY_KEY); 
-      return ready === 'true'; 
-    } catch (e) { 
-      return false; 
-    } 
+    return OfflineService.isResourceReady();
   }, 
  
   /**
    * Mark resource as ready
+   * 【注意】此方法已弃用，请使用 OfflineService.markAsReady()
    */
   async markAsReady() { 
-    try {
-      await AsyncStorage.setItem(READY_KEY, 'true'); 
-    } catch (e) {
-      console.error('Failed to save ready state', e);
-    }
+    return OfflineService.markAsReady();
   }, 
  
   /**
    * Execute resource validation and download
    */
-  async checkAndDownload(onProgress: (p: DownloadProgress) => void) {
-    // 【防止重复启动】
-    if (isDownloading) {
-      console.log('[DownloadService] 下载已在进行中，忽略重复调用');
-      return;
-    }
-    
-    isDownloading = true;
-    globalAbortController = new AbortController();
-    
-    try {
-      // 【网络检查】下载开始前检查网络状态
-      const netInfo = await NetInfo.fetch();
-      if (netInfo.isConnected === false) {
-        console.error('[DownloadService] 无网络连接，阻止下载任务启动');
-        isDownloading = false;
-        throw new Error('No Network');
-      }
-
+  async checkAndDownload(onProgress: (p: DownloadProgress) => void) { 
+    try { 
+      
       let totalBytes = 0;
       let currentReceivedBytes = 0;
       const fileSizes: { [key: string]: number } = {};
@@ -137,7 +70,48 @@ export const DownloadService = {
         }
       }
 
-      console.log(`[DownloadService] 需要下载 ${filesToDownload.length} 个文件，已有 ${AUDIO_MANIFEST.length - filesToDownload.length} 个文件`);
+      // 异步校准：在后台通过 HEAD 请求获取更精准的远程文件大小，但不阻塞主流程
+      // 如果校准成功，会更新 totalBytes，从而让进度条更准
+      const calibrateSizes = async () => {
+        let hasChanges = false;
+        
+        for (const asset of filesToDownload) {
+          const urls = getDownloadUrl(asset.id);
+          for (let i = 0; i < urls.length; i++) {
+            const url = urls[i];
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 5000);
+              
+              const response = await fetch(url, { 
+                method: 'HEAD',
+                signal: controller.signal
+              });
+              clearTimeout(timeoutId);
+
+              const remoteSize = Number(response.headers.get('content-length'));
+              if (remoteSize && remoteSize > 0 && remoteSize !== fileSizes[asset.id]) {
+                const diff = remoteSize - fileSizes[asset.id];
+                fileSizes[asset.id] = remoteSize;
+                totalBytes += diff;
+                hasChanges = true;
+              }
+              break;
+            } catch (e) {
+              // 静默处理：文件大小校准失败不影响主流程
+            }
+          }
+        }
+
+        if (hasChanges) {
+          onProgress({
+            progress: totalBytes > 0 ? currentReceivedBytes / totalBytes : 0,
+            receivedBytes: currentReceivedBytes,
+            totalBytes: totalBytes
+          });
+        }
+      };
+      calibrateSizes();
 
       // 初始进度发送
       onProgress({
@@ -148,10 +122,11 @@ export const DownloadService = {
 
       // 2. 第二步：下载缺失文件 - 使用 Promise.all 实现真正的并行下载
       const failedAssets: string[] = [];
+      let progressUpdateTimer: any = null;
       
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       
-      const downloadSingleFile = async (asset: any, threadId: number): Promise<boolean> => {
+      const downloadSingleFile = async (asset: any): Promise<boolean> => {
         const urls = getDownloadUrl(asset.id);
         const localPath = getLocalPathHelper(asset.category, asset.filename);
         const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
@@ -166,48 +141,120 @@ export const DownloadService = {
           try {
             const tempPath = `${localPath}.tmp`;
             
-            // 【线程启动日志】
-            console.log(`[Thread Start] 线程 ${threadId} 正在请求块数据: ${asset.id} | URL: ${url}`);
+            // 诊断日志：开始下载
+            console.log(`[DownloadService-DIAGNOSE] Starting download: ${asset.id} | URL: ${url} | TempPath: ${tempPath}`);
             
-            // 检查是否被中断
-            if (globalAbortController?.signal.aborted) {
-              console.log(`[Thread Abort] 线程 ${threadId} 被中断: ${asset.id}`);
-              return false;
+            // 检查磁盘写入权限
+            try {
+              const testFile = `${tempPath}.test`;
+              await RNFS.writeFile(testFile, 'test', 'utf8');
+              await RNFS.unlink(testFile);
+              console.log(`[DownloadService-DIAGNOSE] Disk write permission: OK`);
+            } catch (diskError) {
+              console.error(`[DownloadService-DIAGNOSE] Disk write permission: FAILED - ${diskError}`);
             }
             
-            if (await RNFS.exists(tempPath)) {
-              await RNFS.unlink(tempPath);
+            // 检查是否有未完成的下载（断点续传）
+            let resumeFromByte = 0;
+            const existingTemp = await RNFS.exists(tempPath);
+            if (existingTemp) {
+              try {
+                const tempStat = await RNFS.stat(tempPath);
+                resumeFromByte = Number(tempStat.size);
+                console.log(`[DownloadService] 发现未完成的下载: ${asset.id}, 已下载: ${resumeFromByte} bytes`);
+              } catch (e) {
+                // 无法读取临时文件，删除后重新下载
+                await RNFS.unlink(tempPath);
+                resumeFromByte = 0;
+              }
             }
             
-            const result = RNFS.downloadFile({
+            // 获取预期文件大小
+            const expectedAsset = ASSET_LIST.find(a => a.id === asset.id);
+            const expectedSize = expectedAsset?.expectedSize || 0;
+            
+            const downloadOptions: RNFS.DownloadFileOptions = {
               fromUrl: url,
               toFile: tempPath,
               connectionTimeout: 30000,
               readTimeout: 60000,
-              background: false, // 强制禁用后台下载，确保前台模式
-              progressDivider: 1, // 降低进度回调间隔，获取更精确的速度数据
+              background: false,
+              progressDivider: 1,
+              begin: (res) => {
+                console.log(`[DownloadService] 开始下载: ${asset.id}, 预期大小: ${res.contentLength} bytes`);
+              },
               progress: (res) => {
                 const delta = res.bytesWritten - lastFileReceived;
                 lastFileReceived = res.bytesWritten;
                 currentReceivedBytes += delta;
                 
-                // 【线程进度日志】
-                if (delta > 0) {
-                  console.log(`[Thread ${threadId}] ${asset.id} | 速度: ${Math.round(delta / 1024)} KB/s | 进度: ${res.bytesWritten}/${res.contentLength}`);
-                }
+                // 保存下载进度（用于断点续传恢复）
+                OfflineService.saveDownloadProgress({
+                  assetId: asset.id,
+                  downloadedBytes: resumeFromByte + res.bytesWritten,
+                  totalBytes: expectedSize || res.contentLength,
+                  isCompleted: false,
+                  timestamp: Date.now()
+                });
+                
+                console.log(`[DownloadService-DIAGNOSE] Progress: ${asset.id} | ` +
+                  `Bytes: ${res.bytesWritten}/${res.contentLength} | ` +
+                  `Speed: ${delta > 0 ? Math.round(delta / 1024) : 0} KB/s | ` +
+                  `URL: ${url}`);
               }
-            });
+            };
             
-            await result.promise;
+            // 如果支持断点续传，添加 Range header
+            if (resumeFromByte > 0) {
+              downloadOptions.headers = {
+                'Range': `bytes=${resumeFromByte}-`
+              };
+            }
+            
+            const result = RNFS.downloadFile(downloadOptions);
+            
+            const downloadResult = await result.promise;
             
             if (await RNFS.exists(tempPath)) {
               const fileSize = await RNFS.stat(tempPath);
-              console.log(`[Thread ${threadId}] 下载完成: ${asset.id} | 大小: ${fileSize.size} bytes`);
+              console.log(`[DownloadService-DIAGNOSE] Download completed: ${asset.id} | FileSize: ${fileSize.size} bytes`);
+              
+              // 文件大小校验
+              if (expectedSize > 0) {
+                const actualSize = Number(fileSize.size);
+                const sizeDiff = Math.abs(actualSize - expectedSize);
+                const sizeDiffPercent = sizeDiff / expectedSize;
+                
+                if (sizeDiffPercent > 0.01) {
+                  console.error(`[DownloadService] 文件大小校验失败: ${asset.id}, 实际: ${actualSize}, 预期: ${expectedSize}`);
+                  await RNFS.unlink(tempPath);
+                  return false;
+                }
+                
+                console.log(`[DownloadService] 文件大小校验通过: ${asset.id}`);
+              }
+              
               await RNFS.moveFile(tempPath, localPath);
+              console.log(`[DownloadService-DIAGNOSE] File moved to: ${localPath}`);
+              
+              // 清除下载进度记录
+              await OfflineService.clearDownloadProgress(asset.id);
+              
+              // 标记为完成
+              await OfflineService.saveDownloadProgress({
+                assetId: asset.id,
+                downloadedBytes: expectedSize,
+                totalBytes: expectedSize,
+                isCompleted: true,
+                timestamp: Date.now()
+              });
+              
               return true;
+            } else {
+              console.error(`[DownloadService-DIAGNOSE] Download failed: temp file not found - ${tempPath}`);
             }
           } catch (e) {
-            console.warn(`[Thread ${threadId}] 下载失败，尝试备用源: ${asset.id}`);
+            console.warn(`[DownloadService] Download failed for ${asset.id}, trying fallback`);
             const tempPath = `${localPath}.tmp`;
             if (await RNFS.exists(tempPath)) {
               try { await RNFS.unlink(tempPath); } catch {}
@@ -219,8 +266,7 @@ export const DownloadService = {
 
       // 根据渠道设置并发数：Google Play 8线程，国内渠道 5线程
       const MAX_CONCURRENT = IS_GOOGLE_PLAY_VERSION ? 8 : 5;
-      console.log(`[DownloadService] 启动下载引擎: 渠道=${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, 并发数=${MAX_CONCURRENT}`);
-      
+      console.log(`[DownloadService] 当前渠道: ${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, MAX_CONCURRENT: ${MAX_CONCURRENT}`);
       const progressInterval = setInterval(() => {
         // 【强制】分母必须使用 GLOBAL_TOTAL_SIZE，禁止使用 totalBytes
         const rawProgress = GLOBAL_TOTAL_SIZE > 0 ? currentReceivedBytes / GLOBAL_TOTAL_SIZE : 0;
@@ -236,46 +282,24 @@ export const DownloadService = {
         const workers: Promise<void>[] = [];
         
         const worker = async (workerId: number) => {
-          // 【线程启动】随机延迟，避免同时请求
-          const delay = Math.floor(Math.random() * 300) + 50;
-          console.log(`[Worker ${workerId}] 线程启动，延迟 ${delay}ms`);
-          await sleep(delay);
+          await sleep(workerId * Math.floor(Math.random() * 500) + 100);
           
           while (queue.length > 0) {
-            // 检查是否被中断
-            if (globalAbortController?.signal.aborted) {
-              console.log(`[Worker ${workerId}] 线程被中断，退出`);
-              break;
-            }
-            
             const asset = queue.shift();
             if (!asset) break;
-            
-            console.log(`[Worker ${workerId}] 开始下载: ${asset.id}`);
-            const success = await downloadSingleFile(asset, workerId);
-            
+            const success = await downloadSingleFile(asset);
             if (!success) {
               failedAssets.push(asset.id);
-              console.error(`[Worker ${workerId}] 下载失败: ${asset.id}`);
             }
-            
-            // 短暂休息，避免过载
-            await sleep(50);
+            await sleep(Math.floor(Math.random() * 200) + 50);
           }
-          
-          console.log(`[Worker ${workerId}] 线程结束`);
         };
 
-        // 启动所有工作线程
-        const concurrentCount = Math.min(MAX_CONCURRENT, filesToDownload.length);
-        console.log(`[DownloadService] 启动 ${concurrentCount} 个下载线程...`);
-        
-        for (let i = 0; i < concurrentCount; i++) {
+        for (let i = 0; i < Math.min(MAX_CONCURRENT, filesToDownload.length); i++) {
           workers.push(worker(i));
         }
 
         await Promise.all(workers);
-        console.log(`[DownloadService] 所有线程执行完毕`);
       };
 
       await downloadWithConcurrencyLimit();
@@ -288,15 +312,10 @@ export const DownloadService = {
         totalBytes: GLOBAL_TOTAL_SIZE
       });
 
-      console.log(`[DownloadService] 下载完成，成功: ${filesToDownload.length - failedAssets.length}/${filesToDownload.length}`);
-      
       // 静默处理：失败资产已记录到failedAssets数组
     } catch (e) {
       console.error('--- [Validation Error] ---', e);
-      throw e; // 重新抛出错误，让调用方处理
     } finally { 
-      isDownloading = false;
-      globalAbortController = null;
       await this.markAsReady(); 
     } 
   }, 
