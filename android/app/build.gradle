@@ -105,8 +105,8 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 108
-        versionName "1.1.7"
+        versionCode 110
+        versionName "1.1.9"
         resConfigs "en", "zh", "ja"
 
         ndk {
@@ -136,6 +136,7 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            versionNameSuffix "-debug"
         }
         release {
             // Caution! In production, you need to generate your own keystore file.

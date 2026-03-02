@@ -4,12 +4,16 @@ import TrackPlayer, { Event, State } from 'react-native-track-player';
 const getAudioService = () => require('./AudioService').default;
 
 export const PlaybackService = async function() {
-  TrackPlayer.addEventListener(Event.RemotePlay, () => {
+  TrackPlayer.addEventListener(Event.RemotePlay, async () => {
     getAudioService().play();
+    // 直接同步 TrackPlayer 状态，防止系统夺取焦点
+    await TrackPlayer.play();
   });
 
-  TrackPlayer.addEventListener(Event.RemotePause, () => {
+  TrackPlayer.addEventListener(Event.RemotePause, async () => {
     getAudioService().pause();
+    // 直接同步 TrackPlayer 状态，防止系统夺取焦点
+    await TrackPlayer.pause();
   });
 
   TrackPlayer.addEventListener(Event.RemoteStop, () => {
