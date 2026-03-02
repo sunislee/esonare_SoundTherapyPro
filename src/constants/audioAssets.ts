@@ -45,9 +45,9 @@ export const AUDIO_MANIFEST = [
   { id: 'nature_deep_sea', filename: 'base/deep_sea_breathing_rhythm.m4a', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 5242880 },
   { id: 'nature_misty_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 4194304 },
   { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 4194304 }, 
-  { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 4194304 },
+  { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 7201196 },
 
-  { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 4194304 }, 
+  { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 7201196 }, 
   { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 3145728 }, 
 
   { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 2097152 }, 
@@ -71,8 +71,8 @@ export const ASSET_LIST = [
   { id: 'nature_deep_sea', expectedSize: 5242880 },
   { id: 'nature_misty_forest', expectedSize: 4194304 },
   { id: 'nature_river', expectedSize: 4194304 },
-  { id: 'nature_night', expectedSize: 4194304 },
-  { id: 'life_rain_boat', expectedSize: 4194304 },
+  { id: 'nature_night', expectedSize: 7201196 },
+  { id: 'life_rain_boat', expectedSize: 7201196 },
   { id: 'life_bookstore', expectedSize: 3145728 },
   { id: 'healing_zen_bowl', expectedSize: 2097152 },
   { id: 'healing_clean_space', expectedSize: 4194304 },
