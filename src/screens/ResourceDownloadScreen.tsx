@@ -1,180 +1,104 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, StatusBar, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react'; 
+import { View, Text, StyleSheet, StatusBar, Dimensions, Animated, Easing } from 'react-native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import NetInfo from '@react-native-community/netinfo';
 import { useTranslation } from 'react-i18next';
-import { DownloadService, DownloadProgress } from '../services/DownloadService';
+import { DownloadService, DownloadProgress } from '../services/DownloadService'; 
+import { OfflineService } from '../services/OfflineService';
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
-import { GLOBAL_TOTAL_SIZE } from '../constants/audioAssets';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const ResourceDownloadScreen = ({ navigation }: any) => {
+export const ResourceDownloadScreen = ({ navigation }: any) => { 
   const { t } = useTranslation();
   const [downloadInfo, setDownloadInfo] = useState<DownloadProgress>({
     progress: 0,
     receivedBytes: 0,
-    totalBytes: GLOBAL_TOTAL_SIZE
+    totalBytes: 0
   });
-  const [error, setError] = useState<string | null>(null);
-  const [isOffline, setIsOffline] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [hasNavigated, setHasNavigated] = useState(false);
-
+  
   const hapticFlags = useRef({ p25: false, p50: false, p75: false, p100: false });
   const breathAnim = useRef(new Animated.Value(0)).current;
+  const animatedProgress = useRef(new Animated.Value(0)).current;
   
-  // 【防抖】网络恢复定时器
-  const networkRecoveryTimer = useRef<NodeJS.Timeout | null>(null);
+  // 逻辑脱钩：真实进度与 UI 进度分离
+  const [realProgress, setRealProgress] = useState(0);
+  const [isSmoothSliding, setIsSmoothSliding] = useState(false);
+  const [isDownloadCompleted, setIsDownloadCompleted] = useState(false);
+  const [isUiCompleted, setIsUiCompleted] = useState(false);
 
-  // 【硬性约束】检查是否满 54MB
-  const isDownloadComplete = useCallback((received: number): boolean => {
-    return received >= GLOBAL_TOTAL_SIZE;
-  }, []);
-
-  // 【核心】进入主应用 - 只有满 54MB 才能调用
-  const enterMainApp = useCallback(async () => {
-    if (hasNavigated) return;
+  // 逻辑脱钩：真实进度与 UI 进度分离
+  useEffect(() => {
+    const currentProgress = downloadInfo.progress;
+    setRealProgress(currentProgress);
     
-    // 【硬性约束】再次检查是否满 54MB
-    if (!isDownloadComplete(downloadInfo.receivedBytes)) {
-      console.error('[ResourceDownloadScreen] 跳转被拦截：文件未满 54MB！');
-      setError('Download Incomplete');
+    // 80% 后的'视觉谎言'：UI 进度条不再实时跟随真实数据
+    if (currentProgress >= 0.8 && !isSmoothSliding) {
+      setIsSmoothSliding(true);
+      
+      // 使用 stopAnimation 回调获取当前动画值
+      animatedProgress.stopAnimation((currentValue) => {
+        const startProgress = Math.max(currentValue, 0.8);
+        const remainingProgress = 1.0 - startProgress;
+        const duration = (remainingProgress / 0.05) * 1000; // 每秒 5% 的速度
+        
+        // 开始匀速滑行动画
+        Animated.timing(animatedProgress, {
+          toValue: 1.0,
+          duration: duration,
+          easing: Easing.linear, // 匀速滑行
+          useNativeDriver: false,
+        }).start(({ finished }) => {
+          if (finished) {
+            setIsUiCompleted(true);
+          }
+        });
+      });
+      
       return;
     }
+    
+    if (currentProgress < 0.8 && !isSmoothSliding) {
+      // 80% 之前，UI 进度实时跟随真实进度
+      Animated.timing(animatedProgress, {
+        toValue: currentProgress,
+        duration: 200,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start();
+    }
+    
+    // 标记真实下载完成
+    if (currentProgress >= 1.0) {
+      setIsDownloadCompleted(true);
+    }
+  }, [downloadInfo.progress, isSmoothSliding]);
 
-    console.log('[ResourceDownloadScreen] 文件已满 54MB，允许跳转');
-    setHasNavigated(true);
-    setIsComplete(true);
-
+  // 定义 enterMainApp 函数在组件顶层
+  const enterMainApp = async () => {
     EngineControl.allow();
     try {
       await AudioService.setupPlayer();
     } catch (e) {}
-
-    const userName = await AsyncStorage.getItem('USER_NAME');
-    const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
-
-    if (!userName && hasSkipped !== 'true') {
-      navigation.replace('NameEntry');
-    } else {
-      navigation.replace('MainTabs');
-    }
-  }, [downloadInfo.receivedBytes, hasNavigated, isDownloadComplete, navigation]);
-
-  // 【核心】开始下载
-  const startDownload = useCallback(async () => {
-    // 如果已经跳转，不再启动下载
-    if (hasNavigated) return;
-
-    // 检查网络
-    const netInfo = await NetInfo.fetch();
-    if (netInfo.isConnected === false) {
-      console.log('[ResourceDownloadScreen] 无网络，显示离线提示');
-      setIsOffline(true);
-      setError('No Network');
-      return;
-    }
-
-    try {
-      setError(null);
-      setIsOffline(false);
-      
-      console.log('[ResourceDownloadScreen] 启动下载流程...');
-
-      await DownloadService.checkAndDownload((info) => {
-        setDownloadInfo(info);
-
-        const p = Math.floor(info.progress * 100);
-        if (p >= 25 && p < 50 && !hapticFlags.current.p25) {
-          ReactNativeHapticFeedback.trigger('impactLight');
-          hapticFlags.current.p25 = true;
-        } else if (p >= 50 && p < 75 && !hapticFlags.current.p50) {
-          ReactNativeHapticFeedback.trigger('impactLight');
-          hapticFlags.current.p50 = true;
-        } else if (p >= 75 && p < 100 && !hapticFlags.current.p75) {
-          ReactNativeHapticFeedback.trigger('impactLight');
-          hapticFlags.current.p75 = true;
-        } else if (p >= 100 && !hapticFlags.current.p100) {
-          ReactNativeHapticFeedback.trigger('impactLight');
-          hapticFlags.current.p100 = true;
-        }
-
-        // 【硬性约束】只有满 54MB 才允许跳转
-        if (isDownloadComplete(info.receivedBytes)) {
-          console.log('[ResourceDownloadScreen] 下载完成，准备跳转');
-          setTimeout(() => {
-            enterMainApp();
-          }, 500);
-        }
-      });
-
-    } catch (err: any) {
-      console.error('[ResourceDownloadScreen] 下载错误:', err);
-      
-      // 【严禁错误逃逸】任何错误都只能设置错误状态，禁止跳转
-      if (err.message === 'No Network' || err.message?.includes('Network')) {
-        setError('No Network');
-        setIsOffline(true);
-      } else {
-        setError('Download Failed');
-      }
-      
-      // 绝对不调用 enterMainApp()！
-    }
-  }, [enterMainApp, hasNavigated, isDownloadComplete]);
-
-  // 【重试函数】手动点击重试按钮
-  const handleRetry = useCallback(() => {
-    console.log('[ResourceDownloadScreen] 用户点击重试按钮');
     
-    // 【暴力重置】先重置 Service 状态
-    DownloadService.reset();
-    
-    // 重置本地状态
-    setError(null);
-    hapticFlags.current = { p25: false, p50: false, p75: false, p100: false };
-    
-    // 重新启动下载
-    startDownload();
-  }, [startDownload]);
+    // 直接跳转到 NameEntry，不再跳转到 MainTabs
+    navigation.replace('NameEntry');
+  };
+
+  // 监听 UI 完成和真实下载完成的状态，处理跳转
+  useEffect(() => {
+    if (isUiCompleted && isDownloadCompleted) {
+      // 强制停留：500ms 后跳转
+      const timer = setTimeout(() => {
+        enterMainApp();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isUiCompleted, isDownloadCompleted]);
 
   useEffect(() => {
-    // 【网络监听】监听网络状态变化
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      const offline = state.isConnected === false;
-      
-      // 清除之前的恢复定时器
-      if (networkRecoveryTimer.current) {
-        clearTimeout(networkRecoveryTimer.current);
-        networkRecoveryTimer.current = null;
-      }
-
-      if (offline) {
-        console.log('[ResourceDownloadScreen] 检测到离线状态，停止下载');
-        setIsOffline(true);
-        setError('No Network');
-        // 中断下载但不重置，保留进度
-        DownloadService.reset();
-      } else {
-        console.log('[ResourceDownloadScreen] 网络已恢复');
-        setIsOffline(false);
-        
-        // 【防抖】等待 1 秒确认网络稳定后再重试
-        if (error === 'No Network' && !hasNavigated && !isComplete) {
-          console.log('[ResourceDownloadScreen] 网络恢复，1秒后自动重试...');
-          networkRecoveryTimer.current = setTimeout(() => {
-            console.log('[ResourceDownloadScreen] 执行自动重试');
-            // 【暴力重置】清理僵尸任务，重新开启 8 个全新线程
-            DownloadService.reset();
-            handleRetry();
-          }, 1000);
-        }
-      }
-    });
-
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(breathAnim, {
@@ -193,18 +117,68 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     );
     loop.start();
 
-    // 启动下载
-    startDownload();
+    const checkAndStart = async () => { 
+      try { 
+        // 使用 OfflineService 检查资源是否已经准备就绪
+        const isReady = await OfflineService.isResourceReady();
+        if (isReady) {
+          // 如果资源已存在，立即跳转到 NameEntry
+          console.log('[ResourceDownloadScreen] 资源已就绪，跳过下载');
+          navigation.replace('NameEntry');
+          return;
+        }
+        
+        // 检查网络状态
+        const isOffline = await OfflineService.isOfflineMode();
+        if (isOffline) {
+          console.warn('[ResourceDownloadScreen] 检测到离线模式，无法下载资源');
+          // 离线模式下显示提示，但仍然尝试进入主应用
+          // 用户可以在有网络时重新下载
+          await enterMainApp();
+          return;
+        }
+        
+        // 资源不存在，开始下载
+        await DownloadService.checkAndDownload((info) => { 
+          setDownloadInfo(info);
+          
+          const p = Math.floor(info.progress * 100);
+          if (p >= 25 && p < 50 && !hapticFlags.current.p25) {
+            ReactNativeHapticFeedback.trigger('impactLight');
+            hapticFlags.current.p25 = true;
+          } else if (p >= 50 && p < 75 && !hapticFlags.current.p50) {
+            ReactNativeHapticFeedback.trigger('impactLight');
+            hapticFlags.current.p50 = true;
+          } else if (p >= 75 && p < 100 && !hapticFlags.current.p75) {
+            ReactNativeHapticFeedback.trigger('impactLight');
+            hapticFlags.current.p75 = true;
+          } else if (p >= 100 && !hapticFlags.current.p100) {
+            ReactNativeHapticFeedback.trigger('impactLight');
+            hapticFlags.current.p100 = true;
+          }
+        }); 
 
-    return () => {
-      loop.stop();
-      unsubscribe();
-      // 清除恢复定时器
-      if (networkRecoveryTimer.current) {
-        clearTimeout(networkRecoveryTimer.current);
-      }
+        // 下载完成后，进行完整性校验
+        const integrity = await OfflineService.checkResourceIntegrity();
+        if (integrity.isComplete) {
+          await OfflineService.markAsReady();
+          console.log('[ResourceDownloadScreen] 下载完成，资源完整性校验通过');
+        } else {
+          console.warn('[ResourceDownloadScreen] 下载完成，但资源不完整:', {
+            missing: integrity.missingAssets,
+            corrupted: integrity.corruptedAssets
+          });
+        }
+
+      } catch (err) { 
+        console.error('Download error:', err);
+        await enterMainApp();
+      } 
     };
-  }, [error, handleRetry, hasNavigated, isComplete, startDownload]);
+
+    checkAndStart(); 
+    return () => loop.stop();
+  }, []); 
 
   const iconScale = breathAnim.interpolate({
     inputRange: [0, 1],
@@ -219,13 +193,19 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   const formatMB = (bytes: number) => {
     return (bytes / (1024 * 1024)).toFixed(2);
   };
+ 
+  const progressPercent = Math.round(downloadInfo.progress * 100);
 
-  const progressPercent = Math.min(100, Math.round((downloadInfo.receivedBytes / GLOBAL_TOTAL_SIZE) * 100));
+  // 计算动画进度的百分比
+  const animatedProgressPercent = animatedProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
 
-  return (
-    <View style={styles.container}>
+  return ( 
+    <View style={styles.container}> 
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
-
+      
       <View style={styles.content}>
         <Animated.View style={{
           transform: [{ scale: iconScale }],
@@ -234,60 +214,43 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         }}>
           <Text style={{ fontSize: 100 }}>🧘‍♂️</Text>
         </Animated.View>
+        <Text style={styles.title}>{t('download.title')}</Text>
+        <Text style={styles.subtitle}>{t('download.subtitle')}</Text>
 
-        {/* 【错误状态显示】断网或下载失败时显示 */}
-        {error ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorIcon}>📡</Text>
-            <Text style={styles.errorTitle}>
-              {error === 'No Network' ? '无网络连接' : '下载失败'}
-            </Text>
-            <Text style={styles.errorText}>
-              {error === 'No Network'
-                ? '请检查网络设置后重试'
-                : '下载过程中发生错误，请重试'}
-            </Text>
-            {/* 【重试按钮】 */}
-            <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
-              <Text style={styles.retryButtonText}>重试</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <Text style={styles.title}>{t('download.title')}</Text>
-            <Text style={styles.subtitle}>{t('download.subtitle')}</Text>
 
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBarBackground}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    { width: `${progressPercent}%` }
-                  ]}
-                />
+                <View style={styles.progressBarContainer}>
+                  <View style={styles.progressBarBackground}>
+                    <Animated.View 
+                      style={[
+                        styles.progressBarFill, 
+                        { width: animatedProgressPercent }
+                      ]} 
+                    />
+                  </View>
+                  <View style={styles.progressTextRow}>
+                    <Text style={styles.progressPercent}>{progressPercent}%</Text>
+                    {downloadInfo.totalBytes > 0 ? (
+                      <Text style={styles.progressBytes}>
+                        {formatMB(downloadInfo.receivedBytes)}MB / {formatMB(downloadInfo.totalBytes)}MB
+                      </Text>
+                    ) : (
+                      <Text style={styles.progressBytes}>{t('download.calculating')}</Text>
+                    )}
+                  </View>
+                </View>
+  
+                <Text style={styles.tip}>{t('download.tip')}</Text>
               </View>
-              <View style={styles.progressTextRow}>
-                <Text style={styles.progressPercent}>{progressPercent}%</Text>
-                <Text style={styles.progressBytes}>
-                  {formatMB(downloadInfo.receivedBytes)}MB / {formatMB(GLOBAL_TOTAL_SIZE)}MB
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.tip}>{t('download.tip')}</Text>
-          </>
-        )}
-      </View>
-    </View>
-  );
+    </View> 
+  ); 
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-    justifyContent: 'center',
-    alignItems: 'center'
+  container: { 
+    flex: 1, 
+    backgroundColor: '#0F172A', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
   content: {
     width: '80%',
@@ -344,41 +307,7 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontSize: 12,
     marginTop: 20,
-  },
-  // 【错误状态样式】
-  errorContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  errorIcon: {
-    fontSize: 64,
-    marginBottom: 20,
-  },
-  errorTitle: {
-    color: '#EF4444',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  errorText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  // 【重试按钮样式】
-  retryButton: {
-    backgroundColor: '#6C5DD3',
-    paddingHorizontal: 40,
-    paddingVertical: 14,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  }
 });
 
 export default ResourceDownloadScreen;
