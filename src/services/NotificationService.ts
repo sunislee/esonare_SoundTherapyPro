@@ -25,12 +25,20 @@ export class NotificationService {
         android: {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
           alwaysShowNotificationCustom: true,
-          handleAudioFocus: false 
+          handleAudioFocus: true, // 【关键】启用音频焦点管理
+          alwaysPauseOnInterruption: true,
+          channelId: 'esonare_playback_v119', // 【关键】唯一渠道 ID
+          channelName: '心声冥想',
+          channelDescription: '媒体播放控制',
+          category: 'transport', // 【关键】媒体传输类别
+          foregroundServiceType: 'mediaPlayback', // 【关键】前台服务类型
         },
-        capabilities: [Capability.Play, Capability.Pause],
+        capabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SeekTo],
+        notificationCapabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SeekTo],
         compactCapabilities: [Capability.Play, Capability.Pause],
+        progressUpdateEventInterval: 1, // 每秒更新进度
       });
-      console.log('[NotificationService] ✅ 播放选项配置完成');
+      console.log('[NotificationService] ✅ 播放选项配置完成（含通知栏配置）');
       
       console.log('[NotificationService] 添加静音音轨');
       await TrackPlayer.add({
