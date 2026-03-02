@@ -74,26 +74,13 @@ export const LandingScreen = ({ navigation }: any) => {
             navigation.replace('Download');
           } else if (!userName && hasSkipped !== 'true') {
             console.log('[LandingScreen] 资源就绪但未设置名字，跳转到起名页');
+            // 【Android 16 修复】延迟初始化音频服务，避免在启动页触发前台服务
+            // 将 setupPlayer 延迟到用户进入主页后再执行
             navigation.replace('NameEntry');
           } else {
             console.log('[LandingScreen] 资源和名字都就绪，跳转到主页');
-            // 引擎权限必须在 setupPlayer 之前开启
-            EngineControl.allow();
-            
-            try { 
-              await AudioService.setupPlayer(); 
-            } catch (e) {
-              console.error('[Landing] AudioService init failed:', e);
-            }
-            
-            if (AudioService.isPlaying()) {
-              const scene = AudioService.getCurrentScene();
-              if (scene) {
-                navigation.replace('ImmersivePlayer', { sceneId: scene.id });
-                return;
-              }
-            }
-            
+            // 【Android 16 修复】延迟初始化音频服务，避免在启动页触发前台服务
+            // 将 setupPlayer 延迟到用户进入主页后再执行
             navigation.replace('MainTabs');
           }
         }, remainingTime);
