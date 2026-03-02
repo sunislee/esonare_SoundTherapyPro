@@ -10,9 +10,17 @@ export class NotificationService {
   private static isInitialized = false;
 
   static async setup() {
-    if (this.isInitialized) return;
+    if (this.isInitialized) {
+      console.log('[NotificationService] 已经初始化，跳过');
+      return;
+    }
     try {
+      console.log('[NotificationService] ====== 开始初始化通知服务 ======');
+      console.log('[NotificationService] 调用 TrackPlayer.setupPlayer()');
       await TrackPlayer.setupPlayer();
+      console.log('[NotificationService] ✅ TrackPlayer.setupPlayer() 成功');
+      
+      console.log('[NotificationService] 配置播放选项');
       await TrackPlayer.updateOptions({
         android: {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
@@ -22,22 +30,27 @@ export class NotificationService {
         capabilities: [Capability.Play, Capability.Pause],
         compactCapabilities: [Capability.Play, Capability.Pause],
       });
+      console.log('[NotificationService] ✅ 播放选项配置完成');
       
+      console.log('[NotificationService] 添加静音音轨');
       await TrackPlayer.add({
         id: 'esonare_silent_core',
         url: 'https://github.com/anars/blank-audio/raw/master/10-seconds-of-silence.mp3', 
         title: '心声冥想',
         artist: '正在为您营造宁静空间',
-        // 👈 核心：给它一个确定的 1 小时时长，让系统显示进度条
         duration: 3600, 
-        isLiveStream: false, // 👈 确保这个是 false，否则进度条会乱
+        isLiveStream: false,
         artwork: require('../assets/logo.png'), 
       });
+      console.log('[NotificationService] ✅ 音轨添加完成');
 
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
       this.isInitialized = true;
+      console.log('[NotificationService] ====== 通知服务初始化完成 ======');
     } catch (e) {
-      console.error('[NotificationService] Setup failed:', e);
+      console.error('[NotificationService] ❌ Setup failed:', e);
+      console.error('[NotificationService] Error stack:', e.stack);
+      throw e;
     }
   }
 

@@ -49,6 +49,7 @@ class AudioService {
 
   async setupPlayer() {
     try {
+      console.log('[AudioService] ====== 开始设置音频模式 ======');
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
@@ -58,12 +59,16 @@ class AudioService {
         interruptionModeAndroid: 1,
         playThroughEarpieceAndroid: false,
       });
-      console.log('[AudioService] Player setup completed (Expo AV mode)');
+      console.log('[AudioService] ✅ 音频模式设置完成');
       
+      console.log('[AudioService] 调用 NotificationService.setup()');
       await NotificationService.setup();
-      console.log('[AudioService] NotificationService initialized');
+      console.log('[AudioService] ✅ NotificationService 初始化完成');
+      console.log('[AudioService] ====== 音频服务启动完成 ======');
     } catch (e) {
-      console.error('[AudioService] Failed to setup audio mode', e);
+      console.error('[AudioService] ❌ Failed to setup audio mode', e);
+      console.error('[AudioService] Error stack:', e.stack);
+      throw e;
     }
   }
 
