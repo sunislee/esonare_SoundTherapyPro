@@ -50,6 +50,7 @@ class AudioService {
   async setupPlayer() {
     try {
       console.log('[AudioService] ====== 开始设置音频模式 ======');
+      console.log('[AudioService] 设置 Android 音频模式：扬声器播放，后台持续播放');
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
@@ -57,7 +58,7 @@ class AudioService {
         playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
         interruptionModeAndroid: 1,
-        playThroughEarpieceAndroid: false,
+        playThroughEarpieceAndroid: false, // 【关键】false=使用扬声器，true=使用听筒
       });
       console.log('[AudioService] ✅ 音频模式设置完成');
       
@@ -289,14 +290,27 @@ class AudioService {
   private async createSoundWithTimeout(source: any, shouldPlay: boolean) {
     return new Promise<{ sound: Audio.Sound }>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('LOAD_TIMEOUT')), this.loadingTimeoutMs);
+      console.log('[AudioService] createSoundWithTimeout:', {
+        source: typeof source.uri === 'string' ? source.uri.substring(0, 80) : source,
+        shouldPlay,
+        volume: this.ambientVolume,
+        isLooping: true
+      });
       Audio.Sound.createAsync(
         source,
         { shouldPlay, isLooping: true, volume: this.ambientVolume }
       ).then((result) => {
         clearTimeout(timer);
+        console.log('[AudioService] ✅ Sound created:', {
+          isLoaded: result.isLoaded,
+          isPlaying: result.isPlaying,
+          durationMillis: result.durationMillis,
+          uri: source.uri
+        });
         resolve(result);
       }).catch((error) => {
         clearTimeout(timer);
+        console.error('[AudioService] ❌ Sound create failed:', error.message);
         reject(error);
       });
     });

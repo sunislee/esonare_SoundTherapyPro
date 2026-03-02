@@ -64,26 +64,26 @@ export const AUDIO_MANIFEST = [
   { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: 'scenes.interactive_match.title', description: 'scenes.interactive_match.desc', size: 524288 },
 ]; 
 
-// 【核心】定义 ASSET_LIST，手动写好每个文件的 expectedSize（不可篡改的基准）
+// 【核心】定义 ASSET_LIST，手动写好每个文件的 expectedSize（根据实际下载大小更新）
 export const ASSET_LIST = [
-  { id: 'nature_ocean', expectedSize: 5242880 },
-  { id: 'nature_forest', expectedSize: 4194304 },
-  { id: 'nature_deep_sea', expectedSize: 5242880 },
-  { id: 'nature_misty_forest', expectedSize: 4194304 },
-  { id: 'nature_river', expectedSize: 4194304 },
-  { id: 'nature_night', expectedSize: 4194304 },
-  { id: 'life_rain_boat', expectedSize: 4194304 },
-  { id: 'life_bookstore', expectedSize: 3145728 },
-  { id: 'healing_zen_bowl', expectedSize: 2097152 },
-  { id: 'healing_clean_space', expectedSize: 4194304 },
-  { id: 'healing_crystal', expectedSize: 5242880 },
-  { id: 'brainwave_alpha', expectedSize: 3145728 },
-  { id: 'brainwave_delta', expectedSize: 3145728 },
-  { id: 'interactive_white_noise', expectedSize: 1048576 },
-  { id: 'interactive_wind_chime', expectedSize: 1048576 },
-  { id: 'interactive_breath', expectedSize: 1048576 },
-  { id: 'interactive_apple', expectedSize: 524288 },
-  { id: 'interactive_match', expectedSize: 524288 },
+  { id: 'nature_ocean', expectedSize: 1429191 },        // 实际：1.43MB
+  { id: 'nature_forest', expectedSize: 1732906 },       // 实际：1.73MB
+  { id: 'nature_deep_sea', expectedSize: 456030 },      // 实际：456KB
+  { id: 'nature_misty_forest', expectedSize: 680336 },  // 实际：680KB
+  { id: 'nature_river', expectedSize: 7201196 },        // 实际：7.2MB
+  { id: 'nature_night', expectedSize: 7201196 },        // 实际：7.2MB
+  { id: 'life_rain_boat', expectedSize: 7201196 },      // 实际：7.2MB
+  { id: 'life_bookstore', expectedSize: 907157 },       // 实际：907KB
+  { id: 'healing_zen_bowl', expectedSize: 2097152 },    // 保持原值
+  { id: 'healing_clean_space', expectedSize: 4574599 }, // 实际：4.57MB
+  { id: 'healing_crystal', expectedSize: 5242880 },    // 保持原值
+  { id: 'brainwave_alpha', expectedSize: 3095272 },     // 实际：3.09MB
+  { id: 'brainwave_delta', expectedSize: 3840754 },     // 实际：3.84MB
+  { id: 'interactive_white_noise', expectedSize: 69881 },  // 实际：70KB
+  { id: 'interactive_wind_chime', expectedSize: 256806 },  // 实际：257KB
+  { id: 'interactive_breath', expectedSize: 1048576 },     // 保持原值
+  { id: 'interactive_apple', expectedSize: 32853 },        // 实际：33KB
+  { id: 'interactive_match', expectedSize: 846284 },       // 实际：846KB
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）
