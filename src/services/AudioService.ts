@@ -502,16 +502,29 @@ class AudioService {
 
   async play() {
     try {
-      console.log('[AudioService] Resuming all sounds');
+      console.log('[AudioService] ====== 开始播放音频 ======');
+      console.log('[AudioService] Current playing state:', this.isActuallyPlaying);
+      console.log('[AudioService] Sound objects count:', this.soundObjects.size);
+      console.log('[AudioService] Current base scene:', this.currentBaseScene?.id);
+      
       if (this.soundObjects.size === 0 && this.currentBaseScene) {
+        console.log('[AudioService] 场景未加载，调用 playScene');
         await this.playScene(this.currentBaseScene, { triggerLoading: true });
       } else {
         for (const [id, sound] of this.soundObjects.entries()) {
           try {
             if (sound) {
               const status = await sound.getStatusAsync();
-              if (status.isLoaded) {
+              console.log(`[AudioService] Sound ${id} status:`, {
+                isLoaded: status?.isLoaded,
+                isPlaying: status?.isPlaying,
+                volume: status?.volume,
+                durationMillis: status?.durationMillis,
+                positionMillis: status?.positionMillis
+              });
+              if (status?.isLoaded) {
                 await sound.playAsync();
+                console.log(`[AudioService] ✅ Started playing: ${id}`);
               }
             }
           } catch (err) {
@@ -521,8 +534,10 @@ class AudioService {
       }
       this.isActuallyPlaying = true;
       this.notifyListeners();
+      console.log('[AudioService] ====== 播放完成 ======');
     } catch (e) {
-      console.error('[AudioService] Global play error:', e);
+      console.error('[AudioService] ❌ Global play error:', e);
+      console.error('[AudioService] Error stack:', e.stack);
     }
   }
 
