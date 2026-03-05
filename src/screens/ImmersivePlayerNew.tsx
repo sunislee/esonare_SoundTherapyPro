@@ -25,7 +25,7 @@ import { RootStackParamList } from '../navigation/MainNavigator';
 import AudioService from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
-import { Event, useTrackPlayerEvents } from 'react-native-track-player';
+import { Event, useTrackPlayerEvents, State } from 'react-native-track-player';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useBackHandler } from '../hooks/useBackHandler';
 
@@ -124,6 +124,23 @@ const ImmersivePlayerNew: React.FC = () => {
       console.log('[ImmersivePlayer] Playback queue ended');
     }
   });
+
+  // 页面获得焦点时刷新播控状态
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[ImmersivePlayer] Page focused, checking playback status...');
+      
+      // 检查当前播放状态并刷新通知
+      if (isPlaying && targetScene) {
+        console.log('[ImmersivePlayer] Refreshing notification for scene:', targetScene.id);
+        import('../services/NotificationService').then(({ NotificationService }) => {
+          NotificationService.updateNotification(targetScene, State.Playing);
+        }).catch(error => {
+          console.error('[ImmersivePlayer] Failed to refresh notification:', error);
+        });
+      }
+    }, [isPlaying, targetScene])
+  );
 
   useEffect(() => {
     const unsubscribeLoading = AudioService.addLoadingListener(({ loading, id }) => {
