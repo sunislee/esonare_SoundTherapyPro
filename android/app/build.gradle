@@ -155,6 +155,7 @@ android {
         google {
             dimension "version"
             applicationId "com.anonymous.soundtherapyapp"
+            buildConfigField "String", "DISTRIBUTION_CHANNEL", '"googlePlay"'
             buildConfigField "String", "UPDATE_CHANNEL", '"google"'
             buildConfigField "String", "VERSION_CHECK_URL", '"https://raw.githubusercontent.com/sunislee/esonare_SoundTherapyPro/main/version.json"'
             buildConfigField "String", "APK_DOWNLOAD_BASE_URL", '"https://github.com/sunislee/esonare_SoundTherapyPro/releases/download/"'
@@ -162,9 +163,10 @@ android {
         domestic {
             dimension "version"
             applicationId "com.anonymous.soundtherapyapp"
+            buildConfigField "String", "DISTRIBUTION_CHANNEL", '"domestic"'
             buildConfigField "String", "UPDATE_CHANNEL", '"domestic"'
             buildConfigField "String", "VERSION_CHECK_URL", '"https://gitee.com/sunislee/esonare_SoundTherapyPro/raw/main/version.json"'
-            buildConfigField "String", "APK_DOWNLOAD_BASE_URL", '"https://gitee.com/sunislee/esonare_SoundTherapyPro/releases/download/"'
+            buildConfigField "String", "APK_DOWNLOAD_BASE_URL", '"http://43.138.58.71/resources/releases/"'
         }
     }
     packagingOptions {
