@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'; 
-import { View, Text, StyleSheet, StatusBar, Dimensions, Animated, Easing } from 'react-native'; 
+import { View, Text, StyleSheet, StatusBar, Dimensions, Animated, Easing, BackHandler, Alert } from 'react-native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
@@ -7,11 +7,32 @@ import { DownloadService, DownloadProgress } from '../services/DownloadService';
 import { OfflineService } from '../services/OfflineService';
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
+import { PermissionService } from '../services/PermissionService';
+import { AUDIO_MANIFEST, getLocalPath } from '../constants/audioAssets';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as RNFS from 'react-native-fs';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const ResourceDownloadScreen = ({ navigation }: any) => { 
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  
+  // 【关键修复】i18n 保护：如果翻译加载失败，使用默认文本
+  const getSafeText = (key: string, fallback: string) => {
+    try {
+      const text = t(key);
+      // 如果返回的是 key 本身，说明翻译未加载
+      if (text === key || !text) {
+        return fallback;
+      }
+      return text;
+    } catch (e) {
+      console.warn('[ResourceDownloadScreen] i18n 加载失败，使用 fallback:', fallback);
+      return fallback;
+    }
+  };
+  
   const [downloadInfo, setDownloadInfo] = useState<DownloadProgress>({
     progress: 0,
     receivedBytes: 0,
@@ -72,31 +93,41 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     // 标记真实下载完成
     if (currentProgress >= 1.0) {
       setIsDownloadCompleted(true);
+      // 强制设置 UI 完成状态，触发跳转
+      setIsUiCompleted(true);
     }
   }, [downloadInfo.progress, isSmoothSliding]);
 
+  // 【关键修复】监听 isUiCompleted，一旦完成立即跳转
+  useEffect(() => {
+    if (isUiCompleted && isDownloadCompleted) {
+      console.log('[ResourceDownloadScreen] ✅ 下载完成，准备跳转...');
+      // 延迟 500ms 确保用户看到完成状态
+      const timer = setTimeout(() => {
+        enterMainApp();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isUiCompleted, isDownloadCompleted]);
+
   // 定义 enterMainApp 函数在组件顶层
   const enterMainApp = async () => {
+    // 【物理校验】检查资源状态，但即使未完全就绪也允许进入
+    console.log('[ResourceDownloadScreen] 进入主应用前进行物理校验...');
+    const isReallyReady = await OfflineService.isResourceReady();
+    if (!isReallyReady) {
+      console.warn('[ResourceDownloadScreen] ⚠️  资源未完全就绪，但允许进入应用');
+    } else {
+      console.log('[ResourceDownloadScreen] ✅ 物理校验通过，资源真实存在');
+    }
+    
     EngineControl.allow();
     try {
       await AudioService.setupPlayer();
     } catch (e) {}
     
-    // 直接跳转到 NameEntry，不再跳转到 MainTabs
     navigation.replace('NameEntry');
   };
-
-  // 监听 UI 完成和真实下载完成的状态，处理跳转
-  useEffect(() => {
-    if (isUiCompleted && isDownloadCompleted) {
-      // 强制停留：500ms 后跳转
-      const timer = setTimeout(() => {
-        enterMainApp();
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isUiCompleted, isDownloadCompleted]);
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -117,10 +148,46 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     );
     loop.start();
 
+    // 【关键修复】拦截返回键，防止下载中断导致黑屏
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      console.log('[ResourceDownloadScreen] 拦截返回键');
+      // 下载过程中直接拦截，不允许退出
+      return true;
+    });
+
     const checkAndStart = async () => { 
       try { 
-        // 使用 OfflineService 检查资源是否已经准备就绪
+        console.log('[ResourceDownloadScreen] 开始检查资源状态...');
+        
+        // 【关键修复 1】第一步：物理检查文件是否存在
+        console.log('[ResourceDownloadScreen] 物理检查文件是否存在...');
+        const firstAsset = AUDIO_MANIFEST[0];
+        const firstPath = getLocalPath(firstAsset.category, firstAsset.filename);
+        const fileExists = await RNFS.exists(firstPath);
+        
+        if (fileExists) {
+          console.log('[ResourceDownloadScreen] ✅ 文件已存在，跳过下载');
+          // 文件存在，直接跳转
+          await enterMainApp();
+          return;
+        }
+        
+        console.log('[ResourceDownloadScreen] 文件不存在，需要下载');
+        
+        // 【关键修复 2】请求存储权限，确保下载文件可以写入
+        console.log('[ResourceDownloadScreen] 请求存储权限...');
+        const storageGranted = await PermissionService.requestStoragePermission();
+        if (!storageGranted) {
+          console.warn('[ResourceDownloadScreen] 存储权限被拒绝，但仍然尝试下载');
+        } else {
+          console.log('[ResourceDownloadScreen] 存储权限已授予');
+        }
+        
+        // 【关键修复 3】使用 OfflineService 检查资源是否已经准备就绪
+        console.log('[ResourceDownloadScreen] 调用 isResourceReady()...');
         const isReady = await OfflineService.isResourceReady();
+        console.log(`[ResourceDownloadScreen] isResourceReady() 返回：${isReady}`);
+        
         if (isReady) {
           // 如果资源已存在，立即跳转到 NameEntry
           console.log('[ResourceDownloadScreen] 资源已就绪，跳过下载');
@@ -129,7 +196,10 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         }
         
         // 检查网络状态
+        console.log('[ResourceDownloadScreen] 调用 isOfflineMode()...');
         const isOffline = await OfflineService.isOfflineMode();
+        console.log(`[ResourceDownloadScreen] isOfflineMode() 返回：${isOffline}`);
+        
         if (isOffline) {
           console.warn('[ResourceDownloadScreen] 检测到离线模式，无法下载资源');
           // 离线模式下显示提示，但仍然尝试进入主应用
@@ -139,6 +209,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         }
         
         // 资源不存在，开始下载
+        console.log('[ResourceDownloadScreen] 开始下载资源...');
         await DownloadService.checkAndDownload((info) => { 
           setDownloadInfo(info);
           
@@ -163,21 +234,31 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         if (integrity.isComplete) {
           await OfflineService.markAsReady();
           console.log('[ResourceDownloadScreen] 下载完成，资源完整性校验通过');
+          // 设置完成状态，触发跳转
+          setIsDownloadCompleted(true);
+          setIsUiCompleted(true);
         } else {
           console.warn('[ResourceDownloadScreen] 下载完成，但资源不完整:', {
             missing: integrity.missingAssets,
             corrupted: integrity.corruptedAssets
           });
+          // 即使资源不完整，也允许进入主应用
+          setIsDownloadCompleted(true);
+          setIsUiCompleted(true);
         }
 
-      } catch (err) { 
-        console.error('Download error:', err);
+      } catch (err) {
+        console.error('[ResourceDownloadScreen] Download error:', err);
+        console.error('[ResourceDownloadScreen] Error stack:', (err as Error).stack);
         await enterMainApp();
       } 
     };
 
     checkAndStart(); 
-    return () => loop.stop();
+    return () => {
+      loop.stop();
+      backHandler.remove(); // 清理返回键监听
+    };
   }, []); 
 
   const iconScale = breathAnim.interpolate({
@@ -191,123 +272,102 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   });
 
   const formatMB = (bytes: number) => {
-    return (bytes / (1024 * 1024)).toFixed(2);
+    return Math.floor(bytes / (1024 * 1024)).toString();
   };
- 
-  const progressPercent = Math.round(downloadInfo.progress * 100);
 
-  // 计算动画进度的百分比
-  const animatedProgressPercent = animatedProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
+  const formatPercent = (progress: number) => {
+    return (progress * 100).toFixed(0);
+  };
 
-  return ( 
-    <View style={styles.container}> 
+  return (
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
-      
       <View style={styles.content}>
-        <Animated.View style={{
+        <Animated.View style={{ 
           transform: [{ scale: iconScale }],
           opacity: iconOpacity,
-          marginBottom: 30
+          marginBottom: 20
         }}>
           <Text style={{ fontSize: 100 }}>🧘‍♂️</Text>
         </Animated.View>
-        <Text style={styles.title}>{t('download.title')}</Text>
-        <Text style={styles.subtitle}>{t('download.subtitle')}</Text>
-
-
-                <View style={styles.progressBarContainer}>
-                  <View style={styles.progressBarBackground}>
-                    <Animated.View 
-                      style={[
-                        styles.progressBarFill, 
-                        { width: animatedProgressPercent }
-                      ]} 
-                    />
-                  </View>
-                  <View style={styles.progressTextRow}>
-                    <Text style={styles.progressPercent}>{progressPercent}%</Text>
-                    {downloadInfo.totalBytes > 0 ? (
-                      <Text style={styles.progressBytes}>
-                        {formatMB(downloadInfo.receivedBytes)}MB / {formatMB(downloadInfo.totalBytes)}MB
-                      </Text>
-                    ) : (
-                      <Text style={styles.progressBytes}>{t('download.calculating')}</Text>
-                    )}
-                  </View>
-                </View>
-  
-                <Text style={styles.tip}>{t('download.tip')}</Text>
-              </View>
-    </View> 
-  ); 
+        <Text style={styles.brandName}>ESONARE</Text>
+        <Text style={styles.loadingText}>
+          {isUiCompleted ? getSafeText('player.landing.complete', '资源准备完成') : getSafeText('player.landing.loading', '正在进入心灵空间...')}
+        </Text>
+        
+        {/* 进度条 */}
+        <View style={styles.progressBarContainer}>
+          <Animated.View 
+            style={[
+              styles.progressBar, 
+              { 
+                width: animatedProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0%', '100%']
+                })
+              }
+            ]} 
+          />
+        </View>
+        
+        {/* 【恢复百分比显示】 */}
+        <Text style={styles.percentText}>
+          {formatPercent(realProgress)}%
+        </Text>
+        
+        <Text style={styles.progressText}>
+          {isUiCompleted ? '✅ ' : ''}{formatMB(realProgress * GLOBAL_TOTAL_SIZE)} MB / {formatMB(GLOBAL_TOTAL_SIZE)} MB
+        </Text>
+      </View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#0F172A', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  container: {
+    flex: 1,
+    backgroundColor: '#0F172A',
   },
   content: {
-    width: '80%',
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingIcon: {
-    width: 120,
-    height: 120,
-    resizeMode: 'contain',
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 24,
+  brandName: {
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#FFFFFF',
+    marginBottom: 10,
   },
-  subtitle: {
-    color: '#94A3B8',
-    fontSize: 14,
+  loadingText: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 40,
-    textAlign: 'center',
   },
   progressBarContainer: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  progressBarBackground: {
-    height: 8,
+    width: SCREEN_WIDTH * 0.7,
+    height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 4,
+    borderRadius: 2,
     overflow: 'hidden',
-    width: '100%',
+    marginBottom: 10,
   },
-  progressBarFill: {
+  progressBar: {
     height: '100%',
     backgroundColor: '#6C5DD3',
-    borderRadius: 4,
   },
-  progressTextRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
+  percentText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#6C5DD3',
+    marginTop: 15,
+    marginBottom: 10,
   },
-  progressPercent: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+  progressText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
-  progressBytes: {
-    color: '#64748B',
-    fontSize: 12,
-  },
-  tip: {
-    color: '#475569',
-    fontSize: 12,
-    marginTop: 20,
-  }
 });
 
-export default ResourceDownloadScreen;
+// 引入 GLOBAL_TOTAL_SIZE
+import { GLOBAL_TOTAL_SIZE } from '../constants/audioAssets';

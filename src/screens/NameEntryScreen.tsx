@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Platform,
   StatusBar,
   Animated,
+  BackHandler,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -25,25 +27,70 @@ const NameEntryScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
+  // 【关键修复】拦截返回键，防止黑屏
+  useEffect(() => {
+    const onBackPress = () => {
+      Alert.alert(
+        t('common.confirmExit'),
+        t('common.confirmExitMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { 
+            text: t('common.exit'), 
+            style: 'destructive',
+            onPress: () => {
+              // 双击返回或确认后退出
+              BackHandler.exitApp();
+            }
+          }
+        ]
+      );
+      return true; // 阻止默认返回行为
+    };
+
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    };
+  }, []);
+
   const handleStart = async () => {
     const finalName = name.trim();
     if (finalName && !isLoading) {
       setIsLoading(true);
+      
+      console.log('[NameEntryScreen] 开始保存用户名:', finalName);
+      
       // Haptic feedback
       ReactNativeHapticFeedback.trigger('impactMedium');
       
-      await AsyncStorage.setItem('USER_NAME', finalName);
-      await AsyncStorage.setItem('HAS_SET_NAME', 'true');
+      try {
+        await AsyncStorage.setItem('USER_NAME', finalName);
+        console.log('[NameEntryScreen] ✅ USER_NAME 保存成功:', finalName);
+        
+        await AsyncStorage.setItem('HAS_SET_NAME', 'true');
+        console.log('[NameEntryScreen] ✅ HAS_SET_NAME 保存成功');
+        
+        // 验证读取
+        const verifyName = await AsyncStorage.getItem('USER_NAME');
+        const verifySkip = await AsyncStorage.getItem('HAS_SET_NAME');
+        console.log('[NameEntryScreen] 验证读取 - USER_NAME:', verifyName, '| HAS_SET_NAME:', verifySkip);
+      } catch (e) {
+        console.error('[NameEntryScreen] ❌ 保存失败:', e);
+      }
       
       // Add small delay to ensure proper initialization
       setTimeout(() => {
+        console.log('[NameEntryScreen] 跳转到 MainTabs');
         navigation.replace('MainTabs');
       }, 100);
     }
   };
 
   const handleSkip = async () => {
+    console.log('[NameEntryScreen] 用户跳过命名');
     await AsyncStorage.setItem('HAS_SET_NAME', 'true');
+    console.log('[NameEntryScreen] ✅ HAS_SET_NAME 保存成功 (skip)');
     navigation.replace('MainTabs');
   };
 

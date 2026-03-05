@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid, Platform, Alert } from 'react-native';
 import packageJson from '../../package.json';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,24 @@ const AboutScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+
+  const handlePrivacyPress = () => {
+    const message = t('about.contentComingSoon');
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert(message);
+    }
+  };
+
+  const handleTermsPress = () => {
+    const message = t('about.contentComingSoon');
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert(message);
+    }
+  };
 
   // 使用全局返回键处理逻辑（非首页）
   useBackHandler(false, navigation);
@@ -44,12 +62,12 @@ const AboutScreen = () => {
             <Text style={styles.infoValue}>React Native 0.73</Text>
           </View>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.infoItem} onPress={() => {}}>
+          <TouchableOpacity style={styles.infoItem} onPress={handlePrivacyPress}>
             <Text style={styles.infoLabel}>{t('about.privacy')}</Text>
             <Text style={styles.infoValue}>{`>`}</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.infoItem} onPress={() => {}}>
+          <TouchableOpacity style={styles.infoItem} onPress={handleTermsPress}>
             <Text style={styles.infoLabel}>{t('about.terms')}</Text>
             <Text style={styles.infoValue}>{`>`}</Text>
           </TouchableOpacity>

@@ -60,8 +60,14 @@ class AudioService {
       });
       console.log('[AudioService] Player setup completed (Expo AV mode)');
       
-      await NotificationService.setup();
-      console.log('[AudioService] NotificationService initialized');
+      // 确保通知服务初始化
+      try {
+        await NotificationService.setup();
+        console.log('[AudioService] NotificationService initialized successfully');
+      } catch (e) {
+        console.error('[AudioService] NotificationService initialization failed:', e);
+        // 即使通知服务初始化失败，也不影响音频播放
+      }
     } catch (e) {
       console.error('[AudioService] Failed to setup audio mode', e);
     }
@@ -498,6 +504,16 @@ class AudioService {
   async play() {
     try {
       console.log('[AudioService] Resuming all sounds');
+      
+      // 【焊死】先让全世界静音，再放新的声音
+      try {
+        const TrackPlayer = require('react-native-track-player').default;
+        await TrackPlayer.reset();
+        console.log('[AudioService] 已物理切断之前的声音');
+      } catch (e) {
+        console.log('[AudioService] TrackPlayer reset 无需处理');
+      }
+      
       if (this.soundObjects.size === 0 && this.currentBaseScene) {
         await this.playScene(this.currentBaseScene, { triggerLoading: true });
       } else {

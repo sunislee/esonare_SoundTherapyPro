@@ -59,7 +59,10 @@
   "about": {
     "header": "About",
     "kernelVersion": "Kernel Version",
-    "copyright": "© 2024 SoundTherapy Pro. All rights reserved."
+    "copyright": "© 2024 SoundTherapy Pro. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contentComingSoon": "Content is being improved, stay tuned"
   },
   "profile": {
     "loading": "Loading...",
@@ -128,7 +131,8 @@
   },
   "player": {
     "landing": {
-      "loading": "Entering mind space..."
+      "loading": "Entering mind space...",
+      "complete": "Resources ready"
     },
     "labels": {
       "ignite": "Ignite",

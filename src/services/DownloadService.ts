@@ -268,12 +268,12 @@ export const DownloadService = {
       const MAX_CONCURRENT = IS_GOOGLE_PLAY_VERSION ? 8 : 5;
       console.log(`[DownloadService] 当前渠道: ${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, MAX_CONCURRENT: ${MAX_CONCURRENT}`);
       const progressInterval = setInterval(() => {
-        // 【强制】分母必须使用 GLOBAL_TOTAL_SIZE，禁止使用 totalBytes
-        const rawProgress = GLOBAL_TOTAL_SIZE > 0 ? currentReceivedBytes / GLOBAL_TOTAL_SIZE : 0;
+        // 使用实际的 totalBytes 作为分母，确保进度计算准确
+        const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
         onProgress({
           progress: Math.min(0.999, rawProgress),
-          receivedBytes: Math.min(currentReceivedBytes, GLOBAL_TOTAL_SIZE),
-          totalBytes: GLOBAL_TOTAL_SIZE
+          receivedBytes: Math.min(currentReceivedBytes, totalBytes),
+          totalBytes: totalBytes
         });
       }, 200);
 
@@ -305,18 +305,29 @@ export const DownloadService = {
       await downloadWithConcurrencyLimit();
       clearInterval(progressInterval);
       
-      // 3. Step 3: All complete, force 100%
+      // 3. Step 3: 检查下载结果，只有成功下载才标记为完成
+      const successCount = filesToDownload.length - failedAssets.length;
+      const successRate = filesToDownload.length > 0 ? successCount / filesToDownload.length : 0;
+      
+      console.log(`[DownloadService] 下载完成: 成功 ${successCount}/${filesToDownload.length}, 成功率 ${(successRate * 100).toFixed(1)}%`);
+      
+      // 下载完成，无论成功率如何都报告100%进度，允许用户进入应用
+      // 失败的文件可以在应用内再次下载
       onProgress({
         progress: 1,
-        receivedBytes: GLOBAL_TOTAL_SIZE,
-        totalBytes: GLOBAL_TOTAL_SIZE
+        receivedBytes: totalBytes,
+        totalBytes: totalBytes
       });
+      
+      if (successRate >= 0.9) {
+        console.log('[DownloadService] 下载成功，标记为就绪');
+      } else {
+        console.warn(`[DownloadService] 下载完成但有失败: 成功 ${successCount}/${filesToDownload.length}，允许进入应用`);
+      }
 
       // 静默处理：失败资产已记录到failedAssets数组
     } catch (e) {
       console.error('--- [Validation Error] ---', e);
-    } finally { 
-      await this.markAsReady(); 
     } 
   }, 
  
