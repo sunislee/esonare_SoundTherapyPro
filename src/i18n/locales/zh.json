@@ -61,7 +61,8 @@
       "kernelVersion": "内核版本",
       "copyright": "© 2024 疗愈音泉. 保留所有权利。",
       "privacy": "隐私政策",
-      "terms": "用户协议"
+      "terms": "用户协议",
+      "contentComingSoon": "内容完善中，敬请期待"
     },
   "profile": {
     "loading": "加载中...",
@@ -130,7 +131,8 @@
   },
   "player": {
     "landing": {
-      "loading": "正在进入心灵空间..."
+      "loading": "正在进入心灵空间...",
+      "complete": "资源准备完成"
     },
     "labels": {
       "ignite": "点燃",

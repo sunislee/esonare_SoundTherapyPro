@@ -61,7 +61,29 @@ config.resolver.extraNodeModules = {
   'react-native-screens': screensPath,
   ...(regeneratorRuntimePath ? { 'regenerator-runtime': regeneratorRuntimePath } : {}),
 };
+
+// Web平台兼容性配置
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // 处理Web平台的特殊模块
+  if (platform === 'web') {
+    // 处理PermissionsAndroid模块
+    if (moduleName === 'react-native/Libraries/PermissionsAndroid') {
+      return {
+        type: 'sourceFile',
+        filePath: require.resolve('react-native-web/dist/modules/PermissionsAndroid'),
+      };
+    }
+    
+    // 处理其他可能的原生模块
+    if (moduleName.includes('NativeModules')) {
+      return {
+        type: 'sourceFile',
+        filePath: require.resolve('react-native-web/dist/modules/NativeModules'),
+      };
+    }
+  }
+  
+  // 原有解析逻辑
   if (moduleName.startsWith('@babel/runtime/')) {
     const subPath = moduleName.replace('@babel/runtime/', '');
     const fileCandidate = path.resolve(babelRuntimeRoot, `${subPath}.js`);

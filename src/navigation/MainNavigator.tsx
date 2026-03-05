@@ -18,10 +18,12 @@ import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import { DownloadService } from '../services/DownloadService';
+import PermissionService from '../services/PermissionService';
 import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
 
 // 导入类型
 export type RootStackParamList = {
+  CheckAndNavigate: undefined;
   Landing: undefined;
   Download: undefined;
   NameEntry: undefined;
@@ -46,7 +48,18 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
   useEffect(() => {
     const checkAndNavigate = async () => {
       try {
-        // 1. 检查 AsyncStorage 中的状态
+        // 1. 请求通知权限
+        console.log('[CheckAndNavigate] 请求通知权限...');
+        const notificationGranted = await PermissionService.requestNotificationPermission();
+        console.log(`[CheckAndNavigate] 通知权限: ${notificationGranted}`);
+        
+        if (!notificationGranted) {
+          console.warn('[CheckAndNavigate] 通知权限被拒绝');
+          // 显示权限被拒绝的提示
+          PermissionService.showPermissionDeniedAlert();
+        }
+        
+        // 2. 检查 AsyncStorage 中的状态
         const userName = await AsyncStorage.getItem('USER_NAME');
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
         const resourceReady = await DownloadService.isResourceReady();
@@ -77,20 +90,21 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
         console.log(`[CheckAndNavigate] 启动检查: Resources: ${resourcesReady}, Name: ${userName ? '存在' : '不存在'}, Skipped: ${hasSkipped === 'true'}`);
         console.log(`[CheckAndNavigate] 物理校验: ${localTotalSize} bytes / ${GLOBAL_TOTAL_SIZE} bytes`);
         
-        // 3. 根据检查结果导航
-        if (!resourcesReady) {
-          console.log('[CheckAndNavigate] 资源未就绪，跳转到下载页');
-          navigation.replace('Download');
-        } else if (!userName && hasSkipped !== 'true') {
-          console.log('[CheckAndNavigate] 资源就绪但未设置名字，跳转到起名页');
-          navigation.replace('NameEntry');
+        // 3. 【关键修复】优先级：用户名 > 资源
+        // 如果用户已设置名字，直接进主页（资源可以在后台下载）
+        if (userName || hasSkipped === 'true') {
+          console.log('[CheckAndNavigate] ✅ 用户已注册，跳转到 LandingScreen');
+          navigation.navigate('Landing');
+        } else if (!resourcesReady) {
+          console.log('[CheckAndNavigate] ⚠️  资源未就绪且用户未注册，跳转到下载页');
+          navigation.navigate('Download');
         } else {
-          console.log('[CheckAndNavigate] 资源和名字都就绪，先跳转到 LandingScreen 保持仪式感');
-          navigation.replace('Landing');
+          console.log('[CheckAndNavigate] 资源就绪但未设置名字，跳转到 NameEntry');
+          navigation.navigate('NameEntry');
         }
       } catch (e) {
         console.error('[CheckAndNavigate] 检查失败:', e);
-        navigation.replace('Download');
+        navigation.navigate('Download');
       } finally {
         setIsChecking(false);
       }
@@ -122,22 +136,25 @@ export function MainNavigator() {
           gestureEnabled: true,
         }}
       >
-        {/* 启动检查路由 */}
         <Stack.Screen 
           name="CheckAndNavigate" 
           component={CheckAndNavigate} 
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="Landing" 
           component={LandingScreen} 
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="Download" 
           component={ResourceDownloadScreen} 
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="NameEntry" 
           component={NameEntryScreen} 
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="MainTabs" 
