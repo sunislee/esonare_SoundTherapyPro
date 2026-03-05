@@ -32,29 +32,28 @@ export interface DownloadProgressState {
 export const OfflineService = {
   /**
    * 检测当前是否处于离线模式
-   * 通过尝试访问一个可靠的远程端点来判断
+   * 简化网络检测逻辑，避免崩溃，添加超时机制
    */
   async isOfflineMode(): Promise<boolean> {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      // 使用 GitHub 或 Gitee 的可靠端点检测网络
-      const testUrl = IS_GOOGLE_PLAY_VERSION 
-        ? 'https://github.com/favicon.ico'
-        : 'https://gitee.com/favicon.ico';
-      
-      const response = await fetch(testUrl, { 
-        method: 'HEAD',
-        signal: controller.signal,
-        cache: 'no-cache'
+      // 使用 Promise.race 添加 5 秒超时
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Network check timeout')), 5000);
       });
       
-      clearTimeout(timeoutId);
+      const fetchPromise = fetch('https://www.baidu.com/favicon.ico', { 
+        method: 'HEAD',
+        cache: 'no-cache',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
       return !response.ok;
     } catch (e) {
-      // 请求失败视为离线
-      return true;
+      console.warn('[OfflineService] 网络检测失败或超时，默认在线模式以允许下载');
+      return false; // 网络检测失败时默认在线，允许下载
     }
   },
 
@@ -161,12 +160,18 @@ export const OfflineService = {
       const integrity = await this.checkResourceIntegrity();
       const isPhysicallyReady = integrity.isComplete;
 
-      // 3. 两者都必须满足
-      const isReady = isFlagSet && isPhysicallyReady;
+      // 3. 放宽条件：只要物理文件就绪就认为资源就绪
+      const isReady = isPhysicallyReady;
 
       console.log(`[OfflineService] 资源就绪检查: flag=${isFlagSet}, physical=${isPhysicallyReady}, result=${isReady}`);
 
-      // 4. 如果标记为就绪但物理文件不完整，清除标记
+      // 4. 如果物理文件就绪但标记未设置，设置标记
+      if (isPhysicallyReady && !isFlagSet) {
+        console.log('[OfflineService] 物理文件就绪但标记未设置，设置标记');
+        await this.markAsReady();
+      }
+
+      // 5. 如果标记为就绪但物理文件不完整，清除标记
       if (isFlagSet && !isPhysicallyReady) {
         console.warn('[OfflineService] 标记为就绪但物理文件不完整，清除标记');
         await this.clearReadyFlag();

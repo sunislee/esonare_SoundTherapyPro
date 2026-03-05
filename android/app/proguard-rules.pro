@@ -7,6 +7,13 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# Ignore warnings for missing classes during R8 minification
+-dontwarn javax.lang.model.**
+-dontwarn javax.annotation.**
+-dontwarn javax.tools.**
+-dontwarn com.squareup.kotlinpoet.**
+-dontwarn org.jetbrains.kotlin.**
+
 # react-native-reanimated
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
@@ -43,3 +50,18 @@
 # Additional protection for React Native modules
 -keep class expo.modules.** { *; }
 -keep class com.facebook.react.** { *; } 
+
+# Notification and MediaSession support
+-keep class com.facebook.react.modules.core.DeviceEventManagerModule { *; }
+-keep class com.facebook.react.modules.appregistry.AppRegistry { *; }
+-keep class com.facebook.react.modules.core.JSTimers { *; }
+
+# Track Player and Media Control
+-keep class com.guichaguri.trackplayer.** { *; }
+-keep class com.google.android.exoplayer2.** { *; }
+-keep class androidx.media.** { *; }
+-keep class androidx.media3.** { *; }
+
+# Keep all React Native modules
+-keep class * extends com.facebook.react.ReactPackage { *; }
+-keepclassmembers class * extends com.facebook.react.ReactPackage { *; }

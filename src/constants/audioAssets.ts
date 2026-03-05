@@ -8,12 +8,11 @@ const nativeChannel =
 
 export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googlePlay' : true;
 
-// 国内渠道专供：强制使用腾讯云，不需要渠道判断
+// 强制所有渠道使用腾讯云 - 但保留 GitHub 作为保底
 const TENCENT_CLOUD_URL = 'http://43.138.58.71/resources/';
-const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/master/';
 const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 
-// 强制所有渠道使用腾讯云主源
+// 主源使用腾讯云，备源使用 GitHub
 export const PRIMARY_REMOTE_RESOURCE_BASE_URL = TENCENT_CLOUD_URL;
 export const SECONDARY_REMOTE_RESOURCE_BASE_URL = GITHUB_URL;
 export const REMOTE_RESOURCE_BASE_URL = TENCENT_CLOUD_URL;
@@ -94,11 +93,12 @@ export const GLOBAL_TOTAL_SIZE = ASSET_LIST.reduce((sum, asset) => sum + asset.e
 export const GLOBAL_TOTAL_SIZE_MB = GLOBAL_TOTAL_SIZE / 1024 / 1024; // 54.00MB
 
 export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {
-  // 国内渠道专供：强制使用腾讯云主源
-  console.log(`[DownloadService] 国内渠道强制使用腾讯云：${TENCENT_CLOUD_URL}${filename}`);
+  // 【临时调整】所有渠道统一优先使用腾讯云（GitHub 在国内访问慢）
+  // 正式提交 Google Play 前再切换回 GitHub 主源
+  console.log(`[DownloadService] 当前渠道：${isGooglePlay ? 'GooglePlay' : '国内'}，优先腾讯云`);
   return [
-    `${TENCENT_CLOUD_URL}${filename}`,             // 腾讯云主源
-    `${GITHUB_URL}${filename}`                     // GitHub 备源
+    `${TENCENT_CLOUD_URL}${filename}`,            // 腾讯云主源（速度快）
+    `${GITHUB_URL}${filename}`                    // GitHub 备源（保底）
   ];
 };
 
