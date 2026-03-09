@@ -40,7 +40,7 @@ export class NotificationService {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
           // 前台服务配置（Android 14 兼容性）
           foregroundService: {
-            stopWithApp: true,
+            stopWithApp: false, // 应用进入后台时不关闭通知
             notificationId: 1337
           }
         },
@@ -98,7 +98,7 @@ export class NotificationService {
       
       console.log(`[NotificationService] Updating notification: ${sceneTitle}, state=${state}`);
       
-      // 更新 metadata
+      // 先更新 metadata（优先级最高）
       await TrackPlayer.updateMetadataForTrack(0, {
         title: sceneTitle,
         artist: notificationSubtitle,
@@ -108,7 +108,7 @@ export class NotificationService {
       this.lastUpdatedSceneId = scene.id;
       console.log('[NotificationService] Metadata updated for scene:', scene.id);
 
-      // 根据状态控制播放
+      // 然后根据状态控制播放
       const tpState = await TrackPlayer.getState();
       if (state === State.Playing && tpState !== State.Playing) {
         console.log('[NotificationService] TrackPlayer playing...');
