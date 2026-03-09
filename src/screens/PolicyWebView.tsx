@@ -105,6 +105,13 @@ const PolicyWebView = () => {
         javaScriptEnabled={true}
         domStorageEnabled={true}
         scalesPageToFit={Platform.OS === 'android'}
+        userAgent="Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+        cacheEnabled={false}
+        thirdPartyCookiesEnabled={true}
+        sharedCookiesEnabled={true}
+        mixedContentMode="always"
+        setSupportMultipleWindows={false}
+        incognito={true}
         renderLoading={() => (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#6C5DD3" />
