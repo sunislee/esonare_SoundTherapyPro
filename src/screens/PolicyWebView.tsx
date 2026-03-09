@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
-    backgroundColor: '#0F111A',
+    backgroundColor: '#FFFFFF',
   },
   errorContainer: {
     flex: 1,
