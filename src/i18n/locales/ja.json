@@ -158,6 +158,12 @@
       "confirm": "確認"
     }
   },
+  "notification": {
+    "artistDescription": "🎵 {{userName}}、深い癒しの最中",
+    "title": "サウンド瞑想",
+    "subtitle": "深い癒しが進行中...",
+    "playbackControl": "再生コントロール"
+  },
   "scenes": {
     "nature_ocean": { "title": "深海", "desc": "深い青の静寂" },
     "nature_forest": { "title": "霧の森", "desc": "森の中の散歩" },

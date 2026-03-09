@@ -111,7 +111,7 @@ export class NotificationService {
       // 场景标题也使用 i18n 国际化
       const sceneTitle = t(`scenes.${scene.id}.title`, { defaultValue: scene.title });
       
-      console.log(`[NotificationService] Updating notification: ${sceneTitle}, state=${state}`);
+      console.log(`[NotificationService] Updating notification: ${sceneTitle}, state=${state}, lng=${i18next.language}`);
       
       // 先更新 metadata（优先级最高）
       await TrackPlayer.updateMetadataForTrack(0, {
