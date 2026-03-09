@@ -11,40 +11,59 @@ import ja from './locales/ja.json';
 // 导入类型定义
 import { TranslationResources, TranslationKeys } from './types';
 
-// 获取系统语言
+// 获取系统语言 - 增强 RN 0.73 兼容性
 const getSystemLanguage = (): string => {
   try {
-    let locale: string | undefined;
+    let locale: string | null | undefined;
     
     if (Platform.OS === 'ios') {
-      locale = NativeModules.SettingsManager?.settings?.AppleLanguages?.[0];
+      // iOS: 尝试从 SettingsManager 获取
+      const settings = NativeModules.SettingsManager?.settings;
+      if (settings?.AppleLanguages && Array.isArray(settings.AppleLanguages)) {
+        locale = settings.AppleLanguages[0];
+      }
+      // 备用方案：尝试从 I18nManager 获取
+      if (!locale) {
+        locale = (I18nManager as any).localeIdentifier;
+      }
     } else {
-      // Android
+      // Android: 多方案降级获取
       locale = NativeModules.I18nManager?.localeIdentifier || 
-               (I18nManager as any).localeIdentifier ||
                NativeModules.I18nManager?.getConstants?.()?.localeIdentifier ||
-               NativeModules.SettingsManager?.settings?.localeIdentifier; // 有时 Android 也会在这个位置
+               (NativeModules as any).Configuration?.locale ||
+               (NativeModules as any).I18nUtil?.localeIdentifier;
+      
+      // 最后的尝试：从 I18nManager.getConstants() 获取
+      if (!locale) {
+        try {
+          const constants = (I18nManager as any).getConstants?.();
+          locale = constants?.localeIdentifier;
+        } catch (e) {
+          // 忽略错误
+        }
+      }
     }
 
-    // 如果还是获取不到，尝试通过系统原生接口（部分版本可能需要）
-    if (!locale && Platform.OS === 'android') {
-      locale = NativeModules.Configuration?.locale || 
-               NativeModules.I18nUtil?.localeIdentifier;
+    // 如果获取失败，默认返回 'en'
+    if (!locale) {
+      console.log('[i18n] Cannot detect system locale, using default: en');
+      return 'en';
     }
-
-    // 最后的挣扎：从 I18nManager.getConstants() 再次尝试
-    if (!locale && Platform.OS === 'android') {
-      try {
-        const constants = (I18nManager as any).getConstants?.();
-        locale = constants?.localeIdentifier;
-      } catch (e) {}
-    }
-
-    if (!locale) return 'en';
     
+    // 标准化 locale 格式：en-US -> en, zh-CN -> zh
     const lowerLocale = locale.toLowerCase().replace('_', '-');
-    if (lowerLocale.includes('zh')) return 'zh';
-    if (lowerLocale.includes('ja')) return 'ja';
+    
+    // 提取语言代码（处理 en-US, zh-CN, ja-JP 等）
+    const languageCode = lowerLocale.split('-')[0];
+    
+    // 只支持我们有的语言包
+    if (['zh', 'en', 'ja'].includes(languageCode)) {
+      console.log(`[i18n] Detected language: ${languageCode} from ${locale}`);
+      return languageCode;
+    }
+    
+    // 不支持的语言，回退到英文
+    console.log(`[i18n] Language ${languageCode} not supported, falling back to en`);
     return 'en';
   } catch (error) {
     console.warn('[i18n] getSystemLanguage error:', error);
@@ -52,7 +71,7 @@ const getSystemLanguage = (): string => {
   }
 };
 
-// 配置 i18next - 增加错误保护
+// 配置 i18next - 增加错误保护和 en-US 兼容性
 try {
   i18n
     .use(initReactI18next)
@@ -68,10 +87,20 @@ try {
           translation: ja,
         },
       },
-      lng: getSystemLanguage(), // 初始使用系统语言
-      fallbackLng: 'en', // 回退语言设为英文
+      lng: getSystemLanguage(),
+      fallbackLng: 'en',
+      // 关键配置：支持 en-US -> en 的语言回退
+      load: 'languageOnly',
+      // 非严格模式，允许语言代码大小写不敏感
+      cleanCode: true,
+      // 语言回退路径：en-US -> en
+      nonExplicitSupportedLngs: true,
       interpolation: {
-        escapeValue: false, // React 已经处理了转义
+        escapeValue: false,
+      },
+      // 兼容性配置
+      react: {
+        useSuspense: false,
       },
     });
 } catch (error) {
@@ -86,6 +115,7 @@ try {
       },
       lng: 'en',
       fallbackLng: 'en',
+      load: 'languageOnly',
     });
   } catch (fallbackError) {
     console.error('[i18n] Emergency fallback failed:', fallbackError);
@@ -98,9 +128,11 @@ export const initLanguage = async () => {
     const savedLanguage = await AsyncStorage.getItem('@settings_language');
     if (savedLanguage) {
       await i18n.changeLanguage(savedLanguage);
+      console.log(`[i18n] Loaded saved language: ${savedLanguage}`);
     } else {
       const systemLng = getSystemLanguage();
       await i18n.changeLanguage(systemLng);
+      console.log(`[i18n] Using system language: ${systemLng}`);
     }
   } catch (error) {
     console.error('[i18n] Language initialization failed:', error);
@@ -119,9 +151,11 @@ export const changeLanguage = async (language: 'zh' | 'en' | 'ja' | 'system') =>
     await AsyncStorage.removeItem('@settings_language');
     const systemLng = getSystemLanguage();
     await i18n.changeLanguage(systemLng);
+    console.log(`[i18n] Switched to system language: ${systemLng}`);
   } else {
     await i18n.changeLanguage(language);
     await AsyncStorage.setItem('@settings_language', language);
+    console.log(`[i18n] Switched to language: ${language}`);
   }
 };
 

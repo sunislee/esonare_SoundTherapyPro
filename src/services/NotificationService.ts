@@ -7,6 +7,7 @@ import TrackPlayer, {
 } from 'react-native-track-player';
 import { Scene } from '../constants/scenes';
 import { Platform, NativeModules } from 'react-native';
+import i18next from 'i18next';
 
 export class NotificationService {
   private static isInitialized = false;
@@ -48,12 +49,13 @@ export class NotificationService {
         notificationCapabilities: [Capability.Play, Capability.Pause, Capability.Stop],
       });
       
-      // 4. 添加一个持久的 silent track
+      // 4. 添加一个持久的 silent track（使用 1 小时静音音频）
+      const t = i18next.t.bind(i18next);
       await TrackPlayer.add({
         id: 'esonare_silent_core',
-        url: 'https://github.com/anars/blank-audio/raw/master/10-seconds-of-silence.mp3', 
-        title: '心声冥想',
-        artist: '正在深度疗愈中...',
+        url: 'https://github.com/anars/blank-audio/raw/master/1-hour-of-silence.mp3', 
+        title: t('notification.title', { defaultValue: '心声冥想' }),
+        artist: t('notification.subtitle', { defaultValue: '正在深度疗愈中...' }),
         duration: 3600,
         isLiveStream: false,
         artwork: require('../assets/logo.png'),
@@ -82,26 +84,31 @@ export class NotificationService {
     }
 
     try {
-      // 6. 按需更新机制：只有场景变化时才更新 metadata
-      const needsMetadataUpdate = !this.lastUpdatedSceneId || this.lastUpdatedSceneId !== scene.id;
-      
+      // 6. 每次都要更新 metadata 和播放状态
       this.currentScene = scene;
       this.currentState = state;
       
-      console.log(`[NotificationService] Updating notification: ${scene.title}, state=${state}, needsMetadataUpdate=${needsMetadataUpdate}`);
+      // 使用 i18n 获取本地化文本
+      const t = i18next.t.bind(i18next);
+      const notificationTitle = t('notification.title', { defaultValue: '心声冥想' });
+      const notificationSubtitle = t('notification.subtitle', { defaultValue: '正在深度疗愈中...' });
       
-      if (needsMetadataUpdate) {
-        await TrackPlayer.updateMetadataForTrack(0, {
-          title: scene.title || '心声冥想',
-          artist: '正在深度疗愈中...',
-          duration: 3600,
-          artwork: require('../assets/logo.png'),
-        });
-        this.lastUpdatedSceneId = scene.id;
-        console.log('[NotificationService] Metadata updated for scene:', scene.id);
-      }
+      // 场景标题也使用 i18n 国际化
+      const sceneTitle = t(`scenes.${scene.id}.title`, { defaultValue: scene.title });
+      
+      console.log(`[NotificationService] Updating notification: ${sceneTitle}, state=${state}`);
+      
+      // 更新 metadata
+      await TrackPlayer.updateMetadataForTrack(0, {
+        title: sceneTitle,
+        artist: notificationSubtitle,
+        duration: 3600,
+        artwork: require('../assets/logo.png'),
+      });
+      this.lastUpdatedSceneId = scene.id;
+      console.log('[NotificationService] Metadata updated for scene:', scene.id);
 
-      // 7. 根据状态控制播放
+      // 根据状态控制播放
       const tpState = await TrackPlayer.getState();
       if (state === State.Playing && tpState !== State.Playing) {
         console.log('[NotificationService] TrackPlayer playing...');
@@ -109,6 +116,23 @@ export class NotificationService {
       } else if (state === State.Paused && tpState !== State.Paused) {
         console.log('[NotificationService] TrackPlayer pausing...');
         await TrackPlayer.pause();
+      }
+      
+      // 确保通知保持显示
+      if (Platform.OS === 'android') {
+        try {
+          const NotificationManager = NativeModules.NotificationManager;
+          if (NotificationManager && NotificationManager.updateNotification) {
+            await NotificationManager.updateNotification({
+              id: 1337,
+              title: sceneTitle,
+              artist: notificationSubtitle,
+              isPlaying: state === State.Playing,
+            });
+          }
+        } catch (e) {
+          console.error('[NotificationService] Native notification update failed:', e);
+        }
       }
     } catch (e) {
       console.error('[NotificationService] Update error:', e);
@@ -119,10 +143,17 @@ export class NotificationService {
     if (!this.currentScene || !this.isInitialized) return;
     
     try {
+      // 使用 i18n 获取本地化文本
+      const t = i18next.t.bind(i18next);
+      const notificationSubtitle = t('notification.subtitle', { defaultValue: '正在深度疗愈中...' });
+      
+      // 场景标题也使用 i18n 国际化
+      const sceneTitle = t(`scenes.${this.currentScene.id}.title`, { defaultValue: this.currentScene.title });
+      
       // 8. 事件更新时不重新设置 artwork，避免翻转 bug
       await TrackPlayer.updateMetadataForTrack(0, {
-        title: this.currentScene.title || '心声冥想',
-        artist: '正在深度疗愈中...',
+        title: sceneTitle,
+        artist: notificationSubtitle,
         duration: 3600,
         // 不更新 artwork，避免翻转
       });

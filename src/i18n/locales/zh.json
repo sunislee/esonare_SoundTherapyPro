@@ -54,7 +54,10 @@
     "prompt": "提示"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}，正在深度疗愈"
+    "artistDescription": "🎵 {{userName}}，正在深度疗愈",
+    "title": "心声冥想",
+    "subtitle": "正在深度疗愈中...",
+    "playbackControl": "播放控制"
   },
   "about": {
       "header": "关于",

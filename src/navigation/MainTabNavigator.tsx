@@ -61,9 +61,9 @@ export const MainTabNavigator: React.FC = () => {
         ),
         tabBarLabel: ({ focused, color }) => {
           if (route.name === 'HomeTab') {
-            return <Text style={[styles.tabBarLabel, { color }]}>{t('tabs.scenes') || 'Scenes'}</Text>;
+            return <Text style={[styles.tabBarLabel, { color }]}>{t('tabs.scenes')}</Text>;
           } else {
-            return <Text style={[styles.tabBarLabel, { color }]}>{t('tabs.profile') || 'Profile'}</Text>;
+            return <Text style={[styles.tabBarLabel, { color }]}>{t('tabs.profile')}</Text>;
           }
         },
       })}
