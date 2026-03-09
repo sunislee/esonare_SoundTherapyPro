@@ -13,18 +13,18 @@ const AboutScreen = () => {
 
   const isChinese = i18n.language?.startsWith('zh');
 
-  // GitHub Pages URL（需要上传 HTML 文件到 GitHub 后启用）
+  // GitHub Pages URL（已启用 /docs 为根目录）
   const GITHUB_BASE_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro';
   
   const handleOpenPrivacyPolicy = () => {
-    const url = `${GITHUB_BASE_URL}/privacy-policy-${isChinese ? 'zh' : 'en'}.html`;
+    const url = `${GITHUB_BASE_URL}/privacy-policy-zh.html`;
     
     // 使用 WebView 打开
     navigation.navigate('PolicyWebView', { url, title: t('about.privacy') });
   };
 
   const handleOpenTermsOfService = () => {
-    const url = `${GITHUB_BASE_URL}/terms-of-service-${isChinese ? 'zh' : 'en'}.html`;
+    const url = `${GITHUB_BASE_URL}/terms-of-service-zh.html`;
     
     // 使用 WebView 打开
     navigation.navigate('PolicyWebView', { url, title: t('about.terms') });
