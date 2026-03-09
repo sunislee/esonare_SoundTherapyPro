@@ -120,7 +120,7 @@ const PolicyWebView = () => {
         sharedCookiesEnabled={true}
         mixedContentMode="always"
         incognito={true}
-        backgroundColor="#0F111A"
+        backgroundColor="#FFFFFF"
         renderLoading={() => (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#6C5DD3" />
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: '#0F111A',
+    backgroundColor: '#FFFFFF',
   },
 });
 
