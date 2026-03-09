@@ -89,7 +89,6 @@ const PolicyWebView = () => {
       {loading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#6C5DD3" />
-          <Text style={styles.loadingText}>正在加载协议内容...</Text>
         </View>
       )}
       
@@ -105,17 +104,17 @@ const PolicyWebView = () => {
         javaScriptEnabled={true}
         domStorageEnabled={true}
         scalesPageToFit={Platform.OS === 'android'}
-        userAgent="Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+        userAgent="Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+        androidHardwareAccelerationDisabled={false}
         cacheEnabled={false}
         thirdPartyCookiesEnabled={true}
         sharedCookiesEnabled={true}
         mixedContentMode="always"
-        setSupportMultipleWindows={false}
         incognito={true}
+        backgroundColor="#0F111A"
         renderLoading={() => (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#6C5DD3" />
-            <Text style={styles.loadingText}>正在加载协议内容...</Text>
           </View>
         )}
       />
@@ -161,11 +160,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
     backgroundColor: '#0F111A',
-  },
-  loadingText: {
-    marginTop: 16,
-    color: '#888',
-    fontSize: 14,
   },
   errorContainer: {
     flex: 1,
