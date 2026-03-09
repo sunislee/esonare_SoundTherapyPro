@@ -19,7 +19,11 @@ const PolicyWebView = () => {
   const [error, setError] = useState(false);
   const webViewRef = React.useRef<WebView>(null);
 
+  console.log('[PolicyWebView] URL:', url);
+  console.log('[PolicyWebView] Title:', title);
+
   const handleNavigationStateChange = (navState: any) => {
+    console.log('[PolicyWebView] Navigation state changed:', navState.loading, navState.url);
     setLoading(!navState.loading);
     if (!navState.loading && navState.url === 'about:blank') {
       setError(true);
@@ -27,6 +31,7 @@ const PolicyWebView = () => {
   };
 
   const handleLoadEnd = () => {
+    console.log('[PolicyWebView] Load end triggered');
     setLoading(false);
   };
 
@@ -193,7 +198,7 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0F111A',
   },
 });
 
