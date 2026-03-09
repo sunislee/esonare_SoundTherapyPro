@@ -2,8 +2,8 @@
   "welcome": "Welcome to Sound Therapy App",
   "appTitle": "SoundTherapy",
   "tabs": {
-    "scenes": "Scenes",
-    "profile": "My"
+    "scenes": "Space",
+    "profile": "Profile"
   },
   "categories": {
     "nature": "Natural Power",
@@ -54,7 +54,10 @@
     "prompt": "Prompt"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}, in deep healing"
+    "artistDescription": "🎵 {{userName}}, in deep healing",
+    "title": "Sound Meditation",
+    "subtitle": "Deep healing in progress...",
+    "playbackControl": "Playback Control"
   },
   "about": {
     "header": "About",
@@ -329,6 +332,9 @@
     "clearHistoryDesc": "Delete all playback history",
     "clearPresets": "Clear All Mix Presets",
     "clearPresetsDesc": "Delete all saved mix presets",
+    "reset_data": "Reset App Data",
+    "about_us": "About Us",
+    "clear_cache": "Clear Cache",
     "about": "About",
     "version": "Version",
     "developer": "Developer",
@@ -348,6 +354,7 @@
       "clearHistoryMsg": "Are you sure you want to clear all history? This cannot be undone.",
       "clearPresetsTitle": "Clear Presets",
       "clearPresetsMsg": "Are you sure you want to clear all presets? This cannot be undone.",
+      "resetDataMsg": "This will clear your local meditation settings and preferences. Are you sure?",
       "confirm": "Clear",
       "cancel": "Cancel"
     }
@@ -355,8 +362,8 @@
   "scenes": {
     "nature_ocean": { "title": "Deep Ocean", "desc": "Deep blue tranquility" },
     "nature_forest": { "title": "Mist Forest", "desc": "A walk through the woods" },
-    "nature_deep_sea": { "title": "Deep Sea Breath", "desc": "Follow the waves to find your breath" },
-    "nature_misty_forest": { "title": "Forest Mist", "desc": "Morning forest walk with fresh oxygen" },
+    "nature_deep_sea": { "title": "Deep Sea Breath", "desc": "Follow the waves, find your breath" },
+    "nature_misty_forest": { "title": "Forest Mist", "desc": "Morning walk with fresh oxygen" },
     "nature_river": { "title": "Morning River", "desc": "Clear stream over stones" },
     "nature_night": { "title": "Quiet Tribe", "desc": "Ancient callings" },
     "life_rain_boat": { "title": "Rain on Boat", "desc": "Light rain on a lonely boat" },
@@ -370,6 +377,9 @@
     "interactive_wind_chime": { "title": "Wind Chimes", "desc": "Ethereal sounds" },
     "interactive_breath": { "title": "Breathing", "desc": "Mindfulness guidance" },
     "interactive_apple": { "title": "Apple Crunch", "desc": "Relaxing sound" },
-    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" }
+    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" },
+    "church_forest_bells": { "title": "Forest Bells", "desc": "Distant church bells in the woods" },
+    "cathedral_ritual": { "title": "Cathedral Ritual", "desc": "Solemn ceremonial sounds" },
+    "nuns_chant": { "title": "Sacred Chant", "desc": "Gregorian chant meditation" }
   }
 }

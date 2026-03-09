@@ -229,9 +229,13 @@ const ImmersivePlayerNew: React.FC = () => {
 
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
-        {/* 背景图：提升 zIndex 避免被 overlay 遮挡 */}
+        {/* 背景图：使用 fade 过渡避免翻转 */}
         {scene.backgroundSource ? (
-          <Image source={scene.backgroundSource} style={styles.backgroundImage} />
+          <Image 
+            source={scene.backgroundSource} 
+            style={styles.backgroundImage}
+            fadeDuration={300}
+          />
         ) : (
           <View style={[styles.backgroundFallback, { backgroundColor: placeholderColor }]} />
         )}
@@ -248,7 +252,7 @@ const ImmersivePlayerNew: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <Text key={titleSceneId} style={styles.sceneTitle}>
+          <Text key={titleSceneId} style={styles.sceneTitle} numberOfLines={1} adjustsFontSizeToFit>
             {t(`scenes.${titleScene.id}.title`, { defaultValue: titleScene.title })}
           </Text>
 

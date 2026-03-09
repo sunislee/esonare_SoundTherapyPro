@@ -1,32 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import packageJson from '../../package.json';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useBackHandler } from '../hooks/useBackHandler';
+import type { RootStackParamList } from '../navigation/MainNavigator';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+const PRIVACY_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/';
+const TERMS_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/terms.html';
+
+type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'About'>;
 
 const AboutScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<AboutScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
 
   const handlePrivacyPress = () => {
-    const message = t('about.contentComingSoon');
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
-    } else {
-      Alert.alert(message);
-    }
+    navigation.navigate('WebviewScreen', {
+      url: PRIVACY_URL,
+      title: t('about.privacy')
+    });
   };
 
   const handleTermsPress = () => {
-    const message = t('about.contentComingSoon');
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
-    } else {
-      Alert.alert(message);
-    }
+    navigation.navigate('WebviewScreen', {
+      url: TERMS_URL,
+      title: t('about.terms')
+    });
   };
 
   // 使用全局返回键处理逻辑（非首页）

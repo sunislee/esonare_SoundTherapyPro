@@ -51,6 +51,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   const [isPressed, setIsPressed] = useState(false);
   const [itemY, setItemY] = useState<number | null>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const viewRef = useRef<View>(null);
   const triggerHaptic = () => {
     ReactNativeHapticFeedback.trigger('impactLight', {
@@ -87,6 +88,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
       
       if (isVisible) {
         setHasAnimated(true);
+        setIsAnimating(true);
         // 执行 2 次缩放动画（1 -> 1.05 -> 1）
         Animated.sequence([
           Animated.timing(highlightAnim, {
@@ -113,7 +115,9 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
-        ]).start();
+        ]).start(() => {
+          setIsAnimating(false);
+        });
       }
     }
   }, [isFocused, hasAnimated, itemY, scrollOffset]);
@@ -169,7 +173,7 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
        }}
     >
       <Animated.View 
-        renderToHardwareTextureAndroid={true}
+        renderToHardwareTextureAndroid={isAnimating}
         style={[styles.cardContainer, { transform: [{ scale: combinedScale }] }]}
       >
         <View style={styles.cardClip}>

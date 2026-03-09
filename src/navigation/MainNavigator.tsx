@@ -17,6 +17,7 @@ import MiniPlayer from '../components/MiniPlayer';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
+import WebviewScreen from '../screens/WebviewScreen';
 import { DownloadService } from '../services/DownloadService';
 import PermissionService from '../services/PermissionService';
 import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
@@ -34,6 +35,7 @@ export type RootStackParamList = {
   History: undefined;
   Settings: undefined;
   About: undefined;
+  WebviewScreen: { url: string; title: string };
   Mixer: { presetId?: string } | undefined;
 };
 
@@ -55,8 +57,8 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
         
         if (!notificationGranted) {
           console.warn('[CheckAndNavigate] 通知权限被拒绝');
-          // 显示权限被拒绝的提示
-          PermissionService.showPermissionDeniedAlert();
+          // 暂时禁用权限被拒绝的提示（用户要求）
+          // PermissionService.showPermissionDeniedAlert();
         }
         
         // 2. 检查 AsyncStorage 中的状态
@@ -195,6 +197,13 @@ export function MainNavigator() {
         <Stack.Screen 
           name="About" 
           component={AboutScreen} 
+        />
+        <Stack.Screen 
+          name="WebviewScreen" 
+          component={WebviewScreen} 
+          options={{ 
+            headerShown: false 
+          }}
         />
         {/* 
         <Stack.Screen 
