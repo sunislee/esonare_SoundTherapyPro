@@ -24,7 +24,10 @@ const PolicyWebView = () => {
 
   const handleNavigationStateChange = (navState: any) => {
     console.log('[PolicyWebView] Navigation state changed:', navState.loading, navState.url);
-    setLoading(!navState.loading);
+    // 只在真正加载时设置 loading，避免覆盖 handleLoadEnd
+    if (navState.loading) {
+      setLoading(true);
+    }
     if (!navState.loading && navState.url === 'about:blank') {
       setError(true);
     }
@@ -32,6 +35,7 @@ const PolicyWebView = () => {
 
   const handleLoadEnd = () => {
     console.log('[PolicyWebView] Load end triggered');
+    // 强制设置为非 loading 状态
     setLoading(false);
   };
 
