@@ -17,14 +17,14 @@ const AboutScreen = () => {
   const GITHUB_BASE_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro';
   
   const handleOpenPrivacyPolicy = () => {
-    const url = `${GITHUB_BASE_URL}/privacy-policy-zh.html`;
+    const url = `${GITHUB_BASE_URL}/privacy-policy-${isChinese ? 'zh' : 'en'}.html`;
     
     // 使用 WebView 打开
     navigation.navigate('PolicyWebView', { url, title: t('about.privacy') });
   };
 
   const handleOpenTermsOfService = () => {
-    const url = `${GITHUB_BASE_URL}/terms-of-service-zh.html`;
+    const url = `${GITHUB_BASE_URL}/terms-of-service-${isChinese ? 'zh' : 'en'}.html`;
     
     // 使用 WebView 打开
     navigation.navigate('PolicyWebView', { url, title: t('about.terms') });
