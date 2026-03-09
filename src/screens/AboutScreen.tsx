@@ -9,7 +9,26 @@ import { useBackHandler } from '../hooks/useBackHandler';
 const AboutScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const isChinese = i18n.language?.startsWith('zh');
+
+  // GitHub Pages URL（需要上传 HTML 文件到 GitHub 后启用）
+  const GITHUB_BASE_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro';
+  
+  const handleOpenPrivacyPolicy = () => {
+    const url = `${GITHUB_BASE_URL}/privacy-policy-${isChinese ? 'zh' : 'en'}.html`;
+    
+    // 使用 WebView 打开
+    navigation.navigate('PolicyWebView', { url, title: t('about.privacy') });
+  };
+
+  const handleOpenTermsOfService = () => {
+    const url = `${GITHUB_BASE_URL}/terms-of-service-${isChinese ? 'zh' : 'en'}.html`;
+    
+    // 使用 WebView 打开
+    navigation.navigate('PolicyWebView', { url, title: t('about.terms') });
+  };
 
   // 使用全局返回键处理逻辑（非首页）
   useBackHandler(false, navigation);
@@ -44,12 +63,12 @@ const AboutScreen = () => {
             <Text style={styles.infoValue}>React Native 0.73</Text>
           </View>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.infoItem} onPress={() => {}}>
+          <TouchableOpacity style={styles.infoItem} onPress={handleOpenPrivacyPolicy}>
             <Text style={styles.infoLabel}>{t('about.privacy')}</Text>
             <Text style={styles.infoValue}>{`>`}</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.infoItem} onPress={() => {}}>
+          <TouchableOpacity style={styles.infoItem} onPress={handleOpenTermsOfService}>
             <Text style={styles.infoLabel}>{t('about.terms')}</Text>
             <Text style={styles.infoValue}>{`>`}</Text>
           </TouchableOpacity>

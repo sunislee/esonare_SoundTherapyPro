@@ -1,5 +1,5 @@
 {
-  "welcome": "欢迎使用音频疗愈应用",
+  "welcome": "欢迎使用声音放松应用",
   "appTitle": "心声冥想",
   "tabs": {
     "scenes": "场景",
@@ -7,7 +7,7 @@
   },
   "categories": {
     "nature": "自然力量",
-    "healing": "深度疗愈",
+    "healing": "深度放松",
     "brainwave": "脑波专注",
     "life": "生活角落",
     "interactive": "氛围点缀"
@@ -23,7 +23,7 @@
     "restored": "已恢复播放"
   },
   "slogans": {
-    "journey": "开启一段疗愈之旅",
+    "journey": "开启一段放松之旅",
     "peace": "愿你内心平静",
     "silence": "让世界安静一会儿"
   },
@@ -48,24 +48,25 @@
     "delete": "删除",
     "comma": "，",
     "period": "。",
-    "enter_scheme_name": "请输入方案名称",
+    "enter_scheme_name": "输入方案名称",
     "friend": "朋友",
-    "comingSoon": "功能开发中，敬请期待",
-    "prompt": "提示"
+    "comingSoon": "功能开发中，敬请期待！",
+    "prompt": "提示",
+    "unableToOpen": "无法打开链接"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}，正在深度疗愈"
+    "artistDescription": "🎵 {{userName}}，正在深度放松"
   },
   "about": {
       "header": "关于",
       "kernelVersion": "内核版本",
-      "copyright": "© 2024 疗愈音泉. 保留所有权利。",
+      "copyright": "© 2024 放松音泉。保留所有权利。",
       "privacy": "隐私政策",
       "terms": "用户协议"
     },
   "profile": {
     "loading": "加载中...",
-    "defaultUser": "疗愈音泉用户",
+    "defaultUser": "放松音泉用户",
     "stats": {
       "focusCount": "专注次数",
       "totalDuration": "总时长"
@@ -117,7 +118,8 @@
       "systemPreset": "选择系统预设背景",
       "customPro": "从相册选择",
       "proFeatureTitle": "✨ 解锁 Pro 专属特权",
-      "proFeatureMsg": "自定义背景是 Pro 用户的专属功能。升级 Pro 即可解锁相册选图、专属音效等更多福利！该功能将在未来版本开放开通。",
+      "proFeatureMsg": "自定义背景是 Pro 用户的专属功能。升级 Pro 即可解锁相册选图、专属音效等更多福利！敬请期待后续版本开放。",
+
       "proFeatureConfirm": "我知道了",
       "updateSuccess": "背景已更新",
       "recommended": "推荐背景",
@@ -144,7 +146,7 @@
       "text": "试试点击这些图标，有惊喜音效"
     },
     "status": {
-      "playing": "正在疗愈中...",
+      "playing": "正在放松中...",
       "paused": "已暂停",
       "buffering": "缓冲中...",
       "loading": "加载中...",
@@ -245,7 +247,7 @@
   },
   "meditation": {
     "success_title": "恭喜完成冥想",
-    "success_message": "您已成功完成本次音频疗愈之旅，愿您内心常驻平静。",
+    "success_message": "您已成功完成本次声音放松之旅，愿您内心常驻平静。",
     "success_confirm": "太棒了"
   },
   "error": {
@@ -290,7 +292,7 @@
   },
   "nameEntry": {
     "title": "如何称呼您？",
-    "subtitle": "让我们为您开启专属的治愈之旅",
+    "subtitle": "让我们为您开启专属的放松之旅",
     "placeholder": "请输入您的名称",
     "button": "开启之旅",
     "skip": "暂时跳过"
@@ -372,5 +374,9 @@
     "interactive_wind_chime": { "title": "风铃", "desc": "清脆悦耳" },
     "interactive_breath": { "title": "呼吸", "desc": "深度放松" },
     "interactive_white_noise": { "title": "白噪音", "desc": "专注屏蔽" }
+  },
+  "disclaimer": {
+    "title": "健康声明",
+    "content": "本应用提供的声音内容仅用于放松和冥想目的，不能替代专业的医疗建议、诊断或治疗。如有健康问题，请咨询专业医疗人员。"
   }
 }
