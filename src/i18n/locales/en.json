@@ -1,13 +1,13 @@
 {
-  "welcome": "Welcome to Sound Therapy App",
-  "appTitle": "SoundTherapy",
+  "welcome": "Welcome to Sound Relaxation App",
+  "appTitle": "Sound Meditation",
   "tabs": {
-    "scenes": "Space",
+    "scenes": "Scenes",
     "profile": "Profile"
   },
   "categories": {
     "nature": "Natural Power",
-    "healing": "Deep Healing",
+    "healing": "Deep Relaxation",
     "brainwave": "Focus Brainwaves",
     "life": "Life Corners",
     "interactive": "Ambient Decor"
@@ -23,7 +23,7 @@
     "restored": "Playback restored"
   },
   "slogans": {
-    "journey": "Begin a healing journey",
+    "journey": "Begin a relaxation journey",
     "peace": "May your heart be at peace",
     "silence": "Let the world be quiet for a while"
   },
@@ -51,25 +51,20 @@
     "enter_scheme_name": "Enter scheme name",
     "friend": "Friend",
     "comingSoon": "Feature coming soon, stay tuned!",
-    "prompt": "Prompt"
+    "prompt": "Prompt",
+    "unableToOpen": "Unable to open link"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}, in deep healing",
-    "title": "Sound Meditation",
-    "subtitle": "Deep healing in progress...",
-    "playbackControl": "Playback Control"
+    "artistDescription": "🎵 {{userName}}, in deep relaxation"
   },
   "about": {
     "header": "About",
     "kernelVersion": "Kernel Version",
-    "copyright": "© 2024 SoundTherapy Pro. All rights reserved.",
-    "privacy": "Privacy Policy",
-    "terms": "Terms of Service",
-    "contentComingSoon": "Content is being improved, stay tuned"
+    "copyright": "© 2024 Sound Meditation Pro. All rights reserved."
   },
   "profile": {
     "loading": "Loading...",
-    "defaultUser": "SoundTherapy User",
+    "defaultUser": "Sound Meditation User",
     "stats": {
       "focusCount": "Focus Sessions",
       "totalDuration": "Total Duration"
@@ -111,7 +106,7 @@
       "error": "Error",
       "saveFailed": "Save failed",
       "exitTitle": "Exit App",
-      "exitMsg": "Are you sure you want to leave SoundTherapy?",
+      "exitMsg": "Are you sure you want to leave Sound Meditation?",
       "exitConfirm": "Confirm",
       "confirm": "Confirm"
     },
@@ -121,7 +116,7 @@
       "systemPreset": "System Presets",
       "customPro": "Select from Album",
       "proFeatureTitle": "✨ Unlock Pro Features",
-      "proFeatureMsg": "Custom background is a Pro exclusive feature. Upgrade to Pro to unlock gallery selection, exclusive sounds, and more! This feature will be available in future versions.",
+      "proFeatureMsg": "Custom background is a Pro exclusive feature. Upgrade to Pro to unlock gallery selection, exclusive sounds, and more! Stay tuned for this feature in upcoming versions.",
       "proFeatureConfirm": "Got it",
       "updateSuccess": "Background updated",
       "recommended": "Recommended",
@@ -134,8 +129,7 @@
   },
   "player": {
     "landing": {
-      "loading": "Entering mind space...",
-      "complete": "Resources ready"
+      "loading": "Entering mind space..."
     },
     "labels": {
       "ignite": "Ignite",
@@ -149,7 +143,7 @@
       "text": "Try clicking these icons for surprise sound effects"
     },
     "status": {
-      "playing": "Healing in progress...",
+      "playing": "Relaxation in progress...",
       "paused": "Paused",
       "buffering": "Buffering...",
       "loading": "Loading...",
@@ -250,7 +244,7 @@
   },
   "meditation": {
     "success_title": "Congratulations",
-    "success_message": "You have successfully completed this healing journey. May peace be with you.",
+    "success_message": "You have successfully completed this relaxation journey. May peace be with you.",
     "success_confirm": "Great"
   },
   "error": {
@@ -295,7 +289,7 @@
   },
   "nameEntry": {
     "title": "What's your name?",
-    "subtitle": "Let's begin your exclusive healing journey",
+    "subtitle": "Let's begin your exclusive relaxation journey",
     "placeholder": "Enter your name",
     "button": "Begin Journey",
     "skip": "Skip for now"
@@ -332,9 +326,6 @@
     "clearHistoryDesc": "Delete all playback history",
     "clearPresets": "Clear All Mix Presets",
     "clearPresetsDesc": "Delete all saved mix presets",
-    "reset_data": "Reset App Data",
-    "about_us": "About Us",
-    "clear_cache": "Clear Cache",
     "about": "About",
     "version": "Version",
     "developer": "Developer",
@@ -354,7 +345,6 @@
       "clearHistoryMsg": "Are you sure you want to clear all history? This cannot be undone.",
       "clearPresetsTitle": "Clear Presets",
       "clearPresetsMsg": "Are you sure you want to clear all presets? This cannot be undone.",
-      "resetDataMsg": "This will clear your local meditation settings and preferences. Are you sure?",
       "confirm": "Clear",
       "cancel": "Cancel"
     }
@@ -362,8 +352,8 @@
   "scenes": {
     "nature_ocean": { "title": "Deep Ocean", "desc": "Deep blue tranquility" },
     "nature_forest": { "title": "Mist Forest", "desc": "A walk through the woods" },
-    "nature_deep_sea": { "title": "Deep Sea Breath", "desc": "Follow the waves, find your breath" },
-    "nature_misty_forest": { "title": "Forest Mist", "desc": "Morning walk with fresh oxygen" },
+    "nature_deep_sea": { "title": "Deep Sea Breath", "desc": "Follow the waves to find your breath" },
+    "nature_misty_forest": { "title": "Forest Mist", "desc": "Morning forest walk with fresh oxygen" },
     "nature_river": { "title": "Morning River", "desc": "Clear stream over stones" },
     "nature_night": { "title": "Quiet Tribe", "desc": "Ancient callings" },
     "life_rain_boat": { "title": "Rain on Boat", "desc": "Light rain on a lonely boat" },
@@ -377,9 +367,10 @@
     "interactive_wind_chime": { "title": "Wind Chimes", "desc": "Ethereal sounds" },
     "interactive_breath": { "title": "Breathing", "desc": "Mindfulness guidance" },
     "interactive_apple": { "title": "Apple Crunch", "desc": "Relaxing sound" },
-    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" },
-    "church_forest_bells": { "title": "Forest Bells", "desc": "Distant church bells in the woods" },
-    "cathedral_ritual": { "title": "Cathedral Ritual", "desc": "Solemn ceremonial sounds" },
-    "nuns_chant": { "title": "Sacred Chant", "desc": "Gregorian chant meditation" }
+    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" }
+  },
+  "disclaimer": {
+    "title": "Health Disclaimer",
+    "content": "The sound content provided by this app is for relaxation and meditation purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Please consult a qualified healthcare provider for any health concerns."
   }
 }

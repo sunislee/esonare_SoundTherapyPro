@@ -5,31 +5,29 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useBackHandler } from '../hooks/useBackHandler';
-import type { RootStackParamList } from '../navigation/MainNavigator';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-const PRIVACY_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/';
-const TERMS_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/terms.html';
-
-type AboutScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'About'>;
 
 const AboutScreen = () => {
-  const navigation = useNavigation<AboutScreenNavigationProp>();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  const handlePrivacyPress = () => {
-    navigation.navigate('WebviewScreen', {
-      url: PRIVACY_URL,
-      title: t('about.privacy')
-    });
+  const isChinese = i18n.language?.startsWith('zh');
+
+  // GitHub Pages URL（需要上传 HTML 文件到 GitHub 后启用）
+  const GITHUB_BASE_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro';
+  
+  const handleOpenPrivacyPolicy = () => {
+    const url = `${GITHUB_BASE_URL}/privacy-policy-${isChinese ? 'zh' : 'en'}.html`;
+    
+    // 使用 WebView 打开
+    navigation.navigate('PolicyWebView', { url, title: t('about.privacy') });
   };
 
-  const handleTermsPress = () => {
-    navigation.navigate('WebviewScreen', {
-      url: TERMS_URL,
-      title: t('about.terms')
-    });
+  const handleOpenTermsOfService = () => {
+    const url = `${GITHUB_BASE_URL}/terms-of-service-${isChinese ? 'zh' : 'en'}.html`;
+    
+    // 使用 WebView 打开
+    navigation.navigate('PolicyWebView', { url, title: t('about.terms') });
   };
 
   // 使用全局返回键处理逻辑（非首页）
@@ -65,12 +63,12 @@ const AboutScreen = () => {
             <Text style={styles.infoValue}>React Native 0.73</Text>
           </View>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.infoItem} onPress={handlePrivacyPress}>
+          <TouchableOpacity style={styles.infoItem} onPress={handleOpenPrivacyPolicy}>
             <Text style={styles.infoLabel}>{t('about.privacy')}</Text>
             <Text style={styles.infoValue}>{`>`}</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.infoItem} onPress={handleTermsPress}>
+          <TouchableOpacity style={styles.infoItem} onPress={handleOpenTermsOfService}>
             <Text style={styles.infoLabel}>{t('about.terms')}</Text>
             <Text style={styles.infoValue}>{`>`}</Text>
           </TouchableOpacity>
