@@ -47,6 +47,8 @@ export class NotificationService {
         capabilities: [Capability.Play, Capability.Pause, Capability.Stop],
         compactCapabilities: [Capability.Play, Capability.Pause],
         notificationCapabilities: [Capability.Play, Capability.Pause, Capability.Stop],
+        // 启用进度更新事件（每秒更新一次，用于通知栏进度条）
+        progressUpdateEventInterval: 1,
       });
       
       // 4. 添加一个持久的 silent track（使用 1 小时静音音频）
@@ -63,11 +65,24 @@ export class NotificationService {
 
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
       
+      // 立即开始播放（确保 TrackPlayer 处于活跃状态）
+      try {
+        await TrackPlayer.play();
+        console.log('[NotificationService] Initial playback started');
+      } catch (e) {
+        console.error('[NotificationService] Initial playback failed:', e);
+      }
+      
       // 5. 监听播放状态变化，自动更新通知
       TrackPlayer.addEventListener(Event.PlaybackState, async (state) => {
         console.log('[NotificationService] PlaybackState event:', state.state);
         this.currentState = state.state;
         await this.updateNotificationFromEvent();
+      });
+      
+      // 6. 启用进度更新事件（每秒更新一次，用于通知栏进度条）
+      TrackPlayer.addEventListener(Event.PlaybackProgress, async (data) => {
+        console.log('[NotificationService] PlaybackProgress:', data.position, '/', data.duration);
       });
       
       this.isInitialized = true;

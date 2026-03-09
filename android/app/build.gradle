@@ -105,8 +105,8 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 111
-        versionName "1.2.0"
+        versionCode 130
+        versionName "1.3.0"
         resConfigs "en", "zh", "ja"
 
         ndk {
