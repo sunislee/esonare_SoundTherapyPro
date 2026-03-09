@@ -185,12 +185,7 @@ export function MainNavigator() {
           name="PolicyWebView" 
           component={PolicyWebView} 
           options={{
-            headerShown: true,
-            headerTitle: (props) => <Text style={{ color: '#fff', fontSize: 18 }}>{props.children}</Text>,
-            headerStyle: {
-              backgroundColor: '#0F111A',
-            },
-            headerTintColor: '#fff',
+            headerShown: false,
           }}
         />
         {/* 
