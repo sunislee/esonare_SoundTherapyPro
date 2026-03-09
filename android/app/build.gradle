@@ -105,8 +105,8 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 110
-        versionName "1.1.9"
+        versionCode 111
+        versionName "1.2.0"
         resConfigs "en", "zh", "ja"
 
         ndk {
@@ -232,3 +232,105 @@ dependencies {
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
+
+// 动态命名 AAB 文件 - GooglePlay 渠道
+task renameGoogleReleaseAab {
+    dependsOn "bundleGoogleRelease"
+    doLast {
+        def appName = "HeartSound"
+        def versionName = android.defaultConfig.versionName
+        def versionCode = android.defaultConfig.versionCode
+        def buildDate = new Date().format('yyyyMMdd')
+        def channel = "GooglePlay"
+        
+        def newFileName = "${appName}_v${versionName}_vc${versionCode}_${buildDate}.aab"
+        def outputDir = new File("${project.buildDir}/outputs/bundle/googleRelease")
+        def originalFile = new File(outputDir, "app-google-release.aab")
+        def newFile = new File(outputDir, newFileName)
+        
+        if (originalFile.exists()) {
+            originalFile.renameTo(newFile)
+            
+            // 复制到 Releases/GooglePlay/ 目录
+            def releasesDir = new File("${project.rootDir}/../Releases/GooglePlay")
+            releasesDir.mkdirs()
+            def targetFile = new File(releasesDir, newFileName)
+            org.apache.commons.io.FileUtils.copyFile(newFile, targetFile)
+            
+            println "\n=== AAB 文件生成成功 ==="
+            println "渠道: ${channel}"
+            println "文件名: ${newFileName}"
+            println "本地路径: ${newFile.absolutePath}"
+            println "发布路径: ${targetFile.absolutePath}"
+            println "==========================\n"
+        }
+    }
+}
+
+// 动态命名 AAB 文件 - Domestic 渠道
+task renameDomesticReleaseAab {
+    dependsOn "bundleDomesticRelease"
+    doLast {
+        def appName = "HeartSound"
+        def versionName = android.defaultConfig.versionName
+        def versionCode = android.defaultConfig.versionCode
+        def buildDate = new Date().format('yyyyMMdd')
+        def channel = "Domestic"
+        
+        def newFileName = "${appName}_v${versionName}_vc${versionCode}_${buildDate}.aab"
+        def outputDir = new File("${project.buildDir}/outputs/bundle/domesticRelease")
+        def originalFile = new File(outputDir, "app-domestic-release.aab")
+        def newFile = new File(outputDir, newFileName)
+        
+        if (originalFile.exists()) {
+            originalFile.renameTo(newFile)
+            
+            // 复制到 Releases/Domestic/ 目录
+            def releasesDir = new File("${project.rootDir}/../Releases/Domestic")
+            releasesDir.mkdirs()
+            def targetFile = new File(releasesDir, newFileName)
+            org.apache.commons.io.FileUtils.copyFile(newFile, targetFile)
+            
+            println "\n=== AAB 文件生成成功 ==="
+            println "渠道: ${channel}"
+            println "文件名: ${newFileName}"
+            println "本地路径: ${newFile.absolutePath}"
+            println "发布路径: ${targetFile.absolutePath}"
+            println "==========================\n"
+        }
+    }
+}
+
+// 动态命名 APK 文件 - Domestic 渠道
+task renameDomesticReleaseApk {
+    dependsOn "assembleDomesticRelease"
+    doLast {
+        def appName = "HeartSound"
+        def versionName = android.defaultConfig.versionName
+        def versionCode = android.defaultConfig.versionCode
+        def buildDate = new Date().format('yyyyMMdd')
+        def channel = "Domestic"
+        
+        def newFileName = "${appName}_v${versionName}_vc${versionCode}_${buildDate}_domestic.apk"
+        def outputDir = new File("${project.buildDir}/outputs/apk/domestic/release")
+        def originalFile = new File(outputDir, "app-domestic-release.apk")
+        def newFile = new File(outputDir, newFileName)
+        
+        if (originalFile.exists()) {
+            originalFile.renameTo(newFile)
+            
+            // 复制到 Releases/Domestic/ 目录
+            def releasesDir = new File("${project.rootDir}/../Releases/Domestic")
+            releasesDir.mkdirs()
+            def targetFile = new File(releasesDir, newFileName)
+            org.apache.commons.io.FileUtils.copyFile(newFile, targetFile)
+            
+            println "\n=== APK 文件生成成功 ==="
+            println "渠道: ${channel}"
+            println "文件名: ${newFileName}"
+            println "本地路径: ${newFile.absolutePath}"
+            println "发布路径: ${targetFile.absolutePath}"
+            println "==========================\n"
+        }
+    }
+}

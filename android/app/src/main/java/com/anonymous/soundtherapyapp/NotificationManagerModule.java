@@ -36,11 +36,12 @@ public class NotificationManagerModule extends ReactContextBaseJavaModule {
                     NotificationChannel channel = new NotificationChannel(
                             CHANNEL_ID,
                             CHANNEL_NAME,
-                            NotificationManager.IMPORTANCE_DEFAULT
+                            NotificationManager.IMPORTANCE_LOW
                     );
                     channel.setDescription(CHANNEL_DESCRIPTION);
-                    channel.enableLights(true);
-                    channel.enableVibration(true);
+                    channel.enableLights(false);
+                    channel.enableVibration(false);
+                    channel.setShowBadge(false);
 
                     notificationManager.createNotificationChannel(channel);
                     promise.resolve(true);

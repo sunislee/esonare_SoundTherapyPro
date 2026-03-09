@@ -224,15 +224,15 @@ export const ProfileScreen = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleResetAppData = () => {
     triggerHaptic('impactMedium');
-    Alert.alert(t('profile.modals.logoutTitle'), t('profile.modals.logoutMsg'), [
+    Alert.alert(t('settings.reset_data'), t('profile.modals.resetDataMsg'), [
       { text: t('profile.modals.cancel'), style: "cancel" },
       { 
-        text: t('profile.modals.confirmLogout'), 
+        text: t('profile.modals.confirm'), 
         style: "destructive",
         onPress: async () => {
-          await AsyncStorage.multiRemove(['USER_NAME', 'USER_AVATAR', 'HAS_SET_NAME']);
+          await AsyncStorage.multiRemove(['USER_NAME', 'USER_AVATAR', 'HAS_SET_NAME', 'RESOURCE_READY_V_1.0.7', '@mixer_presets', '@fade_out_enabled', '@settings_high_quality_audio', '@settings_developer_mode', '@settings_language']);
           navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
         }
       }
@@ -511,7 +511,7 @@ export const ProfileScreen = () => {
           </TouchableWithoutFeedback>
         </Modal>
 
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.menu.coreFeatures')}</Text>
           <MenuItem icon="clock" title={t('profile.menu.sleepTimer')} onPress={() => {
             // 睡眠定时功能开发中提示
@@ -521,18 +521,18 @@ export const ProfileScreen = () => {
               Alert.alert(t('common.prompt'), t('common.comingSoon'));
             }
           }} />
-        </View>
+        </View> */}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.menu.resources')}</Text>
-          <MenuItem icon="calendar" title={t('profile.menu.history')} onPress={() => {
+          {/* <MenuItem icon="calendar" title={t('profile.menu.history')} onPress={() => {
             // 播放历史功能开发中提示
             if (Platform.OS === 'android') {
               ToastAndroid.show(t('common.comingSoon'), ToastAndroid.SHORT);
             } else {
               Alert.alert(t('common.prompt'), t('common.comingSoon'));
             }
-          }} />
+          }} /> */}
           <MenuItem icon="settings" title={t('profile.menu.settings')} onPress={() => navigation.navigate('Settings')} />
           <MenuItem icon="trash-2" title={t('profile.menu.clearCache')} onPress={handleClearCache} />
         </View>
@@ -540,7 +540,7 @@ export const ProfileScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.menu.about')}</Text>
           <MenuItem icon="info" title={t('profile.menu.aboutUs')} onPress={() => navigation.navigate('About')} />
-          <MenuItem icon="log-out" title={t('profile.menu.logout')} onPress={handleLogout} color="#FF4D4F" showArrow={false} />
+          <MenuItem icon="log-out" title={t('settings.reset_data')} onPress={handleResetAppData} color="#FF4D4F" showArrow={false} />
         </View>
 
         <Text style={styles.versionText}>Version 1.1.9</Text>
