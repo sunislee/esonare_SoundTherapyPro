@@ -113,6 +113,13 @@ android {
             abiFilters "armeabi-v7a", "arm64-v8a"
         }
 
+        // 16KB 内存页面对齐支持 (Google Play 2026 要求)
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+            }
+        }
+
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
         buildConfigField "String", "DISTRIBUTION_CHANNEL", "\"${findProperty('distributionChannel') ?: 'googlePlay'}\""
     }

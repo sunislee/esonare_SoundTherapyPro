@@ -45,7 +45,7 @@ export const ProfileScreen = () => {
   useBackHandler(false, navigation);
   const BACKGROUND_OPTIONS = [
     { id: '1', name: '自然', source: require('../assets/images/categories/category_nature.webp') },
-    { id: '2', name: '治疗', source: require('../assets/images/categories/category_therapy.webp') },
+    { id: '2', name: '疗愈', source: require('../assets/images/categories/category_therapy.webp') },
     { id: '3', name: '生活', source: require('../assets/images/categories/category_life.webp') },
     { id: '4', name: '专注', source: require('../assets/images/categories/category_focus.webp') },
   ];

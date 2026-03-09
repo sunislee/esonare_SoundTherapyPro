@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, NavigationProp } from '@react-navigation/native';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 
@@ -17,6 +17,7 @@ import MiniPlayer from '../components/MiniPlayer';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
+import PolicyWebView from '../screens/PolicyWebView';
 import { DownloadService } from '../services/DownloadService';
 import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
 
@@ -32,6 +33,7 @@ export type RootStackParamList = {
   History: undefined;
   Settings: undefined;
   About: undefined;
+  PolicyWebView: { url: string; title: string };
   Mixer: { presetId?: string } | undefined;
 };
 
@@ -178,6 +180,18 @@ export function MainNavigator() {
         <Stack.Screen 
           name="About" 
           component={AboutScreen} 
+        />
+        <Stack.Screen 
+          name="PolicyWebView" 
+          component={PolicyWebView} 
+          options={{
+            headerShown: true,
+            headerTitle: (props) => <Text style={{ color: '#fff', fontSize: 18 }}>{props.children}</Text>,
+            headerStyle: {
+              backgroundColor: '#0F111A',
+            },
+            headerTintColor: '#fff',
+          }}
         />
         {/* 
         <Stack.Screen 
