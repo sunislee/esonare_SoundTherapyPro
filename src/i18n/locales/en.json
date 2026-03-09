@@ -1,13 +1,13 @@
 {
-  "welcome": "Welcome to Sound Therapy App",
-  "appTitle": "SoundTherapy",
+  "welcome": "Welcome to Sound Relaxation App",
+  "appTitle": "Sound Meditation",
   "tabs": {
     "scenes": "Scenes",
-    "profile": "My"
+    "profile": "Profile"
   },
   "categories": {
     "nature": "Natural Power",
-    "healing": "Deep Healing",
+    "healing": "Deep Relaxation",
     "brainwave": "Focus Brainwaves",
     "life": "Life Corners",
     "interactive": "Ambient Decor"
@@ -23,7 +23,7 @@
     "restored": "Playback restored"
   },
   "slogans": {
-    "journey": "Begin a healing journey",
+    "journey": "Begin a relaxation journey",
     "peace": "May your heart be at peace",
     "silence": "Let the world be quiet for a while"
   },
@@ -51,19 +51,20 @@
     "enter_scheme_name": "Enter scheme name",
     "friend": "Friend",
     "comingSoon": "Feature coming soon, stay tuned!",
-    "prompt": "Prompt"
+    "prompt": "Prompt",
+    "unableToOpen": "Unable to open link"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}, in deep healing"
+    "artistDescription": "🎵 {{userName}}, in deep relaxation"
   },
   "about": {
     "header": "About",
     "kernelVersion": "Kernel Version",
-    "copyright": "© 2024 SoundTherapy Pro. All rights reserved."
+    "copyright": "© 2024 Sound Meditation Pro. All rights reserved."
   },
   "profile": {
     "loading": "Loading...",
-    "defaultUser": "SoundTherapy User",
+    "defaultUser": "Sound Meditation User",
     "stats": {
       "focusCount": "Focus Sessions",
       "totalDuration": "Total Duration"
@@ -105,7 +106,7 @@
       "error": "Error",
       "saveFailed": "Save failed",
       "exitTitle": "Exit App",
-      "exitMsg": "Are you sure you want to leave SoundTherapy?",
+      "exitMsg": "Are you sure you want to leave Sound Meditation?",
       "exitConfirm": "Confirm",
       "confirm": "Confirm"
     },
@@ -115,7 +116,7 @@
       "systemPreset": "System Presets",
       "customPro": "Select from Album",
       "proFeatureTitle": "✨ Unlock Pro Features",
-      "proFeatureMsg": "Custom background is a Pro exclusive feature. Upgrade to Pro to unlock gallery selection, exclusive sounds, and more! This feature will be available in future versions.",
+      "proFeatureMsg": "Custom background is a Pro exclusive feature. Upgrade to Pro to unlock gallery selection, exclusive sounds, and more! Stay tuned for this feature in upcoming versions.",
       "proFeatureConfirm": "Got it",
       "updateSuccess": "Background updated",
       "recommended": "Recommended",
@@ -142,7 +143,7 @@
       "text": "Try clicking these icons for surprise sound effects"
     },
     "status": {
-      "playing": "Healing in progress...",
+      "playing": "Relaxation in progress...",
       "paused": "Paused",
       "buffering": "Buffering...",
       "loading": "Loading...",
@@ -243,7 +244,7 @@
   },
   "meditation": {
     "success_title": "Congratulations",
-    "success_message": "You have successfully completed this healing journey. May peace be with you.",
+    "success_message": "You have successfully completed this relaxation journey. May peace be with you.",
     "success_confirm": "Great"
   },
   "error": {
@@ -288,7 +289,7 @@
   },
   "nameEntry": {
     "title": "What's your name?",
-    "subtitle": "Let's begin your exclusive healing journey",
+    "subtitle": "Let's begin your exclusive relaxation journey",
     "placeholder": "Enter your name",
     "button": "Begin Journey",
     "skip": "Skip for now"
@@ -367,5 +368,9 @@
     "interactive_breath": { "title": "Breathing", "desc": "Mindfulness guidance" },
     "interactive_apple": { "title": "Apple Crunch", "desc": "Relaxing sound" },
     "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" }
+  },
+  "disclaimer": {
+    "title": "Health Disclaimer",
+    "content": "The sound content provided by this app is for relaxation and meditation purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Please consult a qualified healthcare provider for any health concerns."
   }
 }
