@@ -348,9 +348,12 @@
       "clearHistoryMsg": "确定要删除所有播放历史吗？此操作无法撤销。",
       "clearPresetsTitle": "清除所有混音方案",
       "clearPresetsMsg": "确定要删除所有已保存的混音方案吗？此操作无法撤销。",
+      "resetDataTitle": "重置应用数据",
+      "resetDataMsg": "确定要重置应用吗？这将删除所有本地数据（包括用户名、播放历史、混音预设等），但不会删除已下载的音频资源。",
       "confirm": "清除",
       "cancel": "取消"
-    }
+    },
+    "reset_data": "重置应用数据"
   },
   "scenes": {
     "nature_ocean": { "title": "深海", "desc": "深蓝色的宁静" },
