@@ -18,8 +18,7 @@ import {
   ToastAndroid
 } from 'react-native';
 
-
-
+import { version as appVersion } from '../../package.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import AudioService from '../services/AudioService';
@@ -226,13 +225,24 @@ export const ProfileScreen = () => {
 
   const handleResetAppData = () => {
     triggerHaptic('impactMedium');
-    Alert.alert(t('settings.reset_data'), t('profile.modals.resetDataMsg'), [
+    Alert.alert(t('settings.modals.resetDataTitle'), t('settings.modals.resetDataMsg'), [
       { text: t('profile.modals.cancel'), style: "cancel" },
       { 
         text: t('profile.modals.confirm'), 
         style: "destructive",
         onPress: async () => {
-          await AsyncStorage.multiRemove(['USER_NAME', 'USER_AVATAR', 'HAS_SET_NAME', 'RESOURCE_READY_V_1.0.7', '@mixer_presets', '@fade_out_enabled', '@settings_high_quality_audio', '@settings_developer_mode', '@settings_language']);
+          // 清除所有本地数据，但保留已下载的资源
+          await AsyncStorage.multiRemove([
+            'USER_NAME', 
+            'USER_AVATAR', 
+            'HAS_SET_NAME', 
+            'RESOURCE_READY', // 使用简化后的 key
+            '@mixer_presets', 
+            '@fade_out_enabled', 
+            '@settings_high_quality_audio', 
+            '@settings_developer_mode', 
+            '@settings_language'
+          ]);
           navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
         }
       }
@@ -246,7 +256,7 @@ export const ProfileScreen = () => {
       { 
         text: t('profile.modals.confirmClear'), 
         onPress: async () => {
-          await AsyncStorage.removeItem('RESOURCE_READY_V_1.0.7');
+          await AsyncStorage.removeItem('RESOURCE_READY'); // 使用简化后的 key
           Alert.alert(t('profile.modals.clearCacheTitle'), t('profile.modals.clearCacheSuccess'));
           // @ts-ignore
           navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
@@ -543,7 +553,7 @@ export const ProfileScreen = () => {
           <MenuItem icon="log-out" title={t('settings.reset_data')} onPress={handleResetAppData} color="#FF4D4F" showArrow={false} />
         </View>
 
-        <Text style={styles.versionText}>Version 1.1.9</Text>
+        <Text style={styles.versionText}>Version {appVersion}</Text>
       </ScrollView>
 
       {/* SleepTimerSheet已隐藏 - 睡眠定时功能开发中 <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} /> */}

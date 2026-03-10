@@ -345,9 +345,12 @@
       "clearHistoryMsg": "Are you sure you want to clear all history? This cannot be undone.",
       "clearPresetsTitle": "Clear Presets",
       "clearPresetsMsg": "Are you sure you want to clear all presets? This cannot be undone.",
+      "resetDataTitle": "Reset App Data",
+      "resetDataMsg": "Are you sure you want to reset the app? This will delete all local data (including username, playback history, mix presets, etc.), but will not delete downloaded audio resources.",
       "confirm": "Clear",
       "cancel": "Cancel"
-    }
+    },
+    "reset_data": "Reset App Data"
   },
   "scenes": {
     "nature_ocean": { "title": "Deep Ocean", "desc": "Deep blue tranquility" },
