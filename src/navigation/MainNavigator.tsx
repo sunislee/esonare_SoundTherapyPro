@@ -18,6 +18,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import WebviewScreen from '../screens/WebviewScreen';
+import PolicyWebView from '../screens/PolicyWebView';
 import { DownloadService } from '../services/DownloadService';
 import PermissionService from '../services/PermissionService';
 import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   Settings: undefined;
   About: undefined;
   WebviewScreen: { url: string; title: string };
+  PolicyWebView: { url: string; title: string };
   Mixer: { presetId?: string } | undefined;
 };
 
@@ -201,6 +203,13 @@ export function MainNavigator() {
         <Stack.Screen 
           name="WebviewScreen" 
           component={WebviewScreen} 
+          options={{ 
+            headerShown: false 
+          }}
+        />
+        <Stack.Screen 
+          name="PolicyWebView" 
+          component={PolicyWebView} 
           options={{ 
             headerShown: false 
           }}
