@@ -382,14 +382,21 @@ export const HomeScreen: React.FC = () => {
     // Initialize Audio
     const init = async () => {
       try {
+        console.log('[HomeScreen] ====== 开始初始化音频服务 ======');
+        console.log('[HomeScreen] 调用 AudioService.setupPlayer()');
         await AudioService.setupPlayer();
+        console.log('[HomeScreen] ✅ AudioService.setupPlayer() 成功');
         
         // 如果当前没有在播放，则预加载第一个场景（不自动播放）
         if (!AudioService.isPlaying()) {
+          console.log('[HomeScreen] 预加载第一个场景：', SCENES[0].id);
           await AudioService.loadAudio(SCENES[0], false);
+          console.log('[HomeScreen] ✅ 场景加载完成');
         }
+        console.log('[HomeScreen] ====== 音频服务初始化完成 ======');
       } catch (e) {
-        console.warn('[HomeScreen] Audio init failed:', e);
+        console.error('[HomeScreen] ❌ Audio init failed:', e);
+        console.error('[HomeScreen] Error stack:', e.stack);
       }
     };
     init().catch(() => {});

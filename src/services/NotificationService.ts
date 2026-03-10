@@ -2,188 +2,125 @@ import TrackPlayer, {
   Capability, 
   AppKilledPlaybackBehavior, 
   State, 
-  RepeatMode,
-  Event
+  RepeatMode 
 } from 'react-native-track-player';
+import { AppState, AppStateStatus } from 'react-native';
 import { Scene } from '../constants/scenes';
-import { Platform, NativeModules } from 'react-native';
-import i18next from 'i18next';
 
 export class NotificationService {
   private static isInitialized = false;
-  private static currentScene: Scene | null = null;
-  private static currentState: State = State.None;
-  private static lastUpdatedSceneId: string | null = null; // 用于按需更新
+  private static appState: AppStateStatus = 'active';
+  private static appStateListener: any = null;
+
+  private static initAppStateListener() {
+    if (this.appStateListener) return;
+    // 监听 AppState 变化
+    this.appStateListener = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      console.log(`[NotificationService] AppState changed: ${NotificationService.appState} -> ${nextAppState}`);
+      NotificationService.appState = nextAppState;
+    });
+  }
 
   static async setup() {
-    if (this.isInitialized) return;
+    if (this.isInitialized) {
+      console.log('[NotificationService] 已经初始化，跳过');
+      return;
+    }
+    
+    // 初始化 AppState 监听
+    this.initAppStateListener();
+    
     try {
-      // 1. 创建通知渠道（Android 8.0+）
-      if (Platform.OS === 'android') {
-        try {
-          const NotificationManager = NativeModules.NotificationManager;
-          if (NotificationManager && NotificationManager.createNotificationChannel) {
-            await NotificationManager.createNotificationChannel();
-            console.log('[NotificationService] Notification channel created successfully');
-          }
-        } catch (e) {
-          console.error('[NotificationService] Channel creation failed:', e);
-        }
-      }
-      
-      // 2. 等待 TrackPlayer 完全就绪
+      console.log('[NotificationService] ====== 开始初始化通知服务 ======');
+      console.log('[NotificationService] 调用 TrackPlayer.setupPlayer()');
       await TrackPlayer.setupPlayer();
+      console.log('[NotificationService] ✅ TrackPlayer.setupPlayer() 成功');
       
-      // 3. 设置播放选项，包含前台服务配置
+      console.log('[NotificationService] 配置播放选项');
       await TrackPlayer.updateOptions({
         android: {
           appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
-          // 前台服务配置（Android 14 兼容性）
-          foregroundService: {
-            stopWithApp: false, // 应用进入后台时不关闭通知
-            notificationId: 1337
-          }
+          alwaysShowNotificationCustom: true,
+          handleAudioFocus: true, // 【关键】启用音频焦点管理
+          alwaysPauseOnInterruption: true,
+          channelId: 'esonare_playback_v119', // 【关键】唯一渠道 ID
+          channelName: '心声冥想',
+          channelDescription: '媒体播放控制',
+          category: 'transport', // 【关键】媒体传输类别
+          foregroundServiceType: 'mediaPlayback', // 【关键】前台服务类型
         },
-        capabilities: [Capability.Play, Capability.Pause, Capability.Stop],
+        capabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SeekTo],
+        notificationCapabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SeekTo],
         compactCapabilities: [Capability.Play, Capability.Pause],
-        notificationCapabilities: [Capability.Play, Capability.Pause, Capability.Stop],
-        // 启用进度更新事件（每秒更新一次，用于通知栏进度条）
-        progressUpdateEventInterval: 1,
+        progressUpdateEventInterval: 1, // 每秒更新进度
       });
+      console.log('[NotificationService] ✅ 播放选项配置完成（含通知栏配置）');
       
-      // 4. 添加一个持久的 silent track（使用 1 小时静音音频）
-      const t = i18next.t.bind(i18next);
+      console.log('[NotificationService] 添加静音音轨');
       await TrackPlayer.add({
         id: 'esonare_silent_core',
-        url: 'https://github.com/anars/blank-audio/raw/master/1-hour-of-silence.mp3', 
-        title: t('notification.title', { defaultValue: '心声冥想' }),
-        artist: t('notification.subtitle', { defaultValue: '正在深度疗愈中...' }),
-        duration: 3600,
+        url: 'https://github.com/anars/blank-audio/raw/master/10-seconds-of-silence.mp3', 
+        title: '心声冥想',
+        artist: '正在为您营造宁静空间',
+        duration: 3600, 
         isLiveStream: false,
-        artwork: require('../assets/logo.png'),
+        artwork: require('../assets/logo.png'), 
       });
+      console.log('[NotificationService] ✅ 音轨添加完成');
 
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
-      
-      // 立即开始播放（确保 TrackPlayer 处于活跃状态）
-      try {
-        await TrackPlayer.play();
-        console.log('[NotificationService] Initial playback started');
-      } catch (e) {
-        console.error('[NotificationService] Initial playback failed:', e);
-      }
-      
-      // 5. 监听播放状态变化，自动更新通知
-      TrackPlayer.addEventListener(Event.PlaybackState, async (state) => {
-        console.log('[NotificationService] PlaybackState event:', state.state);
-        this.currentState = state.state;
-        await this.updateNotificationFromEvent();
-      });
-      
-      // 6. 启用进度更新事件（每秒更新一次，用于通知栏进度条）
-      TrackPlayer.addEventListener(Event.PlaybackProgress, async (data) => {
-        console.log('[NotificationService] PlaybackProgress:', data.position, '/', data.duration);
-      });
-      
       this.isInitialized = true;
-      console.log('[NotificationService] Setup completed successfully');
+      console.log('[NotificationService] ====== 通知服务初始化完成 ======');
     } catch (e) {
-      console.error('[NotificationService] Setup failed:', e);
+      console.error('[NotificationService] ❌ Setup failed:', e);
+      console.error('[NotificationService] Error stack:', e.stack);
+      throw e;
     }
   }
 
   static async updateNotification(scene: Scene, state: State) {
-    if (!this.isInitialized) {
-      console.log('[NotificationService] Not initialized, calling setup...');
-      await this.setup();
-    }
+    if (!this.isInitialized) await this.setup();
 
     try {
-      // 6. 每次都要更新 metadata 和播放状态
-      this.currentScene = scene;
-      this.currentState = state;
-      
-      // 使用 i18n 获取本地化文本
-      const t = i18next.t.bind(i18next);
-      const notificationTitle = t('notification.title', { defaultValue: '心声冥想' });
-      const notificationSubtitle = t('notification.subtitle', { defaultValue: '正在深度疗愈中...' });
-      
-      // 场景标题也使用 i18n 国际化
-      const sceneTitle = t(`scenes.${scene.id}.title`, { defaultValue: scene.title });
-      
-      console.log(`[NotificationService] Updating notification: ${sceneTitle}, state=${state}, lng=${i18next.language}`);
-      
-      // 先更新 metadata（优先级最高）
       await TrackPlayer.updateMetadataForTrack(0, {
-        title: sceneTitle,
-        artist: notificationSubtitle,
-        duration: 3600,
-        artwork: require('../assets/logo.png'),
+        title: scene.name,
+        artist: '正在深度疗愈中...',
+        duration: 3600, // 保持时长一致
+        artwork: require('../assets/logo.png'), 
       });
-      this.lastUpdatedSceneId = scene.id;
-      console.log('[NotificationService] Metadata updated for scene:', scene.id);
 
-      // 然后根据状态控制播放
       const tpState = await TrackPlayer.getState();
       if (state === State.Playing && tpState !== State.Playing) {
-        console.log('[NotificationService] TrackPlayer playing...');
         await TrackPlayer.play();
       } else if (state === State.Paused && tpState !== State.Paused) {
-        console.log('[NotificationService] TrackPlayer pausing...');
         await TrackPlayer.pause();
-      }
-      
-      // 确保通知保持显示
-      if (Platform.OS === 'android') {
-        try {
-          const NotificationManager = NativeModules.NotificationManager;
-          if (NotificationManager && NotificationManager.updateNotification) {
-            await NotificationManager.updateNotification({
-              id: 1337,
-              title: sceneTitle,
-              artist: notificationSubtitle,
-              isPlaying: state === State.Playing,
-            });
-          }
-        } catch (e) {
-          console.error('[NotificationService] Native notification update failed:', e);
-        }
       }
     } catch (e) {
       console.error('[NotificationService] Update error:', e);
     }
   }
 
-  private static async updateNotificationFromEvent() {
-    if (!this.currentScene || !this.isInitialized) return;
-    
-    try {
-      // 使用 i18n 获取本地化文本
-      const t = i18next.t.bind(i18next);
-      const notificationSubtitle = t('notification.subtitle', { defaultValue: '正在深度疗愈中...' });
-      
-      // 场景标题也使用 i18n 国际化
-      const sceneTitle = t(`scenes.${this.currentScene.id}.title`, { defaultValue: this.currentScene.title });
-      
-      // 8. 事件更新时不重新设置 artwork，避免翻转 bug
-      await TrackPlayer.updateMetadataForTrack(0, {
-        title: sceneTitle,
-        artist: notificationSubtitle,
-        duration: 3600,
-        // 不更新 artwork，避免翻转
-      });
-    } catch (e) {
-      console.error('[NotificationService] Event update error:', e);
-    }
-  }
-
   static async updatePlaybackState(isPlaying: boolean) {
     if (!this.isInitialized) return;
+    
+    // 【关键】后台状态下禁止调用 TrackPlayer.play()，避免 ForegroundServiceStartNotAllowedException
+    if (isPlaying && this.appState !== 'active') {
+      console.log(`[NotificationService] ⚠️ 应用在后台，跳过播放状态更新`);
+      return;
+    }
+    
     try {
       const tpState = await TrackPlayer.getState();
-      if (isPlaying && tpState !== State.Playing) await TrackPlayer.play();
-      else if (!isPlaying && tpState !== State.Paused) await TrackPlayer.pause();
-    } catch (e) {}
+      if (isPlaying && tpState !== State.Playing) {
+        console.log(`[NotificationService] 调用 TrackPlayer.play(), AppState: ${this.appState}`);
+        await TrackPlayer.play();
+      }
+      else if (!isPlaying && tpState !== State.Paused) {
+        await TrackPlayer.pause();
+      }
+    } catch (e) {
+      console.error('[NotificationService] updatePlaybackState error:', e);
+    }
   }
 
   static async hideNotification() {
@@ -191,11 +128,6 @@ export class NotificationService {
     try {
       await TrackPlayer.reset();
       this.isInitialized = false;
-      this.currentScene = null;
-      this.lastUpdatedSceneId = null; // 重置场景 ID
-      console.log('[NotificationService] Notification hidden');
-    } catch (e) {
-      console.error('[NotificationService] Hide error:', e);
-    }
+    } catch (e) {}
   }
 }
