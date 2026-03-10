@@ -80,7 +80,9 @@ const AboutScreen = () => {
         </View>
         
         <View style={styles.footer}>
-          <Text style={styles.copyright}>{t('about.copyright')}</Text>
+          <Text style={styles.copyright}>
+            © {new Date().getFullYear()} Sound Meditation Pro. All rights reserved.
+          </Text>
         </View>
       </View>
     </View>

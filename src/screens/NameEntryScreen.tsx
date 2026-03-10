@@ -88,9 +88,25 @@ const NameEntryScreen: React.FC = () => {
   };
 
   const handleSkip = async () => {
-    console.log('[NameEntryScreen] 用户跳过命名');
-    await AsyncStorage.setItem('HAS_SET_NAME', 'true');
-    console.log('[NameEntryScreen] ✅ HAS_SET_NAME 保存成功 (skip)');
+    console.log('[NameEntryScreen] DEBUG_SAVE_START: 用户跳过命名，开始保存');
+    try {
+      // 跳过时也保存一个默认用户名，防止 LandingScreen 再次跳转回来
+      // 硬编码默认值，不依赖 t() 函数，避免翻译未初始化
+      const defaultName = '旅行者';
+      await AsyncStorage.setItem('USER_NAME', defaultName);
+      console.log('[NameEntryScreen] ✅ USER_NAME 保存成功 (skip, default):', defaultName);
+      
+      await AsyncStorage.setItem('HAS_SET_NAME', 'true');
+      console.log('[NameEntryScreen] ✅ HAS_SET_NAME 保存成功 (skip)');
+      
+      // 验证读取
+      const verifyName = await AsyncStorage.getItem('USER_NAME');
+      const verifySkip = await AsyncStorage.getItem('HAS_SET_NAME');
+      console.log('[NameEntryScreen] 验证读取 - USER_NAME:', verifyName, '| HAS_SET_NAME:', verifySkip);
+      console.log('[NameEntryScreen] DEBUG_SAVE_END: 保存完成');
+    } catch (e) {
+      console.error('[NameEntryScreen] ❌ 跳过时保存失败:', e);
+    }
     navigation.replace('MainTabs');
   };
 

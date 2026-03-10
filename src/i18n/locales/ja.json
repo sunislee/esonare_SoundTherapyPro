@@ -51,7 +51,10 @@
     "enter_scheme_name": "スキーム名を入力してください",
     "friend": "友達",
     "comingSoon": "機能開発中、お楽しみに！",
-    "prompt": "プロンプト"
+    "prompt": "プロンプト",
+    "confirmExit": "終了の確認",
+    "confirmExitMessage": "本当に終了しますか？",
+    "exit": "終了"
   },
   "player": {
     "landing": {
