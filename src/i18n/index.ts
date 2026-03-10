@@ -3,10 +3,401 @@ import { initReactI18next } from 'react-i18next';
 import { Platform, NativeModules, I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// 强制保留 i18n 模块 (防止被 Hermes 优化掉)
+(global as any).__SOUND_THERAPY_I18N__ = i18n;
+
 // 导入语言包
-import zh from './locales/zh.json';
-import en from './locales/en.json';
-import ja from './locales/ja.json';
+const zh = {
+  "welcome": "欢迎使用声音放松应用",
+  "appTitle": "心声冥想",
+  "tabs": {
+    "scenes": "场景",
+    "profile": "我的"
+  },
+  "categories": {
+    "nature": "自然力量",
+    "healing": "深度放松",
+    "brainwave": "脑波专注",
+    "life": "生活角落",
+    "interactive": "氛围点缀"
+  },
+  "actions": {
+    "play": "播放",
+    "pause": "暂停",
+    "stop": "停止",
+    "next": "下一首",
+    "previous": "上一首",
+    "deleted": "已删除",
+    "deleteFailed": "删除失败",
+    "restored": "已恢复播放"
+  },
+  "slogans": {
+    "journey": "开启一段放松之旅",
+    "peace": "愿你内心平静",
+    "silence": "让世界安静一会儿"
+  },
+  "greetings": {
+    "hello": "你好",
+    "midnight": "凌晨好",
+    "morning": "早安",
+    "noon": "中午好",
+    "afternoon": "上午好",
+    "lateAfternoon": "下午好",
+    "evening": "傍晚好",
+    "night": "晚上好"
+  },
+  "common": {
+    "confirm": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "success": "成功",
+    "error": "错误",
+    "loading": "加载中...",
+    "back": "返回",
+    "delete": "删除",
+    "comma": "，",
+    "period": "。",
+    "enter_scheme_name": "输入方案名称",
+    "friend": "朋友",
+    "comingSoon": "功能开发中，敬请期待！",
+    "prompt": "提示",
+    "unableToOpen": "无法打开链接",
+    "confirmExit": "确认退出",
+    "confirmExitMessage": "确定要离开吗？",
+    "exit": "退出"
+  },
+  "notification": {
+    "artistDescription": "🎵 {{userName}}，正在深度放松"
+  },
+  "about": {
+      "header": "关于",
+      "kernelVersion": "内核版本",
+      "copyright": "© 2024 放松音泉。保留所有权利。",
+      "privacy": "隐私政策",
+      "terms": "用户协议"
+    },
+  "profile": {
+    "loading": "加载中...",
+    "defaultUser": "放松音泉用户",
+    "stats": {
+      "focusCount": "专注次数",
+      "totalDuration": "总时长"
+    },
+    "menu": {
+      "coreFeatures": "核心功能",
+      "sleepTimer": "睡眠定时",
+      "myPresets": "我的混音预设",
+      "settings": "偏好设置",
+      "clearCache": "清除缓存",
+      "logout": "退出登录",
+      "comingSoon": "{{feature}} 正在开发中",
+      "comingSoonDesc": "敬请期待下一版本",
+      "resources": "资源与记录",
+      "history": "播放历史",
+      "about": "关于",
+      "aboutUs": "关于我们",
+      "proMember": "会员中心",
+      "editNickname": "修改昵称",
+      "nicknamePlaceholder": "请输入您的昵称"
+    },
+    "modals": {
+      "renameTitle": "修改昵称",
+      "renamePlaceholder": "请输入新名字",
+      "save": "保存",
+      "cancel": "取消",
+      "deletePresetTitle": "删除预设",
+      "deletePresetMsg": "确定要删除这个混音预设吗？",
+      "logoutTitle": "退出登录",
+      "logoutMsg": "确定要退出当前账号并清除所有本地设置吗？",
+      "clearCacheTitle": "清除缓存",
+      "clearCacheMsg": "这将删除所有已下载的音频资源，下次使用需重新下载。",
+      "clearCacheSuccess": "缓存已清理，请重启 App。",
+      "confirmLogout": "确定退出",
+      "confirmClear": "确认清除",
+      "confirmDelete": "删除",
+      "prompt": "提示",
+      "nameEmpty": "名字不能为空",
+      "error": "错误",
+      "saveFailed": "保存失败",
+      "exitTitle": "退出应用",
+      "exitMsg": "确定要离开心声冥想吗？",
+      "exitConfirm": "确定",
+      "confirm": "确定"
+    },
+    "background": {
+      "selectTitle": "选择背景",
+      "selectMsg": "请选择背景设置方式",
+      "systemPreset": "选择系统预设背景",
+      "customPro": "从相册选择",
+      "proFeatureTitle": "✨ 解锁 Pro 专属特权",
+      "proFeatureMsg": "自定义背景是 Pro 用户的专属功能。升级 Pro 即可解锁相册选图、专属音效等更多福利！敬请期待后续版本开放。",
+
+      "proFeatureConfirm": "我知道了",
+      "updateSuccess": "背景已更新",
+      "recommended": "推荐背景",
+      "fire": "火焰",
+      "forest": "森林",
+      "rain": "雨声",
+      "ocean": "海洋",
+      "selectFromAlbum": "从相册选择"
+    }
+  },
+  "player": {
+    "landing": {
+      "loading": "正在进入心灵空间..."
+    },
+    "labels": {
+      "ignite": "点燃",
+      "crisp": "清脆",
+      "ethereal": "空灵",
+      "rain": "听雨",
+      "ocean": "观海",
+      "breath": "呼吸"
+    },
+    "guide": {
+      "text": "试试点击这些图标，有惊喜音效"
+    },
+    "status": {
+      "playing": "正在放松中...",
+      "paused": "已暂停",
+      "buffering": "缓冲中...",
+      "loading": "加载中...",
+      "ready": "准备中..."
+    },
+    "ambient": {
+      "pickerTitle": "氛围点缀",
+      "controlTitle": "氛围点缀控制",
+      "saveMix": "保存当前混音方案",
+      "inputPlaceholder": "输入名称...",
+      "success": "成功",
+      "saveSuccess": "方案已保存",
+      "mainVolume": "场景主音量",
+      "ambientOverlay": "环境音效叠加",
+      "myFavorites": "我的最爱",
+      "applied": "已应用: {{name}}",
+      "mainVolumeLabel": "主音量",
+      "noPresets": "暂无保存方案",
+      "defaultMixName": "{{month}}月{{day}}日 混音",
+      "saveCurrent": "点击保存当前混音"
+    },
+    "debug": {
+      "title": "高级调试",
+      "restartTitle": "救命功能",
+      "restartButton": "🚀 一键音频重启",
+      "restartHint": "声音卡死或逻辑异常时点此复活",
+      "restarting": "正在重启音频引擎...",
+      "restartSuccess": "音频引擎已彻底重置",
+      "restartFailed": "重启失败: {{error}}",
+      "unknownError": "未知错误",
+      "monitorTitle": "原生状态监视器",
+      "activeScene": "当前场景",
+      "nativePlayers": "原生播放器",
+      "logToggle": "日志开关",
+      "logHint": "开启后显示 RENDER_CHECK 日志",
+      "logEnabled": "调试日志已开启",
+      "logDisabled": "调试日志已关闭",
+      "close": "关闭"
+    },
+    "alarm": {
+      "title": "清晨唤醒",
+      "hour": "时",
+      "minute": "分",
+      "clear": "清除",
+      "confirm": "开启闹钟"
+    },
+    "sleepTimer": {
+      "title": "睡眠定时",
+      "remaining": "剩余",
+      "stop": "停止计时",
+      "minutes": "{{count}} 分钟",
+      "close": "稍后设置",
+      "finished": "睡眠定时结束，已停止播放"
+    },
+    "timer": {
+      "title": "定时关闭",
+      "unit": "分钟",
+      "clear": "关闭定时器",
+      "option1min": "1 分钟",
+      "option15min": "15 分钟",
+      "option30min": "30 分钟",
+      "option60min": "60 分钟",
+      "minuteUnit": "分钟",
+      "set_success": "定时器已设置：{{minutes}}分钟后停止播放",
+      "finished": "定时结束，已停止播放"
+    },
+    "history": {
+      "title": "播放历史",
+      "lastPlayed": "上次播放: {{time}}",
+      "empty": "暂无播放记录"
+    },
+    "remix": {
+      "title": "我的混音",
+      "count": "已保存 {{count}} 个方案",
+      "deleteTitle": "删除方案",
+      "deleteMsg": "确定要删除这个混音方案吗？此操作无法撤销。",
+      "renameTitle": "重命名方案",
+      "date": "{{month}}月{{day}}日",
+      "types": {
+        "none": "纯净",
+        "rain": "雨声",
+        "fire": "篝火"
+      }
+    }
+  },
+  "soundscape": {
+    "pickerTitle": "选择场景",
+    "description": "沉浸式自然白噪音",
+    "categories": {
+      "Nature": "自然",
+      "Healing": "疗愈",
+      "Brainwave": "脑波",
+      "Life": "生活"
+    }
+  },
+  "miniPlayer": {
+    "nowPlaying": "正在播放"
+  },
+  "meditation": {
+    "success_title": "恭喜完成冥想",
+    "success_message": "您已成功完成本次声音放松之旅，愿您内心常驻平静。",
+    "success_confirm": "太棒了"
+  },
+  "error": {
+    "boundaryTitle": "出错了",
+    "boundaryMessage": "抱歉，程序遇到了一些问题。",
+    "restartApp": "请尝试重启应用。",
+    "playError": "播放错误",
+    "operationFailed": "操作失败: {{message}}",
+    "audio_playback_error": "音频播放出错",
+    "ambient_load_failed": "环境音加载失败，请检查网络",
+    "load_audio_failed": "loadAudio 失败: 无法解析场景音频资源",
+    "system_mute": "监测到系统静音，请检查音量",
+    "load_audio_failed_with_msg": "loadAudio 失败: {{message}}",
+    "switch_failed": "切换场景失败",
+    "resolve_failed": "无法解析音频资源",
+    "reset_failed_with_msg": "重置播放失败: {{message}}",
+    "play_failed_with_msg": "播放失败: {{message}}",
+    "pause_failed_with_msg": "暂停失败: {{message}}"
+  },
+  "alarm_msg": {
+    "morning_title": "清晨唤醒",
+    "morning_msg": "早安！新的一天开始了",
+    "set_success": "闹钟已设置: {{time}}",
+    "cancelled": "闹钟已取消"
+  },
+  "study": {
+    "title": "雨夜书屋",
+    "subtitle": "沉浸式音频体验",
+    "description": "让心灵在雨中静谧成长",
+    "status": {
+      "playing": "雨落书屋中...",
+      "paused": "雨声渐止",
+      "buffering": "雨云汇聚中...",
+      "ready": "书屋静待中"
+    }
+  },
+  "download": {
+    "title": "资源下载中",
+    "subtitle": "正在为您准备沉浸式音频资源...",
+    "calculating": "正在计算资源大小...",
+    "tip": "初次使用请保持网络畅通，正在为您同步高品质音频"
+  },
+  "nameEntry": {
+    "title": "如何称呼您？",
+    "subtitle": "让我们为您开启专属的放松之旅",
+    "placeholder": "请输入您的名称",
+    "button": "开启之旅",
+    "skip": "暂时跳过"
+  },
+  "mixer": {
+    "title": "氛围点缀",
+    "labTitle": "PRO 混音实验室",
+    "saveConfig": "保存当前配置",
+    "presetNamePlaceholder": "输入预设名称",
+    "presetLoaded": "已加载预设: {{name}}",
+    "emptyTracksError": "请至少开启一个音轨再保存"
+  },
+  "landing": {
+    "loading": "正在进入心灵空间..."
+  },
+  "settings": {
+    "header": "设置",
+    "back": "返回",
+    "language": "语言",
+    "followSystem": "跟随系统",
+    "zh": "简体中文",
+    "en": "English",
+    "ja": "日本語",
+    "personal": "个人",
+    "editName": "修改昵称",
+    "defaultName": "朋友",
+    "audio": "音频",
+    "fadeOut": "定时结束淡出",
+    "fadeOutDesc": "睡眠定时结束时淡出当前音轨",
+    "highQuality": "高质量音频",
+    "highQualityDesc": "启用更高比特率的音频播放",
+    "storage": "存储",
+    "clearHistory": "清除播放历史",
+    "clearHistoryDesc": "删除所有历史记录",
+    "clearPresets": "清除所有混音方案",
+    "clearPresetsDesc": "删除本地保存的混音方案",
+    "about": "关于",
+    "version": "版本",
+    "developer": "开发者",
+    "devOptions": "开发者选项",
+    "advancedDebug": "高级调试",
+    "advancedDebugDesc": "查看应用调试信息",
+    "toast": {
+      "devOn": "开发者模式已开启",
+      "devOff": "开发者模式已关闭",
+      "devClick": "还需点击 {{count}} 次{{action}}调试",
+      "devActionOpen": "开启",
+      "devActionClose": "关闭",
+      "nameUpdated": "昵称已更新"
+    },
+    "modals": {
+      "clearHistoryTitle": "清除播放历史",
+      "clearHistoryMsg": "确定要删除所有播放历史吗？此操作无法撤销。",
+      "clearPresetsTitle": "清除所有混音方案",
+      "clearPresetsMsg": "确定要删除所有已保存的混音方案吗？此操作无法撤销。",
+      "resetDataTitle": "重置应用数据",
+      "resetDataMsg": "确定要重置应用吗？这将删除所有本地数据（包括用户名、播放历史、混音预设等），但不会删除已下载的音频资源。",
+      "confirm": "清除",
+      "cancel": "取消"
+    },
+    "reset_data": "重置应用数据"
+  },
+  "scenes": {
+    "nature_ocean": { "title": "深海", "desc": "深蓝色的宁静" },
+    "nature_forest": { "title": "迷雾森林", "desc": "林间漫步" },
+    "nature_deep_sea": { "title": "深海呼吸", "desc": "伴随海浪节律，找回深度呼吸" },
+    "nature_misty_forest": { "title": "林间迷雾", "desc": "漫步晨间森林，吸入纯净氧气" },
+    "nature_river": { "title": "晨间河畔", "desc": "清泉石上流" },
+    "nature_night": { "title": "静谧部落", "desc": "远古的呼唤" },
+    "life_rain_boat": { "title": "舟上雨", "desc": "微雨落孤舟" },
+    "life_bookstore": { "title": "午后书店", "desc": "纸张与宁静" },
+    "healing_zen_bowl": { "title": "颂钵冥想", "desc": "瞬间定静" },
+    "healing_clean_space": { "title": "洁净空间", "desc": "如水般流动" },
+    "healing_crystal": { "title": "水晶钵", "desc": "高频能量共振" },
+    "brainwave_alpha": { "title": "Alpha专注", "desc": "专注与放松" },
+    "brainwave_delta": { "title": "Delta入眠", "desc": "左右脑同步" },
+    "interactive_white_noise": { "title": "白噪音", "desc": "深层专注" },
+    "interactive_wind_chime": { "title": "风铃", "desc": "空灵之声" },
+    "interactive_breath": { "title": "呼吸", "desc": "正念引导" },
+    "interactive_apple": { "title": "嚼苹果", "desc": "解压音效" },
+    "interactive_match": { "title": "划火柴", "desc": "触发音" },
+    "interactive_wind_chime": { "title": "风铃", "desc": "清脆悦耳" },
+    "interactive_breath": { "title": "呼吸", "desc": "深度放松" },
+    "interactive_white_noise": { "title": "白噪音", "desc": "专注屏蔽" }
+  },
+  "disclaimer": {
+    "title": "健康声明",
+    "content": "本应用提供的声音内容仅用于放松和冥想目的，不能替代专业的医疗建议、诊断或治疗。如有健康问题，请咨询专业医疗人员。"
+  }
+};
+// 导入英文和日文语言包 - 直接导入 JSON 文件
+const en = require('./locales/en.json');
+const ja = require('./locales/ja.json');
 
 // 导入类型定义
 import { TranslationResources, TranslationKeys } from './types';
@@ -89,6 +480,11 @@ try {
       },
       lng: getSystemLanguage(),
       fallbackLng: 'en',
+      // React Native 0.73 必需配置
+      compatibilityJSON: 'v3',
+      // 命名空间配置 (必须设置)
+      defaultNS: 'translation',
+      ns: ['translation'],
       // 关键配置：支持 en-US -> en 的语言回退
       load: 'languageOnly',
       // 非严格模式，允许语言代码大小写不敏感
@@ -115,6 +511,9 @@ try {
       },
       lng: 'en',
       fallbackLng: 'en',
+      compatibilityJSON: 'v3',
+      defaultNS: 'translation',
+      ns: ['translation'],
       load: 'languageOnly',
     });
   } catch (fallbackError) {

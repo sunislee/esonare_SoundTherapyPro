@@ -93,8 +93,17 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     // 标记真实下载完成
     if (currentProgress >= 1.0) {
       setIsDownloadCompleted(true);
-      // 强制设置 UI 完成状态，触发跳转
-      setIsUiCompleted(true);
+      
+      // 【关键修复】先强制进度条到 100%，然后再标记 UI 完成
+      Animated.timing(animatedProgress, {
+        toValue: 1.0,
+        duration: 300,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start(() => {
+        // 动画完成后，再标记 UI 完成，触发"资源准备完成"显示
+        setIsUiCompleted(true);
+      });
     }
   }, [downloadInfo.progress, isSmoothSliding]);
 
@@ -102,10 +111,10 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   useEffect(() => {
     if (isUiCompleted && isDownloadCompleted) {
       console.log('[ResourceDownloadScreen] ✅ 下载完成，准备跳转...');
-      // 延迟 500ms 确保用户看到完成状态
+      // 延迟 800ms 确保用户看到 100% 进度和完成状态
       const timer = setTimeout(() => {
         enterMainApp();
-      }, 500);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [isUiCompleted, isDownloadCompleted]);

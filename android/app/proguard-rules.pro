@@ -48,6 +48,16 @@
 -keep class java.net.** { *; }
 
 # Additional protection for React Native modules
+-keep class com.facebook.react.modules.** { *; }
+
+# AsyncStorage protection (CRITICAL for data persistence)
+-keep class com.reactnativecommunity.asyncstorage.** { *; }
+-keep class com.facebook.react.modules.storage.** { *; }
+-dontwarn com.reactnativecommunity.asyncstorage.**
+
+# React Native bridge protection (prevent storage architecture removal)
+-keep class com.facebook.react.bridge.** { *; }
+-keep class com.facebook.react.common.** { *; }
 -keep class expo.modules.** { *; }
 -keep class com.facebook.react.** { *; } 
 
