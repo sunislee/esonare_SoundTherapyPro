@@ -7,9 +7,11 @@ import {
   IS_GOOGLE_PLAY_VERSION
 } from '../constants/audioAssets';
 
+// 资源版本标记（用于强制重新下载时使用）
 const RESOURCE_VERSION = '1.0.7';
 const SOURCE_ID = IS_GOOGLE_PLAY_VERSION ? 'GITHUB' : 'GITEE';
-const READY_KEY = `RESOURCE_READY_V_${RESOURCE_VERSION}_${SOURCE_ID}`;
+// 简化 key，不再包含版本号，避免版本更新后要求重新下载
+const READY_KEY = 'RESOURCE_READY';
 
 export interface ResourceIntegrityResult {
   isComplete: boolean;
