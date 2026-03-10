@@ -3,6 +3,7 @@ import { View, ActivityIndicator, StyleSheet, Platform, Text, TouchableOpacity, 
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface PolicyWebViewRouteParams {
   url: string;
@@ -60,14 +61,14 @@ const PolicyWebView = () => {
             style={styles.backButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
-            <Text style={styles.backButtonText}>‹</Text>
+            <Icon name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{title}</Text>
           <View style={styles.placeholder} />
         </View>
         
         <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠</Text>
+          <Icon name="alert-circle-outline" size={64} color="#FF6B6B" />
           <Text style={styles.errorTitle}>无法加载页面</Text>
           <Text style={styles.errorText}>请检查网络连接或稍后重试</Text>
           <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
@@ -87,7 +88,7 @@ const PolicyWebView = () => {
           style={styles.backButton}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         >
-          <Text style={styles.backButtonText}>‹</Text>
+          <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{title}</Text>
         <View style={styles.placeholder} />
@@ -150,12 +151,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 4,
   },
-  backButtonText: {
-    fontSize: 36,
-    fontWeight: '300',
-    color: '#FFFFFF',
-    lineHeight: 36,
-  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -173,17 +168,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F111A',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
-  },
-  errorIcon: {
-    fontSize: 64,
-    marginBottom: 24,
   },
   errorTitle: {
     fontSize: 18,

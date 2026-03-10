@@ -8,17 +8,15 @@ const nativeChannel =
 
 export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googlePlay' : true;
 
-// 强制所有渠道使用腾讯云 - 但保留 GitHub 作为保底
-const TENCENT_CLOUD_URL = 'http://43.138.58.71/resources/';
+const TENCENT_CLOUD_URL = 'https://43.138.58.71/';
+const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/master/';
 const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 
-// 主源使用腾讯云，备源使用 GitHub
-export const PRIMARY_REMOTE_RESOURCE_BASE_URL = TENCENT_CLOUD_URL;
-export const SECONDARY_REMOTE_RESOURCE_BASE_URL = GITHUB_URL;
-export const REMOTE_RESOURCE_BASE_URL = TENCENT_CLOUD_URL;
-
-// 腾讯云专供常量 - 硬编码地址
-export const RESOURCE_SERVER_URL = TENCENT_CLOUD_URL;
+// 国内渠道：腾讯云主源 + Gitee备源（更稳定）
+// 海外渠道：GitHub主源 + 腾讯云备源
+export const PRIMARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITHUB_URL : TENCENT_CLOUD_URL;
+export const SECONDARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? TENCENT_CLOUD_URL : GITEE_URL;
+export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 
 export const LOCAL_RESOURCE_PATH = `${RNFS.DocumentDirectoryPath}/audio_resources`; 
 
@@ -42,78 +40,83 @@ export const AMBIENT_RESOURCES = {
 };
 
 export const AUDIO_MANIFEST = [ 
-  { id: 'nature_ocean', filename: 'base/deep_ocean_abyss.m4a', category: 'nature', title: '深海', description: '深海冥想', size: 1429191 }, 
-  { id: 'nature_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: '森林', description: '森林冥想', size: 1732906 }, 
-  { id: 'nature_deep_sea', filename: 'base/deep_sea_breathing_rhythm.m4a', category: 'nature', title: '深海呼吸', description: '深海呼吸冥想', size: 5242880 },
-  { id: 'nature_misty_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: '迷雾森林', description: '迷雾森林冥想', size: 680336 },
-  { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: '河流', description: '河流冥想', size: 3614091 }, 
-  { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: '夜晚', description: '夜晚冥想', size: 7201196 },
+  { id: 'nature_ocean', filename: 'base/deep_ocean_abyss.m4a', category: 'nature', title: 'scenes.nature_ocean.title', description: 'scenes.nature_ocean.desc', size: 1429191 }, 
+  { id: 'nature_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 1732906 }, 
+  { id: 'nature_deep_sea', filename: 'base/deep_sea_breathing_rhythm.m4a', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 456030 },
+  { id: 'nature_misty_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 680336 },
+  { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 7201196 }, 
+  { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 7201196 },
 
-  { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: '雨声', description: '雨声冥想', size: 7201196 }, 
-  { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: '书店', description: '书店冥想', size: 3145728 }, 
+  { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 7201196 }, 
+  { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 }, 
 
-  { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: '禅碗', description: '禅碗冥想', size: 2097152 }, 
-  { id: 'healing_clean_space', filename: 'base/liquid_peace.m4a', category: 'healing', title: '净化空间', description: '净化空间冥想', size: 4574599 }, 
-  { id: 'healing_crystal', filename: 'base/crystal_bowl.m4a', category: 'healing', title: '水晶', description: '水晶冥想', size: 5242880 }, 
+  { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 2097152 }, 
+  { id: 'healing_clean_space', filename: 'base/liquid_peace.m4a', category: 'healing', title: 'scenes.healing_clean_space.title', description: 'scenes.healing_clean_space.desc', size: 4574599 }, 
+  { id: 'healing_crystal', filename: 'base/crystal_bowl.m4a', category: 'healing', title: 'scenes.healing_crystal.title', description: 'scenes.healing_crystal.desc', size: 5242880 }, 
 
-  { id: 'brainwave_alpha', filename: 'base/alpha_wave.m4a', category: 'brainwave', title: 'α波', description: 'α波冥想', size: 3145728 }, 
-  { id: 'brainwave_delta', filename: 'base/binaural_beat.mp3', category: 'brainwave', title: 'δ波', description: 'δ波冥想', size: 3840754 }, 
+  { id: 'brainwave_alpha', filename: 'base/alpha_wave.m4a', category: 'brainwave', title: 'scenes.brainwave_alpha.title', description: 'scenes.brainwave_alpha.desc', size: 3095272 }, 
+  { id: 'brainwave_delta', filename: 'base/binaural_beat.mp3', category: 'brainwave', title: 'scenes.brainwave_delta.title', description: 'scenes.brainwave_delta.desc', size: 3840754 }, 
 
-  { id: 'interactive_white_noise', filename: AMBIENT_RESOURCES.WHITE_NOISE, category: 'interactive', title: '白噪音', description: '白噪音', size: 69881 }, 
-  { id: 'interactive_wind_chime', filename: AMBIENT_RESOURCES.WIND_CHIME, category: 'interactive', title: '风铃', description: '风铃', size: 256806 }, 
-  { id: 'interactive_breath', filename: AMBIENT_RESOURCES.BREATH, category: 'interactive', title: '呼吸', description: '呼吸', size: 1048576 }, 
-  { id: 'interactive_apple', filename: AMBIENT_RESOURCES.APPLE_CRUNCH, category: 'interactive', title: '苹果', description: '苹果', size: 32853 }, 
-  { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: '火柴', description: '火柴', size: 846284 },
+  { id: 'interactive_white_noise', filename: AMBIENT_RESOURCES.WHITE_NOISE, category: 'interactive', title: 'scenes.interactive_white_noise.title', description: 'scenes.interactive_white_noise.desc', size: 69881 }, 
+  { id: 'interactive_wind_chime', filename: AMBIENT_RESOURCES.WIND_CHIME, category: 'interactive', title: 'scenes.interactive_wind_chime.title', description: 'scenes.interactive_wind_chime.desc', size: 256806 }, 
+  { id: 'interactive_breath', filename: AMBIENT_RESOURCES.BREATH, category: 'interactive', title: 'scenes.interactive_breath.title', description: 'scenes.interactive_breath.desc', size: 1048576 }, 
+  { id: 'interactive_apple', filename: AMBIENT_RESOURCES.APPLE_CRUNCH, category: 'interactive', title: 'scenes.interactive_apple.title', description: 'scenes.interactive_apple.desc', size: 32853 }, 
+  { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: 'scenes.interactive_match.title', description: 'scenes.interactive_match.desc', size: 846284 },
 ]; 
 
-// 【核心】定义 ASSET_LIST，手动写好每个文件的 expectedSize（根据实际文件大小更新）
+// 【核心】定义 ASSET_LIST，手动写好每个文件的 expectedSize（根据实际下载大小更新）
 export const ASSET_LIST = [
-  { id: 'nature_ocean', expectedSize: 1429191 },
-  { id: 'nature_forest', expectedSize: 1732906 },
-  { id: 'nature_deep_sea', expectedSize: 5242880 },
-  { id: 'nature_misty_forest', expectedSize: 680336 },
-  { id: 'nature_river', expectedSize: 3614091 },
-  { id: 'nature_night', expectedSize: 7201196 },
-  { id: 'life_rain_boat', expectedSize: 7201196 },
-  { id: 'life_bookstore', expectedSize: 3145728 },
-  { id: 'healing_zen_bowl', expectedSize: 2097152 },
-  { id: 'healing_clean_space', expectedSize: 4574599 },
-  { id: 'healing_crystal', expectedSize: 5242880 },
-  { id: 'brainwave_alpha', expectedSize: 3145728 },
-  { id: 'brainwave_delta', expectedSize: 3840754 },
-  { id: 'interactive_white_noise', expectedSize: 69881 },
-  { id: 'interactive_wind_chime', expectedSize: 256806 },
-  { id: 'interactive_breath', expectedSize: 1048576 },
-  { id: 'interactive_apple', expectedSize: 32853 },
-  { id: 'interactive_match', expectedSize: 846284 },
+  { id: 'nature_ocean', expectedSize: 1429191 },        // 实际：1.43MB
+  { id: 'nature_forest', expectedSize: 1732906 },       // 实际：1.73MB
+  { id: 'nature_deep_sea', expectedSize: 456030 },      // 实际：456KB
+  { id: 'nature_misty_forest', expectedSize: 680336 },  // 实际：680KB
+  { id: 'nature_river', expectedSize: 7201196 },        // 实际：7.2MB
+  { id: 'nature_night', expectedSize: 7201196 },        // 实际：7.2MB
+  { id: 'life_rain_boat', expectedSize: 7201196 },      // 实际：7.2MB
+  { id: 'life_bookstore', expectedSize: 907157 },       // 实际：907KB
+  { id: 'healing_zen_bowl', expectedSize: 2097152 },    // 保持原值
+  { id: 'healing_clean_space', expectedSize: 4574599 }, // 实际：4.57MB
+  { id: 'healing_crystal', expectedSize: 5242880 },    // 保持原值
+  { id: 'brainwave_alpha', expectedSize: 3095272 },     // 实际：3.09MB
+  { id: 'brainwave_delta', expectedSize: 3840754 },     // 实际：3.84MB
+  { id: 'interactive_white_noise', expectedSize: 69881 },  // 实际：70KB
+  { id: 'interactive_wind_chime', expectedSize: 256806 },  // 实际：257KB
+  { id: 'interactive_breath', expectedSize: 1048576 },     // 保持原值
+  { id: 'interactive_apple', expectedSize: 32853 },        // 实际：33KB
+  { id: 'interactive_match', expectedSize: 846284 },       // 实际：846KB
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）
-export const GLOBAL_TOTAL_SIZE = ASSET_LIST.reduce((sum, asset) => sum + asset.expectedSize, 0); // 56,623,104 bytes
-export const GLOBAL_TOTAL_SIZE_MB = GLOBAL_TOTAL_SIZE / 1024 / 1024; // 54.00MB
+export const GLOBAL_TOTAL_SIZE = ASSET_LIST.reduce((sum, asset) => sum + asset.expectedSize, 0);
+export const GLOBAL_TOTAL_SIZE_MB = GLOBAL_TOTAL_SIZE / 1024 / 1024;
 
 export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {
-  // 【临时调整】所有渠道统一优先使用腾讯云（GitHub 在国内访问慢）
-  // 正式提交 Google Play 前再切换回 GitHub 主源
-  console.log(`[DownloadService] 当前渠道：${isGooglePlay ? 'GooglePlay' : '国内'}，优先腾讯云`);
+  // 国内渠道：腾讯云主源 + Gitee备源
+  // 海外渠道：ghproxy.net 加速镜像 → mirror.ghproxy.com → GitHub官方 → 腾讯云备源
+  if (isGooglePlay) {
+    // Google渠道：ghproxy.net 加速镜像（主源）→ mirror.ghproxy.com → GitHub官方 → 腾讯云备源
+    const MIRROR_URL = 'https://ghproxy.net/';
+    const MIRROR_URL_2 = 'https://mirror.ghproxy.com/';
+    console.log(`[DownloadService] Google渠道配置双加速源: A= \`${MIRROR_URL}\`, B= \`${MIRROR_URL_2}\``);
+    return [
+      `${MIRROR_URL}${GITHUB_URL}${filename}`,    // ghproxy.net 加速镜像（主源）
+      `${MIRROR_URL_2}${GITHUB_URL}${filename}`,  // mirror.ghproxy.com（备源）
+      `${GITHUB_URL}${filename}`,                  // GitHub官方
+      `${TENCENT_CLOUD_URL}${filename}`            // 腾讯云备源
+    ];
+  }
+  // 国内渠道
   return [
-    `${TENCENT_CLOUD_URL}${filename}`,            // 腾讯云主源（速度快）
-    `${GITHUB_URL}${filename}`                    // GitHub 备源（保底）
+    `${TENCENT_CLOUD_URL}${filename}`,
+    `${GITEE_URL}${filename}`
   ];
 };
 
-export const getDownloadUrl = (assetIdOrFilename: string) => {
-  const asset = AUDIO_MANIFEST.find(a => a.id === assetIdOrFilename);
-  const filename = asset ? asset.filename : assetIdOrFilename;
-  return getDownloadUrlByChannel(IS_GOOGLE_PLAY_VERSION, filename);
-};
-
-export const getRemoteUrl = (filename: string) => {
-  return `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${filename}`;
-};
-
-export const getLocalUri = (filename: string) => {
-  // 更新：指向下载后的本地存储路径
-  const localPath = getLocalPath('base', filename);
-  return localPath;
+export const getDownloadUrl = (id: string) => {
+  const asset = AUDIO_MANIFEST.find(item => item.id === id);
+  if (!asset) {
+    console.error(`[audioAssets] Asset not found: ${id}`);
+    return [];
+  }
+  return getDownloadUrlByChannel(IS_GOOGLE_PLAY_VERSION, asset.filename);
 };
