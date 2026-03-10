@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Platform, Text, TouchableOpacity, Image, Linking, Alert, InteractionManager } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform, Text, TouchableOpacity, Image } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,39 +23,12 @@ const PolicyWebView = () => {
 
   const handleNavigationStateChange = (navState: any) => {
     console.log('[PolicyWebView] Navigation state changed:', navState.loading, navState.url);
-    
-    // 双重拦截 mailto: 链接（防止 onShouldStartLoadWithRequest 未触发）
-    if (navState.url && navState.url.startsWith('mailto:')) {
-      console.log('[PolicyWebView] Detected mailto in navigation, handling...');
-      handleMailToLink(navState.url);
-      return;
-    }
-    
     // 只在真正加载时设置 loading，避免覆盖 handleLoadEnd
     if (navState.loading) {
       setLoading(true);
     }
     if (!navState.loading && navState.url === 'about:blank') {
       setError(true);
-    }
-  };
-
-  // 处理 mailto 链接的函数
-  const handleMailToLink = async (url: string) => {
-    console.log('[PolicyWebView] Attempting to open mailto link:', url);
-    
-    try {
-      // 直接尝试打开，不先检查 canOpenURL
-      // 因为 canOpenURL 可能返回 true（系统有邮件应用选择器）
-      await Linking.openURL(url);
-    } catch (err: any) {
-      console.error('[PolicyWebView] Failed to open mailto link:', err);
-      
-      // 打开失败，显示友好提示
-      Alert.alert(
-        '提示',
-        '未检测到已配置的邮件应用。请先安装或配置邮件账户，或手动联系：iamlishang@gmail.com'
-      );
     }
   };
 
@@ -68,13 +41,6 @@ const PolicyWebView = () => {
   const handleError = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent;
     console.error('[PolicyWebView] WebView error:', nativeEvent);
-    
-    // 如果是 mailto 协议错误，忽略它（已经处理了）
-    if (nativeEvent.url && nativeEvent.url.startsWith('mailto:')) {
-      console.log('[PolicyWebView] Ignoring mailto error, already handled');
-      return;
-    }
-    
     setLoading(false);
     setError(true);
   };
@@ -83,24 +49,6 @@ const PolicyWebView = () => {
     setError(false);
     setLoading(true);
     webViewRef.current?.reload();
-  };
-
-  // 拦截 mailto: 链接，调用系统邮件应用
-  const handleShouldStartLoadWithRequest = (request: any) => {
-    const { url } = request;
-    console.log('[PolicyWebView] onShouldStartLoadWithRequest:', url);
-    
-    // 如果是 mailto 链接，直接处理并阻止 WebView 加载
-    if (url && url.startsWith('mailto:')) {
-      console.log('[PolicyWebView] Handling mailto link immediately...');
-      // 使用 InteractionManager 确保在下一帧执行，避免阻塞 WebView
-      InteractionManager.runAfterInteractions(() => {
-        handleMailToLink(url);
-      });
-      return false;
-    }
-    
-    return true;
   };
 
   if (error) {
@@ -156,8 +104,6 @@ const PolicyWebView = () => {
         ref={webViewRef}
         source={{ uri: url }}
         style={styles.webview}
-        originWhitelist={['*']}
-        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onLoadStart={() => setLoading(true)}
         onLoadEnd={handleLoadEnd}
         onError={handleError}

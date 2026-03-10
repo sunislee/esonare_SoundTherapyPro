@@ -52,7 +52,10 @@
     "friend": "Friend",
     "comingSoon": "Feature coming soon, stay tuned!",
     "prompt": "Prompt",
-    "unableToOpen": "Unable to open link"
+    "unableToOpen": "Unable to open link",
+    "confirmExit": "Confirm Exit",
+    "confirmExitMessage": "Are you sure you want to exit?",
+    "exit": "EXIT"
   },
   "notification": {
     "artistDescription": "🎵 {{userName}}, in deep relaxation"
@@ -60,7 +63,9 @@
   "about": {
     "header": "About",
     "kernelVersion": "Kernel Version",
-    "copyright": "© 2024 Sound Meditation Pro. All rights reserved."
+    "copyright": "© 2024 Sound Meditation Pro. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "profile": {
     "loading": "Loading...",
