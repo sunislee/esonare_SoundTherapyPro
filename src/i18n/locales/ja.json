@@ -153,10 +153,13 @@
       "error": "エラー",
       "saveFailed": "保存に失敗しました",
       "exitTitle": "アプリを終了",
-      "exitMsg": "SoundTherapyを終了してもよろしいですか？",
+      "exitMsg": "SoundTherapy を終了してもよろしいですか？",
       "exitConfirm": "確認",
-      "confirm": "確認"
-    }
+      "confirm": "確認",
+      "resetDataTitle": "アプリデータをリセット",
+      "resetDataMsg": "アプリをリセットしてもよろしいですか？これにより、すべてのローカルデータ（ユーザー名、再生履歴、ミックスプリセットなど）が削除されますが、ダウンロード済みのオーディオリソースは削除されません。"
+    },
+    "reset_data": "アプリデータをリセット"
   },
   "notification": {
     "artistDescription": "🎵 {{userName}}、深い癒しの最中",
