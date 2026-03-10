@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Platform, Text, TouchableOpacity, Image } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform, Text, TouchableOpacity, Image, Linking } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,6 +49,24 @@ const PolicyWebView = () => {
     setError(false);
     setLoading(true);
     webViewRef.current?.reload();
+  };
+
+  // 拦截 mailto: 链接，调用系统邮件应用
+  const handleShouldStartLoadWithRequest = (event: any) => {
+    const { url } = event;
+    console.log('[PolicyWebView] Intercepting URL:', url);
+    
+    if (url.startsWith('mailto:')) {
+      // 拦截 mailto 链接，使用 Linking 打开
+      Linking.openURL(url).catch(err => {
+        console.error('[PolicyWebView] Failed to open mailto link:', err);
+      });
+      // 阻止 WebView 加载此 URL
+      return false;
+    }
+    
+    // 允许加载其他 URL
+    return true;
   };
 
   if (error) {
@@ -108,6 +126,7 @@ const PolicyWebView = () => {
         onLoadEnd={handleLoadEnd}
         onError={handleError}
         onNavigationStateChange={handleNavigationStateChange}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         startInLoadingState={true}
         javaScriptEnabled={true}
         domStorageEnabled={true}
