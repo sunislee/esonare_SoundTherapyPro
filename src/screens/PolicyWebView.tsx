@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface PolicyWebViewRouteParams {
   url: string;
+  fallbackUrl?: string;
   title: string;
 }
 
@@ -16,9 +17,10 @@ const PolicyWebView = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { url, title } = route.params as PolicyWebViewRouteParams;
+  const { url, title, fallbackUrl } = route.params as PolicyWebViewRouteParams;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState(url);
   const webViewRef = React.useRef<WebView>(null);
 
   // 预加载逻辑
@@ -101,6 +103,14 @@ const PolicyWebView = () => {
       return;
     }
     
+    // 如果是本地文件加载失败且有备用 URL，切换到网络 URL
+    if (fallbackUrl && currentUrl.startsWith('file:///android_asset/')) {
+      console.log('[PolicyWebView] Local file failed, falling back to:', fallbackUrl);
+      setCurrentUrl(fallbackUrl);
+      setLoading(true);
+      return;
+    }
+    
     setLoading(false);
     setError(true);
   };
@@ -180,7 +190,7 @@ const PolicyWebView = () => {
       
       <WebView
         ref={webViewRef}
-        source={{ uri: url }}
+        source={{ uri: currentUrl }}
         style={styles.webview}
         originWhitelist={['*']}
         onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}

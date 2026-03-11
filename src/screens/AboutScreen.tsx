@@ -27,17 +27,29 @@ const AboutScreen = () => {
   }, []);
   
   const handleOpenPrivacyPolicy = () => {
-    const url = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/index.html';
+    // 优先使用本地文件，断网也能看
+    const localUrl = 'file:///android_asset/legal/index.html';
+    const webUrl = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/index.html';
     
-    // 使用 WebView 打开
-    navigation.navigate('PolicyWebView', { url, title: t('about.privacy') });
+    // 使用 WebView 打开，优先本地文件
+    navigation.navigate('PolicyWebView', { 
+      url: localUrl, 
+      fallbackUrl: webUrl,
+      title: t('about.privacy') 
+    });
   };
 
   const handleOpenTermsOfService = () => {
-    const url = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/terms.html';
+    // 优先使用本地文件，断网也能看
+    const localUrl = 'file:///android_asset/legal/terms.html';
+    const webUrl = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/terms.html';
     
-    // 使用 WebView 打开
-    navigation.navigate('PolicyWebView', { url, title: t('about.terms') });
+    // 使用 WebView 打开，优先本地文件
+    navigation.navigate('PolicyWebView', { 
+      url: localUrl, 
+      fallbackUrl: webUrl,
+      title: t('about.terms') 
+    });
   };
 
   // 使用全局返回键处理逻辑（非首页）
