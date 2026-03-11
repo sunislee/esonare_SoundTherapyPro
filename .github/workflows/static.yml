@@ -181,6 +181,15 @@ jobs:
           path: ./web-build
           retention-days: 7
       
+      - name: Verify artifact content
+        run: |
+          echo "=== 验证上传内容 ==="
+          echo "📁 web-build 目录内容:"
+          ls -R web-build/
+          echo ""
+          echo "📄 index.html 内容预览:"
+          head -20 web-build/index.html
+      
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
