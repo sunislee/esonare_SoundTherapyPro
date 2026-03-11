@@ -28,6 +28,12 @@ module.exports = {
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom/index.js'),
       'react-i18next': path.resolve(__dirname, 'node_modules/react-i18next/dist/commonjs/index.js'),
     },
+    fallback: {
+      crypto: require.resolve('crypto-browserify'),
+      stream: require.resolve('stream-browserify'),
+      buffer: require.resolve('buffer'),
+      process: require.resolve('process/browser'),
+    },
   },
   module: {
     rules: [
@@ -133,6 +139,11 @@ module.exports = {
     new webpack.IgnorePlugin({
       resourceRegExp: /^\.\/locale$/,
       contextRegExp: /moment$/,
+    }),
+    // Polyfills for Node.js modules
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+      process: 'process/browser',
     }),
   ],
   mode: 'production',
