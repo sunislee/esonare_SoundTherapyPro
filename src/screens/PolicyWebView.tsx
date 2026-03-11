@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet, Platform, Text, TouchableOpacity, Image, Linking, Alert, InteractionManager } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -9,6 +9,9 @@ interface PolicyWebViewRouteParams {
   title: string;
 }
 
+// 预加载缓存
+const preloadCache = new Map();
+
 const PolicyWebView = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -17,6 +20,29 @@ const PolicyWebView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const webViewRef = React.useRef<WebView>(null);
+
+  // 预加载逻辑
+  useEffect(() => {
+    // 检查是否有预加载缓存
+    if (preloadCache.has(url)) {
+      console.log('[PolicyWebView] Using preloaded cache for:', url);
+      setLoading(false);
+    }
+    
+    // 预加载其他协议页面（如果当前不是隐私政策）
+    if (url.includes('/legal/index.html')) {
+      preloadUrl('https://sunislee.github.io/esonare_SoundTherapyPro/legal/terms.html');
+    } else if (url.includes('/legal/terms.html')) {
+      preloadUrl('https://sunislee.github.io/esonare_SoundTherapyPro/legal/index.html');
+    }
+  }, [url]);
+
+  const preloadUrl = (preloadUrl: string) => {
+    if (!preloadCache.has(preloadUrl)) {
+      console.log('[PolicyWebView] Preloading:', preloadUrl);
+      preloadCache.set(preloadUrl, true);
+    }
+  };
 
   console.log('[PolicyWebView] URL:', url);
   console.log('[PolicyWebView] Title:', title);
@@ -168,17 +194,24 @@ const PolicyWebView = () => {
         scalesPageToFit={Platform.OS === 'android'}
         userAgent="Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
         androidHardwareAccelerationDisabled={false}
-        cacheEnabled={false}
+        cacheEnabled={true}
         thirdPartyCookiesEnabled={true}
         sharedCookiesEnabled={true}
         mixedContentMode="always"
-        incognito={true}
+        incognito={false}
         backgroundColor="#FFFFFF"
         renderLoading={() => (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#6C5DD3" />
+            <Text style={styles.loadingText}>加载中...</Text>
           </View>
         )}
+        applicationNameForUserAgent="HeartSoundMeditation/1.3.0"
+        allowsBackForwardNavigationGestures={true}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
+        textZoom={100}
+        androidLayerType="software"
       />
     </View>
   );
@@ -228,6 +261,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6C5DD3',
+    marginTop: 12,
+    fontWeight: '500',
   },
   errorContainer: {
     flex: 1,
