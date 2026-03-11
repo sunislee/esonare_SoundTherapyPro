@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+https://sunislee.github.io/esonare_SoundTherapyPro/legal/name: Deploy to GitHub Pages
 
 on:
   push:
