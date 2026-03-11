@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import packageJson from '../../package.json';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,21 @@ const AboutScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
+
+  // 预加载协议页面
+  useEffect(() => {
+    console.log('[AboutScreen] Preloading policy pages...');
+    
+    // 预加载隐私政策和用户协议
+    const privacyUrl = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/index.html';
+    const termsUrl = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/terms.html';
+    
+    // 使用 Image.prefetch 预加载（虽然不是图片，但可以触发网络请求）
+    Image.prefetch(privacyUrl).catch(() => {});
+    Image.prefetch(termsUrl).catch(() => {});
+    
+    console.log('[AboutScreen] Preload initiated for policy pages');
+  }, []);
   
   const handleOpenPrivacyPolicy = () => {
     const url = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/index.html';
