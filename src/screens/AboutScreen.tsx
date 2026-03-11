@@ -10,21 +10,16 @@ const AboutScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
-
-  const isChinese = i18n.language?.startsWith('zh');
-
-  // GitHub Pages URL（已启用 /docs 为根目录）
-  const GITHUB_BASE_URL = 'https://sunislee.github.io/esonare_SoundTherapyPro';
   
   const handleOpenPrivacyPolicy = () => {
-    const url = `${GITHUB_BASE_URL}/privacy-policy-${isChinese ? 'zh' : 'en'}.html`;
+    const url = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/index.html';
     
     // 使用 WebView 打开
     navigation.navigate('PolicyWebView', { url, title: t('about.privacy') });
   };
 
   const handleOpenTermsOfService = () => {
-    const url = `${GITHUB_BASE_URL}/terms-of-service-${isChinese ? 'zh' : 'en'}.html`;
+    const url = 'https://sunislee.github.io/esonare_SoundTherapyPro/legal/terms.html';
     
     // 使用 WebView 打开
     navigation.navigate('PolicyWebView', { url, title: t('about.terms') });
