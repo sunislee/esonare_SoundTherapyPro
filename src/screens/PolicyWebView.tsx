@@ -3,6 +3,7 @@ import { View, ActivityIndicator, StyleSheet, Platform, Text, TouchableOpacity, 
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 interface PolicyWebViewRouteParams {
   url: string;
@@ -18,10 +19,13 @@ const PolicyWebView = () => {
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { url, title, fallbackUrl } = route.params as PolicyWebViewRouteParams;
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(url);
   const webViewRef = React.useRef<WebView>(null);
+
+  const isChinese = i18n.language?.startsWith('zh');
 
   // 预加载逻辑
   useEffect(() => {
@@ -81,8 +85,10 @@ const PolicyWebView = () => {
       
       // 打开失败，显示友好提示
       Alert.alert(
-        '提示',
-        '未检测到已配置的邮件应用。请先安装或配置邮件账户，或手动联系：iamlishang@gmail.com'
+        isChinese ? '提示' : 'Notice',
+        isChinese 
+          ? '未检测到已配置的邮件应用。请先安装或配置邮件账户，或手动联系：iamlishang@gmail.com'
+          : 'No email app found. Please install or configure an email account, or contact us at iamlishang@gmail.com manually.'
       );
     }
   };
