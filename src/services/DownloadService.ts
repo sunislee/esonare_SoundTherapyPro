@@ -303,8 +303,10 @@ export const DownloadService = {
         return false;
       };
 
-      // 【暴力修复】Task 1+2: 删除并发代码，改为最简单的串行下载
-      console.log('[DownloadService] 开始串行下载所有文件...');
+      // 【性能优化】Task 1: 恢复受控并发下载
+      // 【Task 4】降级监控：连续失败次数
+      let continuousFailCount = 0;
+      const MAX_CONTINUOUS_FAILS = 3;
       
       // 【Task 4】强制物理自检：检查磁盘空间
       try {
@@ -313,6 +315,10 @@ export const DownloadService = {
       } catch (e) {
         console.error(`[DownloadService] 磁盘空间检查失败：${e}`);
       }
+      
+      // 【Task 1】根据渠道设置并发数
+      const MAX_CONCURRENT = IS_GOOGLE_PLAY_VERSION ? 8 : 5;
+      console.log(`[DownloadService] 当前渠道：${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, MAX_CONCURRENT: ${MAX_CONCURRENT}`);
       
       const progressInterval = setInterval(() => {
         const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
@@ -323,15 +329,108 @@ export const DownloadService = {
         });
       }, 200);
 
-      // 【暴力修复】简单的 for...of 循环串行下载
-      for (const asset of filesToDownload) {
-        console.log(`[Queue] Starting ${asset.id} from ${getDownloadUrl(asset.id)[0]}`);
-        const success = await downloadSingleFile(asset);
-        if (!success) {
-          failedAssets.push(asset.id);
-          console.error(`[Queue] Failed ${asset.id}`);
-        } else {
-          console.log(`[Queue] Completed ${asset.id} (${filesToDownload.indexOf(asset) + 1}/${filesToDownload.length})`);
+      // 【Task 1-3】受控并发下载函数：带超时保护和重试机制
+      const downloadWithConcurrencyLimit = async (assets: any[], maxConcurrent: number) => {
+        const queue = [...assets];
+        const workers: Promise<void>[] = [];
+        
+        const worker = async (workerId: number) => {
+          // 【Task 1】启动错峰：每个 Worker 错开 100ms 启动
+          await sleep(workerId * 100);
+          console.log(`[Queue] Worker ${workerId} started`);
+          
+          while (queue.length > 0) {
+            const asset = queue.shift();
+            if (!asset) break;
+            
+            // 【Task 4】健康检查：如果连续失败过多，降级为单线程
+            if (continuousFailCount >= MAX_CONTINUOUS_FAILS) {
+              console.warn(`[DownloadService] ⚠️ 连续失败 ${continuousFailCount} 次，降级为单线程模式`);
+              queue.unshift(asset); // 把当前文件放回去
+              break; // 退出 worker
+            }
+            
+            // 【Task 2+3】带超时保护和重试的下载
+            const downloadWithTimeoutAndRetry = async (fileAsset: any, maxRetries = 2): Promise<boolean> => {
+              for (let retry = 0; retry <= maxRetries; retry++) {
+                try {
+                  // 【Task 2】30 秒超时保护
+                  const timeoutPromise = new Promise<boolean>((_, reject) => {
+                    setTimeout(() => reject(new Error('Download timeout (30s)')), 30000);
+                  });
+                  
+                  const downloadPromise = downloadSingleFile(fileAsset);
+                  const success = await Promise.race([downloadPromise, timeoutPromise]);
+                  
+                  if (success) {
+                    continuousFailCount = 0; // 重置失败计数
+                    return true;
+                  } else {
+                    throw new Error('Download failed');
+                  }
+                } catch (e: any) {
+                  console.warn(`[DownloadService] ${fileAsset.id} 下载失败 (尝试 ${retry + 1}/${maxRetries + 1}): ${e.message}`);
+                  
+                  if (retry < maxRetries) {
+                    // 【Task 3】递增重试间隔：第 1 次等 1s，第 2 次等 2s
+                    const waitTime = (retry + 1) * 1000;
+                    console.log(`[DownloadService] 等待 ${waitTime}ms 后重试...`);
+                    await sleep(waitTime);
+                  }
+                }
+              }
+              
+              // 所有重试都失败
+              continuousFailCount++;
+              console.warn(`[DownloadService] ${fileAsset.id} 所有重试失败，连续失败计数：${continuousFailCount}`);
+              return false;
+            };
+            
+            // 【Task 5】日志全保留：打印每个文件的下载信息
+            console.log(`[Queue] Starting ${asset.id} from ${getDownloadUrl(asset.id)[0]}`);
+            
+            const success = await downloadWithTimeoutAndRetry(asset);
+            if (!success) {
+              failedAssets.push(asset.id);
+              console.error(`[Queue] Failed ${asset.id} after retries`);
+            } else {
+              console.log(`[Queue] Completed ${asset.id} (${assets.indexOf(asset) + 1}/${assets.length})`);
+            }
+            
+            // 短暂延迟，避免过于密集
+            await sleep(50);
+          }
+        };
+
+        // 启动并发 workers
+        const actualConcurrent = Math.min(maxConcurrent, assets.length);
+        console.log(`[DownloadService] 启动 ${actualConcurrent} 个并发 workers`);
+        for (let i = 0; i < actualConcurrent; i++) {
+          workers.push(worker(i));
+        }
+
+        await Promise.all(workers);
+      };
+
+      // 【Task 5】日志全保留：打印每个文件的下载信息
+      console.log('[DownloadService] 开始并发下载所有文件...');
+      await downloadWithConcurrencyLimit(filesToDownload, MAX_CONCURRENT);
+      
+      // 【Task 4】如果降级为单线程，继续下载剩余文件
+      if (continuousFailCount >= MAX_CONTINUOUS_FAILS) {
+        console.warn('[DownloadService] ⚠️ 降级模式：单线程下载剩余文件...');
+        for (const asset of filesToDownload) {
+          if (!failedAssets.includes(asset.id)) {
+            const urls = getDownloadUrl(asset.id);
+            console.log(`[Queue] Starting ${asset.id} from ${urls[0]}`);
+            const success = await downloadSingleFile(asset);
+            if (!success) {
+              failedAssets.push(asset.id);
+              console.error(`[Queue] Failed ${asset.id} in single-thread mode`);
+            } else {
+              console.log(`[Queue] Completed ${asset.id} (single-thread)`);
+            }
+          }
         }
       }
       
@@ -342,6 +441,7 @@ export const DownloadService = {
       const successRate = filesToDownload.length > 0 ? successCount / filesToDownload.length : 0;
       
       console.log(`[DownloadService] 下载完成：成功 ${successCount}/${filesToDownload.length}, 成功率 ${(successRate * 100).toFixed(1)}%`);
+      console.log(`[DownloadService] 连续失败次数：${continuousFailCount}`);
       
       // 【暴力修复 2】拦截 1.0 信号：除非物理检查所有文件通过，否则不允许达到 1.0
       console.log('[DownloadService] 开始物理校验所有文件...');
