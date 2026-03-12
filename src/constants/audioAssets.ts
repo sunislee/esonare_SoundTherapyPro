@@ -50,7 +50,7 @@ export const AUDIO_MANIFEST = [
   { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 7201196 }, 
   { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 }, 
 
-  { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 2097152 }, 
+  { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 391549 }, 
   { id: 'healing_clean_space', filename: 'base/liquid_peace.m4a', category: 'healing', title: 'scenes.healing_clean_space.title', description: 'scenes.healing_clean_space.desc', size: 4574599 }, 
   { id: 'healing_crystal', filename: 'base/crystal_bowl.m4a', category: 'healing', title: 'scenes.healing_crystal.title', description: 'scenes.healing_crystal.desc', size: 5242880 }, 
 
@@ -74,7 +74,7 @@ export const ASSET_LIST = [
   { id: 'nature_night', expectedSize: 7201196 },        // 实际：7.2MB
   { id: 'life_rain_boat', expectedSize: 7201196 },      // 实际：7.2MB
   { id: 'life_bookstore', expectedSize: 907157 },       // 实际：907KB
-  { id: 'healing_zen_bowl', expectedSize: 2097152 },    // 保持原值
+  { id: 'healing_zen_bowl', expectedSize: 391549 },    // 实际：391KB
   { id: 'healing_clean_space', expectedSize: 4574599 }, // 实际：4.57MB
   { id: 'healing_crystal', expectedSize: 5242880 },    // 保持原值
   { id: 'brainwave_alpha', expectedSize: 3095272 },     // 实际：3.09MB
