@@ -43,52 +43,24 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   const breathAnim = useRef(new Animated.Value(0)).current;
   const animatedProgress = useRef(new Animated.Value(0)).current;
   
-  // 逻辑脱钩：真实进度与 UI 进度分离
+  // 【暴力修复 1】严防死守 100%：除非 18 个文件全部下载完成并通过物理校验，否则严禁显示"资源准备完成"
   const [realProgress, setRealProgress] = useState(0);
-  const [isSmoothSliding, setIsSmoothSliding] = useState(false);
   const [isDownloadCompleted, setIsDownloadCompleted] = useState(false);
   const [isUiCompleted, setIsUiCompleted] = useState(false);
+  const [allFilesVerified, setAllFilesVerified] = useState(false); // 【新增】物理校验通过标记
 
-  // 逻辑脱钩：真实进度与 UI 进度分离
+  // 【暴力修复】UI 进度完全跟随真实下载进度，不再"视觉谎言"
   useEffect(() => {
     const currentProgress = downloadInfo.progress;
     setRealProgress(currentProgress);
     
-    // 80% 后的'视觉谎言'：UI 进度条不再实时跟随真实数据
-    if (currentProgress >= 0.8 && !isSmoothSliding) {
-      setIsSmoothSliding(true);
-      
-      // 使用 stopAnimation 回调获取当前动画值
-      animatedProgress.stopAnimation((currentValue) => {
-        const startProgress = Math.max(currentValue, 0.8);
-        const remainingProgress = 1.0 - startProgress;
-        const duration = (remainingProgress / 0.05) * 1000; // 每秒 5% 的速度
-        
-        // 开始匀速滑行动画
-        Animated.timing(animatedProgress, {
-          toValue: 1.0,
-          duration: duration,
-          easing: Easing.linear, // 匀速滑行
-          useNativeDriver: false,
-        }).start(({ finished }) => {
-          if (finished) {
-            setIsUiCompleted(true);
-          }
-        });
-      });
-      
-      return;
-    }
-    
-    if (currentProgress < 0.8 && !isSmoothSliding) {
-      // 80% 之前，UI 进度实时跟随真实进度
-      Animated.timing(animatedProgress, {
-        toValue: currentProgress,
-        duration: 200,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }).start();
-    }
+    // 进度条完全跟随真实进度
+    Animated.timing(animatedProgress, {
+      toValue: currentProgress,
+      duration: 200,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }).start();
     
     // 标记真实下载完成
     if (currentProgress >= 1.0) {
@@ -105,30 +77,64 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         setIsUiCompleted(true);
       });
     }
-  }, [downloadInfo.progress, isSmoothSliding]);
+  }, [downloadInfo.progress]);
 
-  // 【关键修复】监听 isUiCompleted，一旦完成立即跳转
+  // 【暴力修复 1】物理校验通过后才允许显示"资源准备完成"
+  useEffect(() => {
+    if (isUiCompleted && isDownloadCompleted && !allFilesVerified) {
+      console.log('[ResourceDownloadScreen] 开始物理校验所有文件...');
+      OfflineService.checkFullIntegrity().then((result) => {
+        if (result.isComplete) {
+          console.log('[ResourceDownloadScreen] ✅ 物理校验通过，允许显示"资源准备完成"');
+          setAllFilesVerified(true);
+        } else {
+          console.error('[ResourceDownloadScreen] ❌ 物理校验失败，禁止显示"资源准备完成"');
+          console.error(`缺失文件：${result.missingFiles.length}个`);
+          console.error(`损坏文件：${result.corruptedFiles.length}个`);
+          // 重置 UI 完成状态，继续下载
+          setIsUiCompleted(false);
+          setIsDownloadCompleted(false);
+        }
+      });
+    }
+  }, [isUiCompleted, isDownloadCompleted, allFilesVerified]);
+
+  // 监听下载完成和 UI 完成状态，自动跳转到主应用
   useEffect(() => {
     if (isUiCompleted && isDownloadCompleted) {
-      console.log('[ResourceDownloadScreen] ✅ 下载完成，准备跳转...');
-      // 延迟 800ms 确保用户看到 100% 进度和完成状态
-      const timer = setTimeout(() => {
+      console.log('[ResourceDownloadScreen] 下载和 UI 都完成了，等待 2 秒确保所有文件落盘...');
+      
+      // 【暴力修复】延迟 2 秒确保所有文件完全落盘
+      const timer = setTimeout(async () => {
         enterMainApp();
-      }, 800);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [isUiCompleted, isDownloadCompleted]);
 
   // 定义 enterMainApp 函数在组件顶层
   const enterMainApp = async () => {
-    // 【物理校验】检查资源状态，但即使未完全就绪也允许进入
-    console.log('[ResourceDownloadScreen] 进入主应用前进行物理校验...');
-    const isReallyReady = await OfflineService.isResourceReady();
-    if (!isReallyReady) {
-      console.warn('[ResourceDownloadScreen] ⚠️  资源未完全就绪，但允许进入应用');
-    } else {
-      console.log('[ResourceDownloadScreen] ✅ 物理校验通过，资源真实存在');
+    // 【暴力修复】强制检查所有文件完整下载后才允许进入！
+    console.log('[ResourceDownloadScreen] 进入主应用前进行完整物理校验...');
+    const fullIntegrity = await OfflineService.checkFullIntegrity();
+    
+    if (!fullIntegrity.isComplete) {
+      // 资源不完整，绝对不允许进入！
+      console.error('[ResourceDownloadScreen] ❌ 资源不完整，禁止进入应用！');
+      console.error(`[ResourceDownloadScreen] 缺失文件：${fullIntegrity.missingFiles.length}个 - ${fullIntegrity.missingFiles.join(', ')}`);
+      console.error(`[ResourceDownloadScreen] 损坏文件：${fullIntegrity.corruptedFiles.length}个 - ${fullIntegrity.corruptedFiles.join(', ')}`);
+      
+      // 强制停留在下载页面
+      Alert.alert(
+        t('download.incompleteTitle'),
+        t('download.incompleteMessage', { count: fullIntegrity.missingFiles.length + fullIntegrity.corruptedFiles.length }),
+        [{ text: t('common.continue') }]
+      );
+      return; // 不执行 navigation.replace
     }
+    
+    console.log('[ResourceDownloadScreen] ✅ 完整物理校验通过，所有资源真实存在');
+    console.log(`[ResourceDownloadScreen] 已下载 ${fullIntegrity.details.length} 个文件`);
     
     EngineControl.allow();
     try {
@@ -168,22 +174,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       try { 
         console.log('[ResourceDownloadScreen] 开始检查资源状态...');
         
-        // 【关键修复 1】第一步：物理检查文件是否存在
-        console.log('[ResourceDownloadScreen] 物理检查文件是否存在...');
-        const firstAsset = AUDIO_MANIFEST[0];
-        const firstPath = getLocalPath(firstAsset.category, firstAsset.filename);
-        const fileExists = await RNFS.exists(firstPath);
-        
-        if (fileExists) {
-          console.log('[ResourceDownloadScreen] ✅ 文件已存在，跳过下载');
-          // 文件存在，直接跳转
-          await enterMainApp();
-          return;
-        }
-        
-        console.log('[ResourceDownloadScreen] 文件不存在，需要下载');
-        
-        // 【关键修复 2】请求存储权限，确保下载文件可以写入
+        // 【关键修复 1】请求存储权限，确保下载文件可以写入
         console.log('[ResourceDownloadScreen] 请求存储权限...');
         const storageGranted = await PermissionService.requestStoragePermission();
         if (!storageGranted) {
@@ -192,7 +183,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           console.log('[ResourceDownloadScreen] 存储权限已授予');
         }
         
-        // 【关键修复 3】使用 OfflineService 检查资源是否已经准备就绪
+        // 【关键修复 2】使用 OfflineService 检查资源是否已经准备就绪
         console.log('[ResourceDownloadScreen] 调用 isResourceReady()...');
         const isReady = await OfflineService.isResourceReady();
         console.log(`[ResourceDownloadScreen] isResourceReady() 返回：${isReady}`);
@@ -301,8 +292,15 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         </Animated.View>
         <Text style={styles.brandName}>ESONARE</Text>
         <Text style={styles.loadingText}>
-          {isUiCompleted ? getSafeText('player.landing.complete', '资源准备完成') : getSafeText('player.landing.loading', '正在进入心灵空间...')}
+          {allFilesVerified ? getSafeText('player.landing.complete', '资源准备完成') : getSafeText('player.landing.loading', '正在进入心灵空间...')}
         </Text>
+        
+        {/* 【关键优化】显示下载状态提示 */}
+        {!isUiCompleted && (
+          <Text style={styles.statusHintText}>
+            {getSafeText('download.optimizing', 'Optimizing audio assets with 8 threads...')}
+          </Text>
+        )}
         
         {/* 进度条 */}
         <View style={styles.progressBarContainer}>
@@ -351,7 +349,13 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 40,
+    marginBottom: 10,
+  },
+  statusHintText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 30,
+    fontStyle: 'italic',
   },
   progressBarContainer: {
     width: SCREEN_WIDTH * 0.7,

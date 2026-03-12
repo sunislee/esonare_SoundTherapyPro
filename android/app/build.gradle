@@ -105,8 +105,8 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 130
-        versionName "1.3.0"
+        versionCode 131
+        versionName "1.3.1"
         resConfigs "en", "zh", "ja"
 
         ndk {
@@ -116,7 +116,8 @@ android {
         // 16KB 内存页面对齐支持 (Google Play 2026 要求)
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+                // 暂时注释掉 16 KB 配置，先保编译通过
+                // arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
             }
         }
 
@@ -178,8 +179,8 @@ android {
     }
     packagingOptions {
         jniLibs {
-            def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
-            useLegacyPackaging enableLegacyPackaging.toBoolean()
+            // 强制禁用旧版打包方式，确保 16 KB 页面大小支持
+            useLegacyPackaging false
         }
     }
     androidResources {

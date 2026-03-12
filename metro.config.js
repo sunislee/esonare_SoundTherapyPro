@@ -51,6 +51,10 @@ config.resolver.useWatchman = false;
 config.resolver.unstable_enableSymlinks = true;
 config.resolver.disableHierarchicalLookup = true;
 config.watchFolders = [__dirname, rootNodeModules, pnpmStore];
+const expoModulesCorePath = findPnpmPackagePath('expo-modules-core') || fs.realpathSync(
+  path.dirname(require.resolve('expo-modules-core/package.json', { paths: [__dirname] }))
+);
+
 config.resolver.extraNodeModules = {
   '@babel/runtime': babelRuntimeRoot,
   'react-native': reactNativePath,
@@ -59,6 +63,11 @@ config.resolver.extraNodeModules = {
   'react-native-safe-area-context': safeAreaPath,
   'react-native-gesture-handler': gestureHandlerPath,
   'react-native-screens': screensPath,
+  'expo-modules-core': expoModulesCorePath,
+  'expo-file-system': findPnpmPackagePath('expo-file-system') || expoModulesCorePath,
+  'expo-av': findPnpmPackagePath('expo-av') || expoModulesCorePath,
+  'expo-asset': findPnpmPackagePath('expo-asset') || expoModulesCorePath,
+  'expo-constants': findPnpmPackagePath('expo-constants') || expoModulesCorePath,
   ...(regeneratorRuntimePath ? { 'regenerator-runtime': regeneratorRuntimePath } : {}),
 };
 

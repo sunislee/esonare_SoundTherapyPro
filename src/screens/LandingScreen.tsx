@@ -68,20 +68,19 @@ export const LandingScreen = ({ navigation }: any) => {
         const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
 
         setTimeout(async () => {
-          // 资源就绪判断：使用 OfflineService 的统一判断
-          if (!resourceReady) {
-            console.log('[LandingScreen] 资源未就绪，跳转到下载页');
-            navigation.replace('Download');
-          } else if (!userName && hasSkipped !== 'true') {
-            console.log('[LandingScreen] 资源就绪但未设置名字，跳转到起名页');
-            // 【Android 16 修复】延迟初始化音频服务，避免在启动页触发前台服务
-            // 将 setupPlayer 延迟到用户进入主页后再执行
-            navigation.replace('NameEntry');
-          } else {
-            console.log('[LandingScreen] 资源和名字都就绪，跳转到主页');
-            // 【Android 16 修复】延迟初始化音频服务，避免在启动页触发前台服务
-            // 将 setupPlayer 延迟到用户进入主页后再执行
+          // 【关键修复】优先检查用户信息，放宽资源检查条件
+          const hasUserInfo = userName || hasSkipped === 'true';
+          
+          if (hasUserInfo) {
+            // 用户已经设置过信息，直接进入主应用，即使资源未完全就绪
+            console.log('[LandingScreen] 用户已设置信息，直接进入主应用');
             navigation.replace('MainTabs');
+          } else if (!resourceReady) {
+            console.log('[LandingScreen] 资源未就绪且未设置用户信息，跳转到下载页');
+            navigation.replace('Download');
+          } else {
+            console.log('[LandingScreen] 资源就绪但未设置名字，跳转到起名页');
+            navigation.replace('NameEntry');
           }
         }, remainingTime);
 
