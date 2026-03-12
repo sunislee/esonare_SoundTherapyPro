@@ -49,10 +49,10 @@
     "comma": "，",
     "period": "。",
     "enter_scheme_name": "输入方案名称",
-    "friend": "朋友",
-    "comingSoon": "功能开发中，敬请期待！",
+    "friend": "好友",
+    "comingSoon": "功能即将上线，敬请期待！",
     "prompt": "提示",
-    "unableToOpen": "无法打开链接"
+    "continue": "继续"
   },
   "notification": {
     "artistDescription": "🎵 {{userName}}，正在深度放松"
@@ -132,7 +132,8 @@
   },
   "player": {
     "landing": {
-      "loading": "正在进入心灵空间..."
+      "loading": "正在进入心灵空间...",
+      "complete": "资源准备完成"
     },
     "labels": {
       "ignite": "点燃",
@@ -288,7 +289,10 @@
     "title": "资源下载中",
     "subtitle": "正在为您准备沉浸式音频资源...",
     "calculating": "正在计算资源大小...",
-    "tip": "初次使用请保持网络畅通，正在为您同步高品质音频"
+    "tip": "初次使用请保持网络畅通，正在为您同步高品质音频",
+    "optimizing": "正在优化音频资源...",
+    "incompleteTitle": "资源下载未完成",
+    "incompleteMessage": "还有 {{count}} 个文件未下载完成，请等待下载完成后再继续。"
   },
   "nameEntry": {
     "title": "如何称呼您？",

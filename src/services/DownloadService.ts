@@ -211,9 +211,27 @@ export const DownloadService = {
               };
             }
             
+            // 【暴力修复 3】强制打印"落盘"路径
+            console.log(`[DownloadService] 文件绝对路径：${localPath}`);
+            console.log(`[DownloadService] 临时文件路径：${tempPath}`);
+            
             const result = RNFS.downloadFile(downloadOptions);
             
             const downloadResult = await result.promise;
+            
+            // 【暴力修复 2】修复"假成功"逻辑：检查 HTTP 状态码
+            if (downloadResult.statusCode === 404) {
+              console.error(`[DownloadService] ❌ 404 Not Found: ${asset.id} - ${url}`);
+              throw new Error('404 Not Found');
+            }
+            if (downloadResult.statusCode === 403) {
+              console.error(`[DownloadService] ❌ 403 Forbidden: ${asset.id} - ${url}`);
+              throw new Error('403 Forbidden');
+            }
+            if (downloadResult.statusCode !== 200 && downloadResult.statusCode !== 206) {
+              console.error(`[DownloadService] ❌ HTTP Error ${downloadResult.statusCode}: ${asset.id}`);
+              throw new Error(`HTTP ${downloadResult.statusCode}`);
+            }
             
             if (await RNFS.exists(tempPath)) {
               const fileSize = await RNFS.stat(tempPath);
@@ -231,11 +249,24 @@ export const DownloadService = {
                   return false;
                 }
                 
-                console.log(`[DownloadService] 文件大小校验通过: ${asset.id}`);
+                console.log(`[DownloadService] 文件大小校验通过：${asset.id}`);
               }
+              
+              // 【暴力修复 4】增加 1 秒写入缓冲：给 Android 系统一点写盘时间
+              console.log(`[DownloadService] 等待 1 秒写入缓冲...`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
               
               await RNFS.moveFile(tempPath, localPath);
               console.log(`[DownloadService-DIAGNOSE] File moved to: ${localPath}`);
+              
+              // 再次确认文件已移动成功
+              if (await RNFS.exists(localPath)) {
+                const finalStat = await RNFS.stat(localPath);
+                console.log(`[DownloadService] ✅ 文件落盘成功：${localPath} (${finalStat.size} bytes)`);
+              } else {
+                console.error(`[DownloadService] ❌ 文件移动失败：${localPath}`);
+                return false;
+              }
               
               // 清除下载进度记录
               await OfflineService.clearDownloadProgress(asset.id);
@@ -253,22 +284,37 @@ export const DownloadService = {
             } else {
               console.error(`[DownloadService-DIAGNOSE] Download failed: temp file not found - ${tempPath}`);
             }
-          } catch (e) {
-            console.warn(`[DownloadService] Download failed for ${asset.id}, trying fallback`);
+          } catch (e: any) {
+            console.error(`[DownloadService] ❌ 下载失败：${asset.id}, 错误：${e.message || e}`);
+            
+            // 【暴力修复 3】修复"断头"下载：记录失败但不阻塞队列
             const tempPath = `${localPath}.tmp`;
             if (await RNFS.exists(tempPath)) {
               try { await RNFS.unlink(tempPath); } catch {}
             }
+            
+            // 记录失败资产，但不阻塞整个队列
+            failedAssets.push(asset.id);
+            
+            // 继续下载下一个文件
+            return false;
           }
         }
         return false;
       };
 
-      // 根据渠道设置并发数：Google Play 8线程，国内渠道 5线程
-      const MAX_CONCURRENT = IS_GOOGLE_PLAY_VERSION ? 8 : 5;
-      console.log(`[DownloadService] 当前渠道: ${IS_GOOGLE_PLAY_VERSION ? 'GooglePlay' : '国内'}, MAX_CONCURRENT: ${MAX_CONCURRENT}`);
+      // 【暴力修复】Task 1+2: 删除并发代码，改为最简单的串行下载
+      console.log('[DownloadService] 开始串行下载所有文件...');
+      
+      // 【Task 4】强制物理自检：检查磁盘空间
+      try {
+        const diskStats = await RNFS.getFSInfo();
+        console.log(`[DownloadService] 磁盘空间检查：可用 ${diskStats.freeSpace / (1024 * 1024)} MB, 总 ${diskStats.totalSpace / (1024 * 1024)} MB`);
+      } catch (e) {
+        console.error(`[DownloadService] 磁盘空间检查失败：${e}`);
+      }
+      
       const progressInterval = setInterval(() => {
-        // 使用实际的 totalBytes 作为分母，确保进度计算准确
         const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
         onProgress({
           progress: Math.min(0.999, rawProgress),
@@ -277,55 +323,102 @@ export const DownloadService = {
         });
       }, 200);
 
-      const downloadWithConcurrencyLimit = async () => {
-        const queue = [...filesToDownload];
-        const workers: Promise<void>[] = [];
-        
-        const worker = async (workerId: number) => {
-          await sleep(workerId * Math.floor(Math.random() * 500) + 100);
-          
-          while (queue.length > 0) {
-            const asset = queue.shift();
-            if (!asset) break;
-            const success = await downloadSingleFile(asset);
-            if (!success) {
-              failedAssets.push(asset.id);
-            }
-            await sleep(Math.floor(Math.random() * 200) + 50);
-          }
-        };
-
-        for (let i = 0; i < Math.min(MAX_CONCURRENT, filesToDownload.length); i++) {
-          workers.push(worker(i));
+      // 【暴力修复】简单的 for...of 循环串行下载
+      for (const asset of filesToDownload) {
+        console.log(`[Queue] Starting ${asset.id} from ${getDownloadUrl(asset.id)[0]}`);
+        const success = await downloadSingleFile(asset);
+        if (!success) {
+          failedAssets.push(asset.id);
+          console.error(`[Queue] Failed ${asset.id}`);
+        } else {
+          console.log(`[Queue] Completed ${asset.id} (${filesToDownload.indexOf(asset) + 1}/${filesToDownload.length})`);
         }
-
-        await Promise.all(workers);
-      };
-
-      await downloadWithConcurrencyLimit();
+      }
+      
       clearInterval(progressInterval);
       
-      // 3. Step 3: 检查下载结果，只有成功下载才标记为完成
+      // 3. Step 3: 检查下载结果
       const successCount = filesToDownload.length - failedAssets.length;
       const successRate = filesToDownload.length > 0 ? successCount / filesToDownload.length : 0;
       
-      console.log(`[DownloadService] 下载完成: 成功 ${successCount}/${filesToDownload.length}, 成功率 ${(successRate * 100).toFixed(1)}%`);
+      console.log(`[DownloadService] 下载完成：成功 ${successCount}/${filesToDownload.length}, 成功率 ${(successRate * 100).toFixed(1)}%`);
       
-      // 下载完成，无论成功率如何都报告100%进度，允许用户进入应用
-      // 失败的文件可以在应用内再次下载
-      onProgress({
-        progress: 1,
-        receivedBytes: totalBytes,
-        totalBytes: totalBytes
+      // 【暴力修复 2】拦截 1.0 信号：除非物理检查所有文件通过，否则不允许达到 1.0
+      console.log('[DownloadService] 开始物理校验所有文件...');
+      let allFilesValid = true;
+      const invalidFiles: string[] = [];
+      
+      for (const asset of filesToDownload) {
+        const localPath = getLocalPathHelper(asset.category, asset.filename);
+        const fileExists = await RNFS.exists(localPath);
+        
+        if (!fileExists) {
+          allFilesValid = false;
+          invalidFiles.push(`${asset.id}: 文件不存在`);
+          continue;
+        }
+        
+        // 检查文件大小
+        try {
+          const stat = await RNFS.stat(localPath);
+          const actualSize = Number(stat.size);
+          const expectedSize = (asset as any).size || 0;
+          const sizeDiff = Math.abs(actualSize - expectedSize);
+          const sizeDiffPercent = expectedSize > 0 ? sizeDiff / expectedSize : 0;
+          
+          if (sizeDiffPercent > 0.01) { // 允许 1% 误差
+            allFilesValid = false;
+            invalidFiles.push(`${asset.id}: 大小不匹配 - 实际：${actualSize}, 预期：${expectedSize}`);
+          }
+        } catch (e) {
+          allFilesValid = false;
+          invalidFiles.push(`${asset.id}: 无法读取文件信息 - ${e}`);
+        }
+      }
+      
+      console.log(`[DownloadService] 物理校验结果：${allFilesValid ? '通过' : '失败'}`);
+      if (!allFilesValid) {
+        console.error(`[DownloadService] 无效文件：${invalidFiles.join(', ')}`);
+      }
+      
+      // 【暴力修复 3】打印每一步的分子分母
+      const downloadedBytes = currentReceivedBytes;
+      const totalBytesValue = totalBytes;
+      const ratio = totalBytesValue > 0 ? downloadedBytes / totalBytesValue : 0;
+      console.log('Progress Trace:', { 
+        downloadedBytes, 
+        totalBytes: totalBytesValue, 
+        ratio,
+        allFilesValid,
+        invalidFilesCount: invalidFiles.length
       });
+      
+      // 下载完成，只有物理校验通过才报告 100% 进度
+      if (allFilesValid) {
+        console.log('[DownloadService] ✅ 物理校验通过，报告 100% 进度');
+        onProgress({
+          progress: 1,
+          receivedBytes: totalBytesValue,
+          totalBytes: totalBytesValue
+        });
+      } else {
+        // 报告真实进度，不伪造 100%
+        const realProgress = Math.min(0.99, ratio);
+        console.log(`[DownloadService] ⚠️ 物理校验失败，报告真实进度：${(realProgress * 100).toFixed(1)}%`);
+        onProgress({
+          progress: realProgress,
+          receivedBytes: downloadedBytes,
+          totalBytes: totalBytesValue
+        });
+      }
       
       if (successRate >= 0.9) {
         console.log('[DownloadService] 下载成功，标记为就绪');
       } else {
-        console.warn(`[DownloadService] 下载完成但有失败: 成功 ${successCount}/${filesToDownload.length}，允许进入应用`);
+        console.warn(`[DownloadService] 下载完成但有失败：成功 ${successCount}/${filesToDownload.length}，允许进入应用`);
       }
 
-      // 静默处理：失败资产已记录到failedAssets数组
+      // 静默处理：失败资产已记录到 failedAssets 数组
     } catch (e) {
       console.error('--- [Validation Error] ---', e);
     } 
