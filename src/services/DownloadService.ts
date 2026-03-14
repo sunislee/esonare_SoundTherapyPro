@@ -111,7 +111,10 @@ export const DownloadService = {
           });
         }
       };
-      calibrateSizes();
+      
+      setImmediate(() => {
+        calibrateSizes();
+      });
 
       // 初始进度发送
       onProgress({
@@ -479,6 +482,36 @@ export const DownloadService = {
       console.log(`[DownloadService] 物理校验结果：${allFilesValid ? '通过' : '失败'}`);
       if (!allFilesValid) {
         console.error(`[DownloadService] 无效文件：${invalidFiles.join(', ')}`);
+        console.log('[DownloadService] 尝试重新下载失败的文件...');
+        
+        // 重新下载失败的文件
+        for (const asset of filesToDownload) {
+          const localPath = getLocalPathHelper(asset.category, asset.filename);
+          const fileExists = await RNFS.exists(localPath);
+          
+          if (!fileExists) {
+            console.log(`[DownloadService] 重新下载：${asset.id}`);
+            await downloadFileWithRetry(asset, localPath, 0, totalFiles, downloadedBytes, totalBytes, onProgress);
+          } else {
+            // 检查文件大小
+            try {
+              const stat = await RNFS.stat(localPath);
+              const actualSize = Number(stat.size);
+              const expectedSize = (asset as any).size || 0;
+              const sizeDiff = Math.abs(actualSize - expectedSize);
+              const sizeDiffPercent = expectedSize > 0 ? sizeDiff / expectedSize : 0;
+              
+              if (sizeDiffPercent > 0.01) {
+                console.log(`[DownloadService] 重新下载（大小不匹配）：${asset.id}`);
+                await RNFS.unlink(localPath);
+                await downloadFileWithRetry(asset, localPath, 0, totalFiles, downloadedBytes, totalBytes, onProgress);
+              }
+            } catch (e) {
+              console.log(`[DownloadService] 重新下载（读取失败）：${asset.id}`);
+              await downloadFileWithRetry(asset, localPath, 0, totalFiles, downloadedBytes, totalBytes, onProgress);
+            }
+          }
+        }
       }
       
       // 【暴力修复 3】打印每一步的分子分母

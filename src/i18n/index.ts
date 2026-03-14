@@ -144,7 +144,11 @@ const zh = {
   },
   "player": {
     "landing": {
-      "loading": "正在进入心灵空间..."
+      "loading": "正在准备冥想空间...",
+      "preparing": "正在准备冥想空间...",
+      "waking": "正在唤醒心声资源...",
+      "downloading": "正在下载中...",
+      "complete": "资源准备完成"
     },
     "labels": {
       "ignite": "点燃",
@@ -300,7 +304,10 @@ const zh = {
     "title": "资源下载中",
     "subtitle": "正在为您准备沉浸式音频资源...",
     "calculating": "正在计算资源大小...",
-    "tip": "初次使用请保持网络畅通，正在为您同步高品质音频"
+    "tip": "初次使用请保持网络畅通，正在为您同步高品质音频",
+    "optimizing": "正在优化音频资源...",
+    "incompleteTitle": "下载不完整",
+    "incompleteMessage": "还有 {{count}} 个文件正在下载中，请等待下载完成。"
   },
   "nameEntry": {
     "title": "如何称呼您？",

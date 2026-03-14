@@ -1,0 +1,919 @@
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
+
+> Configure project :app
+WARNING: The option 'android.bundle.enableUncompressedNativeLibs' is deprecated.
+The current default is 'true'.
+It was removed in version 8.1 of the Android Gradle plugin.
+
+> Configure project :expo
+
+Using expo modules
+  - [32mexpo-asset[0m (10.0.10)
+  - [32mexpo-av[0m (14.0.7)
+  - [32mexpo-constants[0m (16.0.2)
+  - [32mexpo-file-system[0m (17.0.1)
+  - [32mexpo-font[0m (12.0.10)
+  - [32mexpo-keep-awake[0m (13.0.2)
+  - [32mexpo-modules-core[0m (1.12.26)
+
+
+> Configure project :react-native-firebase_app
+:react-native-firebase_app package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_app:firebase.bom using default value: 34.8.0
+:react-native-firebase_app:play.play-services-auth using default value: 21.4.0
+:react-native-firebase_app package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_app:version set from package.json: 23.8.6 (23,8,6 - 23008006)
+:react-native-firebase_app:android.compileSdk using custom value: 35
+:react-native-firebase_app:android.targetSdk using custom value: 35
+:react-native-firebase_app:android.minSdk using custom value: 23
+:react-native-firebase_app:reactNativeAndroidDir /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/android
+
+> Configure project :react-native-firebase_crashlytics
+:react-native-firebase_crashlytics package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/package.json
+:react-native-firebase_app package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_crashlytics:firebase.bom using default value: 34.8.0
+:react-native-firebase_crashlytics package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/package.json
+:react-native-firebase_crashlytics:version set from package.json: 23.8.6 (23,8,6 - 23008006)
+:react-native-firebase_crashlytics:android.compileSdk using custom value: 35
+:react-native-firebase_crashlytics:android.targetSdk using custom value: 35
+:react-native-firebase_crashlytics:android.minSdk using custom value: 23
+:react-native-firebase_crashlytics:reactNativeAndroidDir /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/android
+
+> Configure project :react-native-reanimated
+Android gradle plugin: 8.2.1
+Gradle: 8.3
+
+> Configure project :react-native-video
+Kotlin version is correct: 1.9.22
+AndroidX version is correct: 1.9.3
+useExoplayerIMA: false
+useExoplayerSmoothStreaming: true
+useExoplayerDash: true
+useExoplayerHls: true
+useExoplayerRtsp: false
+buildFromSource: false
+
+> Task :expo-av:preBuild UP-TO-DATE
+> Task :expo-font:preBuild UP-TO-DATE
+> Task :expo-keep-awake:preBuild UP-TO-DATE
+> Task :expo-av:preReleaseBuild UP-TO-DATE
+> Task :expo-font:preReleaseBuild UP-TO-DATE
+> Task :expo-modules-core:preBuild UP-TO-DATE
+> Task :expo-keep-awake:preReleaseBuild UP-TO-DATE
+> Task :expo-constants:createExpoConfig UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preBuild UP-TO-DATE
+> Task :expo-av:generateReleaseResValues UP-TO-DATE
+> Task :expo-file-system:preBuild UP-TO-DATE
+> Task :expo-font:generateReleaseResValues UP-TO-DATE
+> Task :expo-font:generateReleaseResources UP-TO-DATE
+> Task :expo-keep-awake:generateReleaseResValues UP-TO-DATE
+> Task :expo:generateExpoModulesPackageListTask UP-TO-DATE
+> Task :expo-keep-awake:generateReleaseResources UP-TO-DATE
+> Task :expo:preBuild UP-TO-DATE
+> Task :expo-modules-core:preReleaseBuild UP-TO-DATE
+> Task :expo:preReleaseBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preReleaseBuild UP-TO-DATE
+> Task :expo-asset:preBuild UP-TO-DATE
+> Task :expo-file-system:preReleaseBuild UP-TO-DATE
+> Task :expo-asset:preReleaseBuild UP-TO-DATE
+> Task :expo:generateReleaseResValues UP-TO-DATE
+> Task :expo:generateReleaseResources UP-TO-DATE
+> Task :expo-constants:preBuild UP-TO-DATE
+> Task :expo-av:generateReleaseResources UP-TO-DATE
+> Task :expo-file-system:generateReleaseResValues UP-TO-DATE
+> Task :expo-file-system:generateReleaseResources UP-TO-DATE
+> Task :expo-keep-awake:packageReleaseResources UP-TO-DATE
+> Task :expo-constants:preReleaseBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseResValues UP-TO-DATE
+> Task :expo-modules-core:generateReleaseResValues UP-TO-DATE
+> Task :expo-modules-core:generateReleaseResources UP-TO-DATE
+> Task :expo-asset:generateReleaseResValues UP-TO-DATE
+> Task :expo-constants:generateReleaseResValues UP-TO-DATE
+> Task :expo-constants:generateReleaseResources UP-TO-DATE
+> Task :expo-asset:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_blur:preBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_blur:preReleaseBuild UP-TO-DATE
+> Task :expo-constants:packageReleaseResources UP-TO-DATE
+> Task :react-native-community_netinfo:preBuild UP-TO-DATE
+> Task :react-native-community_netinfo:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_blur:generateReleaseResValues UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseResValues UP-TO-DATE
+> Task :expo-font:packageReleaseResources UP-TO-DATE
+> Task :react-native-community_blur:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_slider:preBuild UP-TO-DATE
+> Task :react-native-community_slider:preReleaseBuild UP-TO-DATE
+> Task :expo:packageReleaseResources UP-TO-DATE
+> Task :expo-file-system:packageReleaseResources UP-TO-DATE
+> Task :expo-asset:packageReleaseResources UP-TO-DATE
+> Task :react-native-community_slider:generateReleaseResValues UP-TO-DATE
+> Task :react-native-firebase_crashlytics:preBuild UP-TO-DATE
+> Task :react-native-firebase_app:preBuild UP-TO-DATE
+> Task :react-native-fs:preBuild UP-TO-DATE
+> Task :react-native-firebase_app:preReleaseBuild UP-TO-DATE
+> Task :react-native-firebase_crashlytics:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_netinfo:packageReleaseResources UP-TO-DATE
+> Task :react-native-fs:preReleaseBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:packageReleaseResources UP-TO-DATE
+> Task :react-native-firebase_app:generateReleaseResValues UP-TO-DATE
+> Task :react-native-firebase_app:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_slider:generateReleaseResources UP-TO-DATE
+> Task :react-native-fs:generateReleaseResValues UP-TO-DATE
+> Task :react-native-gesture-handler:preBuild UP-TO-DATE
+> Task :react-native-fs:generateReleaseResources UP-TO-DATE
+> Task :react-native-firebase_crashlytics:generateReleaseResValues UP-TO-DATE
+> Task :react-native-firebase_crashlytics:generateReleaseResources UP-TO-DATE
+> Task :react-native-haptic-feedback:preBuild UP-TO-DATE
+> Task :react-native-gesture-handler:preReleaseBuild UP-TO-DATE
+> Task :react-native-haptic-feedback:preReleaseBuild UP-TO-DATE
+> Task :react-native-haptic-feedback:generateReleaseResValues UP-TO-DATE
+> Task :react-native-gesture-handler:generateReleaseResValues UP-TO-DATE
+> Task :expo-av:packageReleaseResources UP-TO-DATE
+> Task :react-native-haptic-feedback:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_slider:packageReleaseResources UP-TO-DATE
+> Task :react-native-gesture-handler:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_blur:packageReleaseResources UP-TO-DATE
+> Task :react-native-image-picker:preBuild UP-TO-DATE
+> Task :react-native-image-picker:preReleaseBuild UP-TO-DATE
+> Task :react-native-reanimated:assertLatestReactNativeWithNewArchitectureTask SKIPPED
+> Task :react-native-safe-area-context:preBuild UP-TO-DATE
+> Task :react-native-reanimated:assertMinimalReactNativeVersionTask SKIPPED
+> Task :react-native-safe-area-context:preReleaseBuild UP-TO-DATE
+> Task :react-native-firebase_app:packageReleaseResources UP-TO-DATE
+> Task :react-native-screens:preBuild UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseResValues UP-TO-DATE
+> Task :react-native-screens:preReleaseBuild UP-TO-DATE
+> Task :react-native-fs:packageReleaseResources UP-TO-DATE
+> Task :react-native-image-picker:generateReleaseResValues UP-TO-DATE
+> Task :react-native-screens:generateReleaseResValues UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseResources UP-TO-DATE
+> Task :react-native-screens:generateReleaseResources UP-TO-DATE
+> Task :react-native-image-picker:generateReleaseResources UP-TO-DATE
+> Task :react-native-svg:preBuild UP-TO-DATE
+> Task :react-native-svg:preReleaseBuild UP-TO-DATE
+> Task :react-native-firebase_crashlytics:packageReleaseResources UP-TO-DATE
+> Task :react-native-gesture-handler:packageReleaseResources UP-TO-DATE
+> Task :react-native-track-player:preBuild UP-TO-DATE
+> Task :react-native-track-player:preReleaseBuild UP-TO-DATE
+> Task :react-native-safe-area-context:packageReleaseResources UP-TO-DATE
+> Task :react-native-vector-icons:preBuild UP-TO-DATE
+> Task :react-native-vector-icons:preReleaseBuild UP-TO-DATE
+> Task :react-native-svg:generateReleaseResValues UP-TO-DATE
+> Task :react-native-track-player:generateReleaseResValues UP-TO-DATE
+> Task :react-native-haptic-feedback:packageReleaseResources UP-TO-DATE
+> Task :react-native-track-player:generateReleaseResources UP-TO-DATE
+> Task :react-native-svg:generateReleaseResources UP-TO-DATE
+> Task :react-native-vector-icons:generateReleaseResValues UP-TO-DATE
+> Task :react-native-vector-icons:generateReleaseResources UP-TO-DATE
+> Task :react-native-video:preBuild UP-TO-DATE
+> Task :react-native-video:preReleaseBuild UP-TO-DATE
+> Task :react-native-reanimated:prepareHeadersForPrefab UP-TO-DATE
+> Task :react-native-reanimated:preBuild UP-TO-DATE
+> Task :react-native-reanimated:preReleaseBuild UP-TO-DATE
+> Task :react-native-reanimated:generateReleaseResValues UP-TO-DATE
+> Task :react-native-reanimated:generateReleaseResources UP-TO-DATE
+> Task :react-native-screens:packageReleaseResources UP-TO-DATE
+> Task :react-native-webview:preBuild UP-TO-DATE
+> Task :expo:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-webview:preReleaseBuild UP-TO-DATE
+> Task :react-native-video:generateReleaseResValues UP-TO-DATE
+> Task :react-native-video:generateReleaseResources UP-TO-DATE
+> Task :react-native-image-picker:packageReleaseResources UP-TO-DATE
+> Task :expo:processReleaseManifest UP-TO-DATE
+> Task :expo-asset:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-av:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-webview:generateReleaseResValues UP-TO-DATE
+> Task :react-native-webview:generateReleaseResources UP-TO-DATE
+> Task :expo-asset:processReleaseManifest UP-TO-DATE
+> Task :react-native-reanimated:packageReleaseResources UP-TO-DATE
+> Task :react-native-track-player:packageReleaseResources UP-TO-DATE
+> Task :expo-constants:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-file-system:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-svg:packageReleaseResources UP-TO-DATE
+> Task :react-native-webview:packageReleaseResources UP-TO-DATE
+> Task :expo-file-system:processReleaseManifest UP-TO-DATE
+> Task :expo-av:processReleaseManifest UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-font:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-community_blur:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-constants:processReleaseManifest UP-TO-DATE
+> Task :react-native-video:packageReleaseResources UP-TO-DATE
+> Task :react-native-community_netinfo:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-keep-awake:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:processReleaseManifest UP-TO-DATE
+> Task :react-native-community_slider:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-firebase_app:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-firebase_crashlytics:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-font:processReleaseManifest UP-TO-DATE
+> Task :expo-keep-awake:processReleaseManifest UP-TO-DATE
+> Task :react-native-community_slider:processReleaseManifest UP-TO-DATE
+> Task :react-native-firebase_crashlytics:processReleaseManifest UP-TO-DATE
+> Task :react-native-community_netinfo:processReleaseManifest UP-TO-DATE
+> Task :react-native-gesture-handler:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-fs:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-haptic-feedback:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-gesture-handler:processReleaseManifest UP-TO-DATE
+> Task :react-native-fs:processReleaseManifest UP-TO-DATE
+> Task :react-native-safe-area-context:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-screens:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-firebase_app:processReleaseManifest UP-TO-DATE
+> Task :react-native-image-picker:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-reanimated:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-haptic-feedback:processReleaseManifest UP-TO-DATE
+> Task :react-native-image-picker:processReleaseManifest UP-TO-DATE
+> Task :react-native-reanimated:processReleaseManifest UP-TO-DATE
+> Task :react-native-screens:processReleaseManifest UP-TO-DATE
+> Task :react-native-webview:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-track-player:extractDeepLinksRelease UP-TO-DATE
+> Task :expo:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-asset:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-track-player:processReleaseManifest UP-TO-DATE
+> Task :react-native-svg:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-av:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-constants:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-video:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-file-system:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-font:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-video:processReleaseManifest UP-TO-DATE
+> Task :react-native-webview:processReleaseManifest UP-TO-DATE
+> Task :react-native-community_slider:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-keep-awake:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-community_netinfo:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-firebase_crashlytics:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-firebase_app:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-svg:processReleaseManifest UP-TO-DATE
+> Task :react-native-fs:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-gesture-handler:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-haptic-feedback:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-reanimated:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-screens:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-svg:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-track-player:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-video:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-image-picker:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-webview:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-asset:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-av:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-constants:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-asset:parseReleaseLocalResources UP-TO-DATE
+> Task :expo:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-av:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-constants:parseReleaseLocalResources UP-TO-DATE
+> Task :expo:generateReleaseRFile UP-TO-DATE
+> Task :expo-asset:generateReleaseRFile UP-TO-DATE
+> Task :expo-av:generateReleaseRFile UP-TO-DATE
+> Task :expo-file-system:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-constants:generateReleaseRFile UP-TO-DATE
+> Task :expo-font:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-keep-awake:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-community_netinfo:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-font:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-keep-awake:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-community_netinfo:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-file-system:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-font:generateReleaseRFile UP-TO-DATE
+> Task :expo-keep-awake:generateReleaseRFile UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseRFile UP-TO-DATE
+> Task :expo-file-system:generateReleaseRFile UP-TO-DATE
+> Task :react-native-community_slider:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-firebase_app:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-firebase_crashlytics:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-fs:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-community_slider:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-firebase_crashlytics:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-firebase_app:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-fs:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-community_slider:generateReleaseRFile UP-TO-DATE
+> Task :react-native-firebase_crashlytics:generateReleaseRFile UP-TO-DATE
+> Task :react-native-gesture-handler:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-fs:generateReleaseRFile UP-TO-DATE
+> Task :react-native-firebase_app:generateReleaseRFile UP-TO-DATE
+> Task :react-native-haptic-feedback:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-gesture-handler:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-reanimated:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-haptic-feedback:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-image-picker:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-gesture-handler:generateReleaseRFile UP-TO-DATE
+> Task :react-native-reanimated:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-haptic-feedback:generateReleaseRFile UP-TO-DATE
+> Task :react-native-image-picker:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-reanimated:generateReleaseRFile UP-TO-DATE
+> Task :react-native-screens:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-image-picker:generateReleaseRFile UP-TO-DATE
+> Task :react-native-track-player:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-screens:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-track-player:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-svg:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-track-player:generateReleaseRFile UP-TO-DATE
+> Task :react-native-video:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-svg:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-webview:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-webview:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-svg:generateReleaseRFile UP-TO-DATE
+> Task :react-native-screens:generateReleaseRFile UP-TO-DATE
+> Task :react-native-webview:generateReleaseRFile UP-TO-DATE
+> Task :expo-asset:mergeReleaseShaders UP-TO-DATE
+> Task :expo-av:mergeReleaseShaders UP-TO-DATE
+> Task :expo-av:compileReleaseShaders NO-SOURCE
+> Task :react-native-video:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-av:generateReleaseAssets UP-TO-DATE
+> Task :expo-asset:compileReleaseShaders NO-SOURCE
+> Task :expo-asset:generateReleaseAssets UP-TO-DATE
+> Task :expo-av:packageReleaseAssets UP-TO-DATE
+> Task :expo-asset:packageReleaseAssets UP-TO-DATE
+> Task :expo-constants:mergeReleaseShaders UP-TO-DATE
+> Task :expo-file-system:mergeReleaseShaders UP-TO-DATE
+> Task :expo-constants:compileReleaseShaders NO-SOURCE
+> Task :expo-constants:generateReleaseAssets UP-TO-DATE
+> Task :react-native-video:generateReleaseRFile UP-TO-DATE
+> Task :expo-constants:packageReleaseAssets UP-TO-DATE
+> Task :expo-file-system:compileReleaseShaders NO-SOURCE
+> Task :expo-file-system:generateReleaseAssets UP-TO-DATE
+> Task :expo-file-system:packageReleaseAssets UP-TO-DATE
+> Task :expo-keep-awake:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseShaders UP-TO-DATE
+> Task :expo-keep-awake:compileReleaseShaders NO-SOURCE
+> Task :expo-keep-awake:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_netinfo:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_netinfo:generateReleaseAssets UP-TO-DATE
+> Task :expo-font:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-community_netinfo:packageReleaseAssets UP-TO-DATE
+> Task :expo-keep-awake:packageReleaseAssets UP-TO-DATE
+> Task :expo-font:compileReleaseShaders NO-SOURCE
+> Task :expo-font:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_slider:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-firebase_app:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-firebase_app:compileReleaseShaders NO-SOURCE
+> Task :react-native-firebase_app:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_slider:compileReleaseShaders NO-SOURCE
+> Task :expo-font:packageReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_app:packageReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_crashlytics:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-firebase_crashlytics:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_slider:generateReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_crashlytics:generateReleaseAssets UP-TO-DATE
+> Task :react-native-fs:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-fs:compileReleaseShaders NO-SOURCE
+> Task :react-native-fs:generateReleaseAssets UP-TO-DATE
+> Task :react-native-fs:packageReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_crashlytics:packageReleaseAssets UP-TO-DATE
+> Task :react-native-haptic-feedback:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-haptic-feedback:compileReleaseShaders NO-SOURCE
+> Task :react-native-haptic-feedback:generateReleaseAssets UP-TO-DATE
+> Task :react-native-haptic-feedback:packageReleaseAssets UP-TO-DATE
+> Task :react-native-image-picker:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-image-picker:compileReleaseShaders NO-SOURCE
+> Task :react-native-image-picker:generateReleaseAssets UP-TO-DATE
+> Task :react-native-image-picker:packageReleaseAssets UP-TO-DATE
+> Task :react-native-reanimated:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-reanimated:compileReleaseShaders NO-SOURCE
+> Task :react-native-reanimated:generateReleaseAssets UP-TO-DATE
+> Task :react-native-reanimated:packageReleaseAssets UP-TO-DATE
+> Task :react-native-screens:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-screens:compileReleaseShaders NO-SOURCE
+> Task :react-native-screens:generateReleaseAssets UP-TO-DATE
+> Task :react-native-screens:packageReleaseAssets UP-TO-DATE
+> Task :react-native-svg:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-svg:compileReleaseShaders NO-SOURCE
+> Task :react-native-svg:generateReleaseAssets UP-TO-DATE
+> Task :react-native-svg:packageReleaseAssets UP-TO-DATE
+> Task :react-native-track-player:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-track-player:compileReleaseShaders NO-SOURCE
+> Task :react-native-track-player:generateReleaseAssets UP-TO-DATE
+> Task :react-native-track-player:packageReleaseAssets UP-TO-DATE
+> Task :react-native-video:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-video:compileReleaseShaders NO-SOURCE
+> Task :react-native-video:generateReleaseAssets UP-TO-DATE
+> Task :react-native-video:packageReleaseAssets UP-TO-DATE
+> Task :react-native-webview:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-webview:compileReleaseShaders NO-SOURCE
+> Task :react-native-webview:generateReleaseAssets UP-TO-DATE
+> Task :react-native-webview:packageReleaseAssets UP-TO-DATE
+> Task :expo-asset:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-asset:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-asset:javaPreCompileRelease UP-TO-DATE
+> Task :expo-av:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-av:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-av:javaPreCompileRelease UP-TO-DATE
+> Task :expo-constants:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-constants:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-constants:javaPreCompileRelease UP-TO-DATE
+> Task :expo-file-system:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-file-system:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-file-system:javaPreCompileRelease UP-TO-DATE
+> Task :expo-font:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-font:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-font:javaPreCompileRelease UP-TO-DATE
+> Task :expo-keep-awake:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-keep-awake:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-keep-awake:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-reanimated:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-reanimated:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
+> Task :expo-modules-core:packageReleaseResources UP-TO-DATE
+> Task :expo-modules-core:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-safe-area-context:processReleaseManifest UP-TO-DATE
+> Task :react-native-community_blur:processReleaseManifest UP-TO-DATE
+> Task :react-native-async-storage_async-storage:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-vector-icons:packageReleaseResources UP-TO-DATE
+> Task :expo-modules-core:processReleaseManifest UP-TO-DATE
+> Task :react-native-vector-icons:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-modules-core:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-community_slider:packageReleaseAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-gesture-handler:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-community_blur:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-vector-icons:processReleaseManifest UP-TO-DATE
+> Task :expo-modules-core:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-vector-icons:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-safe-area-context:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo:compileReleaseShaders NO-SOURCE
+> Task :expo:generateReleaseAssets UP-TO-DATE
+> Task :react-native-vector-icons:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:parseReleaseLocalResources UP-TO-DATE
+> Task :expo:packageReleaseAssets UP-TO-DATE
+> Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-community_blur:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-gesture-handler:compileReleaseShaders NO-SOURCE
+> Task :react-native-vector-icons:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-community_blur:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseRFile UP-TO-DATE
+> Task :react-native-gesture-handler:generateReleaseAssets UP-TO-DATE
+> Task :expo-modules-core:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseShaders UP-TO-DATE
+> Task :expo:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-community_blur:generateReleaseRFile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileReleaseShaders NO-SOURCE
+> Task :react-native-gesture-handler:packageReleaseAssets UP-TO-DATE
+> Task :expo:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-community_blur:mergeReleaseShaders UP-TO-DATE
+> Task :expo:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-community_blur:compileReleaseShaders NO-SOURCE
+> Task :react-native-gesture-handler:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-track-player:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-vector-icons:generateReleaseRFile UP-TO-DATE
+> Task :react-native-vector-icons:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-safe-area-context:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-modules-core:generateReleaseRFile UP-TO-DATE
+> Task :react-native-vector-icons:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_blur:generateReleaseAssets UP-TO-DATE
+> Task :react-native-track-player:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseAssets UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseRFile UP-TO-DATE
+> Task :react-native-community_blur:packageReleaseAssets UP-TO-DATE
+> Task :react-native-gesture-handler:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-async-storage_async-storage:packageReleaseAssets UP-TO-DATE
+> Task :react-native-screens:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-gesture-handler:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-video:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-webview:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-modules-core:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-vector-icons:generateReleaseAssets UP-TO-DATE
+> Task :react-native-video:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-async-storage_async-storage:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-webview:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
+> Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
+> Task :react-native-safe-area-context:packageReleaseAssets UP-TO-DATE
+> Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-safe-area-context:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-modules-core:compileReleaseShaders NO-SOURCE
+> Task :expo-modules-core:generateReleaseAssets UP-TO-DATE
+> Task :react-native-vector-icons:packageReleaseAssets UP-TO-DATE
+> Task :react-native-community_blur:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-community_blur:javaPreCompileRelease UP-TO-DATE
+> Task :expo-modules-core:packageReleaseAssets UP-TO-DATE
+> Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-modules-core:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-reanimated:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-community_blur:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-community_blur:mergeReleaseGeneratedProguardFiles
+> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseGeneratedProguardFiles
+> Task :react-native-safe-area-context:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-track-player:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-community_blur:exportReleaseConsumerProguardFiles
+> Task :react-native-async-storage_async-storage:exportReleaseConsumerProguardFiles
+> Task :react-native-webview:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-screens:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-video:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-safe-area-context:javaPreCompileRelease
+> Task :react-native-track-player:javaPreCompileRelease
+> Task :react-native-screens:javaPreCompileRelease
+> Task :react-native-webview:javaPreCompileRelease
+> Task :react-native-community_netinfo:generateReleaseBuildConfig
+> Task :react-native-community_slider:generateReleaseBuildConfig
+> Task :react-native-video:javaPreCompileRelease
+> Task :react-native-community_netinfo:javaPreCompileRelease
+> Task :react-native-community_slider:javaPreCompileRelease
+> Task :react-native-reanimated:bundleLibCompileToJarRelease
+> Task :expo-modules-core:javaPreCompileRelease
+
+> Task :react-native-safe-area-context:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/paper/java/com/th3rdwave/safeareacontext/NativeSafeAreaContextSpec.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-safe-area-context:mergeReleaseGeneratedProguardFiles
+> Task :react-native-safe-area-context:exportReleaseConsumerProguardFiles
+> Task :react-native-firebase_app:generateReleaseBuildConfig
+> Task :react-native-firebase_app:javaPreCompileRelease
+
+> Task :react-native-community_slider:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/slider/android/src/oldarch/java/com/reactnativecommunity/slider/ReactSliderManager.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-community_slider:mergeReleaseGeneratedProguardFiles
+> Task :react-native-community_slider:exportReleaseConsumerProguardFiles
+> Task :react-native-firebase_crashlytics:generateReleaseBuildConfig
+> Task :react-native-firebase_crashlytics:javaPreCompileRelease
+> Task :react-native-fs:generateReleaseBuildConfig
+> Task :react-native-fs:javaPreCompileRelease
+
+> Task :react-native-community_netinfo:compileReleaseJavaWithJavac
+/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/netinfo/android/src/main/java/com/reactnativecommunity/netinfo/NetInfoModule.java:45: 警告: [removal] NativeModule 中的 onCatalystInstanceDestroy() 已过时, 且标记为待删除
+    public void onCatalystInstanceDestroy() {
+                ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+1 个警告
+
+> Task :react-native-community_netinfo:mergeReleaseGeneratedProguardFiles
+> Task :react-native-track-player:compileReleaseJavaWithJavac
+> Task :react-native-track-player:mergeReleaseGeneratedProguardFiles
+> Task :react-native-track-player:exportReleaseConsumerProguardFiles
+> Task :react-native-haptic-feedback:generateReleaseBuildConfig
+> Task :react-native-community_netinfo:exportReleaseConsumerProguardFiles
+> Task :react-native-haptic-feedback:javaPreCompileRelease
+> Task :react-native-image-picker:generateReleaseBuildConfig
+
+> Task :react-native-screens:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/paper/java/com/swmansion/rnscreens/NativeScreensModuleSpec.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-image-picker:javaPreCompileRelease
+> Task :react-native-screens:mergeReleaseGeneratedProguardFiles
+> Task :react-native-screens:exportReleaseConsumerProguardFiles
+> Task :react-native-reanimated:mergeReleaseGeneratedProguardFiles
+> Task :react-native-reanimated:exportReleaseConsumerProguardFiles
+> Task :react-native-svg:generateReleaseBuildConfig
+> Task :react-native-svg:javaPreCompileRelease
+
+> Task :react-native-webview:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-webview:mergeReleaseGeneratedProguardFiles
+> Task :react-native-webview:exportReleaseConsumerProguardFiles
+> Task :react-native-vector-icons:generateReleaseBuildConfig
+> Task :react-native-vector-icons:javaPreCompileRelease
+
+> Task :react-native-haptic-feedback:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-haptic-feedback:mergeReleaseGeneratedProguardFiles
+> Task :react-native-haptic-feedback:exportReleaseConsumerProguardFiles
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
+> Task :react-native-community_blur:bundleLibCompileToJarRelease
+> Task :react-native-community_netinfo:bundleLibCompileToJarRelease
+> Task :react-native-community_slider:bundleLibCompileToJarRelease
+> Task :react-native-haptic-feedback:bundleLibCompileToJarRelease
+> Task :react-native-safe-area-context:bundleLibCompileToJarRelease
+> Task :react-native-screens:bundleLibCompileToJarRelease
+> Task :react-native-track-player:bundleLibCompileToJarRelease
+> Task :react-native-webview:bundleLibCompileToJarRelease
+> Task :expo:prepareReleaseArtProfile
+> Task :expo-asset:prepareReleaseArtProfile
+> Task :expo-av:prepareReleaseArtProfile
+> Task :expo-constants:prepareReleaseArtProfile
+> Task :expo-file-system:prepareReleaseArtProfile
+> Task :expo-font:prepareReleaseArtProfile
+> Task :expo-keep-awake:prepareReleaseArtProfile
+> Task :expo-modules-core:prepareReleaseArtProfile
+> Task :react-native-async-storage_async-storage:prepareReleaseArtProfile
+> Task :react-native-community_blur:prepareReleaseArtProfile
+> Task :react-native-community_netinfo:prepareReleaseArtProfile
+> Task :react-native-community_slider:prepareReleaseArtProfile
+> Task :react-native-firebase_crashlytics:prepareReleaseArtProfile
+> Task :react-native-gesture-handler:prepareReleaseArtProfile
+> Task :react-native-haptic-feedback:prepareReleaseArtProfile
+> Task :react-native-reanimated:prepareReleaseArtProfile
+> Task :react-native-safe-area-context:prepareReleaseArtProfile
+> Task :react-native-screens:prepareReleaseArtProfile
+> Task :react-native-track-player:prepareReleaseArtProfile
+> Task :react-native-webview:prepareReleaseArtProfile
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease
+> Task :react-native-community_blur:bundleLibRuntimeToJarRelease
+> Task :react-native-community_netinfo:bundleLibRuntimeToJarRelease
+
+> Task :react-native-video:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-video:mergeReleaseGeneratedProguardFiles
+
+> Task :react-native-fs:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-fs:mergeReleaseGeneratedProguardFiles
+> Task :react-native-fs:exportReleaseConsumerProguardFiles
+> Task :react-native-video:exportReleaseConsumerProguardFiles
+> Task :react-native-community_slider:bundleLibRuntimeToJarRelease
+> Task :react-native-fs:prepareReleaseArtProfile
+> Task :react-native-video:prepareReleaseArtProfile
+> Task :react-native-fs:bundleLibCompileToJarRelease
+
+> Task :react-native-vector-icons:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-haptic-feedback:bundleLibRuntimeToJarRelease
+> Task :react-native-vector-icons:mergeReleaseGeneratedProguardFiles
+> Task :react-native-vector-icons:exportReleaseConsumerProguardFiles
+> Task :react-native-fs:bundleLibRuntimeToJarRelease
+> Task :react-native-vector-icons:prepareReleaseArtProfile
+> Task :react-native-video:bundleLibCompileToJarRelease
+> Task :react-native-vector-icons:bundleLibCompileToJarRelease
+> Task :react-native-reanimated:bundleLibRuntimeToJarRelease
+> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
+> Task :react-native-vector-icons:bundleLibRuntimeToJarRelease
+> Task :react-native-webview:bundleLibRuntimeToJarRelease
+> Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_blur:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_netinfo:processReleaseJavaRes NO-SOURCE
+> Task :react-native-screens:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_crashlytics:processReleaseJavaRes NO-SOURCE
+> Task :react-native-track-player:bundleLibRuntimeToJarRelease
+
+> Task :react-native-image-picker:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerPackage.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-community_slider:processReleaseJavaRes NO-SOURCE
+> Task :react-native-fs:processReleaseJavaRes NO-SOURCE
+> Task :react-native-haptic-feedback:processReleaseJavaRes NO-SOURCE
+> Task :react-native-image-picker:mergeReleaseGeneratedProguardFiles
+> Task :react-native-reanimated:processReleaseJavaRes NO-SOURCE
+> Task :react-native-safe-area-context:processReleaseJavaRes
+> Task :react-native-video:bundleLibRuntimeToJarRelease
+> Task :react-native-image-picker:prepareReleaseArtProfile
+> Task :react-native-screens:processReleaseJavaRes
+> Task :react-native-vector-icons:processReleaseJavaRes NO-SOURCE
+> Task :react-native-image-picker:exportReleaseConsumerProguardFiles
+> Task :react-native-track-player:processReleaseJavaRes
+> Task :react-native-image-picker:bundleLibCompileToJarRelease
+> Task :react-native-webview:processReleaseJavaRes
+> Task :expo:mergeReleaseJniLibFolders
+> Task :react-native-video:processReleaseJavaRes
+> Task :expo:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-image-picker:processReleaseJavaRes NO-SOURCE
+
+> Task :react-native-firebase_app:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :expo-asset:mergeReleaseJniLibFolders
+> Task :expo:copyReleaseJniLibsProjectOnly
+> Task :expo-asset:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-constants:mergeReleaseJniLibFolders
+> Task :react-native-firebase_app:mergeReleaseGeneratedProguardFiles
+> Task :react-native-firebase_app:exportReleaseConsumerProguardFiles
+> Task :expo-asset:copyReleaseJniLibsProjectOnly
+> Task :react-native-firebase_app:prepareReleaseArtProfile
+> Task :expo-constants:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-constants:copyReleaseJniLibsProjectOnly
+> Task :react-native-firebase_app:processReleaseJavaRes NO-SOURCE
+> Task :react-native-image-picker:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_app:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_app:bundleLibCompileToJarRelease
+> Task :expo-file-system:mergeReleaseJniLibFolders
+> Task :expo-keep-awake:mergeReleaseJniLibFolders
+> Task :expo-font:mergeReleaseJniLibFolders
+> Task :expo-file-system:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-font:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-keep-awake:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-font:copyReleaseJniLibsProjectOnly
+> Task :expo-file-system:copyReleaseJniLibsProjectOnly
+> Task :expo-keep-awake:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_blur:mergeReleaseJniLibFolders
+> Task :react-native-community_blur:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_netinfo:mergeReleaseJniLibFolders
+> Task :react-native-community_netinfo:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_blur:copyReleaseJniLibsProjectOnly
+> Task :react-native-async-storage_async-storage:mergeReleaseJniLibFolders
+> Task :react-native-async-storage_async-storage:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_netinfo:copyReleaseJniLibsProjectOnly
+> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_slider:mergeReleaseJniLibFolders
+> Task :react-native-community_slider:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-firebase_app:mergeReleaseJniLibFolders
+> Task :react-native-fs:mergeReleaseJniLibFolders
+> Task :react-native-firebase_app:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_slider:copyReleaseJniLibsProjectOnly
+> Task :react-native-fs:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-firebase_app:copyReleaseJniLibsProjectOnly
+> Task :react-native-fs:copyReleaseJniLibsProjectOnly
+> Task :react-native-image-picker:mergeReleaseJniLibFolders
+> Task :react-native-image-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-gesture-handler:mergeReleaseJniLibFolders
+> Task :react-native-image-picker:copyReleaseJniLibsProjectOnly
+> Task :react-native-gesture-handler:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-gesture-handler:copyReleaseJniLibsProjectOnly
+> Task :react-native-safe-area-context:mergeReleaseJniLibFolders
+> Task :react-native-haptic-feedback:mergeReleaseJniLibFolders
+> Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-haptic-feedback:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
+> Task :react-native-haptic-feedback:copyReleaseJniLibsProjectOnly
+> Task :react-native-track-player:mergeReleaseJniLibFolders
+> Task :react-native-track-player:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-track-player:copyReleaseJniLibsProjectOnly
+> Task :react-native-vector-icons:mergeReleaseJniLibFolders
+> Task :react-native-vector-icons:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-vector-icons:copyReleaseJniLibsProjectOnly
+> Task :react-native-video:mergeReleaseJniLibFolders
+> Task :react-native-video:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-video:copyReleaseJniLibsProjectOnly
+> Task :react-native-webview:mergeReleaseJniLibFolders
+> Task :react-native-webview:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-webview:copyReleaseJniLibsProjectOnly
+
+> Task :react-native-firebase_crashlytics:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/android/src/main/java/io/invertase/firebase/crashlytics/ReactNativeFirebaseCrashlyticsModule.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-firebase_crashlytics:mergeReleaseGeneratedProguardFiles
+
+> Task :app:createBundleGoogleReleaseJsAndAssets
+debug Reading Metro config from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/metro.config.js
+warn =================================================================================================
+warn From React Native 0.73, your project's Metro config should extend '@react-native/metro-config'
+warn or it will fail to build. Please copy the template at:
+warn https://github.com/facebook/react-native/blob/main/packages/react-native/template/metro.config.js
+warn This warning will be removed in future (https://github.com/facebook/metro/issues/1018).
+warn =================================================================================================
+warning: the transform cache was reset.
+                Welcome to Metro v0.80.12
+              Fast - Scalable - Integrated
+
+
+
+> Task :react-native-firebase_crashlytics:bundleLibCompileToJarRelease
+> Task :react-native-firebase_crashlytics:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_crashlytics:mergeReleaseJniLibFolders
+> Task :react-native-firebase_crashlytics:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-firebase_crashlytics:copyReleaseJniLibsProjectOnly
+
+> Task :react-native-svg:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: 某些输入文件使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-firebase_crashlytics:exportReleaseConsumerProguardFiles
+> Task :react-native-svg:mergeReleaseGeneratedProguardFiles
+> Task :react-native-svg:exportReleaseConsumerProguardFiles
+> Task :react-native-svg:prepareReleaseArtProfile
+> Task :react-native-svg:processReleaseJavaRes NO-SOURCE
+> Task :react-native-svg:mergeReleaseJniLibFolders
+> Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-svg:copyReleaseJniLibsProjectOnly
+> Task :react-native-svg:bundleLibRuntimeToJarRelease
+> Task :react-native-svg:bundleLibCompileToJarRelease
+
+> Task :expo-av:configureCMakeRelWithDebInfo[arm64-v8a]
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+
+> Task :react-native-gesture-handler:compileReleaseKotlin
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt:69:42 'constructor ReactModuleInfo(String!, String!, Boolean, Boolean, Boolean, Boolean, Boolean)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/core/FlingGestureHandler.kt:25:26 Parameter 'event' is never used
+
+> Task :react-native-gesture-handler:compileReleaseJavaWithJavac
+> Task :react-native-gesture-handler:mergeReleaseGeneratedProguardFiles
+> Task :react-native-gesture-handler:exportReleaseConsumerProguardFiles
+> Task :react-native-gesture-handler:bundleLibCompileToJarRelease
+> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease
+> Task :react-native-gesture-handler:processReleaseJavaRes
+
+> Task :expo-modules-core:compileReleaseKotlin FAILED
+e: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/permissions/PermissionsService.kt:166:36 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Array<(out) String!>?
+
+> Task :react-native-screens:configureCMakeRelWithDebInfo[arm64-v8a]
+C/C++: CMake Warning:
+C/C++:   Manually-specified variables were not used by the project:
+C/C++:     ANDROID_ALIGNED_AS_16KB
+C/C++:     ANDROID_EXTRACT_NATIVE_LIBS
+
+> Task :expo-av:configureCMakeRelWithDebInfo[arm64-v8a]
+C/C++: CMake Warning:
+C/C++:   Manually-specified variables were not used by the project:
+C/C++:     ANDROID_ALIGNED_AS_16KB
+C/C++:     ANDROID_EXTRACT_NATIVE_LIBS
+
+> Task :expo-modules-core:configureCMakeRelWithDebInfo[arm64-v8a]
+C/C++: CMake Warning:
+C/C++:   Manually-specified variables were not used by the project:
+C/C++:     ANDROID_ALIGNED_AS_16KB
+C/C++:     ANDROID_EXTRACT_NATIVE_LIBS
+
+> Task :react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]
+C/C++: CMake Warning:
+C/C++:   Manually-specified variables were not used by the project:
+C/C++:     ANDROID_ALIGNED_AS_16KB
+C/C++:     ANDROID_EXTRACT_NATIVE_LIBS
+
+> Task :app:createBundleGoogleReleaseJsAndAssets
+error Unable to resolve module @react-native/virtualized-lists from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/Libraries/Modal/Modal.js: @react-native/virtualized-lists could not be found within the project or in these directories:
+  node_modules
+  node_modules/.pnpm
+[0m [90m 18 |[39m [36mimport[39m [33mNativeModalManager[39m [36mfrom[39m [32m'./NativeModalManager'[39m[33m;[39m
+ [90m 19 |[39m [36mimport[39m [33mRCTModalHostView[39m [36mfrom[39m [32m'./RCTModalHostViewNativeComponent'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 20 |[39m [36mimport[39m {[33mVirtualizedListContextResetter[39m} [36mfrom[39m [32m'@react-native/virtualized-lists'[39m[33m;[39m
+Error: Unable to resolve module @react-native/virtualized-lists from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/Libraries/Modal/Modal.js: @react-native/virtualized-lists could not be found within the project or in these directories:
+  node_modules
+  node_modules/.pnpm
+[0m [90m 18 |[39m [36mimport[39m [33mNativeModalManager[39m [36mfrom[39m [32m'./NativeModalManager'[39m[33m;[39m
+ [90m 19 |[39m [36mimport[39m [33mRCTModalHostView[39m [36mfrom[39m [32m'./RCTModalHostViewNativeComponent'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 20 |[39m [36mimport[39m {[33mVirtualizedListContextResetter[39m} [36mfrom[39m [32m'@react-native/virtualized-lists'[39m[33m;[39m
+ [90m    |[39m                                               [31m[1m^[22m[39m
+ [90m 21 |[39m
+ [90m 22 |[39m [36mconst[39m [33mScrollView[39m [33m=[39m require([32m'../Components/ScrollView/ScrollView'[39m)[33m;[39m
+ [90m 23 |[39m [36mconst[39m [33mView[39m [33m=[39m require([32m'../Components/View/View'[39m)[33m;[39m[0m
+    at ModuleResolver.resolveDependency (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/node-haste/DependencyGraph/ModuleResolution.js:139:15)
+    at DependencyGraph.resolveDependency (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/node-haste/DependencyGraph.js:232:43)
+    at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/lib/transformHelpers.js:156:21
+    at resolveDependencies (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:42:25)
+    at visit (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:83:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 12)
+    at async visit (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+    at async Promise.all (index 3)
+    at async visit (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+ [90m    |[39m                                               [31m[1m^[22m[39m
+ [90m 21 |[39m
+ [90m 22 |[39m [36mconst[39m [33mScrollView[39m [33m=[39m require([32m'../Components/ScrollView/ScrollView'[39m)[33m;[39m
+ [90m 23 |[39m [36mconst[39m [33mView[39m [33m=[39m require([32m'../Components/View/View'[39m)[33m;[39m[0m.
+
+> Task :app:createBundleGoogleReleaseJsAndAssets FAILED
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':expo-modules-core:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:createBundleGoogleReleaseJsAndAssets'.
+> Process 'command 'node'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 28s
+512 actionable tasks: 209 executed, 303 up-to-date

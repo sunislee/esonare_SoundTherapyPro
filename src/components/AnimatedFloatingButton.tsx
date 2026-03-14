@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   Animated,
   Dimensions,
 } from 'react-native';
@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 const BUTTON_SIZE = 70;
-const CONTAINER_WIDTH = width - 40; // marginHorizontal: 20
+const CONTAINER_WIDTH = width - 40;
 
 interface AnimatedFloatingButtonProps {
   ambient: Scene;
@@ -33,9 +33,9 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
+  const buttonPressed = useRef(false);
 
   useEffect(() => {
-    // Entrance animation
     Animated.spring(scaleAnim, {
       toValue: 1,
       delay: (row * 2 + column) * 100,
@@ -66,10 +66,16 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
     }
   }, [isActive]);
 
-  // Position calculation
-  // 2 columns, 4 rows
   const left = column === 0 ? 20 : CONTAINER_WIDTH - BUTTON_SIZE - 20;
   const top = row * 130 + 40;
+
+  const handlePress = useCallback(() => {
+    buttonPressed.current = true;
+    onPress();
+    setTimeout(() => {
+      buttonPressed.current = false;
+    }, 100);
+  }, [onPress]);
 
   return (
     <Animated.View
@@ -82,12 +88,13 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
         },
       ]}
     >
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={onPress}
+      <Pressable
+        onPress={handlePress}
+        unstable_pressDelay={0}
         style={[
           styles.button,
           isActive && styles.activeButton,
+          ({ pressed }) => pressed && styles.pressedButton,
         ]}
       >
         <Animated.View
@@ -111,7 +118,7 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
           size={28}
           color={isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)'}
         />
-      </TouchableOpacity>
+      </Pressable>
       <View style={{ height: 15 }} />
       <Text style={[styles.label, isActive && styles.activeLabel]}>
         {t(ambient.title)}
@@ -147,6 +154,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 10,
   },
+  pressedButton: {
+    backgroundColor: '#5a4cc4',
+  },
   glow: {
     position: 'absolute',
     width: BUTTON_SIZE,
@@ -168,4 +178,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AnimatedFloatingButton;
+export default memo(AnimatedFloatingButton);

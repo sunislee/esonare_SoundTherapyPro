@@ -1,0 +1,1461 @@
+> Task :gradle-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:inspectClassesForKotlinIC UP-TO-DATE
+
+> Configure project :app
+WARNING: The option 'android.bundle.enableUncompressedNativeLibs' is deprecated.
+The current default is 'true'.
+It was removed in version 8.1 of the Android Gradle plugin.
+
+> Configure project :expo
+
+Using expo modules
+  - [32mexpo-asset[0m (10.0.10)
+  - [32mexpo-av[0m (14.0.7)
+  - [32mexpo-constants[0m (16.0.2)
+  - [32mexpo-file-system[0m (17.0.1)
+  - [32mexpo-font[0m (12.0.10)
+  - [32mexpo-keep-awake[0m (13.0.2)
+  - [32mexpo-modules-core[0m (1.12.26)
+
+
+> Configure project :react-native-firebase_app
+:react-native-firebase_app package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_app:firebase.bom using default value: 34.8.0
+:react-native-firebase_app:play.play-services-auth using default value: 21.4.0
+:react-native-firebase_app package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_app:version set from package.json: 23.8.6 (23,8,6 - 23008006)
+:react-native-firebase_app:android.compileSdk using custom value: 35
+:react-native-firebase_app:android.targetSdk using custom value: 35
+:react-native-firebase_app:android.minSdk using custom value: 23
+:react-native-firebase_app:reactNativeAndroidDir /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/android
+
+> Configure project :react-native-firebase_crashlytics
+:react-native-firebase_crashlytics package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/package.json
+:react-native-firebase_app package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_crashlytics:firebase.bom using default value: 34.8.0
+:react-native-firebase_crashlytics package.json found at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/package.json
+:react-native-firebase_crashlytics:version set from package.json: 23.8.6 (23,8,6 - 23008006)
+:react-native-firebase_crashlytics:android.compileSdk using custom value: 35
+:react-native-firebase_crashlytics:android.targetSdk using custom value: 35
+:react-native-firebase_crashlytics:android.minSdk using custom value: 23
+:react-native-firebase_crashlytics:reactNativeAndroidDir /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/android
+
+> Configure project :react-native-reanimated
+Android gradle plugin: 8.2.1
+Gradle: 8.3
+
+> Configure project :react-native-video
+Kotlin version is correct: 1.9.22
+AndroidX version is correct: 1.9.3
+useExoplayerIMA: false
+useExoplayerSmoothStreaming: true
+useExoplayerDash: true
+useExoplayerHls: true
+useExoplayerRtsp: false
+buildFromSource: false
+
+> Task :expo-modules-core:externalNativeBuildCleanDebug
+> Task :expo-av:externalNativeBuildCleanDebug
+> Task :app:clean
+> Task :expo-asset:clean
+> Task :expo-keep-awake:clean
+> Task :expo-file-system:clean
+> Task :expo-constants:clean
+> Task :expo:clean
+> Task :expo-font:clean
+> Task :react-native-async-storage_async-storage:clean
+
+> Task :expo-modules-core:externalNativeBuildCleanRelease
+Clean expo-modules-core-arm64-v8a
+
+> Task :react-native-community_blur:clean
+
+> Task :expo-av:externalNativeBuildCleanRelease
+Clean expo-av-armeabi-v7a
+Clean expo-av-arm64-v8a
+
+> Task :react-native-community_netinfo:clean
+> Task :react-native-community_slider:clean
+> Task :react-native-fs:clean
+> Task :react-native-screens:externalNativeBuildCleanDebug
+> Task :react-native-firebase_app:clean
+> Task :react-native-firebase_crashlytics:clean
+> Task :expo-modules-core:clean
+> Task :react-native-image-picker:clean
+> Task :react-native-haptic-feedback:clean
+> Task :react-native-reanimated:cleanCmakeCache
+
+> Task :react-native-screens:externalNativeBuildCleanRelease
+Clean rnscreens-armeabi-v7a
+Clean rnscreens-arm64-v8a
+
+> Task :react-native-reanimated:externalNativeBuildCleanDebug
+> Task :react-native-reanimated:externalNativeBuildCleanRelease
+> Task :expo-av:clean
+> Task :app:generatePackageList
+> Task :react-native-vector-icons:clean
+> Task :react-native-gesture-handler:clean
+> Task :expo-asset:preBuild UP-TO-DATE
+> Task :expo-asset:preReleaseBuild UP-TO-DATE
+> Task :expo-asset:generateReleaseResValues
+> Task :expo-asset:generateReleaseResources
+> Task :react-native-safe-area-context:clean
+> Task :expo-av:preBuild UP-TO-DATE
+> Task :expo-av:preReleaseBuild UP-TO-DATE
+> Task :expo-av:generateReleaseResValues
+> Task :expo-av:generateReleaseResources
+> Task :react-native-track-player:clean
+> Task :react-native-webview:clean
+> Task :react-native-svg:clean
+> Task :expo-file-system:preBuild UP-TO-DATE
+> Task :expo-font:preBuild UP-TO-DATE
+> Task :expo-font:preReleaseBuild UP-TO-DATE
+> Task :expo-file-system:preReleaseBuild UP-TO-DATE
+> Task :expo-asset:packageReleaseResources
+> Task :expo-font:generateReleaseResValues
+> Task :expo-font:generateReleaseResources
+> Task :expo-keep-awake:preBuild UP-TO-DATE
+> Task :expo-keep-awake:preReleaseBuild UP-TO-DATE
+> Task :expo-file-system:generateReleaseResValues
+> Task :expo-file-system:generateReleaseResources
+> Task :expo-keep-awake:generateReleaseResValues
+> Task :expo-keep-awake:generateReleaseResources
+> Task :react-native-reanimated:clean
+> Task :expo-modules-core:preBuild UP-TO-DATE
+> Task :expo-modules-core:preReleaseBuild UP-TO-DATE
+> Task :expo-modules-core:generateReleaseResValues
+> Task :expo-modules-core:generateReleaseResources
+> Task :expo-font:packageReleaseResources
+> Task :react-native-async-storage_async-storage:preBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preReleaseBuild UP-TO-DATE
+> Task :expo-keep-awake:packageReleaseResources
+> Task :react-native-community_blur:preBuild UP-TO-DATE
+> Task :react-native-community_blur:preReleaseBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseResValues
+> Task :react-native-async-storage_async-storage:generateReleaseResources
+> Task :react-native-community_blur:generateReleaseResValues
+> Task :react-native-community_blur:generateReleaseResources
+> Task :expo-file-system:packageReleaseResources
+> Task :react-native-community_netinfo:preBuild UP-TO-DATE
+> Task :react-native-community_netinfo:preReleaseBuild UP-TO-DATE
+> Task :expo-av:packageReleaseResources
+> Task :react-native-community_slider:preBuild UP-TO-DATE
+> Task :react-native-community_slider:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseResValues
+> Task :react-native-community_slider:generateReleaseResValues
+> Task :react-native-community_netinfo:generateReleaseResources
+> Task :react-native-community_slider:generateReleaseResources
+> Task :react-native-community_blur:packageReleaseResources
+> Task :react-native-firebase_app:preBuild UP-TO-DATE
+> Task :react-native-firebase_app:preReleaseBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:packageReleaseResources
+> Task :react-native-firebase_app:generateReleaseResValues
+> Task :react-native-firebase_app:generateReleaseResources
+> Task :react-native-firebase_crashlytics:preBuild UP-TO-DATE
+> Task :react-native-firebase_crashlytics:preReleaseBuild UP-TO-DATE
+> Task :react-native-video:clean
+> Task :react-native-fs:preBuild UP-TO-DATE
+> Task :react-native-fs:preReleaseBuild UP-TO-DATE
+> Task :react-native-fs:generateReleaseResValues
+> Task :react-native-fs:generateReleaseResources
+> Task :react-native-firebase_crashlytics:generateReleaseResValues
+> Task :react-native-firebase_crashlytics:generateReleaseResources
+> Task :react-native-community_netinfo:packageReleaseResources
+> Task :react-native-gesture-handler:preBuild UP-TO-DATE
+> Task :react-native-gesture-handler:preReleaseBuild UP-TO-DATE
+> Task :react-native-gesture-handler:generateReleaseResValues
+> Task :react-native-gesture-handler:generateReleaseResources
+> Task :react-native-screens:clean
+> Task :react-native-haptic-feedback:preBuild UP-TO-DATE
+> Task :react-native-haptic-feedback:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_slider:packageReleaseResources
+> Task :react-native-image-picker:preBuild UP-TO-DATE
+> Task :react-native-image-picker:preReleaseBuild UP-TO-DATE
+> Task :react-native-firebase_app:packageReleaseResources
+> Task :react-native-reanimated:assertLatestReactNativeWithNewArchitectureTask SKIPPED
+> Task :react-native-reanimated:assertMinimalReactNativeVersionTask SKIPPED
+> Task :react-native-image-picker:generateReleaseResValues
+> Task :react-native-image-picker:generateReleaseResources
+> Task :react-native-haptic-feedback:generateReleaseResValues
+> Task :react-native-firebase_crashlytics:packageReleaseResources
+> Task :react-native-haptic-feedback:generateReleaseResources
+> Task :react-native-safe-area-context:preBuild UP-TO-DATE
+> Task :react-native-safe-area-context:preReleaseBuild UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseResValues
+> Task :react-native-safe-area-context:generateReleaseResources
+> Task :react-native-gesture-handler:packageReleaseResources
+> Task :react-native-screens:preBuild UP-TO-DATE
+> Task :react-native-screens:preReleaseBuild UP-TO-DATE
+> Task :react-native-fs:packageReleaseResources
+> Task :react-native-svg:preBuild UP-TO-DATE
+> Task :react-native-svg:preReleaseBuild UP-TO-DATE
+> Task :react-native-screens:generateReleaseResValues
+> Task :react-native-screens:generateReleaseResources
+> Task :react-native-svg:generateReleaseResValues
+> Task :react-native-svg:generateReleaseResources
+> Task :react-native-haptic-feedback:packageReleaseResources
+> Task :react-native-track-player:preBuild UP-TO-DATE
+> Task :react-native-track-player:preReleaseBuild UP-TO-DATE
+> Task :react-native-track-player:generateReleaseResValues
+> Task :react-native-track-player:generateReleaseResources
+
+> Task :expo-constants:createExpoConfig
+The NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set.
+Proceeding without mode-specific .env
+
+> Task :expo-constants:preBuild
+> Task :expo-constants:preReleaseBuild
+> Task :react-native-safe-area-context:packageReleaseResources
+> Task :react-native-vector-icons:preBuild UP-TO-DATE
+> Task :react-native-vector-icons:preReleaseBuild UP-TO-DATE
+> Task :expo-constants:generateReleaseResValues
+> Task :expo-constants:generateReleaseResources
+> Task :react-native-vector-icons:generateReleaseResValues
+> Task :react-native-vector-icons:generateReleaseResources
+> Task :react-native-image-picker:packageReleaseResources
+> Task :react-native-video:preBuild UP-TO-DATE
+> Task :react-native-video:preReleaseBuild UP-TO-DATE
+> Task :react-native-svg:packageReleaseResources
+> Task :react-native-webview:preBuild UP-TO-DATE
+> Task :react-native-webview:preReleaseBuild UP-TO-DATE
+> Task :react-native-video:generateReleaseResValues
+> Task :react-native-video:generateReleaseResources
+> Task :react-native-webview:generateReleaseResValues
+> Task :react-native-webview:generateReleaseResources
+> Task :expo-constants:packageReleaseResources
+> Task :expo-asset:extractDeepLinksRelease
+> Task :react-native-webview:packageReleaseResources
+> Task :expo-av:extractDeepLinksRelease
+> Task :react-native-reanimated:prepareHeadersForPrefab
+> Task :react-native-reanimated:preBuild
+> Task :react-native-reanimated:preReleaseBuild
+> Task :react-native-reanimated:generateReleaseResValues
+> Task :react-native-reanimated:generateReleaseResources
+> Task :react-native-track-player:packageReleaseResources
+> Task :expo-constants:extractDeepLinksRelease
+> Task :react-native-reanimated:packageReleaseResources
+> Task :expo-file-system:extractDeepLinksRelease
+> Task :react-native-screens:packageReleaseResources
+> Task :expo-font:extractDeepLinksRelease
+> Task :react-native-video:packageReleaseResources
+> Task :expo-keep-awake:extractDeepLinksRelease
+> Task :expo-keep-awake:processReleaseManifest
+> Task :expo-av:processReleaseManifest
+> Task :expo-font:processReleaseManifest
+> Task :expo-asset:processReleaseManifest
+> Task :expo-constants:processReleaseManifest
+> Task :react-native-community_blur:extractDeepLinksRelease
+> Task :react-native-community_slider:extractDeepLinksRelease
+> Task :react-native-async-storage_async-storage:extractDeepLinksRelease
+> Task :react-native-community_netinfo:extractDeepLinksRelease
+
+> Task :expo-file-system:processReleaseManifest
+/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/expo-file-system/android/src/main/AndroidManifest.xml:6:9-8:20 Warning:
+	provider#expo.modules.filesystem.FileSystemFileProvider@android:authorities was tagged at AndroidManifest.xml:6 to replace other declarations but no other declaration present
+
+> Task :react-native-firebase_app:extractDeepLinksRelease
+> Task :react-native-firebase_crashlytics:extractDeepLinksRelease
+
+> Task :react-native-async-storage_async-storage:processReleaseManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-community_netinfo:processReleaseManifest
+package="com.reactnativecommunity.netinfo" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/netinfo/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.netinfo" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/netinfo/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-gesture-handler:extractDeepLinksRelease
+> Task :react-native-fs:extractDeepLinksRelease
+
+> Task :react-native-community_slider:processReleaseManifest
+package="com.reactnativecommunity.slider" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/slider/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.slider" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/slider/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-haptic-feedback:extractDeepLinksRelease
+
+> Task :react-native-gesture-handler:processReleaseManifest
+package="com.swmansion.gesturehandler" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.swmansion.gesturehandler" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-fs:processReleaseManifest
+package="com.rnfs" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-fs/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.rnfs" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-fs/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-reanimated:extractDeepLinksRelease
+> Task :react-native-image-picker:extractDeepLinksRelease
+
+> Task :react-native-firebase_crashlytics:processReleaseManifest
+package="io.invertase.firebase.crashlytics" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.invertase.firebase.crashlytics" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-firebase_app:processReleaseManifest
+package="io.invertase.firebase" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.invertase.firebase" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/app/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-screens:extractDeepLinksRelease
+> Task :react-native-safe-area-context:extractDeepLinksRelease
+
+> Task :react-native-reanimated:processReleaseManifest
+package="com.swmansion.reanimated" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.swmansion.reanimated" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-image-picker:processReleaseManifest
+package="com.imagepicker" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-image-picker/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.imagepicker" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-image-picker/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-haptic-feedback:processReleaseManifest
+package="com.mkuczera" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-haptic-feedback/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.mkuczera" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-haptic-feedback/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-svg:extractDeepLinksRelease
+> Task :react-native-track-player:extractDeepLinksRelease
+> Task :react-native-video:extractDeepLinksRelease
+
+> Task :react-native-svg:processReleaseManifest
+package="com.horcrux.svg" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-svg/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.horcrux.svg" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-svg/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-screens:processReleaseManifest
+package="com.swmansion.rnscreens" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.swmansion.rnscreens" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-track-player:processReleaseManifest
+package="com.doublesymmetry.trackplayer" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.doublesymmetry.trackplayer" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-webview:extractDeepLinksRelease
+> Task :react-native-video:processReleaseManifest
+> Task :expo-asset:writeReleaseAarMetadata
+> Task :react-native-webview:processReleaseManifest
+> Task :expo-constants:writeReleaseAarMetadata
+> Task :expo-file-system:writeReleaseAarMetadata
+> Task :expo-font:writeReleaseAarMetadata
+> Task :expo-keep-awake:writeReleaseAarMetadata
+> Task :react-native-community_netinfo:writeReleaseAarMetadata
+> Task :expo-av:writeReleaseAarMetadata
+> Task :react-native-firebase_app:writeReleaseAarMetadata
+> Task :react-native-fs:writeReleaseAarMetadata
+> Task :react-native-community_slider:writeReleaseAarMetadata
+> Task :react-native-gesture-handler:writeReleaseAarMetadata
+> Task :react-native-haptic-feedback:writeReleaseAarMetadata
+> Task :react-native-image-picker:writeReleaseAarMetadata
+> Task :react-native-firebase_crashlytics:writeReleaseAarMetadata
+> Task :react-native-reanimated:writeReleaseAarMetadata
+> Task :react-native-screens:writeReleaseAarMetadata
+> Task :react-native-svg:writeReleaseAarMetadata
+> Task :react-native-webview:writeReleaseAarMetadata
+> Task :react-native-video:writeReleaseAarMetadata
+> Task :react-native-track-player:writeReleaseAarMetadata
+> Task :expo-constants:compileReleaseLibraryResources
+> Task :expo-asset:compileReleaseLibraryResources
+> Task :expo:generateExpoModulesPackageListTask
+> Task :expo:preBuild
+> Task :expo:preReleaseBuild
+> Task :expo:generateReleaseResValues
+> Task :expo:generateReleaseResources
+> Task :expo:packageReleaseResources
+> Task :expo:extractDeepLinksRelease
+> Task :expo-av:parseReleaseLocalResources
+> Task :expo-asset:parseReleaseLocalResources
+> Task :expo:writeReleaseAarMetadata
+> Task :expo:processReleaseManifest
+> Task :expo:compileReleaseLibraryResources
+> Task :expo-av:compileReleaseLibraryResources
+> Task :expo:parseReleaseLocalResources
+> Task :expo-constants:parseReleaseLocalResources
+> Task :expo:generateReleaseRFile
+> Task :expo-constants:generateReleaseRFile
+> Task :expo-asset:generateReleaseRFile
+> Task :expo-av:generateReleaseRFile
+> Task :expo-font:compileReleaseLibraryResources
+> Task :expo-keep-awake:compileReleaseLibraryResources
+> Task :react-native-community_netinfo:compileReleaseLibraryResources
+> Task :expo-file-system:compileReleaseLibraryResources
+> Task :expo-keep-awake:parseReleaseLocalResources
+> Task :expo-font:parseReleaseLocalResources
+> Task :react-native-community_netinfo:parseReleaseLocalResources
+> Task :expo-file-system:parseReleaseLocalResources
+> Task :react-native-async-storage_async-storage:writeReleaseAarMetadata
+> Task :react-native-community_blur:writeReleaseAarMetadata
+> Task :expo-modules-core:packageReleaseResources
+> Task :react-native-safe-area-context:writeReleaseAarMetadata
+> Task :expo-modules-core:extractDeepLinksRelease
+> Task :expo-keep-awake:generateReleaseRFile
+> Task :expo-font:generateReleaseRFile
+> Task :react-native-community_netinfo:generateReleaseRFile
+
+> Task :react-native-community_blur:processReleaseManifest
+package="com.reactnativecommunity.blurview" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/blur/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.blurview" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/blur/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-async-storage_async-storage:compileReleaseLibraryResources
+> Task :react-native-community_blur:compileReleaseLibraryResources
+
+> Task :react-native-safe-area-context:processReleaseManifest
+package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-community_slider:compileReleaseLibraryResources
+> Task :react-native-firebase_app:compileReleaseLibraryResources
+> Task :react-native-vector-icons:packageReleaseResources
+> Task :expo-file-system:generateReleaseRFile
+> Task :expo-modules-core:writeReleaseAarMetadata
+> Task :react-native-community_slider:parseReleaseLocalResources
+> Task :expo-modules-core:compileReleaseLibraryResources
+> Task :react-native-async-storage_async-storage:parseReleaseLocalResources
+> Task :react-native-vector-icons:extractDeepLinksRelease
+> Task :react-native-community_blur:parseReleaseLocalResources
+> Task :react-native-firebase_app:parseReleaseLocalResources
+> Task :react-native-firebase_crashlytics:compileReleaseLibraryResources
+> Task :expo-modules-core:parseReleaseLocalResources
+
+> Task :expo-modules-core:processReleaseManifest
+/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/expo-modules-core/android/src/main/AndroidManifest.xml:8:9-11:45 Warning:
+	meta-data#com.facebook.soloader.enabled@android:value was tagged at AndroidManifest.xml:8 to replace other declarations but no other declaration present
+
+> Task :react-native-vector-icons:writeReleaseAarMetadata
+> Task :react-native-async-storage_async-storage:generateReleaseRFile
+> Task :react-native-community_slider:generateReleaseRFile
+
+> Task :react-native-vector-icons:processReleaseManifest
+package="com.oblador.vectoricons" found in source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-vector-icons/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.oblador.vectoricons" from the source AndroidManifest.xml: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-vector-icons/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-firebase_app:generateReleaseRFile
+> Task :react-native-fs:compileReleaseLibraryResources
+> Task :react-native-reanimated:compileReleaseLibraryResources
+> Task :react-native-safe-area-context:compileReleaseLibraryResources
+> Task :react-native-haptic-feedback:compileReleaseLibraryResources
+> Task :react-native-gesture-handler:compileReleaseLibraryResources
+> Task :react-native-fs:parseReleaseLocalResources
+> Task :expo-modules-core:generateReleaseRFile
+> Task :react-native-haptic-feedback:parseReleaseLocalResources
+> Task :react-native-image-picker:compileReleaseLibraryResources
+> Task :react-native-firebase_crashlytics:parseReleaseLocalResources
+> Task :react-native-gesture-handler:parseReleaseLocalResources
+> Task :react-native-image-picker:parseReleaseLocalResources
+> Task :react-native-community_blur:generateReleaseRFile
+> Task :react-native-firebase_crashlytics:generateReleaseRFile
+> Task :react-native-safe-area-context:parseReleaseLocalResources
+> Task :react-native-fs:generateReleaseRFile
+> Task :react-native-haptic-feedback:generateReleaseRFile
+> Task :react-native-gesture-handler:generateReleaseRFile
+> Task :react-native-reanimated:parseReleaseLocalResources
+> Task :react-native-svg:parseReleaseLocalResources
+> Task :react-native-safe-area-context:generateReleaseRFile
+> Task :react-native-screens:parseReleaseLocalResources
+> Task :react-native-svg:compileReleaseLibraryResources
+> Task :react-native-track-player:parseReleaseLocalResources
+> Task :react-native-screens:compileReleaseLibraryResources
+> Task :react-native-screens:generateReleaseRFile
+> Task :react-native-vector-icons:compileReleaseLibraryResources
+> Task :react-native-image-picker:generateReleaseRFile
+> Task :react-native-svg:generateReleaseRFile
+> Task :react-native-track-player:generateReleaseRFile
+> Task :react-native-vector-icons:parseReleaseLocalResources
+> Task :react-native-webview:parseReleaseLocalResources
+> Task :expo-asset:mergeReleaseShaders
+> Task :react-native-webview:compileReleaseLibraryResources
+> Task :expo-asset:compileReleaseShaders NO-SOURCE
+> Task :expo-asset:generateReleaseAssets UP-TO-DATE
+> Task :react-native-video:compileReleaseLibraryResources
+> Task :expo:mergeReleaseShaders
+> Task :expo:compileReleaseShaders NO-SOURCE
+> Task :expo:generateReleaseAssets UP-TO-DATE
+> Task :react-native-video:parseReleaseLocalResources
+> Task :react-native-reanimated:generateReleaseRFile
+> Task :expo-asset:packageReleaseAssets
+> Task :expo-av:mergeReleaseShaders
+> Task :expo-av:compileReleaseShaders NO-SOURCE
+> Task :expo-av:generateReleaseAssets UP-TO-DATE
+> Task :react-native-webview:generateReleaseRFile
+> Task :expo-av:packageReleaseAssets
+> Task :expo-keep-awake:mergeReleaseShaders
+> Task :expo-keep-awake:compileReleaseShaders NO-SOURCE
+> Task :expo-keep-awake:generateReleaseAssets UP-TO-DATE
+> Task :expo:packageReleaseAssets
+> Task :react-native-track-player:compileReleaseLibraryResources
+> Task :react-native-async-storage_async-storage:mergeReleaseShaders
+> Task :expo-constants:mergeReleaseShaders
+> Task :react-native-vector-icons:generateReleaseRFile
+> Task :react-native-async-storage_async-storage:compileReleaseShaders NO-SOURCE
+> Task :react-native-async-storage_async-storage:generateReleaseAssets UP-TO-DATE
+> Task :react-native-video:generateReleaseRFile
+> Task :expo-constants:compileReleaseShaders NO-SOURCE
+> Task :expo-constants:generateReleaseAssets UP-TO-DATE
+> Task :expo-font:mergeReleaseShaders
+> Task :react-native-async-storage_async-storage:packageReleaseAssets
+> Task :react-native-community_slider:mergeReleaseShaders
+> Task :expo-modules-core:mergeReleaseShaders
+> Task :react-native-community_slider:compileReleaseShaders NO-SOURCE
+> Task :expo-modules-core:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_slider:generateReleaseAssets UP-TO-DATE
+> Task :expo-modules-core:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseShaders
+> Task :expo-file-system:mergeReleaseShaders
+> Task :react-native-community_netinfo:compileReleaseShaders NO-SOURCE
+> Task :expo-file-system:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_netinfo:generateReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_app:mergeReleaseShaders
+> Task :expo-font:compileReleaseShaders NO-SOURCE
+> Task :expo-font:generateReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_app:compileReleaseShaders NO-SOURCE
+> Task :react-native-firebase_app:generateReleaseAssets UP-TO-DATE
+> Task :expo-modules-core:packageReleaseAssets
+> Task :expo-keep-awake:packageReleaseAssets
+> Task :react-native-community_slider:packageReleaseAssets
+> Task :expo-constants:packageReleaseAssets
+> Task :react-native-firebase_crashlytics:mergeReleaseShaders
+> Task :react-native-firebase_crashlytics:compileReleaseShaders NO-SOURCE
+> Task :react-native-firebase_crashlytics:generateReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_app:packageReleaseAssets
+> Task :expo-font:packageReleaseAssets
+> Task :expo-file-system:generateReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_crashlytics:packageReleaseAssets
+> Task :react-native-fs:mergeReleaseShaders
+> Task :react-native-fs:compileReleaseShaders NO-SOURCE
+> Task :react-native-fs:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_blur:mergeReleaseShaders
+> Task :react-native-community_blur:compileReleaseShaders NO-SOURCE
+> Task :react-native-image-picker:mergeReleaseShaders
+> Task :react-native-community_blur:generateReleaseAssets UP-TO-DATE
+> Task :react-native-image-picker:compileReleaseShaders NO-SOURCE
+> Task :react-native-image-picker:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_netinfo:packageReleaseAssets
+> Task :react-native-reanimated:mergeReleaseShaders
+> Task :react-native-reanimated:compileReleaseShaders NO-SOURCE
+> Task :react-native-reanimated:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_blur:packageReleaseAssets
+> Task :react-native-safe-area-context:mergeReleaseShaders
+> Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
+> Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
+> Task :react-native-fs:packageReleaseAssets
+> Task :react-native-image-picker:packageReleaseAssets
+> Task :react-native-screens:mergeReleaseShaders
+> Task :react-native-haptic-feedback:mergeReleaseShaders
+> Task :react-native-screens:compileReleaseShaders NO-SOURCE
+> Task :react-native-haptic-feedback:compileReleaseShaders NO-SOURCE
+> Task :react-native-screens:generateReleaseAssets UP-TO-DATE
+> Task :react-native-haptic-feedback:generateReleaseAssets UP-TO-DATE
+> Task :expo-file-system:packageReleaseAssets
+> Task :react-native-reanimated:packageReleaseAssets
+> Task :react-native-vector-icons:mergeReleaseShaders
+> Task :react-native-vector-icons:compileReleaseShaders NO-SOURCE
+> Task :react-native-vector-icons:generateReleaseAssets UP-TO-DATE
+> Task :react-native-screens:packageReleaseAssets
+> Task :react-native-webview:mergeReleaseShaders
+> Task :react-native-video:mergeReleaseShaders
+> Task :expo:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-track-player:mergeReleaseShaders
+> Task :react-native-track-player:compileReleaseShaders NO-SOURCE
+> Task :react-native-track-player:generateReleaseAssets UP-TO-DATE
+> Task :react-native-webview:compileReleaseShaders NO-SOURCE
+> Task :react-native-safe-area-context:packageReleaseAssets
+> Task :react-native-video:compileReleaseShaders NO-SOURCE
+> Task :react-native-webview:generateReleaseAssets UP-TO-DATE
+> Task :react-native-vector-icons:packageReleaseAssets
+> Task :react-native-track-player:packageReleaseAssets
+> Task :react-native-haptic-feedback:packageReleaseAssets
+> Task :react-native-video:generateReleaseAssets UP-TO-DATE
+> Task :expo-asset:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-av:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-constants:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-webview:packageReleaseAssets
+> Task :expo-file-system:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-video:packageReleaseAssets
+> Task :expo-font:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-gesture-handler:mergeReleaseShaders
+> Task :react-native-gesture-handler:compileReleaseShaders NO-SOURCE
+> Task :react-native-gesture-handler:generateReleaseAssets UP-TO-DATE
+> Task :expo-constants:generateReleaseBuildConfig
+> Task :expo-av:generateReleaseBuildConfig
+> Task :expo:generateReleaseBuildConfig
+> Task :expo-modules-core:generateReleaseBuildConfig
+> Task :expo-font:generateReleaseBuildConfig
+> Task :expo-keep-awake:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-file-system:generateReleaseBuildConfig
+> Task :expo-keep-awake:generateReleaseBuildConfig
+> Task :expo-asset:generateReleaseBuildConfig
+> Task :expo-font:javaPreCompileRelease
+> Task :expo-file-system:javaPreCompileRelease
+> Task :expo-constants:javaPreCompileRelease
+> Task :expo-av:javaPreCompileRelease
+> Task :expo-keep-awake:javaPreCompileRelease
+> Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-track-player:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-asset:javaPreCompileRelease
+> Task :react-native-video:checkKotlinGradlePluginConfigurationErrors
+> Task :expo:javaPreCompileRelease
+> Task :react-native-webview:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-svg:mergeReleaseShaders
+> Task :react-native-svg:compileReleaseShaders NO-SOURCE
+> Task :react-native-svg:generateReleaseAssets UP-TO-DATE
+> Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-safe-area-context:generateReleaseBuildConfig
+> Task :react-native-track-player:generateReleaseBuildConfig
+> Task :react-native-reanimated:generateReleaseBuildConfig
+> Task :react-native-video:generateReleaseBuildConfig
+> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
+> Task :react-native-reanimated:javaPreCompileRelease
+> Task :react-native-gesture-handler:packageReleaseAssets
+> Task :react-native-gesture-handler:checkKotlinGradlePluginConfigurationErrors
+> Task :react-native-screens:generateReleaseBuildConfig
+> Task :react-native-gesture-handler:generateReleaseBuildConfig
+> Task :react-native-gesture-handler:javaPreCompileRelease
+> Task :react-native-webview:generateReleaseBuildConfig
+> Task :react-native-async-storage_async-storage:generateReleaseBuildConfig
+> Task :react-native-async-storage_async-storage:javaPreCompileRelease
+> Task :react-native-svg:packageReleaseAssets
+> Task :react-native-community_blur:generateReleaseBuildConfig
+> Task :react-native-community_blur:javaPreCompileRelease
+> Task :react-native-community_blur:compileReleaseJavaWithJavac
+> Task :expo-modules-core:javaPreCompileRelease
+> Task :react-native-safe-area-context:javaPreCompileRelease
+> Task :react-native-screens:javaPreCompileRelease
+> Task :react-native-track-player:javaPreCompileRelease
+> Task :react-native-video:javaPreCompileRelease
+
+> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-async-storage/async-storage/android/src/javaPackage/java/com/reactnativecommunity/asyncstorage/AsyncStoragePackage.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-webview:javaPreCompileRelease
+> Task :react-native-async-storage_async-storage:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_blur:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_blur:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseBuildConfig
+> Task :react-native-community_slider:generateReleaseBuildConfig
+> Task :react-native-community_netinfo:javaPreCompileRelease
+> Task :react-native-community_slider:javaPreCompileRelease
+
+> Task :react-native-community_netinfo:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-community_netinfo:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_netinfo:exportReleaseConsumerProguardFiles UP-TO-DATE
+
+> Task :react-native-community_slider:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-community/slider/android/src/oldarch/java/com/reactnativecommunity/slider/ReactSliderManager.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-community_slider:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_slider:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-firebase_app:generateReleaseBuildConfig
+> Task :react-native-firebase_app:javaPreCompileRelease
+> Task :react-native-firebase_crashlytics:generateReleaseBuildConfig
+
+> Task :react-native-reanimated:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: 某些输入文件使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-firebase_crashlytics:javaPreCompileRelease
+> Task :react-native-fs:generateReleaseBuildConfig
+> Task :react-native-fs:javaPreCompileRelease
+> Task :react-native-reanimated:bundleLibCompileToJarRelease
+
+> Task :react-native-fs:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-fs:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-fs:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-haptic-feedback:generateReleaseBuildConfig
+> Task :react-native-haptic-feedback:javaPreCompileRelease
+
+> Task :react-native-firebase_app:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-firebase_app:bundleLibCompileToJarRelease
+
+> Task :app:createBundleGoogleReleaseJsAndAssets
+debug Reading Metro config from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/metro.config.js
+warn =================================================================================================
+warn From React Native 0.73, your project's Metro config should extend '@react-native/metro-config'
+warn or it will fail to build. Please copy the template at:
+warn https://github.com/facebook/react-native/blob/main/packages/react-native/template/metro.config.js
+warn This warning will be removed in future (https://github.com/facebook/metro/issues/1018).
+warn =================================================================================================
+warning: the transform cache was reset.
+                Welcome to Metro v0.80.12
+              Fast - Scalable - Integrated
+
+
+
+> Task :react-native-haptic-feedback:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-firebase_app:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-firebase_app:exportReleaseConsumerProguardFiles UP-TO-DATE
+
+> Task :react-native-firebase_crashlytics:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/@react-native-firebase/crashlytics/android/src/main/java/io/invertase/firebase/crashlytics/ReactNativeFirebaseCrashlyticsModule.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-haptic-feedback:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-haptic-feedback:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-firebase_crashlytics:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-firebase_crashlytics:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-image-picker:generateReleaseBuildConfig
+> Task :react-native-reanimated:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-image-picker:javaPreCompileRelease
+> Task :react-native-reanimated:exportReleaseConsumerProguardFiles
+> Task :react-native-svg:generateReleaseBuildConfig
+> Task :react-native-svg:javaPreCompileRelease
+
+> Task :react-native-webview:compileReleaseKotlin
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:40:71 Parameter 'webView' is never used, could be renamed to _
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:81:18 'setter for allowFileAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:82:18 'setter for allowUniversalAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:93:102 Parameter 'contentLength' is never used, could be renamed to _
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:110:32 Variable 'urlObj' initializer is redundant
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:124:21 'allowScanningByMediaScanner(): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:161:36 'setter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:336:15 Condition 'args == null' is always 'false'
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:345:34 Condition 'args != null' is always 'true'
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:364:38 'setter for allowUniversalAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:421:51 Unchecked cast: Any! to kotlin.collections.HashMap<String, String> /* = java.util.HashMap<String, String> */
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:477:23 'setter for savePassword: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:478:23 'setter for saveFormData: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:548:23 'setter for allowFileAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:647:53 Unchecked cast: ArrayList<Any!> to List<Map<String, String>>
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:667:23 'setter for saveFormData: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:702:36 Parameter 'viewWrapper' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:11:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:22:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:23:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:11:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:22:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:23:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:11:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:22:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:23:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:11:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:22:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:23:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:11:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:22:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:23:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:11:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:22:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:23:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:10:75 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:21:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:22:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:11:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:22:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:23:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:12:3 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:23:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:24:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:5:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:10:89 'constructor Event<T : Event<(raw) Event<*>>!>(Int)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:27:42 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:28:21 'receiveEvent(Int, String!, WritableMap?): Unit' is deprecated. Deprecated in Java
+
+> Task :react-native-image-picker:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerPackage.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-safe-area-context:compileReleaseKotlin
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaContextModule.kt:6:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaContextModule.kt:8:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaContextPackage.kt:6:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaContextPackage.kt:25:51 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaContextPackage.kt:27:11 'constructor ReactModuleInfo(String!, String!, Boolean, Boolean, Boolean, Boolean, Boolean)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaContextPackage.kt:33:27 'hasConstants: Boolean' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaProviderManager.kt:4:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaProviderManager.kt:11:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'getter for uiImplementation: UIImplementation!' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaViewManager.kt:4:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaViewManager.kt:14:2 'ReactModule' is deprecated. Deprecated in Java
+
+> Task :react-native-image-picker:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-image-picker:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-vector-icons:generateReleaseBuildConfig
+> Task :react-native-vector-icons:javaPreCompileRelease
+
+> Task :react-native-safe-area-context:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/paper/java/com/th3rdwave/safeareacontext/NativeSafeAreaContextSpec.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-safe-area-context:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
+> Task :react-native-community_blur:bundleLibCompileToJarRelease
+> Task :react-native-community_netinfo:bundleLibCompileToJarRelease
+
+> Task :react-native-webview:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-webview:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-webview:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_slider:bundleLibCompileToJarRelease
+> Task :react-native-firebase_crashlytics:bundleLibCompileToJarRelease
+> Task :react-native-fs:bundleLibCompileToJarRelease
+> Task :react-native-image-picker:bundleLibCompileToJarRelease
+> Task :react-native-haptic-feedback:bundleLibCompileToJarRelease
+> Task :react-native-safe-area-context:bundleLibCompileToJarRelease
+> Task :expo:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-asset:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-av:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-constants:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-file-system:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-font:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-keep-awake:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-modules-core:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_blur:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_netinfo:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_slider:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-firebase_app:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-firebase_crashlytics:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-fs:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-gesture-handler:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-haptic-feedback:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-image-picker:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-reanimated:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-safe-area-context:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-screens:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-track-player:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-video:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-webview:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-webview:bundleLibCompileToJarRelease
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease
+> Task :react-native-community_blur:bundleLibRuntimeToJarRelease
+> Task :react-native-community_netinfo:bundleLibRuntimeToJarRelease
+> Task :react-native-community_slider:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_crashlytics:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_app:bundleLibRuntimeToJarRelease
+> Task :react-native-haptic-feedback:bundleLibRuntimeToJarRelease
+> Task :react-native-fs:bundleLibRuntimeToJarRelease
+> Task :react-native-image-picker:bundleLibRuntimeToJarRelease
+> Task :react-native-reanimated:bundleLibRuntimeToJarRelease
+> Task :react-native-webview:bundleLibRuntimeToJarRelease
+> Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_blur:processReleaseJavaRes NO-SOURCE
+> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
+> Task :react-native-community_netinfo:processReleaseJavaRes NO-SOURCE
+> Task :react-native-firebase_app:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_slider:processReleaseJavaRes NO-SOURCE
+> Task :react-native-firebase_crashlytics:processReleaseJavaRes NO-SOURCE
+> Task :react-native-fs:processReleaseJavaRes NO-SOURCE
+> Task :react-native-image-picker:processReleaseJavaRes NO-SOURCE
+> Task :react-native-haptic-feedback:processReleaseJavaRes NO-SOURCE
+> Task :react-native-reanimated:processReleaseJavaRes NO-SOURCE
+> Task :react-native-safe-area-context:processReleaseJavaRes
+> Task :expo:mergeReleaseJniLibFolders
+> Task :expo:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo:copyReleaseJniLibsProjectOnly
+
+> Task :react-native-vector-icons:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-vector-icons:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-vector-icons:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-webview:processReleaseJavaRes
+> Task :expo-asset:mergeReleaseJniLibFolders
+> Task :react-native-vector-icons:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-vector-icons:bundleLibCompileToJarRelease
+> Task :expo-asset:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-asset:copyReleaseJniLibsProjectOnly
+> Task :react-native-vector-icons:processReleaseJavaRes NO-SOURCE
+> Task :react-native-vector-icons:bundleLibRuntimeToJarRelease
+> Task :expo-constants:mergeReleaseJniLibFolders
+> Task :expo-constants:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-constants:copyReleaseJniLibsProjectOnly
+> Task :expo-av:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :expo-file-system:mergeReleaseJniLibFolders
+> Task :expo-file-system:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-file-system:copyReleaseJniLibsProjectOnly
+> Task :expo-font:mergeReleaseJniLibFolders
+> Task :expo-font:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-keep-awake:mergeReleaseJniLibFolders
+> Task :expo-font:copyReleaseJniLibsProjectOnly
+> Task :expo-keep-awake:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-keep-awake:copyReleaseJniLibsProjectOnly
+> Task :expo-modules-core:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-async-storage_async-storage:mergeReleaseJniLibFolders
+> Task :react-native-async-storage_async-storage:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_blur:mergeReleaseJniLibFolders
+> Task :react-native-community_blur:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_blur:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_netinfo:mergeReleaseJniLibFolders
+> Task :react-native-community_netinfo:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_netinfo:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_slider:mergeReleaseJniLibFolders
+> Task :react-native-community_slider:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_slider:copyReleaseJniLibsProjectOnly
+> Task :react-native-firebase_app:mergeReleaseJniLibFolders
+> Task :react-native-firebase_app:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-firebase_app:copyReleaseJniLibsProjectOnly
+> Task :react-native-firebase_crashlytics:mergeReleaseJniLibFolders
+> Task :react-native-firebase_crashlytics:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-firebase_crashlytics:copyReleaseJniLibsProjectOnly
+> Task :react-native-fs:mergeReleaseJniLibFolders
+> Task :react-native-fs:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-fs:copyReleaseJniLibsProjectOnly
+> Task :react-native-gesture-handler:mergeReleaseJniLibFolders
+> Task :react-native-gesture-handler:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-gesture-handler:copyReleaseJniLibsProjectOnly
+> Task :react-native-haptic-feedback:mergeReleaseJniLibFolders
+> Task :react-native-haptic-feedback:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-haptic-feedback:copyReleaseJniLibsProjectOnly
+> Task :react-native-image-picker:mergeReleaseJniLibFolders
+> Task :react-native-image-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-image-picker:copyReleaseJniLibsProjectOnly
+
+> Task :react-native-svg:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: 某些输入文件使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-svg:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-svg:exportReleaseConsumerProguardFiles
+> Task :react-native-svg:bundleLibCompileToJarRelease
+> Task :react-native-svg:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-svg:bundleLibRuntimeToJarRelease
+> Task :react-native-svg:processReleaseJavaRes NO-SOURCE
+> Task :react-native-safe-area-context:mergeReleaseJniLibFolders
+> Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
+> Task :react-native-screens:configureCMakeRelWithDebInfo[arm64-v8a]
+
+> Task :react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]
+C/C++: CMake Warning:
+C/C++:   Manually-specified variables were not used by the project:
+C/C++:     ANDROID_ALIGNED_AS_16KB
+C/C++:     ANDROID_EXTRACT_NATIVE_LIBS
+
+> Task :react-native-track-player:compileReleaseKotlin
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:4:38 'MediaMetadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:5:47 'Metadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:6:52 'VorbisComment' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:7:51 'IcyHeaders' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:8:51 'IcyInfo' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:9:51 'ChapterFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:10:51 'TextInformationFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:11:51 'UrlLinkFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:12:51 'MdtaMetadataEntry' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:17:36 'Metadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:25:28 'ChapterFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:28:28 'TextInformationFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:33:62 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:37:66 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:41:63 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:45:69 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:49:62 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:56:63 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:61:28 'UrlLinkFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:70:28 'IcyHeaders' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:98:28 'IcyInfo' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:117:28 'VorbisComment' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:153:28 'MdtaMetadataEntry' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:193:41 'MediaMetadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:3:47 'Metadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:4:52 'VorbisComment' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:5:51 'IcyHeaders' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:6:51 'IcyInfo' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:7:51 'TextInformationFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:8:51 'UrlLinkFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:9:51 'MdtaMetadataEntry' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:25:39 'Metadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:37:24 'TextInformationFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:41:47 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:45:47 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:49:48 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:53:46 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:57:47 'value: String' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:62:24 'UrlLinkFrame' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:81:31 'Metadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:84:24 'IcyHeaders' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:87:24 'IcyInfo' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:112:41 'Metadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:124:30 'VorbisComment' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:160:37 'Metadata' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:171:30 'MdtaMetadataEntry' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/Track.kt:9:47 'RawResourceDataSource' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/Track.kt:40:13 'RawResourceDataSource' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:8:47 'LocalBroadcastManager' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:19:38 'DefaultLoadControl' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:20:38 'Player' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:156:34 'Player' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:157:36 'Player' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:158:36 'Player' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:232:9 'LocalBroadcastManager' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:357:13 Variable 'context' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt:176:13 'stoppingAppPausesPlayback: Boolean' is deprecated. This will be removed soon
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt:177:17 'stoppingAppPausesPlayback: Boolean' is deprecated. This will be removed soon
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:16:19 'get(String!): Any?' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:45:19 'get(String!): Any?' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:105:21 'get(String!): Any?' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:112:21 'get(String!): Any?' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:119:21 'get(String!): Any?' is deprecated. Deprecated in Java
+
+> Task :react-native-track-player:compileReleaseJavaWithJavac
+> Task :react-native-track-player:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-track-player:exportReleaseConsumerProguardFiles
+> Task :react-native-track-player:bundleLibCompileToJarRelease
+> Task :react-native-track-player:bundleLibRuntimeToJarRelease
+> Task :react-native-track-player:processReleaseJavaRes
+> Task :react-native-svg:mergeReleaseJniLibFolders
+> Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-svg:copyReleaseJniLibsProjectOnly
+> Task :react-native-track-player:mergeReleaseJniLibFolders
+> Task :react-native-track-player:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-track-player:copyReleaseJniLibsProjectOnly
+> Task :react-native-vector-icons:mergeReleaseJniLibFolders
+> Task :react-native-vector-icons:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-vector-icons:copyReleaseJniLibsProjectOnly
+> Task :react-native-video:mergeReleaseJniLibFolders
+> Task :react-native-video:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-video:copyReleaseJniLibsProjectOnly
+> Task :react-native-webview:mergeReleaseJniLibFolders
+> Task :react-native-webview:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-webview:copyReleaseJniLibsProjectOnly
+> Task :react-native-screens:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-screens:configureCMakeRelWithDebInfo[armeabi-v7a]
+
+> Task :react-native-video:compileReleaseKotlin
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/common/api/CMCDProps.kt:40:31 Unnecessary safe call on a non-null receiver of type ReadableMap
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/common/api/CMCDProps.kt:41:39 Unnecessary safe call on a non-null receiver of type ReadableMap
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/common/api/CMCDProps.kt:42:48 Unnecessary safe call on a non-null receiver of type ReadableMap
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/common/api/CMCDProps.kt:43:48 Unnecessary safe call on a non-null receiver of type ReadableMap
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/common/api/Source.kt:251:42 Unnecessary safe call on a non-null receiver of type ReadableMap
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/common/api/Source.kt:252:44 Unnecessary safe call on a non-null receiver of type ReadableMap
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/DRMManager.kt:21:18 'SDK_INT: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt:49:9 'setUseArtwork(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt:142:27 Parameter 'viewType' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/PictureInPictureUtil.kt:181:47 Elvis operator (?:) always returns the left operand of non-nullable type ComponentActivity
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:38:48 'constructor Builder()' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:41:10 'setIconResId(Int): CommandButton.Builder' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:45:49 'constructor Builder()' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:48:10 'setIconResId(Int): CommandButton.Builder' is deprecated. Deprecated in Java
+
+> Task :react-native-screens:compileReleaseKotlin
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ModalScreenViewManager.kt:3:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ModalScreenViewManager.kt:5:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:42:47 'constructor ReactModuleInfo(String!, String!, Boolean, Boolean, Boolean, Boolean, Boolean)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenContainerViewManager.kt:5:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenContainerViewManager.kt:10:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:65:27 'setter for targetElevation: Float' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:128:27 'setter for targetElevation: Float' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:86:34 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:231:37 'setColorFilter(Int, PorterDuff.Mode): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt:7:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt:18:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderSubviewManager.kt:4:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderSubviewManager.kt:12:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackViewManager.kt:6:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackViewManager.kt:15:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:6:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:24:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:47:42 'setStateWrapper(StateWrapper!): Unit' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:55:53 'getter for statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:66:48 'getter for statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:69:32 'setter for statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:135:47 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsetsCompat' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:136:51 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:138:51 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:139:51 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:179:72 'getter for navigationBarColor: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:185:16 'setter for navigationBarColor: Int' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensModule.kt:7:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensModule.kt:12:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/SearchBarManager.kt:6:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/SearchBarManager.kt:17:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/SearchBarManager.kt:100:22 Parameter 'view' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/SearchBarManager.kt:100:43 Parameter 'placeholder' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/SearchBarView.kt:147:43 Parameter 'flag' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/events/HeaderHeightChangeEvent.kt:6:44 'RCTEventEmitter' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/paper/java/com/swmansion/rnscreens/FabricEnabledViewGroup.kt:5:37 'FabricViewStateManager' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/paper/java/com/swmansion/rnscreens/FabricEnabledViewGroup.kt:9:48 'FabricViewStateManager' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/paper/java/com/swmansion/rnscreens/FabricEnabledViewGroup.kt:11:42 Parameter 'width' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/paper/java/com/swmansion/rnscreens/FabricEnabledViewGroup.kt:11:54 Parameter 'height' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/paper/java/com/swmansion/rnscreens/FabricEnabledViewGroup.kt:11:67 Parameter 'headerHeight' is never used
+
+> Task :expo-av:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :expo-av:configureCMakeRelWithDebInfo[armeabi-v7a]
+
+> Task :react-native-video:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-video:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-video:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-video:processReleaseJavaRes
+> Task :react-native-video:bundleLibCompileToJarRelease
+> Task :react-native-video:bundleLibRuntimeToJarRelease
+
+> Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: ninja: Entering directory `/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/.cxx/RelWithDebInfo/1n220y47/arm64-v8a'
+C/C++: /Users/sunislee/Library/Android/sdk/ndk/27.1.12297006/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ --target=aarch64-none-linux-android23 --sysroot=/Users/sunislee/Library/Android/sdk/ndk/27.1.12297006/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -Dreanimated_EXPORTS -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/AnimatedSensor -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Fabric -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/hidden_headers -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/LayoutAnimations -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/NativeModules -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/ReanimatedRuntime -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Registries -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/SharedItems -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/src/main/cpp -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactAndroid/src/main/jni/react/turbomodule -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/callinvoker -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/cxx -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/yoga -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/folly_runtime/include -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/glog/include -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/reactnativejni/include -isystem /Users/sunislee/.gradle/caches/transforms-3/90ccb4761a0c9ffdf1a2b24ceb5f8b5c/transformed/fbjni-0.5.1/prefab/modules/fbjni/include -isystem /Users/sunislee/.gradle/caches/transforms-3/90ccaee47887636aa3cd529743ff5314/transformed/hermes-android-0.73.6-release/prefab/modules/libhermes/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D__BIONIC_NO_PAGE_SIZE_MACRO -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -Wno-error=deprecated-this-capture -Wno-error=unused-command-line-argument -DREACT_NATIVE_MINOR_VERSION=73 -DREANIMATED_VERSION=3.10.1 -DHERMES_ENABLE_DEBUGGER=0 -fexceptions -fno-omit-frame-pointer -frtti -fstack-protector-all -std=c++20 -Wall -Werror -DNDEBUG -DJS_RUNTIME_HERMES=1 -O2 -g -DNDEBUG -fPIC -DFOLLY_NO_CONFIG=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_MOBILE=1 -DFOLLY_HAVE_RECVMMSG=1 -DFOLLY_HAVE_PTHREAD=1 -DFOLLY_HAVE_XSI_STRERROR_R=1 -std=gnu++20 -MD -MT CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o -MF CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o.d -o CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o -c /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:1:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.h:3:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools/JSScheduler.h:4:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor/ReactCommon/RuntimeExecutor.h:13:
+C/C++: In file included from /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1509:
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:38:7: error: static assertion failed due to requirement 'std::is_base_of<facebook::jsi::Pointer, facebook::jsi::Value *>::value': This type cannot be converted to Value
+C/C++:    38 |       std::is_base_of<Pointer, T>::value,
+C/C++:       |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:272:33: note: in instantiation of function template specialization 'facebook::jsi::detail::toValue<facebook::jsi::Value *>' requested here
+C/C++:   272 |   return call(runtime, {detail::toValue(runtime, std::forward<Args>(args))...});
+C/C++:       |                                 ^
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:117:51: note: in instantiation of function template specialization 'facebook::jsi::Function::call<facebook::jsi::Value *, unsigned long &>' requested here
+C/C++:   117 |             remoteFun.asObject(rt).asFunction(rt).call(rt, args.data(), argsSize);
+C/C++:       |                                                   ^
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:1:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.h:3:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools/JSScheduler.h:4:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor/ReactCommon/RuntimeExecutor.h:13:
+C/C++: In file included from /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1509:
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:38:7: error: static assertion failed due to requirement 'std::is_base_of<facebook::jsi::Pointer, unsigned long>::value': This type cannot be converted to Value
+C/C++:    38 |       std::is_base_of<Pointer, T>::value,
+C/C++:       |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:272:33: note: in instantiation of function template specialization 'facebook::jsi::detail::toValue<unsigned long>' requested here
+C/C++:   272 |   return call(runtime, {detail::toValue(runtime, std::forward<Args>(args))...});
+C/C++:       |                                 ^
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:117:51: note: in instantiation of function template specialization 'facebook::jsi::Function::call<facebook::jsi::Value *, unsigned long &>' requested here
+C/C++:   117 |             remoteFun.asObject(rt).asFunction(rt).call(rt, args.data(), argsSize);
+C/C++:       |                                                   ^
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:1:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.h:3:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools/JSScheduler.h:4:
+C/C++: In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor/ReactCommon/RuntimeExecutor.h:13:
+C/C++: In file included from /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1509:
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:40:25: error: conversion from 'const unsigned long' to 'const Value' is ambiguous
+C/C++:    40 |   return Value(runtime, other);
+C/C++:       |                         ^~~~~
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1090:18: note: candidate constructor
+C/C++:  1090 |   /* implicit */ Value(bool b) : Value(BooleanKind) {
+C/C++:       |                  ^
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1095:18: note: candidate constructor
+C/C++:  1095 |   /* implicit */ Value(double d) : Value(NumberKind) {
+C/C++:       |                  ^
+C/C++: /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1100:18: note: candidate constructor
+C/C++:  1100 |   /* implicit */ Value(int i) : Value(NumberKind) {
+C/C++:       |                  ^
+C/C++: 3 errors generated.
+
+> Task :react-native-gesture-handler:compileReleaseKotlin
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt:8:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt:66:26 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt:66:89 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt:69:42 'constructor ReactModuleInfo(String!, String!, Boolean, Boolean, Boolean, Boolean, Boolean)' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/core/FlingGestureHandler.kt:25:26 Parameter 'event' is never used
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerButtonViewManager.kt:26:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerButtonViewManager.kt:38:2 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerModule.kt:13:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootViewManager.kt:3:46 'ReactModule' is deprecated. Deprecated in Java
+w: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootViewManager.kt:15:2 'ReactModule' is deprecated. Deprecated in Java
+
+> Task :react-native-gesture-handler:compileReleaseJavaWithJavac
+> Task :react-native-gesture-handler:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:bundleLibCompileToJarRelease
+> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease
+> Task :react-native-gesture-handler:processReleaseJavaRes
+> Task :react-native-screens:buildCMakeRelWithDebInfo[armeabi-v7a]
+
+> Task :react-native-screens:compileReleaseJavaWithJavac
+注: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/paper/java/com/swmansion/rnscreens/NativeScreensModuleSpec.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-screens:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-screens:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-screens:processReleaseJavaRes
+> Task :react-native-screens:bundleLibCompileToJarRelease
+> Task :react-native-screens:bundleLibRuntimeToJarRelease
+> Task :react-native-screens:mergeReleaseJniLibFolders
+> Task :react-native-screens:mergeReleaseNativeLibs
+> Task :react-native-screens:copyReleaseJniLibsProjectOnly
+> Task :expo-av:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :expo-av:mergeReleaseJniLibFolders
+> Task :expo-av:mergeReleaseNativeLibs
+> Task :expo-av:copyReleaseJniLibsProjectOnly
+
+> Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a] FAILED
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:176:35: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+C/C++:   176 |     const auto scope = jsi::Scope(uiWorkletRuntime_->getJSIRuntime());
+C/C++:       |                                   ^
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:169:31: note: add an explicit capture of 'this' to capture '*this' by reference
+C/C++:   169 |   uiScheduler_->scheduleOnUI([=] {
+C/C++:       |                               ^
+C/C++:       |                                , this
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:238:5: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+C/C++:   238 |     eventHandlerRegistry_->registerEventHandler(std::move(handler));
+C/C++:       |     ^
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:235:31: note: add an explicit capture of 'this' to capture '*this' by reference
+C/C++:   235 |   uiScheduler_->scheduleOnUI([=] {
+C/C++:       |                               ^
+C/C++:       |                                , this
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:249:13: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+C/C++:   249 |       [=] { eventHandlerRegistry_->unregisterEventHandler(id); });
+C/C++:       |             ^
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:249:8: note: add an explicit capture of 'this' to capture '*this' by reference
+C/C++:   249 |       [=] { eventHandlerRegistry_->unregisterEventHandler(id); });
+C/C++:       |        ^
+C/C++:       |         , this
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:346:31: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+C/C++:   346 |     jsi::Runtime &uiRuntime = uiWorkletRuntime_->getJSIRuntime();
+C/C++:       |                               ^
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:345:31: note: add an explicit capture of 'this' to capture '*this' by reference
+C/C++:   345 |   uiScheduler_->scheduleOnUI([=]() {
+C/C++:       |                               ^
+C/C++:       |                                , this
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:833:9: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+C/C++:   833 |         uiWorkletRuntime_->runGuarded(
+C/C++:       |         ^
+C/C++: /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:832:8: note: add an explicit capture of 'this' to capture '*this' by reference
+C/C++:   832 |       [=](int keyboardState, int height) {
+C/C++:       |        ^
+C/C++:       |         , this
+C/C++: 5 warnings generated.
+
+> Task :expo-modules-core:compileReleaseKotlin FAILED
+e: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/permissions/PermissionsService.kt:166:36 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Array<(out) String!>?
+e: file:///Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/defaultmodules/CoreModule.kt:88:21 Unresolved reference: reload
+
+> Task :expo-modules-core:buildCMakeRelWithDebInfo[arm64-v8a]
+
+> Task :app:createBundleGoogleReleaseJsAndAssets
+error Unable to resolve module regenerator-runtime/runtime from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/Libraries/Core/setUpRegeneratorRuntime.js: regenerator-runtime/runtime could not be found within the project or in these directories:
+  node_modules
+  node_modules/.pnpm
+[0m [90m 42 |[39m     [90m// regenerator-runtime/runtime exports the regeneratorRuntime object, so we[39m
+ [90m 43 |[39m     [90m// can return it safely.[39m
+Error: Unable to resolve module regenerator-runtime/runtime from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/Libraries/Core/setUpRegeneratorRuntime.js: regenerator-runtime/runtime could not be found within the project or in these directories:
+  node_modules
+  node_modules/.pnpm
+[0m [90m 42 |[39m     [90m// regenerator-runtime/runtime exports the regeneratorRuntime object, so we[39m
+ [90m 43 |[39m     [90m// can return it safely.[39m
+[31m[1m>[22m[39m[90m 44 |[39m     [36mreturn[39m require([32m'regenerator-runtime/runtime'[39m)[33m;[39m [90m// flowlint-line untyped-import:off[39m
+ [90m    |[39m                     [31m[1m^[22m[39m
+ [90m 45 |[39m   })[33m;[39m
+ [90m 46 |[39m }
+ [90m 47 |[39m[0m
+    at ModuleResolver.resolveDependency (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/node-haste/DependencyGraph/ModuleResolution.js:139:15)
+    at DependencyGraph.resolveDependency (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/node-haste/DependencyGraph.js:232:43)
+    at /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/lib/transformHelpers.js:156:21
+    at resolveDependencies (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:42:25)
+    at visit (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:83:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 5)
+    at async visit (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+    at async Promise.all (index 0)
+    at async visit (/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+[31m[1m>[22m[39m[90m 44 |[39m     [36mreturn[39m require([32m'regenerator-runtime/runtime'[39m)[33m;[39m [90m// flowlint-line untyped-import:off[39m
+ [90m    |[39m                     [31m[1m^[22m[39m
+ [90m 45 |[39m   })[33m;[39m
+ [90m 46 |[39m }
+ [90m 47 |[39m[0m.
+
+> Task :app:createBundleGoogleReleaseJsAndAssets FAILED
+
+FAILURE: Build completed with 3 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a]'.
+> com.android.ide.common.process.ProcessException: ninja: Entering directory `/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/.cxx/RelWithDebInfo/1n220y47/arm64-v8a'
+  [0/2] Re-checking globbed directories...
+  [1/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Fabric/ReanimatedCommitMarker.cpp.o
+  [2/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Fabric/ReanimatedMountHook.cpp.o
+  [3/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Fabric/ShadowTreeCloner.cpp.o
+  [4/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Fabric/ReanimatedCommitHook.cpp.o
+  [5/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Fabric/PropsRegistry.cpp.o
+  [6/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeRegistry.cpp.o
+  [7/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/ReanimatedRuntime.cpp.o
+  [8/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModuleSpec.cpp.o
+  [9/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/ReanimatedHermesRuntime.cpp.o
+  [10/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/RNRuntimeDecorator.cpp.o
+  [11/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/AnimatedSensor/AnimatedSensorModule.cpp.o
+  [12/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Registries/EventHandlerRegistry.cpp.o
+  [13/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o
+  FAILED: CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o 
+  /Users/sunislee/Library/Android/sdk/ndk/27.1.12297006/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ --target=aarch64-none-linux-android23 --sysroot=/Users/sunislee/Library/Android/sdk/ndk/27.1.12297006/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -Dreanimated_EXPORTS -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/AnimatedSensor -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Fabric -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/hidden_headers -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/LayoutAnimations -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/NativeModules -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/ReanimatedRuntime -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Registries -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/SharedItems -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/src/main/cpp -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactAndroid/src/main/jni/react/turbomodule -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/callinvoker -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/cxx -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor -I/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/yoga -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/folly_runtime/include -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/glog/include -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include -isystem /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/reactnativejni/include -isystem /Users/sunislee/.gradle/caches/transforms-3/90ccb4761a0c9ffdf1a2b24ceb5f8b5c/transformed/fbjni-0.5.1/prefab/modules/fbjni/include -isystem /Users/sunislee/.gradle/caches/transforms-3/90ccaee47887636aa3cd529743ff5314/transformed/hermes-android-0.73.6-release/prefab/modules/libhermes/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D__BIONIC_NO_PAGE_SIZE_MACRO -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -Wno-error=deprecated-this-capture -Wno-error=unused-command-line-argument -DREACT_NATIVE_MINOR_VERSION=73 -DREANIMATED_VERSION=3.10.1 -DHERMES_ENABLE_DEBUGGER=0 -fexceptions -fno-omit-frame-pointer -frtti -fstack-protector-all -std=c++20 -Wall -Werror -DNDEBUG -DJS_RUNTIME_HERMES=1 -O2 -g -DNDEBUG -fPIC -DFOLLY_NO_CONFIG=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_MOBILE=1 -DFOLLY_HAVE_RECVMMSG=1 -DFOLLY_HAVE_PTHREAD=1 -DFOLLY_HAVE_XSI_STRERROR_R=1 -std=gnu++20 -MD -MT CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o -MF CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o.d -o CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp.o -c /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:1:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.h:3:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools/JSScheduler.h:4:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor/ReactCommon/RuntimeExecutor.h:13:
+  In file included from /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1509:
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:38:7: error: static assertion failed due to requirement 'std::is_base_of<facebook::jsi::Pointer, facebook::jsi::Value *>::value': This type cannot be converted to Value
+     38 |       std::is_base_of<Pointer, T>::value,
+        |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:272:33: note: in instantiation of function template specialization 'facebook::jsi::detail::toValue<facebook::jsi::Value *>' requested here
+    272 |   return call(runtime, {detail::toValue(runtime, std::forward<Args>(args))...});
+        |                                 ^
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:117:51: note: in instantiation of function template specialization 'facebook::jsi::Function::call<facebook::jsi::Value *, unsigned long &>' requested here
+    117 |             remoteFun.asObject(rt).asFunction(rt).call(rt, args.data(), argsSize);
+        |                                                   ^
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:1:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.h:3:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools/JSScheduler.h:4:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor/ReactCommon/RuntimeExecutor.h:13:
+  In file included from /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1509:
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:38:7: error: static assertion failed due to requirement 'std::is_base_of<facebook::jsi::Pointer, unsigned long>::value': This type cannot be converted to Value
+     38 |       std::is_base_of<Pointer, T>::value,
+        |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:272:33: note: in instantiation of function template specialization 'facebook::jsi::detail::toValue<unsigned long>' requested here
+    272 |   return call(runtime, {detail::toValue(runtime, std::forward<Args>(args))...});
+        |                                 ^
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:117:51: note: in instantiation of function template specialization 'facebook::jsi::Function::call<facebook::jsi::Value *, unsigned long &>' requested here
+    117 |             remoteFun.asObject(rt).asFunction(rt).call(rt, args.data(), argsSize);
+        |                                                   ^
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.cpp:1:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntimeDecorator.h:3:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/../Common/cpp/Tools/JSScheduler.h:4:
+  In file included from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native/ReactCommon/runtimeexecutor/ReactCommon/RuntimeExecutor.h:13:
+  In file included from /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1509:
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi-inl.h:40:25: error: conversion from 'const unsigned long' to 'const Value' is ambiguous
+     40 |   return Value(runtime, other);
+        |                         ^~~~~
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1090:18: note: candidate constructor
+   1090 |   /* implicit */ Value(bool b) : Value(BooleanKind) {
+        |                  ^
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1095:18: note: candidate constructor
+   1095 |   /* implicit */ Value(double d) : Value(NumberKind) {
+        |                  ^
+  /Users/sunislee/.gradle/caches/transforms-3/ade53e40733fa2623f3506ecdd262f42/transformed/react-android-0.73.6-release/prefab/modules/jsi/include/jsi/jsi.h:1100:18: note: candidate constructor
+   1100 |   /* implicit */ Value(int i) : Value(NumberKind) {
+        |                  ^
+  3 errors generated.
+  [14/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Tools/FeaturesConfig.cpp.o
+  [15/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/SharedItems/Shareables.cpp.o
+  [16/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Tools/AsyncQueue.cpp.o
+  [17/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/LayoutAnimations/LayoutAnimationsManager.cpp.o
+  [18/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntime.cpp.o
+  [19/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Tools/JSLogger.cpp.o
+  [20/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Tools/ReanimatedJSIUtils.cpp.o
+  [21/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Tools/ReanimatedVersion.cpp.o
+  [22/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Tools/JSISerializer.cpp.o
+  [23/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/Tools/JSScheduler.cpp.o
+  [24/35] Building CXX object CMakeFiles/reanimated.dir/Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp.o
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:176:35: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+    176 |     const auto scope = jsi::Scope(uiWorkletRuntime_->getJSIRuntime());
+        |                                   ^
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:169:31: note: add an explicit capture of 'this' to capture '*this' by reference
+    169 |   uiScheduler_->scheduleOnUI([=] {
+        |                               ^
+        |                                , this
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:238:5: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+    238 |     eventHandlerRegistry_->registerEventHandler(std::move(handler));
+        |     ^
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:235:31: note: add an explicit capture of 'this' to capture '*this' by reference
+    235 |   uiScheduler_->scheduleOnUI([=] {
+        |                               ^
+        |                                , this
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:249:13: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+    249 |       [=] { eventHandlerRegistry_->unregisterEventHandler(id); });
+        |             ^
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:249:8: note: add an explicit capture of 'this' to capture '*this' by reference
+    249 |       [=] { eventHandlerRegistry_->unregisterEventHandler(id); });
+        |        ^
+        |         , this
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:346:31: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+    346 |     jsi::Runtime &uiRuntime = uiWorkletRuntime_->getJSIRuntime();
+        |                               ^
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:345:31: note: add an explicit capture of 'this' to capture '*this' by reference
+    345 |   uiScheduler_->scheduleOnUI([=]() {
+        |                               ^
+        |                                , this
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:833:9: warning: implicit capture of 'this' with a capture default of '=' is deprecated [-Wdeprecated-this-capture]
+    833 |         uiWorkletRuntime_->runGuarded(
+        |         ^
+  /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/Common/cpp/NativeModules/NativeReanimatedModule.cpp:832:8: note: add an explicit capture of 'this' to capture '*this' by reference
+    832 |       [=](int keyboardState, int height) {
+        |        ^
+        |         , this
+  5 warnings generated.
+  ninja: build stopped: subcommand failed.
+  
+  C++ build system [build] failed while executing:
+      /Users/sunislee/Library/Android/sdk/cmake/3.22.1/bin/ninja \
+        -C \
+        /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android/.cxx/RelWithDebInfo/1n220y47/arm64-v8a \
+        reanimated
+    from /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/node_modules/react-native-reanimated/android
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':expo-modules-core:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+3: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:createBundleGoogleReleaseJsAndAssets'.
+> Process 'command 'node'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 28s
+563 actionable tasks: 499 executed, 64 up-to-date

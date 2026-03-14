@@ -356,12 +356,13 @@ class AudioService {
     return this.currentBaseScene?.id || null;
   }
 
-  async playScene(scene: Scene, options?: { triggerLoading?: boolean }) {
+  async playScene(scene: Scene, options?: { triggerLoading?: boolean; skipNotify?: boolean }) {
     const shouldTriggerLoading = options?.triggerLoading !== false;
+    const skipNotify = options?.skipNotify ?? false;
     try {
       if (!scene || !scene.filename) {
         console.error(`[AudioService] Scene or filename is null for ${scene?.id}`);
-        return;
+        return Promise.resolve();
       }
 
       if (shouldTriggerLoading && this.loadingSceneId !== scene.id) {
@@ -382,10 +383,12 @@ class AudioService {
         if (!status || !status.isLoaded) return;
         if (status.isPlaying) {
           this.isActuallyPlaying = true;
-          // Use setImmediate to avoid blocking the main thread
-          setImmediate(() => {
-            this.notifyListeners();
-          });
+          // Only notify listeners if not in loading-trigger mode to avoid extra re-renders
+          if (shouldTriggerLoading && !skipNotify) {
+            setImmediate(() => {
+              this.notifyListeners();
+            });
+          }
           finishLoading();
         }
       };
@@ -398,7 +401,7 @@ class AudioService {
           const status = await sound.getStatusAsync();
           handlePlaybackStart(status);
         }
-        return;
+        return Promise.resolve();
       }
 
       const isDeepSea = scene.id.includes('deep_sea') || scene.filename.includes('deep_sea');
@@ -527,20 +530,27 @@ class AudioService {
   async pause() {
     try {
       console.log('[AudioService] Pausing all sounds');
+      
+      // 1. 先暂停所有音频（物理停止）
       for (const [id, sound] of this.soundObjects.entries()) {
         try {
           if (sound) {
             const status = await sound.getStatusAsync();
-            if (status.isLoaded) {
+            if (status.isLoaded && status.isPlaying) {
               await sound.pauseAsync();
+              console.log(`[AudioService] ✅ Paused: ${id}`);
             }
           }
         } catch (err) {
           console.warn(`[AudioService] Failed to pause sound ${id}:`, err);
         }
       }
+      
+      // 2. 立即更新状态并通知所有监听器（UI + MediaSession）
       this.isActuallyPlaying = false;
       this.notifyListeners();
+      
+      console.log('[AudioService] ✅ All sounds paused, state updated');
     } catch (e) {
       console.error('[AudioService] Global pause error:', e);
     }
@@ -561,14 +571,7 @@ class AudioService {
           try {
             if (sound) {
               const status = await sound.getStatusAsync();
-              console.log(`[AudioService] Sound ${id} status:`, {
-                isLoaded: status?.isLoaded,
-                isPlaying: status?.isPlaying,
-                volume: status?.volume,
-                durationMillis: status?.durationMillis,
-                positionMillis: status?.positionMillis
-              });
-              if (status?.isLoaded) {
+              if (status?.isLoaded && !status.isPlaying) {
                 await sound.playAsync();
                 console.log(`[AudioService] ✅ Started playing: ${id}`);
               }
@@ -578,8 +581,13 @@ class AudioService {
           }
         }
       }
+      
+      // 1. 先更新状态
       this.isActuallyPlaying = true;
+      
+      // 2. 立即通知所有监听器（UI + MediaSession）
       this.notifyListeners();
+      
       console.log('[AudioService] ====== 播放完成 ======');
     } catch (e) {
       console.error('[AudioService] ❌ Global play error:', e);
@@ -601,24 +609,34 @@ class AudioService {
     return false;
   }
 
-  async stopScene(sceneId: string) {
+  stopScene(sceneId: string, skipNotify: boolean = false) {
     try {
       const sound = this.soundObjects.get(sceneId);
       if (sound) {
-        try {
-          const status = await sound.getStatusAsync();
-          if (status.isLoaded) {
-            await sound.stopAsync();
-            await sound.unloadAsync();
-          }
-        } catch (err) {
-          console.warn(`[AudioService] Error stopping sound ${sceneId}:`, err);
-        } finally {
-          this.soundObjects.delete(sceneId);
-        }
+        sound.getStatusAsync()
+          .then((status) => {
+            if (status.isLoaded) {
+              console.log(`[AudioService] Stopping scene ${sceneId}`);
+              sound.stopAsync()
+                .then(() => {
+                  console.log(`[AudioService] Unloading scene ${sceneId}`);
+                  return sound.unloadAsync();
+                })
+                .catch((err) => console.warn(`[AudioService] Error unloading sound ${sceneId}:`, err));
+            }
+          })
+          .catch((err) => console.warn(`[AudioService] Error getting status for ${sceneId}:`, err));
+        this.soundObjects.delete(sceneId);
+      } else {
+        console.log(`[AudioService] Sound not found for scene ${sceneId}`);
       }
       if (this.soundObjects.size === 0) {
         this.isActuallyPlaying = false;
+      }
+      if (!skipNotify) {
+        setImmediate(() => {
+          this.notifyListeners();
+        });
       }
     } catch (e) {
       console.error(`[AudioService] stopScene failed for ${sceneId}:`, e);
@@ -675,21 +693,37 @@ class AudioService {
     }
   }
 
-  async toggleAmbience(scene: Scene, forceState?: boolean) {
+  toggleAmbience(scene: Scene, forceState?: boolean) {
     try {
       const isCurrentlyActive = this.activeSmallScenes.has(scene.id);
       const targetState = forceState !== undefined ? forceState : !isCurrentlyActive;
 
       if (isCurrentlyActive === targetState) return;
 
+      // UI 立即响应：先更新状态
       if (targetState) {
         this.activeSmallScenes.add(scene.id);
-        await this.playScene(scene, { triggerLoading: false });
       } else {
         this.activeSmallScenes.delete(scene.id);
-        await this.stopScene(scene.id);
       }
-      this.notifyListeners();
+
+      // 立即通知监听器更新 UI
+      setImmediate(() => {
+        this.notifyListeners();
+      });
+
+      // 异步执行音频操作，不阻塞 UI
+      if (targetState) {
+        setImmediate(() => {
+          this.playScene(scene, { triggerLoading: false, skipNotify: true }).catch((e) => 
+            console.error(`[AudioService] playScene failed for ${scene?.id}:`, e)
+          );
+        });
+      } else {
+        setImmediate(() => {
+          this.stopScene(scene.id, true);
+        });
+      }
     } catch (e) {
       console.error(`[AudioService] toggleAmbience failed for ${scene?.id}:`, e);
     }
