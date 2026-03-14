@@ -49,55 +49,13 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
   useEffect(() => {
     const checkAndNavigate = async () => {
       try {
-        // 【暴力修复 1】物理清空标记！不管本地有没有，先当成没有处理！
-        console.log('[CheckAndNavigate] 物理清空资源就绪标记...');
-        await AsyncStorage.removeItem('RESOURCES_READY_KEY');
+        console.log('[CheckAndNavigate] 开始启动检查...');
         
-        // 【暴力修复 2】异步等待空窗期：强制加一个 500ms 的 Loading 状态
-        console.log('[CheckAndNavigate] 强制等待 500ms 确保状态加载完成...');
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // 1. 检查 AsyncStorage 中的状态
-        const userName = await AsyncStorage.getItem('USER_NAME');
-        const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
-        
-        // 2. 【关键修复】调用新的 checkFullIntegrity() 方法，检查完整资源
-        console.log('[CheckAndNavigate] 开始完整资源检查...');
-        const fullIntegrity = await OfflineService.checkFullIntegrity();
-        
-        // 打印详细日志，显示所有缺失和损坏的文件
-        console.log('[CheckAndNavigate] 完整资源检查结果:');
-        fullIntegrity.details.forEach((detail, index) => {
-          console.log(`  [${index + 1}] ${detail}`);
-        });
-        
-        // 3. 根据检查结果导航
-        // 【关键修复】强制重定向：如果完整资源检查失败，强制跳转到下载页
-        if (!fullIntegrity.isComplete) {
-          console.log('[CheckAndNavigate] 资源不完整，强制跳转到下载页');
-          console.log(`[CheckAndNavigate] 缺失文件：${fullIntegrity.missingFiles.length}个 - ${fullIntegrity.missingFiles.join(', ')}`);
-          console.log(`[CheckAndNavigate] 损坏文件：${fullIntegrity.corruptedFiles.length}个 - ${fullIntegrity.corruptedFiles.join(', ')}`);
-          navigation.replace('Download');
-          return;
-        }
-        
-        console.log('[CheckAndNavigate] 资源完整，检查用户信息...');
-        
-        // 4. 资源完整的情况下，检查用户信息
-        const hasUserInfo = userName || hasSkipped === 'true';
-        
-        if (hasUserInfo) {
-          // 用户已经设置过信息，直接进入主应用
-          console.log('[CheckAndNavigate] 用户已设置信息，直接进入主应用');
-          navigation.replace('MainTabs');
-        } else {
-          // 资源完整但用户未设置名字，跳转到起名页
-          console.log('[CheckAndNavigate] 资源完整但未设置名字，跳转到起名页');
-          navigation.replace('NameEntry');
-        }
+        // 【强制重构】只做一件事：进入 DownloadScreen，让它自己判断
+        console.log('[CheckAndNavigate] 进入 DownloadScreen');
+        navigation.replace('Download');
       } catch (e) {
         console.error('[CheckAndNavigate] 检查失败:', e);
-        // 检查失败时，跳转到下载页
         navigation.replace('Download');
       } finally {
         setIsChecking(false);

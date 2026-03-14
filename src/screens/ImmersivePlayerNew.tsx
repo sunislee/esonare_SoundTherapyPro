@@ -7,7 +7,6 @@ import {
   Dimensions,
   Animated,
   Image,
-  StatusBar,
   ActivityIndicator,
   Modal,
   BackHandler,
@@ -17,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { useAudio } from '../context/AudioContext';
-import AnimatedFloatingButton from '../components/AnimatedFloatingButton';
+import InteractiveButtons from '../components/InteractiveButtons';
 import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
 import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -49,13 +48,13 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+  const [activeSmallSceneIds, setActiveSmallSceneIds] = useState<string[]>([]);
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
   const pendingSceneIdRef = useRef<string | null>(null);
 
   const {
     currentBaseSceneId,
-    activeSmallSceneIds,
     toggleAmbience,
   } = useAudio();
 
@@ -219,13 +218,14 @@ const ImmersivePlayerNew: React.FC = () => {
   };
 
   const displayScenes = useMemo(() => SCENES.filter(s => s.isBaseScene), []);
+  const globalAmbientScenes = useMemo(() => 
+    SMALL_SCENE_IDS.map(id => SCENES.find(s => s.id === id)).filter(Boolean) as Scene[]
+  , []);
+
+  console.log('[ImmersivePlayer] Rendered, activeSmallSceneIds:', activeSmallSceneIds);
 
   const renderScenePage = (scene: Scene, index: number) => {
     if (!scene) return <View key={`empty-${index}`} style={styles.page} />;
-
-    const globalAmbientScenes = SMALL_SCENE_IDS.map(id =>
-      SCENES.find(s => s.id === id)
-    ).filter(Boolean) as Scene[];
 
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
@@ -243,8 +243,6 @@ const ImmersivePlayerNew: React.FC = () => {
         <View style={styles.backgroundOverlay} />
 
         <View style={[styles.mainContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}>
-          <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
@@ -257,26 +255,11 @@ const ImmersivePlayerNew: React.FC = () => {
           </Text>
 
           {/* 交互按钮 */}
-          <View style={styles.floatingIconsContainer} pointerEvents="box-none">
-            {globalAmbientScenes.map((ambient, idx) => {
-              const isActive = activeSmallSceneIds.includes(ambient.id);
-              const column = idx % 2;
-              const row = Math.floor(idx / 2);
-              return (
-                <AnimatedFloatingButton
-                  key={`floating-${ambient.id}`}
-                  ambient={ambient}
-                  isActive={isActive}
-                  column={column}
-                  row={row}
-                  onPress={() => {
-                    triggerHaptic();
-                    toggleAmbience(ambient, 'Floating Icon');
-                  }}
-                />
-              );
-            })}
-          </View>
+          <InteractiveButtons
+            globalAmbientScenes={globalAmbientScenes}
+            activeSmallSceneIds={activeSmallSceneIds}
+            setActiveSmallSceneIds={setActiveSmallSceneIds}
+          />
 
           {/* 底部控制：场景切换按钮提升 zIndex */}
           <View style={styles.bottomSection}>
@@ -302,7 +285,7 @@ const ImmersivePlayerNew: React.FC = () => {
                   name={isPlaying ? "pause" : "play"} 
                   size={40} 
                   color="#FFF" 
-                  style={!isPlaying && { marginLeft: 5 }}
+                  style={{ marginLeft: 5 }}
                 />
               )}
             </TouchableOpacity>

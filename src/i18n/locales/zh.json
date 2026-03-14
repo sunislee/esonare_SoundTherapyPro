@@ -55,7 +55,9 @@
     "continue": "继续"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}，正在深度放松"
+    "artistDescription": "🎵 {{userName}}，正在深度放松",
+    "playingStatus": "正在深度疗愈中...",
+    "channelDescription": "媒体播放控制"
   },
   "about": {
       "header": "关于",
@@ -133,6 +135,7 @@
   "player": {
     "landing": {
       "loading": "正在进入心灵空间...",
+      "preparing": "正在准备冥想空间...",
       "complete": "资源准备完成"
     },
     "labels": {

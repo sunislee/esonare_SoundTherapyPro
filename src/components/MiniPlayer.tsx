@@ -40,8 +40,6 @@ const MiniPlayer = () => {
   const widthAnim = useRef(new Animated.Value(1)).current; // 1 = expanded, 0 = collapsed
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
-  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autoHideAnim = useRef(new Animated.Value(1)).current;
   const triggerHaptic = () => {
     ReactNativeHapticFeedback.trigger('impactLight', {
       enableVibrateFallback: true,
@@ -49,54 +47,15 @@ const MiniPlayer = () => {
     });
   };
 
-  // Auto-hide logic
-  const resetAutoHideTimer = () => {
-    if (autoHideTimerRef.current) {
-      clearTimeout(autoHideTimerRef.current);
-    }
-    
-    // Show player
-    Animated.timing(autoHideAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true, // Now only transform/opacity
-    }).start();
-
-    // Start timer to hide
-    autoHideTimerRef.current = setTimeout(() => {
-      // Only auto-hide if not interacting
-      if (!isInteracting) {
-        Animated.timing(autoHideAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true, // Now only transform/opacity
-        }).start();
-      }
-    }, 5000);
-  };
-
   useEffect(() => {
-    // Initial timer
-    resetAutoHideTimer();
-    return () => {
-      if (autoHideTimerRef.current) {
-        clearTimeout(autoHideTimerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    // Listen to AudioService state changes
     const sub = AudioService.addAudioStateListener(({ state }) => {
-      setIsPlaying(state === State.Playing || state === State.Buffering);
-      resetAutoHideTimer(); // Reset timer on state change
+      const playing = state === State.Playing || state === State.Buffering;
+      setIsPlaying(playing);
       
-      // Update current scene info
       const scene = AudioService.getCurrentScene();
       setCurrentScene(scene);
     });
 
-    // Initial check
     const scene = AudioService.getCurrentScene();
     if (scene) {
       setCurrentScene(scene);
@@ -109,40 +68,35 @@ const MiniPlayer = () => {
   }, []);
 
   useEffect(() => {
-    // Visibility logic:
-    // Show if: currentScene exists AND NOT on PlayerScreen
-    // Hide if: currentScene is null OR on PlayerScreen
     const shouldShow = !!currentScene && !isPlayerScreen;
 
     Animated.timing(fadeAnim, {
       toValue: shouldShow ? 1 : 0,
       duration: 300,
-      useNativeDriver: true, // Now only transform/opacity
+      useNativeDriver: true,
     }).start();
-    
-    if (shouldShow) {
-      resetAutoHideTimer();
-    }
   }, [currentScene, isPlayerScreen, fadeAnim]);
 
-  const handlePlayPause = async (e: any) => {
+  const handlePlayPause = (e: any) => {
     e.stopPropagation();
-    resetAutoHideTimer();
     triggerHaptic();
-    try {
-      if (isPlaying) {
-        await AudioService.pause();
-      } else {
-        await AudioService.play();
+    const targetState = isPlaying ? 'pause' : 'play';
+    
+    setImmediate(async () => {
+      try {
+        if (targetState === 'pause') {
+          await AudioService.pause();
+        } else {
+          await AudioService.play();
+        }
+      } catch (error) {
+        console.error('MiniPlayer toggle failed:', error);
       }
-    } catch (error) {
-      console.error('MiniPlayer toggle failed:', error);
-    }
+    });
   };
 
   const toggleCollapse = (e: any) => {
     e.stopPropagation();
-    resetAutoHideTimer();
     triggerHaptic();
     
     const targetValue = isCollapsed ? 1 : 0;
@@ -150,20 +104,17 @@ const MiniPlayer = () => {
     
     Animated.spring(widthAnim, {
       toValue: targetValue,
-      useNativeDriver: true, // Now using transform: scaleX, so native driver is supported
+      useNativeDriver: true,
       friction: 8,
       tension: 40
     }).start();
   };
 
   const handlePress = () => {
-    resetAutoHideTimer();
     triggerHaptic();
     if (isCollapsed) {
-      // If collapsed, expand first instead of navigating
       toggleCollapse({ stopPropagation: () => {} });
     } else if (currentScene) {
-      // Determine destination based on scene type
       if (currentScene.id.includes('breath')) {
         navigation.navigate('BreathDetail', { sceneId: currentScene.id });
       } else {
@@ -174,15 +125,13 @@ const MiniPlayer = () => {
 
   const handleTouchStart = () => {
     setIsInteracting(true);
-    resetAutoHideTimer();
   };
 
   const handleTouchEnd = () => {
     setIsInteracting(false);
-    resetAutoHideTimer();
   };
 
-  if (!currentScene || isPlayerScreen) return null; // Render nothing if no track loaded ever or on detail screens
+  if (!currentScene || isPlayerScreen) return null;
 
   // Calculate dynamic styles
   const containerWidth = widthAnim.interpolate({
@@ -201,19 +150,18 @@ const MiniPlayer = () => {
   });
 
   return (
-    <Animated.View
+    <TouchableOpacity
       style={[
         styles.container,
         {
-          opacity: Animated.multiply(fadeAnim, autoHideAnim),
-          bottom: insets.bottom + 16, // Safe area + margin
+          opacity: fadeAnim,
+          bottom: insets.bottom + 16,
           alignSelf: 'center',
-          // Use transform scale instead of maxWidth for better native performance
           transform: [
             {
               translateY: fadeAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [100, 0], // Slide up/down effect
+                outputRange: [100, 0],
               }),
             },
             {
@@ -226,14 +174,14 @@ const MiniPlayer = () => {
         },
       ]}
       pointerEvents={!currentScene || isPlayerScreen ? 'none' : 'auto'}
+      onPress={handlePress}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      activeOpacity={1}
     >
-      <View style={{ width: 340, height: '100%' }}>
-        <TouchableOpacity 
+      <Animated.View style={{ width: 340, height: '100%' }}>
+        <View 
           style={[styles.content, isCollapsed && styles.collapsedContent]} 
-          onPress={handlePress}
-          activeOpacity={0.9}
         >
         {/* Collapsed View (Pill) */}
         <Animated.View style={[styles.collapsedView, { opacity: collapsedOpacity }]}>
@@ -246,7 +194,7 @@ const MiniPlayer = () => {
                name={isPlaying ? 'pause' : 'play'}
                size={20}
                color="#FFF"
-               style={[styles.playIcon, !isPlaying && styles.playIconOffset]}
+               style={styles.playIcon}
              />
            </TouchableOpacity>
         </Animated.View>
@@ -278,7 +226,7 @@ const MiniPlayer = () => {
               name={isPlaying ? 'pause' : 'play'}
               size={18}
               color="#FFF"
-              style={[styles.playIcon, !isPlaying && styles.playIconOffset]}
+              style={styles.playIcon}
             />
           </TouchableOpacity>
         </Animated.View>
@@ -291,9 +239,9 @@ const MiniPlayer = () => {
         >
           <Text style={styles.collapseIcon}>{isCollapsed ? '⤢' : '—'}</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
-      </View>
-    </Animated.View>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
   );
 };
 
@@ -379,8 +327,6 @@ const styles = StyleSheet.create({
   },
   playIcon: {
     marginTop: 1,
-  },
-  playIconOffset: {
     marginLeft: 2,
   },
   collapseButton: {

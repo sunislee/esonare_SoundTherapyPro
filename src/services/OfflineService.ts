@@ -34,29 +34,11 @@ export interface DownloadProgressState {
 export const OfflineService = {
   /**
    * 检测当前是否处于离线模式
-   * 简化网络检测逻辑，避免崩溃，添加超时机制
+   * 优化：资源已下载完成，直接返回在线状态
    */
   async isOfflineMode(): Promise<boolean> {
-    try {
-      // 使用 Promise.race 添加 5 秒超时
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Network check timeout')), 5000);
-      });
-      
-      const fetchPromise = fetch('https://www.baidu.com/favicon.ico', { 
-        method: 'HEAD',
-        cache: 'no-cache',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      
-      const response = await Promise.race([fetchPromise, timeoutPromise]);
-      return !response.ok;
-    } catch (e) {
-      console.warn('[OfflineService] 网络检测失败或超时，默认在线模式以允许下载');
-      return false; // 网络检测失败时默认在线，允许下载
-    }
+    // 资源已下载完成，始终返回在线状态以允许播放
+    return false;
   },
 
   /**
@@ -251,9 +233,14 @@ export const OfflineService = {
       const corruptedFiles: string[] = [];
       const details: string[] = [];
       
+      console.log('[OfflineService] 开始完整资源检查...');
+      console.log(`[OfflineService] AUDIO_MANIFEST 长度: ${AUDIO_MANIFEST.length}`);
+      
       for (const asset of AUDIO_MANIFEST) {
         const localPath = getLocalPathHelper(asset.category, asset.filename);
         const exists = await RNFS.exists(localPath);
+        
+        console.log(`[OfflineService] 检查文件: ${asset.id}, path: ${localPath}, exists: ${exists}`);
         
         if (!exists) {
           missingFiles.push(asset.id);

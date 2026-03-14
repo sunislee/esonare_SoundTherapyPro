@@ -222,7 +222,7 @@ const PolicyWebView = () => {
             <Text style={styles.loadingText}>加载中...</Text>
           </View>
         )}
-        applicationNameForUserAgent="HeartSoundMeditation/1.3.0"
+        applicationNameForUserAgent="HeartSoundMeditation/1.3.2"
         allowsBackForwardNavigationGestures={true}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}

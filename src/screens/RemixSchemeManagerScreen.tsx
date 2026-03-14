@@ -6,7 +6,6 @@ import {
   Alert,
   TouchableOpacity,
   FlatList,
-  StatusBar,
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -209,7 +208,6 @@ const RemixSchemeManagerScreen: React.FC = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="light-content" />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('player.remix.title')}</Text>
           <Text style={styles.headerSubtitle}>{t('player.remix.count', { count: data.length })}</Text>

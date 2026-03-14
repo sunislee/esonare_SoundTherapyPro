@@ -1,4 +1,4 @@
-import { StyleSheet, Platform, Dimensions, StatusBar, Easing } from 'react-native';
+import { StyleSheet, Platform, Dimensions, Easing } from 'react-native';
 import { Typography } from '../theme/Typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -25,7 +25,7 @@ export const CommonStyles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 40,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
+    paddingTop: 20,
   },
   section: {
     width: '100%',

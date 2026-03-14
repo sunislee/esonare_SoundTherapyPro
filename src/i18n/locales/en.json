@@ -59,7 +59,9 @@
     "continue": "Continue"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}, in deep relaxation"
+    "artistDescription": "🎵 {{userName}}, in deep relaxation",
+    "playingStatus": "Deep Healing in progress...",
+    "channelDescription": "Media playback control"
   },
   "about": {
     "header": "About",
@@ -135,7 +137,10 @@
   },
   "player": {
     "landing": {
-      "loading": "Entering Mind Space...",
+      "loading": "Preparing Meditation Space...",
+      "preparing": "Preparing Meditation Space...",
+      "waking": "Waking up the inner voice...",
+      "downloading": "Downloading...",
       "complete": "Resources Ready"
     },
     "labels": {
@@ -293,7 +298,7 @@
     "subtitle": "Preparing immersive audio resources for you...",
     "calculating": "Calculating resource size...",
     "tip": "Please stay connected for the first time, syncing high-quality audio",
-    "optimizing": "Preparing audio assets...",
+    "optimizing": "Optimizing audio assets...",
     "incompleteTitle": "Download Incomplete",
     "incompleteMessage": "{{count}} files are still downloading. Please wait for the download to complete."
   },

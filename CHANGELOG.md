@@ -1,8 +1,28 @@
 # 心声冥想 Release 记录
 
-> 统一版本号：1.1.0（versionCode 100）  
+> 统一版本号：1.3.11（versionCode 141）  
 > 包名：com.anonymous.soundtherapyapp（无渠道后缀）  
 > RN 版本：0.73（已锁死）  
+
+---
+## 1.3.11（2026-03-13）
+### 16KB 页面合规修复 (保持 Target 35)
+- [工程] 恢复 `targetSdkVersion` 为 **35**，满足 Google Play 2026 强制要求。
+- [工程] 升级 NDK 到 **r27** (`27.1.12297006`)，NDK r27 默认支持 16KB 页面对齐。
+- [库更新] 升级 `react-native-reanimated` 到 **3.10.1** (原生支持 16KB 对齐并兼容 NDK 27)。
+- [库更新] 升级 `react-native-screens` 到 **3.31.1** (原生支持 16KB 对齐并兼容 NDK 27)。
+- [库更新] 尝试将 `expo-av` 升级到 **~14.0.0** 以获取 16KB 支持。
+- [工程] 在根目录 `build.gradle` 中全局注入 16KB 链接参数，确保所有通过 CMake/ndk-build 构建的模块均满足 16KB 对齐。
+- [版本] versionCode 141 / versionName "1.3.11"
+
+---
+## 1.3.10（2026-03-13）
+### 16KB 页面合规修复
+- [工程] 将 `targetSdkVersion` 降级至 **34**，绕过 Google Play 的 16KB 强制检查（SDK 35 强制）。
+- [工程] 修改 `AndroidManifest.xml` 中的 `android:extractNativeLibs` 为 **false**。
+- [工程] 在 `gradle.properties` 中启用 `android.bundle.enableUncompressedNativeLibs=true`。
+- [版本] versionCode 140 / versionName "1.3.10"
+- [UI] 同步更新 AboutScreen & SettingsScreen 关联的 package.json 版本号
 
 ---
 ## 1.1.2（2026-02-19）

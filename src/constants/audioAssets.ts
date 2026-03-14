@@ -11,11 +11,12 @@ export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googleP
 const TENCENT_CLOUD_URL = 'https://43.138.58.71/';
 const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/master/';
 const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
+const GHPROXY_URL = 'https://ghproxy.net/';
 
-// 国内渠道：腾讯云主源 + Gitee备源（更稳定）
-// 海外渠道：GitHub主源 + 腾讯云备源
-export const PRIMARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITHUB_URL : TENCENT_CLOUD_URL;
-export const SECONDARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? TENCENT_CLOUD_URL : GITEE_URL;
+// Google Play 专用配置：GitHub 官方源（主源）+ ghproxy 镜像加速
+// 专注海外市场，使用 GitHub 作为主源，通过镜像加速提升下载速度
+export const PRIMARY_REMOTE_RESOURCE_BASE_URL = GITHUB_URL;
+export const SECONDARY_REMOTE_RESOURCE_BASE_URL = `${GHPROXY_URL}${GITHUB_URL}`;
 export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 
 export const LOCAL_RESOURCE_PATH = `${RNFS.DocumentDirectoryPath}/audio_resources`; 
@@ -105,10 +106,10 @@ export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string)
       `${TENCENT_CLOUD_URL}${filename}`            // 腾讯云备源
     ];
   }
-  // 国内渠道
+  // 国内渠道：Gitee 主源 + 腾讯云备源（如果 Gitee 不可用）
   return [
-    `${TENCENT_CLOUD_URL}${filename}`,
-    `${GITEE_URL}${filename}`
+    `${GITEE_URL}${filename}`,
+    `${TENCENT_CLOUD_URL}${filename}`
   ];
 };
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Animated,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -404,12 +403,6 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar 
-        barStyle="light-content" 
-        backgroundColor="transparent" 
-        translucent={true} 
-      />
-      
       <View style={styles.gradientBackground}>
         {/* Rain Drops */}
         <View style={styles.rainContainer} pointerEvents="none">
@@ -495,7 +488,7 @@ const styles = StyleSheet.create({
   header: { 
     alignItems: 'center', 
     marginBottom: 40,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
+    paddingTop: 10,
   },
   headerIcon: {
     marginBottom: 10,

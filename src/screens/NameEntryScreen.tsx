@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  StatusBar,
   Animated,
   BackHandler,
   Alert,
@@ -115,7 +114,6 @@ const NameEntryScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <StatusBar barStyle="light-content" />
       <View style={styles.content}>
         <Text style={styles.title}>{t('nameEntry.title')}</Text>
         <Text style={styles.subtitle}>{t('nameEntry.subtitle')}</Text>

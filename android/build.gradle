@@ -5,8 +5,8 @@ buildscript {
         buildToolsVersion = "35.0.0"
         minSdkVersion = 23
         compileSdkVersion = 35
-        targetSdkVersion = 35
-        ndkVersion = "25.1.8937393"  // 暂时回退到 NDK r25，先保证编译通过
+        targetSdkVersion = 35   // 强制保持 SDK 35，继续通过库升级和编译参数解决 16KB 页面对齐问题
+        ndkVersion = "27.1.12297006"  // 升级到 NDK r27 以支持 16KB 页面对齐 (默认开启)
         kotlinVersion = "1.9.22"
     }
   repositories {
@@ -35,12 +35,29 @@ buildscript {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force "com.swmansion.rnscreens:react-native-screens:3.29.0"
+            force "com.swmansion.rnscreens:react-native-screens:3.31.1"
         }
     }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             allWarningsAsErrors = false
+        }
+    }
+    
+    // 全局注入 16KB 页面对齐编译参数，确保所有 native 模块 (CMake/ndk-build) 强制 16KB 对齐
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android.defaultConfig {
+                externalNativeBuild {
+                    cmake {
+                        arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON", "-DANDROID_LINKER_FLAGS=-Wl,-z,common-page-size=16384 -Wl,-z,max-page-size=16384", "-DANDROID_EXTRACT_NATIVE_LIBS=false", "-DANDROID_ALIGNED_AS_16KB=true"
+                        cppFlags "-fpermissive -w"
+                    }
+                    ndkBuild {
+                        arguments "APP_LDFLAGS+=-Wl,-z,common-page-size=16384", "APP_LDFLAGS+=-Wl,-z,max-page-size=16384"
+                    }
+                }
+            }
         }
     }
 }

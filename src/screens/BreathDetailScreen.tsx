@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   Animated,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -40,9 +39,10 @@ const BreathDetailScreen: React.FC = () => {
   const route = useRoute<BreathDetailRouteProp>();
   const insets = useSafeAreaInsets();
   const { isPlaying } = usePlayerState();
-  const { activeSmallSceneIds, toggleAmbience } = useAudio();
+  const { toggleAmbience } = useAudio();
   
   const [isLoading, setIsLoading] = useState(true);
+  const [activeSmallSceneIds, setActiveSmallSceneIds] = useState<string[]>(AudioService.getActiveSmallSceneIds());
   
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
@@ -66,6 +66,16 @@ const BreathDetailScreen: React.FC = () => {
       console.log('[BreathDetail] Playback queue ended');
     }
   });
+
+  useEffect(() => {
+    const sub = AudioService.addSmallScenesListener((ids) => {
+      setActiveSmallSceneIds(ids);
+    });
+
+    return () => {
+      sub();
+    };
+  }, []);
 
   useEffect(() => {
     // 初始进入逻辑 - 优化：不等待音频初始化即渲染页面架构
@@ -108,14 +118,25 @@ const BreathDetailScreen: React.FC = () => {
     }
   };
 
+  const handleToggleAmbience = useCallback(async (ambient: Scene) => {
+    const isActive = activeSmallSceneIds.includes(ambient.id);
+    const targetState = !isActive;
+    
+    if (targetState) {
+      setActiveSmallSceneIds(prev => [...prev, ambient.id]);
+    } else {
+      setActiveSmallSceneIds(prev => prev.filter(id => id !== ambient.id));
+    }
+    
+    await AudioService.toggleAmbience(ambient, targetState);
+  }, [activeSmallSceneIds]);
+
   const handleBack = () => {
     navigation.goBack();
   };
 
   return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        
         {scene.backgroundSource ? (
           <Image source={scene.backgroundSource} style={styles.backgroundImage} />
         ) : (
@@ -151,7 +172,7 @@ const BreathDetailScreen: React.FC = () => {
                   isActive={isActive}
                   column={column}
                   row={row}
-                  onPress={() => toggleAmbience(ambient, 'Floating Icon')}
+                  onPress={() => handleToggleAmbience(ambient)}
                 />
               );
             })}
@@ -168,7 +189,7 @@ const BreathDetailScreen: React.FC = () => {
                 name={isPlaying ? "pause" : "play"} 
                 size={40} 
                 color="#FFF" 
-                style={!isPlaying && { marginLeft: 5 }}
+                style={{ marginLeft: 5 }}
               />
             </TouchableOpacity>
           </View>
