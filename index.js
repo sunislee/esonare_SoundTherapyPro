@@ -1,4 +1,4 @@
-import { AppRegistry, Text, View, ActivityIndicator } from 'react-native';
+import { AppRegistry, Text, View, ActivityIndicator, StatusBar, useColorScheme } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { MainNavigator } from './src/navigation/MainNavigator';
@@ -10,6 +10,7 @@ import TrackPlayer from 'react-native-track-player';
 import PlaybackService from './src/services/PlaybackService';
 import { initLanguage } from './src/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigationState } from '@react-navigation/native';
 
 // 显式导入 i18n 模块，确保被打包
 import './src/i18n';
@@ -34,6 +35,28 @@ const LoadingScreen = () => (
     </SafeAreaProvider>
   </GestureHandlerRootView>
 );
+
+// 状态栏适配组件
+const StatusBarAdapter = () => {
+  const isPlayerScreen = useNavigationState((state) => {
+    if (!state) return false;
+    const currentRoute = state.routes[state.index];
+    return currentRoute.name === 'ImmersivePlayer' || currentRoute.name === 'BreathDetail';
+  });
+
+  // 所有页面强制白色状态栏
+  const barStyle = 'light-content';
+  
+  console.log('[StatusBarAdapter] barStyle:', barStyle);
+
+  return (
+    <StatusBar
+      barStyle={barStyle}
+      backgroundColor="transparent"
+      translucent={true}
+    />
+  );
+};
 
 // App 组件 - 强制同步初始化
 function App() {
@@ -72,6 +95,7 @@ function App() {
         <SafeAreaProvider>
           <AudioProvider>
             <NavigationContainer theme={MyTheme}>
+              <StatusBarAdapter />
               <MainNavigator />
             </NavigationContainer>
           </AudioProvider>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, Animated, StatusBar, ActivityIndicator, Easing } from 'react-native';
+import { View, StyleSheet, Text, Animated, ActivityIndicator, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OfflineService } from '../services/OfflineService';
 import AudioService from '../services/AudioService';
@@ -108,7 +108,6 @@ export const LandingScreen = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Animated.View style={{ 
           transform: [{ scale: iconScale }],

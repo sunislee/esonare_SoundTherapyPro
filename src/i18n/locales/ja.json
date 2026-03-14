@@ -58,7 +58,10 @@
   },
   "player": {
     "landing": {
-      "loading": "マインドスペースに入っています...",
+      "loading": "瞑想空間を準備しています...",
+      "preparing": "瞑想空間を準備しています...",
+      "waking": "心の声を呼び覚ましています...",
+      "downloading": "ダウンロード中...",
       "complete": "リソース準備完了"
     }
   },
@@ -66,7 +69,10 @@
     "title": "リソースをダウンロード中",
     "subtitle": "没入型オーディオリソースを準備しています...",
     "calculating": "リソースのサイズを計算中...",
-    "tip": "初めて使用する場合は、ネットワーク接続を維持してください。高品質なオーディオを同期しています"
+    "tip": "初めて使用する場合は、ネットワーク接続を維持してください。高品質なオーディオを同期しています",
+    "optimizing": "オーディオアセットを最適化中...",
+    "incompleteTitle": "ダウンロード不完全",
+    "incompleteMessage": "{{count}} ファイルがまだダウンロード中です。完了までお待ちください。"
   },
   "settings": {
     "header": "設定",
@@ -165,10 +171,9 @@
     "reset_data": "アプリデータをリセット"
   },
   "notification": {
-    "artistDescription": "🎵 {{userName}}、深い癒しの最中",
-    "title": "サウンド瞑想",
-    "subtitle": "深い癒しが進行中...",
-    "playbackControl": "再生コントロール"
+    "artistDescription": "🎵 {{userName}}、深いリラクゼーション中",
+    "playingStatus": "深いヒーリング中...",
+    "channelDescription": "メディア再生コントロール"
   },
   "scenes": {
     "nature_ocean": { "title": "深海", "desc": "深い青の静寂" },

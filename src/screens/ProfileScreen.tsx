@@ -8,7 +8,6 @@ import {
   Alert,
   Platform,
   ScrollView,
-  StatusBar,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -401,7 +400,6 @@ export const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
   
         

@@ -1,21 +1,11 @@
-import React, { useEffect, useRef, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Animated,
-  Dimensions,
-} from 'react-native';
+import React, { useCallback, memo } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Scene, getIconName } from '../constants/scenes';
+import { Scene } from '../constants/scenes';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
 
-const { width } = Dimensions.get('window');
-const BUTTON_SIZE = 70;
-const CONTAINER_WIDTH = width - 40;
-
-interface AnimatedFloatingButtonProps {
+interface InteractiveButtonProps {
   ambient: Scene;
   isActive: boolean;
   column: number;
@@ -23,7 +13,7 @@ interface AnimatedFloatingButtonProps {
   onPress: () => void;
 }
 
-const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
+const InteractiveButton: React.FC<InteractiveButtonProps> = ({
   ambient,
   isActive,
   column,
@@ -31,11 +21,10 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
   onPress,
 }) => {
   const { t } = useTranslation();
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
-  const buttonPressed = useRef(false);
+  const scaleAnim = React.useRef(new Animated.Value(0)).current;
+  const glowAnim = React.useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
+  React.useEffect(() => {
     Animated.spring(scaleAnim, {
       toValue: 1,
       delay: (row * 2 + column) * 100,
@@ -45,7 +34,7 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
     }).start();
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isActive) {
       Animated.loop(
         Animated.sequence([
@@ -66,15 +55,16 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
     }
   }, [isActive]);
 
-  const left = column === 0 ? 20 : CONTAINER_WIDTH - BUTTON_SIZE - 20;
+  const left = column === 0 ? 20 : (Dimensions.get('window').width - 40) - 70 - 20;
   const top = row * 130 + 40;
 
   const handlePress = useCallback(() => {
-    buttonPressed.current = true;
+    const options = {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    };
+    ReactNativeHapticFeedback.trigger('impactLight', options);
     onPress();
-    setTimeout(() => {
-      buttonPressed.current = false;
-    }, 100);
   }, [onPress]);
 
   return (
@@ -127,55 +117,54 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
   );
 };
 
+const { width } = Dimensions.get('window');
+const BUTTON_SIZE = 70;
+const CONTAINER_WIDTH = width - 40;
+
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     alignItems: 'center',
-    width: BUTTON_SIZE + 40,
-    overflow: 'visible',
-    paddingBottom: 20,
   },
   button: {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     borderRadius: BUTTON_SIZE / 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(108, 93, 211, 0.3)',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
   },
   activeButton: {
     backgroundColor: '#6C5DD3',
-    borderColor: '#fff',
-    elevation: 10,
-    shadowColor: '#6C5DD3',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
   },
   pressedButton: {
-    backgroundColor: '#5a4cc4',
+    opacity: 0.7,
   },
   glow: {
     position: 'absolute',
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     borderRadius: BUTTON_SIZE / 2,
-    backgroundColor: 'rgba(108, 93, 211, 0.4)',
+    backgroundColor: '#6C5DD3',
+    opacity: 0,
   },
   label: {
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'center',
-    flexWrap: 'wrap',
-    maxWidth: 100,
+    marginTop: 5,
   },
   activeLabel: {
     color: '#fff',
-    fontWeight: 'bold',
   },
 });
 
-export default memo(AnimatedFloatingButton);
+function getIconName(sceneId: string): string {
+  if (sceneId.includes('white_noise')) return 'radio';
+  if (sceneId.includes('wind_chime')) return 'musical-notes';
+  if (sceneId.includes('breath')) return 'body';
+  if (sceneId.includes('apple')) return 'apple';
+  if (sceneId.includes('match')) return 'flame';
+  return 'musical-note';
+}
+
+export default memo(InteractiveButton);

@@ -2,6 +2,10 @@ package com.anonymous.soundtherapyapp
 
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -10,7 +14,26 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(null)
+    super.onCreate(savedInstanceState)
+    
+    // 启用 Edge-to-Edge 显示 (Android 15 适配)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      // 设置状态栏和导航栏透明
+      window.decorView.systemUiVisibility = (
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+      )
+      
+      window.statusBarColor = android.graphics.Color.TRANSPARENT
+      window.navigationBarColor = android.graphics.Color.TRANSPARENT
+      
+      // 设置状态栏图标为深色（适配浅色背景）
+      WindowInsetsControllerCompat(window, window.decorView).apply {
+        isAppearanceLightStatusBars = true
+        isAppearanceLightNavigationBars = true
+      }
+    }
   }
 
   /**

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'; 
-import { View, Text, StyleSheet, StatusBar, Dimensions, Animated, Easing, BackHandler, Alert } from 'react-native'; 
+import { View, Text, StyleSheet, Dimensions, Animated, Easing, BackHandler, Alert } from 'react-native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export const ResourceDownloadScreen = ({ navigation }: any) => { 
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  
+  // 【多语言支持】自动检测系统语言并加载对应文案
+  // i18n 已经在 src/i18n/index.ts 中配置了自动检测 (zh/en/ja)
+  // 使用 useTranslation() hook 后，t() 函数会自动返回当前系统语言对应的文案
   
   // 【关键修复】i18n 保护：如果翻译加载失败，使用默认文本
   const getSafeText = (key: string, fallback: string) => {
@@ -48,6 +52,8 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   const [isDownloadCompleted, setIsDownloadCompleted] = useState(false);
   const [isUiCompleted, setIsUiCompleted] = useState(false);
   const [allFilesVerified, setAllFilesVerified] = useState(false); // 【新增】物理校验通过标记
+  const [isResourceAlreadyExists, setIsResourceAlreadyExists] = useState(false); // 【禅意体验】资源已存在标记
+  const fadeOutAnim = useRef(new Animated.Value(1)).current; // 【禅意体验】淡出动画
 
   // 【暴力修复】UI 进度完全跟随真实下载进度，不再"视觉谎言"
   useEffect(() => {
@@ -128,7 +134,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       Alert.alert(
         t('download.incompleteTitle'),
         t('download.incompleteMessage', { count: fullIntegrity.missingFiles.length + fullIntegrity.corruptedFiles.length }),
-        [{ text: t('common.continue') }]
+        [{ text: t('common.confirm') }]
       );
       return; // 不执行 navigation.replace
     }
@@ -183,17 +189,52 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           console.log('[ResourceDownloadScreen] 存储权限已授予');
         }
         
-        // 【关键修复 2】使用 OfflineService 检查资源是否已经准备就绪
-        console.log('[ResourceDownloadScreen] 调用 isResourceReady()...');
-        const isReady = await OfflineService.isResourceReady();
-        console.log(`[ResourceDownloadScreen] isResourceReady() 返回：${isReady}`);
+        // 【100% 还原】核心修复逻辑
+        console.log('[ResourceDownloadScreen] ====== 开始异步并行预检 ======');
         
-        if (isReady) {
-          // 如果资源已存在，立即跳转到 NameEntry
-          console.log('[ResourceDownloadScreen] 资源已就绪，跳过下载');
-          navigation.replace('NameEntry');
-          return;
+        // 1. 异步并行预检：同时检查资源和用户名
+        console.log('[ResourceDownloadScreen] 1. 检查资源完整性...');
+        const resourcesReady = await OfflineService.checkFullIntegrity();
+        const isResourcesReady = resourcesReady.isComplete;
+        console.log(`[ResourceDownloadScreen] 资源检查结果：${isResourcesReady}`);
+        
+        console.log('[ResourceDownloadScreen] 2. 检查用户名...');
+        const savedName = await AsyncStorage.getItem('USER_NAME');
+        console.log(`[ResourceDownloadScreen] 用户名：${savedName || 'null'}`);
+        
+        // 2. UI 状态锁死：一旦资源完整，立即设置禅意模式
+        if (isResourcesReady) {
+          console.log('[ResourceDownloadScreen] 3. 资源完整，立即锁死禅意模式（隐藏进度条）');
+          setIsResourceAlreadyExists(true);
+        } else {
+          console.log('[ResourceDownloadScreen] 3. 资源不完整，设置为下载模式（显示进度条）');
+          setIsResourceAlreadyExists(false);
         }
+        
+        // 3. 强制仪式感：确保禅意小人展示 1500ms
+        console.log('[ResourceDownloadScreen] 4. 强制展示禅意小人 1500ms...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // 4. 上帝视角分流（关键！）
+        console.log('[ResourceDownloadScreen] 5. 执行导航分流...');
+        console.log(`[ResourceDownloadScreen] 条件：isResourcesReady=${isResourcesReady}, savedName=${savedName ? '有值' : 'null'}`);
+        
+        if (isResourcesReady && savedName) {
+          // IF (资源齐 && 有名字) -> 老用户进主页
+          console.log('[ResourceDownloadScreen] ✅ 老用户：资源完整 + 有用户名 -> 跳转到 MainTabs');
+          navigation.replace('MainTabs');
+          return; // ⚠️ 关键：立即返回，禁止继续执行
+        }
+        
+        if (isResourcesReady && !savedName) {
+          // IF (资源齐 && 没名字) -> 新用户去起名
+          console.log('[ResourceDownloadScreen] ✅ 新用户：资源完整 + 无用户名 -> 跳转到 NameEntry');
+          navigation.replace('NameEntry');
+          return; // ⚠️ 关键：立即返回，禁止继续执行
+        }
+        
+        // ELSE (只有资源不齐) -> 才允许执行下载
+        console.log('[ResourceDownloadScreen] ⚠️ 资源不完整，开始下载流程...');
         
         // 检查网络状态
         console.log('[ResourceDownloadScreen] 调用 isOfflineMode()...');
@@ -202,8 +243,6 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         
         if (isOffline) {
           console.warn('[ResourceDownloadScreen] 检测到离线模式，无法下载资源');
-          // 离线模式下显示提示，但仍然尝试进入主应用
-          // 用户可以在有网络时重新下载
           await enterMainApp();
           return;
         }
@@ -280,8 +319,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+    <Animated.View style={[styles.container, { opacity: fadeOutAnim }]}>
       <View style={styles.content}>
         <Animated.View style={{ 
           transform: [{ scale: iconScale }],
@@ -292,41 +330,49 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         </Animated.View>
         <Text style={styles.brandName}>ESONARE</Text>
         <Text style={styles.loadingText}>
-          {allFilesVerified ? getSafeText('player.landing.complete', '资源准备完成') : getSafeText('player.landing.loading', '正在进入心灵空间...')}
+          {isResourceAlreadyExists 
+            ? t('player.landing.preparing')
+            : allFilesVerified 
+              ? t('player.landing.complete') 
+              : t('player.landing.loading')}
         </Text>
         
         {/* 【关键优化】显示下载状态提示 */}
-        {!isUiCompleted && (
+        {!isUiCompleted && !isResourceAlreadyExists && (
           <Text style={styles.statusHintText}>
-            {getSafeText('download.optimizing', 'Optimizing audio assets with 8 threads...')}
+            {t('download.optimizing')}
           </Text>
         )}
         
-        {/* 进度条 */}
-        <View style={styles.progressBarContainer}>
-          <Animated.View 
-            style={[
-              styles.progressBar, 
-              { 
-                width: animatedProgress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%']
-                })
-              }
-            ]} 
-          />
-        </View>
-        
-        {/* 【恢复百分比显示】 */}
-        <Text style={styles.percentText}>
-          {formatPercent(realProgress)}%
-        </Text>
-        
-        <Text style={styles.progressText}>
-          {isUiCompleted ? '✅ ' : ''}{formatMB(realProgress * GLOBAL_TOTAL_SIZE)} MB / {formatMB(GLOBAL_TOTAL_SIZE)} MB
-        </Text>
+        {/* 【关键修复】进度条只在资源不完整时显示 */}
+        {!isResourceAlreadyExists && (
+          <>
+            <View style={styles.progressBarContainer}>
+              <Animated.View 
+                style={[
+                  styles.progressBar, 
+                  { 
+                    width: animatedProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%']
+                    })
+                  }
+                ]} 
+              />
+            </View>
+            
+            {/* 【恢复百分比显示】 */}
+            <Text style={styles.percentText}>
+              {formatPercent(realProgress)}%
+            </Text>
+            
+            <Text style={styles.progressText}>
+              {isUiCompleted ? '✅ ' : ''}{formatMB(realProgress * GLOBAL_TOTAL_SIZE)} MB / {formatMB(GLOBAL_TOTAL_SIZE)} MB
+            </Text>
+          </>
+        )}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

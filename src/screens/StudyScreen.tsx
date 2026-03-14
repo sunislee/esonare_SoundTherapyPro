@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   State,
   usePlaybackState,
@@ -32,6 +32,7 @@ interface RainDropConfig {
 }
 
 const StudyScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const playbackState = usePlaybackState();
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +74,6 @@ const StudyScreen: React.FC = () => {
   
 
   const getPlaybackStatus = () => {
-
     const currentState = (typeof playbackState === 'object' && 'state' in playbackState 
       ? playbackState.state 
       : playbackState) as any;
@@ -90,7 +90,6 @@ const StudyScreen: React.FC = () => {
       case State.Paused:
       case State.Ready:
       case State.Stopped:
-
       case 'paused':
       case 'stopped':
         return {
@@ -110,7 +109,7 @@ const StudyScreen: React.FC = () => {
           isPlaying: false,
           isBuffering: true,
           statusText: t('study.status.buffering'),
-          buttonIcon: '⏸',
+          buttonIcon: '⏳',
           buttonText: t('study.status.buffering')
         };
       default:
@@ -124,7 +123,12 @@ const StudyScreen: React.FC = () => {
     }
   };
 
-  const { isPlaying, isBuffering, statusText, buttonIcon, buttonText } = getPlaybackStatus();
+  const playbackStatus = getPlaybackStatus();
+  const isPlaying = playbackStatus.isPlaying;
+  const isBuffering = playbackStatus.isBuffering;
+  const statusText = playbackStatus.statusText;
+  const buttonIcon = playbackStatus.buttonIcon;
+  const buttonText = playbackStatus.buttonText;
   const currentState: any = (typeof playbackState === 'object' && 'state' in playbackState 
     ? playbackState.state 
     : playbackState) as any;
@@ -236,13 +240,6 @@ const StudyScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar 
-        barStyle="light-content" 
-        backgroundColor="transparent" 
-        translucent={true} 
-      />
-      
-
       <View style={styles.gradientBackground}>
         
 
@@ -388,7 +385,7 @@ const styles = StyleSheet.create({
   header: { 
     alignItems: 'center', 
     marginBottom: 60,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 40, 
+    paddingTop: 10,
   },
   title: { fontSize: 42, color: '#fff', fontWeight: '200', letterSpacing: 5, textShadowColor: 'rgba(74, 144, 226, 0.5)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 10 },
   subtitle: { fontSize: 16, color: '#aaa', marginTop: 10 },
