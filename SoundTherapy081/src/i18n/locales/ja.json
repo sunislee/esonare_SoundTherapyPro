@@ -1,0 +1,200 @@
+{
+  "welcome": "サウンドセラピーアプリへようこそ",
+  "appTitle": "サウンドセラピー",
+  "tabs": {
+    "scenes": "シーン",
+    "profile": "マイページ"
+  },
+  "categories": {
+    "nature": "自然の力",
+    "healing": "深いヒーリング",
+    "brainwave": "脳波集中",
+    "life": "生活の片隅",
+    "interactive": "環境音"
+  },
+  "actions": {
+    "play": "再生",
+    "pause": "一時停止",
+    "stop": "停止",
+    "next": "次へ",
+    "previous": "前へ",
+    "download": "ダウンロード"
+  },
+  "slogans": {
+    "journey": "癒しの旅に出かけよう",
+    "peace": "心が平和になるように",
+    "silence": "世界を少し静かにしよう"
+  },
+  "greetings": {
+    "hello": "こんにちは",
+    "midnight": "こんばんは",
+    "morning": "おはよう",
+    "noon": "こんにちは",
+    "afternoon": "こんにちは",
+    "lateAfternoon": "こんにちは",
+    "evening": "こんばんは",
+    "night": "こんばんは"
+  },
+  "landing": {
+    "loading": "マインドスペースに入っています..."
+  },
+  "common": {
+    "confirm": "OK",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "success": "成功",
+    "error": "エラー",
+    "loading": "読み込み中...",
+    "back": "戻る",
+    "delete": "削除",
+    "comma": "、",
+    "period": "。",
+    "enter_scheme_name": "スキーム名を入力してください",
+    "friend": "友達",
+    "comingSoon": "機能開発中、お楽しみに！",
+    "prompt": "プロンプト",
+    "confirmExit": "終了の確認",
+    "confirmExitMessage": "本当に終了しますか？",
+    "exit": "終了"
+  },
+  "player": {
+    "landing": {
+      "loading": "瞑想空間を準備しています...",
+      "preparing": "瞑想空間を準備しています...",
+      "waking": "心の声を呼び覚ましています...",
+      "downloading": "ダウンロード中...",
+      "complete": "リソース準備完了"
+    }
+  },
+  "download": {
+    "title": "リソースをダウンロード中",
+    "subtitle": "没入型オーディオリソースを準備しています...",
+    "calculating": "リソースのサイズを計算中...",
+    "tip": "初めて使用する場合は、ネットワーク接続を維持してください。高品質なオーディオを同期しています",
+    "optimizing": "オーディオアセットを最適化中...",
+    "incompleteTitle": "ダウンロード不完全",
+    "incompleteMessage": "{{count}} ファイルがまだダウンロード中です。完了までお待ちください。",
+    "message": "「{{sceneTitle}}」のオーディオファイルはまだダウンロードされていません。今すぐダウンロードしますか？"
+  },
+  "settings": {
+    "header": "設定",
+    "back": "戻る",
+    "language": "言語",
+    "followSystem": "システム設定に従う",
+    "zh": "简体中文",
+    "en": "English",
+    "ja": "日本語",
+    "personal": "個人",
+    "editName": "ニックネームの変更",
+    "defaultName": "友達",
+    "audio": "オーディオ",
+    "fadeOut": "タイマー終了時にフェードアウト",
+    "fadeOutDesc": "スリープタイマー終了時に音声をフェードアウトさせる",
+    "highQuality": "高音質オーディオ",
+    "highQualityDesc": "高ビットレートのオーディオ再生を有効にする",
+    "storage": "ストレージ",
+    "clearHistory": "再生履歴を消去",
+    "clearHistoryDesc": "すべての再生履歴を削除する",
+    "clearPresets": "すべてのミックスプリセットを消去",
+    "clearPresetsDesc": "保存されたすべてのミックスプリセットを削除する",
+    "about": "アプリについて",
+    "version": "バージョン",
+    "developer": "開発者",
+    "devOptions": "開発者向けオプション",
+    "advancedDebug": "高度なデバッグ",
+    "advancedDebugDesc": "アプリケーションのデバッグ情報を表示する",
+    "toast": {
+      "devOn": "開発者モードが有効になりました",
+      "devOff": "開発者モードが無効になりました",
+      "devClick": "あと {{count}} 回クリックしてデバッグモードを{{action}}します",
+      "devActionOpen": "有効に",
+      "devActionClose": "無効に",
+      "nameUpdated": "ニックネームが更新されました"
+    }
+  },
+  "about": {
+    "header": "アプリについて",
+    "kernelVersion": "カーネルバージョン",
+    "copyright": "© 2024 サウンドセラピー. All rights reserved.",
+    "privacy": "プライバシーポリシー",
+    "terms": "利用規約",
+    "contentComingSoon": "コンテンツを準備中です。お楽しみに！"
+  },
+  "profile": {
+    "loading": "読み込み中...",
+    "defaultUser": "サウンドセラピーユーザー",
+    "stats": {
+      "focusCount": "集中回数",
+      "totalDuration": "総時間"
+    },
+    "menu": {
+      "coreFeatures": "コア機能",
+      "sleepTimer": "スリープタイマー",
+      "myPresets": "マイプリセット",
+      "settings": "設定",
+      "clearCache": "キャッシュをクリア",
+      "logout": "ログアウト",
+      "comingSoon": "{{feature}} は開発中です",
+      "comingSoonDesc": "次のバージョンをお楽しみに",
+      "resources": "リソースと記録",
+      "history": "再生履歴",
+      "about": "について",
+      "aboutUs": "私たちについて",
+      "proMember": "プロメンバー",
+      "editNickname": "ニックネームを編集",
+      "nicknamePlaceholder": "ニックネームを入力してください"
+    },
+    "modals": {
+      "renameTitle": "ニックネームを変更",
+      "renamePlaceholder": "新しいニックネームを入力してください",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "deletePresetTitle": "プリセットを削除",
+      "deletePresetMsg": "この混音プリセットを削除してもよろしいですか？",
+      "logoutTitle": "ログアウト",
+      "logoutMsg": "現在のアカウントからログアウトし、すべてのローカル設定をクリアしてもよろしいですか？",
+      "clearCacheTitle": "キャッシュをクリア",
+      "clearCacheMsg": "これにより、すべてのダウンロード済みオーディオリソースが削除されます。次回使用時に再ダウンロードが必要になります。",
+      "clearCacheSuccess": "キャッシュがクリアされました。アプリを再起動してください。",
+      "confirmLogout": "ログアウトを確認",
+      "confirmClear": "クリアを確認",
+      "confirmDelete": "削除",
+      "prompt": "プロンプト",
+      "nameEmpty": "名前を入力してください",
+      "error": "エラー",
+      "saveFailed": "保存に失敗しました",
+      "exitTitle": "アプリを終了",
+      "exitMsg": "SoundTherapy を終了してもよろしいですか？",
+      "exitConfirm": "確認",
+      "confirm": "確認",
+      "resetDataTitle": "アプリデータをリセット",
+      "resetDataMsg": "アプリをリセットしてもよろしいですか？これにより、すべてのローカルデータ（ユーザー名、再生履歴、ミックスプリセットなど）が削除されますが、ダウンロード済みのオーディオリソースは削除されません。"
+    },
+    "reset_data": "アプリデータをリセット"
+  },
+  "notification": {
+    "artistDescription": "🎵 {{userName}}、深いリラクゼーション中",
+    "playingStatus": "深いヒーリング中...",
+    "channelDescription": "メディア再生コントロール"
+  },
+  "scenes": {
+    "nature_ocean": { "title": "深海", "desc": "深い青の静寂" },
+    "nature_forest": { "title": "霧の森", "desc": "森の中の散歩" },
+    "nature_deep_sea": { "title": "深海の呼吸", "desc": "波の音に合わせて、深い呼吸を取り戻す" },
+    "nature_misty_forest": { "title": "森の霧", "desc": "朝の森を歩き、澄んだ空気を吸い込む" },
+    "nature_river": { "title": "朝の川辺", "desc": "石の上を流れる清流" },
+    "nature_night": { "title": "静かな部族", "desc": "太古の呼び声" },
+    "life_rain_boat": { "title": "舟の上の雨", "desc": "小舟に落ちる微かな雨" },
+    "life_bookstore": { "title": "午後の書店", "desc": "紙と静寂" },
+    "healing_zen_bowl": { "title": "シンギングボウル", "desc": "一瞬の静寂" },
+    "healing_clean_space": { "title": "清らかな空間", "desc": "水のように流れる" },
+    "healing_crystal": { "title": "クリスタルボウル", "desc": "高周波エネルギーの共鳴" },
+    "brainwave_alpha": { "title": "アルファ波集中", "desc": "集中とリラックス" },
+    "brainwave_delta": { "title": "デルタ波入眠", "desc": "左右脳の同期" },
+    "interactive_white_noise": { "title": "ホワイトノイズ", "desc": "深い集中" },
+    "interactive_wind_chime": { "title": "風鈴", "desc": "空霊の響き" },
+    "interactive_breath": { "title": "呼吸", "desc": "マインドフルネスガイド" },
+    "interactive_apple": { "title": "リンゴをかじる", "desc": "ストレス解消音" },
+    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" }
+  }
+}
