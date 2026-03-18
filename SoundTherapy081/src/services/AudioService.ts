@@ -370,6 +370,12 @@ class AudioService {
           const stateBefore = await TrackPlayer.getState();
           console.log('[AudioService] 播放前状态:', stateBefore);
           
+          // 【关键修复】在 play() 之前先更新 currentBaseScene
+          // 这样 Event.PlaybackState 事件触发 notifyListeners() 时，状态已经是正确的
+          this.currentBaseScene = scene;
+          this.isActuallyPlaying = true;
+          console.log('[AudioService] ✅ 预设状态：currentBaseScene =', scene.id, ', isActuallyPlaying = true');
+          
           // 【1】seekTo(0) - 确保从开头播放
           console.log('[AudioService] [1/3] 调用 TrackPlayer.seekTo(0)');
           await TrackPlayer.seekTo(0);
@@ -420,8 +426,6 @@ class AudioService {
           console.log('[AudioService] 播放后状态:', stateAfter);
           console.log('[AudioService] State.Playing 值应该是 3');
           
-          this.currentBaseScene = scene;
-          this.isActuallyPlaying = true;
           console.log('[AudioService] ✅ 播放已启动，isActuallyPlaying =', this.isActuallyPlaying);
           
           // 【关键修复】显式清除 loading 状态
@@ -483,7 +487,12 @@ class AudioService {
       });
       console.log('[AudioService] ✅ TrackPlayer.add 成功');
       
+      // 【关键修复】在 play() 之前先更新 currentBaseScene
+      this.currentBaseScene = scene;
+      
       if (shouldPlay) {
+        // 【关键修复】在 play() 之前先设置 isActuallyPlaying
+        this.isActuallyPlaying = true;
         console.log('[AudioService] ▶️ 调用 TrackPlayer.play()');
         await TrackPlayer.play();
         
@@ -494,11 +503,9 @@ class AudioService {
         });
         console.log('[AudioService] ✅ updateNowPlayingMetadata 完成');
         
-        this.isActuallyPlaying = true;
         console.log('[AudioService] ✅ 播放已启动，isActuallyPlaying = true');
       }
       
-      this.currentBaseScene = scene;
       this.notifyListeners();
       console.log('[AudioService] ====== loadTrack 结束 ======');
     } catch (error: any) {
@@ -517,8 +524,10 @@ class AudioService {
       return;
     }
     
-    await TrackPlayer.pause();
+    // 【关键修复】在 TrackPlayer.pause() 之前先更新状态
+    // 这样 Event.PlaybackState 事件触发时状态已经正确
     this.isActuallyPlaying = false;
+    await TrackPlayer.pause();
     this.notifyListeners();
   }
 
@@ -528,8 +537,9 @@ class AudioService {
       return;
     }
     
-    await TrackPlayer.play();
+    // 【关键修复】在 TrackPlayer.play() 之前先更新状态
     this.isActuallyPlaying = true;
+    await TrackPlayer.play();
     this.notifyListeners();
   }
 
@@ -601,7 +611,12 @@ class AudioService {
   private notifyListeners() {
     this.listeners.forEach(l => l());
     const curState = this.isActuallyPlaying ? State.Playing : State.Paused;
-    this.audioStateListeners.forEach(l => l({ id: this.currentBaseScene?.id || null, state: curState }));
+    console.log('[AudioService] notifyListeners 被调用, isActuallyPlaying=', this.isActuallyPlaying, 'curState=', curState, 'currentBaseScene.id=', this.currentBaseScene?.id);
+    console.log('[AudioService] audioStateListeners 数量:', this.audioStateListeners.size);
+    this.audioStateListeners.forEach((l, index) => {
+      console.log('[AudioService] 调用第', index + 1, '个监听器');
+      l({ id: this.currentBaseScene?.id || null, state: curState });
+    });
     
     if (this.currentBaseScene) {
       NotificationService.updateNotification(this.currentBaseScene, this.getCurrentState()).catch(() => {});

@@ -150,40 +150,33 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     checkServiceReady();
   }, [retryCount]);
 
-  const isPlaying = playbackState === 'playing';
-  const isBuffering = playbackState === 'buffering' || playbackState === 'loading';
+  const isPlaying = playbackState === State.Playing;
+  const isBuffering = playbackState === State.Buffering;
   const isTimerActive = remainingTime !== null && remainingTime > 0;
 
   // Sync state from AudioService (仅在服务准备好后)
   useEffect(() => {
-    if (!isServiceReady) return;
+    if (!isServiceReady) {
+      console.warn('[AudioContext] ⚠️ isServiceReady=false, 跳过注册监听器');
+      return;
+    }
+    
+    console.warn('[AudioContext] ✅ isServiceReady=true, 开始注册监听器');
     
     const unsubscribeState = audioService.addAudioStateListener((state) => {
-      setActiveSoundId(state.id);
-      setPlaybackState(state.state);
-      setCurrentScene(audioService.getCurrentScene());
-      setCurrentBaseSceneId(audioService.getCurrentBaseSceneId());
-      setActiveSmallSceneIds(audioService.getActiveSmallSceneIds());
-      
-      // 【关键修复】监听状态变化，确保 loading 正确清除
-      console.log('[AudioContext] 状态变更:', state.state);
-      if (state.state === 'playing') {
-        console.log('[AudioContext] ✅ 检测到 State.Playing，确保 loading 已清除');
-        
-        // 【用户要求】打印当前队列长度，确认交互音是否真的进去了
-        TrackPlayer.getQueue().then(queue => {
-          console.log('[AudioContext] 📊 当前队列长度:', queue.length, '队列 ID:', queue.map(t => t.id).join(', '));
-          
-          // 检查是否有 small_ 开头的音轨
-          const hasSmallScenes = queue.some(t => t.id?.startsWith('small_'));
-          if (hasSmallScenes) {
-            console.log('[AudioContext] ✅ 检测到交互音在队列中');
-          }
-        }).catch(err => {
-          console.warn('[AudioContext] ⚠️ 获取队列失败:', err);
-        });
-      } else if (state.state === 'buffering' || state.state === 'loading') {
-        console.log('[AudioContext] ⏳ 检测到 State.Buffering/Loading');
+      try {
+        // 【强制日志】
+        console.warn('--- [AudioContext] STATUS UPDATED: id=' + state?.id + ' state=' + state?.state + ' ---');
+        console.warn('--- [AudioContext] isPlaying=' + (state?.state === State.Playing) + ' ---');
+        console.warn('--- [AudioContext] 开始更新 state ---');
+        setActiveSoundId(state.id);
+        setPlaybackState(state.state);
+        setCurrentScene(audioService.getCurrentScene());
+        setCurrentBaseSceneId(audioService.getCurrentBaseSceneId());
+        setActiveSmallSceneIds(audioService.getActiveSmallSceneIds());
+        console.warn('--- [AudioContext] state 更新完成 ---');
+      } catch (err) {
+        console.error('[AudioContext] ❌ 状态回调异常:', err);
       }
     });
 
@@ -210,7 +203,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       unsubscribeVolume();
       unsubscribeTimer();
     };
-  }, [initialRemaining]);
+  }, [isServiceReady]);
 
   const updateAmbientVolume = useCallback((volume: number) => {
     if (!isServiceReady) {

@@ -52,6 +52,11 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   const [hasAnimated, setHasAnimated] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const viewRef = useRef<View>(null);
+  
+  // 【强制日志】每次渲染都打印状态
+  const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
+  console.warn('--- [SceneItem] ' + item.id + ' isPlaying=' + isPlaying + ' currentBaseSceneId=' + currentBaseSceneId + ' isThisPlaying=' + isThisPlaying + ' ---');
+  
   const triggerHaptic = () => {
     ReactNativeHapticFeedback.trigger('impactLight', {
       enableVibrateFallback: true,
@@ -59,7 +64,6 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
     });
   };
   
-  const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
   const { t, i18n } = useTranslation(); // 添加 i18n 以监听语言变化
   const windowHeight = Dimensions.get('window').height;
   const [language, setLanguage] = useState(i18n.language); // 强制监听语言变化
@@ -256,6 +260,9 @@ export const HomeScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
 
+  // 【调试】打印状态变化
+  console.log('[HomeScreen] isPlaying:', isPlaying, 'currentBaseSceneId:', currentBaseSceneId);
+
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
   const greetingFadeAnim = useRef(new Animated.Value(0)).current;
@@ -298,13 +305,15 @@ export const HomeScreen: React.FC = () => {
   };
 
   // Grouped data - 添加 t 和 i18n.language 依赖，确保语言切换时重新渲染
+  // 【关键修复】添加 currentBaseSceneId 和 isPlaying 依赖，强制列表刷新
   const groupedScenes = useMemo(() => {
+    console.warn('--- [HomeScreen] groupedScenes 重新计算, isPlaying=' + isPlaying + ', currentBaseSceneId=' + currentBaseSceneId + ' ---');
     return categories.map(cat => ({
       title: cat,
       label: categoryLabels[cat],
       baseScenes: SCENES.filter(s => s.category === cat && s.isBaseScene),
     }));
-  }, [t, i18n.language]);
+  }, [t, i18n.language, currentBaseSceneId, isPlaying]);
 
   // Use useFocusEffect to ensure the username is re-read every time we return to the home page
   useFocusEffect(
