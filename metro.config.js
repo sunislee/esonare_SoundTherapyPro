@@ -50,7 +50,10 @@ config.resolver.nodeModulesPaths = [rootNodeModules, pnpmStore];
 config.resolver.useWatchman = false;
 config.resolver.unstable_enableSymlinks = true;
 config.resolver.disableHierarchicalLookup = true;
-config.watchFolders = [__dirname, rootNodeModules, pnpmStore];
+config.watchFolders = [__dirname, rootNodeModules];
+if (fs.existsSync(pnpmStore)) {
+  config.watchFolders.push(pnpmStore);
+}
 const expoModulesCorePath = findPnpmPackagePath('expo-modules-core') || fs.realpathSync(
   path.dirname(require.resolve('expo-modules-core/package.json', { paths: [__dirname] }))
 );

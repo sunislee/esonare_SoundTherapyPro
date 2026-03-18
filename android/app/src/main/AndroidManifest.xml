@@ -24,9 +24,16 @@
     </intent>
   </queries>
 
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:theme="@style/AppTheme" android:supportsRtl="true" android:usesCleartextTraffic="true" android:allowNativeHeapPointerTagging="false" android:extractNativeLibs="false">
+  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:theme="@style/AppTheme" android:supportsRtl="true" android:usesCleartextTraffic="true" android:allowNativeHeapPointerTagging="false">
     <!-- Android 15 16KB 页面大小支持声明 -->
     <meta-data android:name="android.supports_16kb_page_size" android:value="true" />
+    <!-- 禁用新架构以避免 libreact_featureflagsjni.so 加载失败 -->
+    <meta-data android:name="com.facebook.react.newarchenabled" android:value="false" />
+    <meta-data android:name="com.facebook.react.new_architecture" android:value="false" />
+    <meta-data android:name="com.facebook.react.new_architecture_enabled" android:value="false" />
+    <meta-data android:name="com.facebook.react.bridgeless" android:value="false" />
+    <meta-data android:name="com.facebook.react.bridgeless_enabled" android:value="false" />
+    <meta-data android:name="com.facebook.react.bridgelessArchitectureEnabled" android:value="false" />
     <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>

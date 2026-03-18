@@ -330,11 +330,8 @@ class AudioService {
       console.log(`[AudioService] 尝试播放：${scene.id}, 路径：${finalUri}`);
 
       // 【多语言支持】统一使用 i18n.t()，与 playAmbient 保持一致
-      console.log('[i18n 调试] playScene - i18n.language:', i18n.language);
-      console.log('[i18n 调试] playScene - scene.title:', scene.title);
       const translatedTitle = i18n.t(`scenes.${scene.id}.title`);
       const translatedArtist = i18n.t('appTitle');
-      console.log('[i18n 调试] playScene - translatedTitle:', translatedTitle);
 
       const track: any = {
         id: scene.id,
