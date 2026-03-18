@@ -75,3 +75,21 @@
 # Keep all React Native modules
 -keep class * extends com.facebook.react.ReactPackage { *; }
 -keepclassmembers class * extends com.facebook.react.ReactPackage { *; }
+
+# 16k 修复：保留 React Native 新架构相关的 FeatureFlags 类（仅保留 LocalAccessor）
+-keep class com.facebook.react.internal.featureflags.ReactNativeFeatureFlags { *; }
+-keep class com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsLocalAccessor { *; }
+
+# 16k 修复：强制删除 ReactNativeFeatureFlagsCxxInterop 和 ReactNativeFeatureFlagsCxxAccessor
+-dontwarn com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsCxxInterop
+-dontwarn com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsCxxAccessor
+-assumenosideeffects class com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsCxxInterop { *; }
+-assumenosideeffects class com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsCxxAccessor { *; }
+
+# 防止混淆 SoLoader 加载 Native 库的相关逻辑
+-keepclassmembers class * {
+    @com.facebook.proguard.annotations.DoNotStrip *;
+}
+
+# 明确保留 SoLoader 类
+-keep class com.facebook.soloader.** { *; }

@@ -2,12 +2,12 @@
 
 buildscript {
     ext {
-        buildToolsVersion = "35.0.0"
-        minSdkVersion = 23
-        compileSdkVersion = 35
-        targetSdkVersion = 35   // 强制保持 SDK 35，继续通过库升级和编译参数解决 16KB 页面对齐问题
-        ndkVersion = "27.1.12297006"  // 升级到 NDK r27 以支持 16KB 页面对齐 (默认开启)
-        kotlinVersion = "1.9.22"
+        buildToolsVersion = "36.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 36
+        targetSdkVersion = 36   // Android 16 (API 36) 目标
+        ndkVersion = "27.1.12297006"  // 支持 16KB 页面对齐
+        kotlinVersion = "2.0.21"  // RN 0.77 推荐版本
     }
   repositories {
     maven { url 'https://maven.aliyun.com/repository/google' }
@@ -23,11 +23,11 @@ buildscript {
     }
   }
   dependencies {
-        classpath('com.android.tools.build:gradle:8.2.1')
-        classpath('com.facebook.react:react-native-gradle-plugin:0.73.4')
-        classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22')
-        classpath('com.google.gms:google-services:4.4.1')
-        classpath('com.google.firebase:firebase-crashlytics-gradle:2.9.9')
+        classpath('com.android.tools.build:gradle:8.5.0')  // AGP 8.5 支持 RN 0.77
+        classpath('com.facebook.react:react-native-gradle-plugin:0.77.0')  // RN 0.77 专用插件
+        classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21')  // Kotlin 2.0.21
+        classpath('com.google.gms:google-services:4.4.2')
+        classpath('com.google.firebase:firebase-crashlytics-gradle:3.0.0')
     }
 }
 

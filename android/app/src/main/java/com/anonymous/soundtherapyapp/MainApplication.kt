@@ -1,24 +1,27 @@
 package com.anonymous.soundtherapyapp
 
 import android.app.Application
-import android.content.res.Configuration
-
+import android.content.Context
+import com.anonymous.soundtherapyapp.BuildConfig
+// import com.anonymous.soundtherapyapp.NotificationManager
+import com.anonymous.soundtherapyapp.NotificationManagerPackage
+import com.anonymous.soundtherapyapp.CrashReportPackage
+import com.anonymous.soundtherapyapp.BuildConfigPackage
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
+import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
-import com.facebook.react.ReactHost
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
-import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
+import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags
+import com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsLocalAccessor
 
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost = object : DefaultReactNativeHost(this) {
     override fun getPackages(): List<ReactPackage> = 
         PackageList(this).packages.apply {
-          // Packages that cannot be autolinked yet can be added manually here, for example:
           add(CrashReportPackage())
           add(BuildConfigPackage())
           add(NotificationManagerPackage())
@@ -33,39 +36,30 @@ class MainApplication : Application(), ReactApplication {
   }
 
   override val reactHost: ReactHost
-    get() = getDefaultReactHost(this.applicationContext, reactNativeHost)
+    get() = com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost(this.applicationContext, reactNativeHost)
 
   override fun onCreate() {
     super.onCreate()
+    
+    // 16k 兼容：在 SoLoader 初始化前设置系统属性，强制禁用新架构
+    System.setProperty("react.native.newarch.enabled", "false")
+    System.setProperty("react.native.new_architecture", "false")
+    System.setProperty("react.native.new_architecture_enabled", "false")
+    System.setProperty("react.native.bridgeless", "false")
+    System.setProperty("react.native.bridgeless_enabled", "false")
+    
+    // 16k 兼容：移除 ReactNativeFeatureFlags 调用，防止触发 CxxAccessor 初始化
+    // try {
+    //   ReactNativeFeatureFlags.enableBridgelessArchitecture()
+    // } catch (e: Exception) {
+    //   e.printStackTrace()
+    // }
+    
     SoLoader.init(this, false)
-    if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-      load()
-    }
     initCrashReport()
   }
 
   private fun initCrashReport() {
-    val channel = BuildConfig.DISTRIBUTION_CHANNEL
-    if (channel == "googlePlay") {
-      try {
-        val clazz = Class.forName("com.google.firebase.FirebaseApp")
-        val method = clazz.getMethod("initializeApp", android.content.Context::class.java)
-        method.invoke(null, this)
-      } catch (e: Exception) {
-        e.printStackTrace()
-      }
-    } else if (channel == "domestic") {
-      try {
-        val clazz = Class.forName("com.tencent.bugly.crashreport.CrashReport")
-        val method = clazz.getMethod("initCrashReport", android.content.Context::class.java, String::class.java, Boolean::class.java)
-        method.invoke(null, applicationContext, "de02ce9158", BuildConfig.DEBUG)
-      } catch (e: Exception) {
-        e.printStackTrace()
-      }
-    }
-  }
-
-  override fun onConfigurationChanged(newConfig: Configuration) {
-    super.onConfigurationChanged(newConfig)
+    // NotificationManager.init(this)
   }
 }

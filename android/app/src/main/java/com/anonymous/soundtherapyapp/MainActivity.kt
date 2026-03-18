@@ -9,11 +9,13 @@ import androidx.core.view.WindowInsetsControllerCompat
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    // 16k 兼容：强制禁用 CxxInterop，使用 Java 降级方案
+    System.setProperty("react.native.featureflags.usecxx", "false")
+    
     super.onCreate(savedInstanceState)
     
     // 启用 Edge-to-Edge 显示 (Android 15 适配)
@@ -50,7 +52,7 @@ class MainActivity : ReactActivity() {
     return DefaultReactActivityDelegate(
         this,
         mainComponentName,
-        fabricEnabled
+        false  // 禁用 Fabric (新架构)
     )
   }
 
