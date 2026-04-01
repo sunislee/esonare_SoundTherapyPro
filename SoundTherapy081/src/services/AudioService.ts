@@ -22,6 +22,9 @@ import en from '../i18n/locales/en.json';
 import ja from '../i18n/locales/ja.json';
 import i18n from '../i18n';
 
+// 【交互音效独立播放器】
+import SFXPlayer from './SFXPlayer';
+
 // 【防御性检查】确保 TrackPlayer 正确导入
 if (!TrackPlayer || !TrackPlayer.setupPlayer) {
   console.error('[AudioService] ❌ TrackPlayer 导入失败:', TrackPlayer);
@@ -124,6 +127,9 @@ class AudioService {
   // 【防双响锁】
   private isAmbientPlaying = false;
   private ambientPlaybackLock = false;
+  
+  // 【交互音效独立播放器】
+  private sfxPlayer: SFXPlayer = SFXPlayer.getInstance();
 
   private constructor() {
     AppState.addEventListener('change', this.handleAppStateChange);
@@ -302,6 +308,10 @@ class AudioService {
         await TrackPlayer.stop();
         this.isActuallyPlaying = false;
       }
+      
+      // 【场景切换保护】停止所有交互音效，防止场景切换后交互音继续播放
+      console.log('[AudioService] 🛑 场景切换，停止所有交互音');
+      await this.stopAllAmbient();
 
       const shouldTriggerLoading = options?.triggerLoading !== false;
       if (shouldTriggerLoading) {
@@ -629,7 +639,9 @@ class AudioService {
   }
 
   private notifySmallScenes() {
-    this.smallScenesListeners.forEach(l => l(Array.from(this.activeSmallScenes)));
+    const ids = Array.from(this.activeSmallScenes);
+    console.log('[AudioService] 📡 notifySmallScenes 通知监听器:', ids);
+    this.smallScenesListeners.forEach(l => l(ids));
   }
 
   private notifyVolume() {
@@ -720,13 +732,7 @@ class AudioService {
       return;
     }
     
-    // 【防双响锁】如果正在播放，直接返回
-    if (this.ambientPlaybackLock) {
-      console.warn('[AudioService] ⚠️ 播放锁生效，跳过本次请求');
-      return;
-    }
-    
-    __DEV__ && console.log('--- [尝试播放交互音] ---', id);
+    __DEV__ && console.log('--- [播放交互音] ---', id);
     
     // 查找对应的场景配置
     const scene = SCENES.find(s => s.id === id);
@@ -741,118 +747,25 @@ class AudioService {
       return;
     }
     
-    const trackId = `small_${id}`;
+    const soundId = `small_${id}`;
     
     try {
-      // 【防双响锁】设置锁
-      this.ambientPlaybackLock = true;
-      __DEV__ && console.log('[AudioService] 🔒 播放锁已设置');
+      // 【关键重构】使用 SFXPlayer 播放，不触碰 TrackPlayer
+      const localPath = getValidUrl(uri);
+      console.log('[AudioService] 🎵 通过 SFXPlayer 播放交互音:', soundId);
       
-      // 【关键】强制设置音量为 1.0
-      await TrackPlayer.setVolume(1.0);
-      __DEV__ && console.log('[AudioService] ✅ 交互音音量已设置为 1.0');
-      
-      // 【安全检查 1】获取当前队列
-      const queue = await TrackPlayer.getQueue();
-      __DEV__ && console.log('[AudioService] 📊 当前队列长度:', queue.length);
-      
-      // 【安全检查 2】排他性检查：检查 ID 是否已存在
-      const existingTrack = queue.find(t => t.id === trackId);
-      if (existingTrack) {
-        __DEV__ && console.log('[AudioService] ⚠️ 交互音已存在，跳过添加:', trackId);
-        // 如果已存在，找到索引并 skip
-        const trackIndex = queue.findIndex(t => t.id === trackId);
-        if (trackIndex >= 0) {
-          __DEV__ && console.log('[AudioService] 🔢 skip 到已存在音轨索引:', trackIndex);
-          await TrackPlayer.skip(trackIndex);
-          await TrackPlayer.play();
-          __DEV__ && console.log('[AudioService] ✅ 已存在的交互音开始播放');
-        } else {
-          console.error('[AudioService] ❌ 音轨存在但找不到索引:', trackId);
-        }
-        // 【防双响锁】提前释放锁
-        setTimeout(() => {
-          this.ambientPlaybackLock = false;
-          __DEV__ && console.log('[AudioService] 🔓 播放锁已释放');
-        }, 500);
-        return;
-      }
-      
-      // 【混音模式】确保不会打断场景音
-      __DEV__ && console.log('[AudioService] 🎵 准备添加交互音');
-      
-      // 【安全检查 3】队列为空时不使用 index 0
-      // 【多语言支持】动态翻译标题和艺术家
-      const translatedTitle = i18n.t(`scenes.${scene.id}.title`);
-      const translatedArtist = i18n.t('appTitle');
-      
-      const track = {
-        id: trackId,
-        url: uri,
-        title: translatedTitle,
-        artist: translatedArtist,
-      };
-      
-      // 【类型安全】直接使用数组格式，不传第二个参数
-      // 避免 java.lang.String cannot be cast to java.lang.Double 错误
-      __DEV__ && console.log('[AudioService] 🎵 添加交互音到队列（不传 index 参数）');
-      const addResult = await TrackPlayer.add([track]);
-      __DEV__ && console.log('[AudioService] ✅ 交互音已添加到队列，返回结果:', addResult);
-      
-      // 【关键修复】skip 需要数字索引，不能用字符串 ID！
-      // addResult 就是新添加音轨的索引
-      if (typeof addResult === 'number') {
-        __DEV__ && console.log('[AudioService] 🔢 skip 到索引:', addResult);
-        await TrackPlayer.skip(addResult);
-        __DEV__ && console.log('[AudioService] ✅ 已 skip 到交互音音轨');
-      } else {
-        console.warn('[AudioService] ⚠️ add 返回的不是数字，尝试用队列长度计算索引');
-        const queue = await TrackPlayer.getQueue();
-        const trackIndex = queue.findIndex(t => t.id === trackId);
-        if (trackIndex >= 0) {
-          __DEV__ && console.log('[AudioService] 🔢 skip 到计算索引:', trackIndex);
-          await TrackPlayer.skip(trackIndex);
-          __DEV__ && console.log('[AudioService] ✅ 已 skip 到交互音音轨');
-        } else {
-          console.error('[AudioService] ❌ 找不到音轨，无法 skip');
-        }
-      }
-      
-      // 播放
-      await TrackPlayer.play();
-      __DEV__ && console.log('[AudioService] ✅ 交互音播放开始');
-      
-      // 【音量补偿】Android 硬件层响应需要缓冲，延迟 100ms 后再次设置音量
-      setTimeout(async () => {
-        try {
-          await TrackPlayer.setVolume(1.0);
-          __DEV__ && console.log('[AudioService] ✅ 交互音音量补偿完成');
-        } catch (e) {
-          console.warn('[AudioService] ⚠️ 音量补偿失败:', e);
-        }
-      }, 100);
+      await this.sfxPlayer.play(localPath, soundId);
+      __DEV__ && console.log('[AudioService] ✅ 交互音已加入 SFXPlayer 播放队列');
       
       // 记录到 activeSmallScenes
       this.activeSmallScenes.add(id);
       this.notifySmallScenes();
       
-      // 打印队列状态
-      const finalQueue = await TrackPlayer.getQueue();
-      __DEV__ && console.log('[AudioService] 📊 最终队列长度:', finalQueue.length, '队列 ID:', finalQueue.map(t => t.id).join(', '));
-      
-      // 【防双响锁】延迟 500ms 后释放锁
-      setTimeout(() => {
-        this.ambientPlaybackLock = false;
-        __DEV__ && console.log('[AudioService] 🔓 播放锁已释放');
-      }, 500);
-      
+      __DEV__ && console.log('[AudioService] ✅ 交互音播放已触发');
     } catch (error: any) {
-      // 【安全检查 5】完整错误信息打印
       console.error('[AudioService] ❌ playAmbient 失败:', error);
       console.error('[AudioService] ❌ 错误消息:', error?.message);
       console.error('[AudioService] ❌ 错误堆栈:', error?.stack);
-      // 【防双响锁】异常时也要释放锁
-      this.ambientPlaybackLock = false;
       throw error;
     }
   }
@@ -866,24 +779,14 @@ class AudioService {
     __DEV__ && console.log('[AudioService] 🛑 停止所有交互音');
     
     try {
-      // 获取当前队列
-      const queue = await TrackPlayer.getQueue();
+      // 【关键重构】使用 SFXPlayer 停止所有交互音
+      this.sfxPlayer.stopAll();
+      __DEV__ && console.log('[AudioService] ✅ SFXPlayer 已停止所有交互音');
       
-      // 找到所有 small_ 开头的音轨索引
-      const smallSceneIndices = queue
-        .map((track, index) => track.id?.startsWith('small_') ? index : -1)
-        .filter(index => index !== -1);
-      
-      __DEV__ && console.log('[AudioService] 📋 待移除的交互音索引:', smallSceneIndices);
-      
-      if (smallSceneIndices.length > 0) {
-        // 【关键修复】remove 需要数字索引数组，不是字符串 ID 数组！
-        await TrackPlayer.remove(smallSceneIndices);
-        __DEV__ && console.log('[AudioService] ✅ 已移除所有交互音音轨');
-      }
-      
-      // 清空 activeSmallScenes
+      // 【关键】先清空集合，再通知监听器
+      console.log('[AudioService] 📋 清空 activeSmallScenes 集合');
       this.activeSmallScenes.clear();
+      console.log('[AudioService] 📡 通知监听器清空状态');
       this.notifySmallScenes();
       
       __DEV__ && console.log('[AudioService] ✅ 所有交互音已停止');
@@ -908,17 +811,9 @@ class AudioService {
         await this.playAmbient(scene.id);
       } else {
         // 停止单个交互音
-        const trackId = `small_${scene.id}`;
-        const queue = await TrackPlayer.getQueue();
-        const trackIndex = queue.findIndex(t => t.id === trackId);
-        
-        if (trackIndex >= 0) {
-          // 【关键修复】remove 需要数字索引，不是字符串 ID
-          await TrackPlayer.remove([trackIndex]);
-          __DEV__ && console.log('[AudioService] ✅ 交互音已停止:', scene.id);
-        } else {
-          console.warn('[AudioService] ⚠️ 交互音音轨不存在:', trackId);
-        }
+        const soundId = `small_${scene.id}`;
+        this.sfxPlayer.stop(soundId);
+        __DEV__ && console.log('[AudioService] ✅ 交互音已停止:', scene.id);
         
         this.activeSmallScenes.delete(scene.id);
         this.notifySmallScenes();

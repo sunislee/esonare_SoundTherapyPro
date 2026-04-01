@@ -52,6 +52,9 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
+    
+    /* Codegen for pnpm */
+    codegenDir = file("../../node_modules/.pnpm/@react-native+codegen@0.81.5_@babel+core@7.29.0/node_modules/@react-native/codegen")
 }
 
 /**
@@ -111,6 +114,11 @@ android {
         jniLibs {
             useLegacyPackaging = false
         }
+    }
+    
+    // 【Android 16 16KB 页面适配】extractNativeLibs 必须设为 true
+    packagingOptions {
+        // extractNativeLibs.set(true) - 该属性只读，通过 AndroidManifest.xml 设置
     }
 }
 

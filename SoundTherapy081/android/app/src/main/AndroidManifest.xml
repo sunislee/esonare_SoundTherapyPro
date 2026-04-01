@@ -23,7 +23,7 @@
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="true"
       android:supportsRtl="true"
-      android:extractNativeLibs="false">
+      android:extractNativeLibs="true">
       
       <activity
         android:name=".MainActivity"

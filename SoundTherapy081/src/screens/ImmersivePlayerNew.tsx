@@ -48,7 +48,6 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const [activeSmallSceneIds, setActiveSmallSceneIds] = useState<string[]>([]);
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
   const pendingSceneIdRef = useRef<string | null>(null);
@@ -56,6 +55,7 @@ const ImmersivePlayerNew: React.FC = () => {
   const {
     currentBaseSceneId,
     toggleAmbience,
+    activeSmallSceneIds,
   } = useAudio();
 
   const triggerHaptic = () => {
@@ -307,7 +307,6 @@ const ImmersivePlayerNew: React.FC = () => {
           <InteractiveButtons
             globalAmbientScenes={globalAmbientScenes}
             activeSmallSceneIds={activeSmallSceneIds}
-            setActiveSmallSceneIds={setActiveSmallSceneIds}
           />
 
           {/* 底部控制：场景切换按钮提升 zIndex */}

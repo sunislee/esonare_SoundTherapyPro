@@ -32,6 +32,7 @@ interface AudioContextType {
   setAmbient: (id: string | null) => Promise<void>;
   getAmbientVolumeById: (id: string) => number;
   toggleAmbience: (scene: Scene, targetState: boolean) => Promise<void>;
+  playScene: (scene: Scene) => Promise<void>;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -269,6 +270,17 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await audioService.togglePlayback(scene);
   }, [isServiceReady]);
 
+  const playScene = useCallback(async (scene: Scene) => {
+    if (!isServiceReady) {
+      console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 playScene');
+      return;
+    }
+    // 【关键】在切换场景前，强制重置交互音状态
+    console.log('[AudioContext] 🛑 playScene 切换场景，强制重置 activeSmallSceneIds');
+    setActiveSmallSceneIds([]);
+    await audioService.playScene(scene);
+  }, [isServiceReady]);
+
   const syncNativeStatus = useCallback(async () => {
     if (!isServiceReady) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 syncNativeStatus');
@@ -310,6 +322,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         play,
         pause,
         togglePlayback,
+        playScene,
         syncNativeStatus,
         setSleepTimer,
         clearSleepTimer,

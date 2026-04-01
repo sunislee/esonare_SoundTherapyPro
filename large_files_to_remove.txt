@@ -1,0 +1,5 @@
+android/android/app/src/main/res/raw/*.mp3
+android/android/app/src/main/res/raw/*.wav
+SoundTherapyApp/ios/Pods/hermes-engine-artifacts/*.tar.gz
+.cocoapods/cache/**/*.wav
+audio_engine/raw_assets/**/*.wav
