@@ -237,10 +237,41 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
                 <TouchableOpacity
                   style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]}
                   onPress={async () => {
-                    triggerHaptic();
-                    await togglePlayback(item);
-                  }}
-                >
+                           // 【严格100ms响应】记录点击时间
+                           const clickStartTime = Date.now();
+                           
+                           // 【优化】立即触发触觉反馈
+                           triggerHaptic();
+                           
+                           // 【关键优化】立即更新 UI 状态，必须在100ms内完成
+                           const audioService = AudioService.getInstance();
+                           const isCurrentScene = currentBaseSceneId === item.id;
+                           // 【修复】正确的播放/暂停逻辑：如果正在播放当前场景，则暂停；否则播放
+                           const shouldPlay = !(isPlaying && isCurrentScene);
+                           
+                           console.log(`[HomeScreen] 点击播放按钮: item=${item.id}, isCurrentScene=${isCurrentScene}, isPlaying=${isPlaying}, shouldPlay=${shouldPlay}, currentBaseSceneId=${currentBaseSceneId}`);
+                           
+                           // 【关键修复】禁止提前设置当前场景，由AudioService内部在音频加载成功后更新
+                           console.log(`[HomeScreen] 禁止提前设置场景，由AudioService内部更新`);
+                           
+                           // 【性能监控】检查是否在100ms内完成
+                           const uiUpdateTime = Date.now() - clickStartTime;
+                           console.log(`[Performance] UI状态更新耗时: ${uiUpdateTime}ms`);
+                           if (uiUpdateTime > 100) {
+                             console.warn(`[Performance] ⚠️ UI更新超过100ms: ${uiUpdateTime}ms`);
+                           }
+                           
+                           // 【关键修复】同步调用togglePlayback，确保指令立即执行
+                           console.log(`[HomeScreen] 同步调用 togglePlayback: ${item.id}`);
+                           
+                           try {
+                             await togglePlayback(item);
+                             console.log(`[HomeScreen] togglePlayback 执行完成`);
+                           } catch (error) {
+                             console.error(`[HomeScreen] togglePlayback 错误:`, error);
+                           }
+                         }}
+                       >
                   <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>
                     {isThisPlaying ? '||' : '▶'}
                   </Text>

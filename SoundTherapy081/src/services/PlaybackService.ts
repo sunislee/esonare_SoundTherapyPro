@@ -1,4 +1,5 @@
 import TrackPlayer, { Event } from 'react-native-track-player';
+import AudioService from './AudioService';
 
 /**
  * 【RN 0.81 适配版】PlaybackService
@@ -7,19 +8,34 @@ import TrackPlayer, { Event } from 'react-native-track-player';
 export const PlaybackService = async function() {
   
   // 1. 处理远程控制事件（通知栏/蓝牙耳机操作）
-  TrackPlayer.addEventListener(Event.RemotePlay, () => {
-    console.log('[PlaybackService] Remote Play');
-    TrackPlayer.play();
+  TrackPlayer.addEventListener(Event.RemotePlay, async () => {
+    console.log('[PlaybackService] Remote Play - 强制同步状态');
+    const audioService = AudioService.getInstance();
+    
+    // 【关键修复】先更新 AudioService 状态，再调用 TrackPlayer
+    audioService.setIsActuallyPlaying(true);
+    await TrackPlayer.play();
+    audioService.notifyListeners(); // 强制通知 UI 更新
   });
 
-  TrackPlayer.addEventListener(Event.RemotePause, () => {
-    console.log('[PlaybackService] Remote Pause');
-    TrackPlayer.pause();
+  TrackPlayer.addEventListener(Event.RemotePause, async () => {
+    console.log('[PlaybackService] Remote Pause - 强制同步状态');
+    const audioService = AudioService.getInstance();
+    
+    // 【关键修复】先更新 AudioService 状态，再调用 TrackPlayer
+    audioService.setIsActuallyPlaying(false);
+    await TrackPlayer.pause();
+    audioService.notifyListeners(); // 强制通知 UI 更新
   });
 
-  TrackPlayer.addEventListener(Event.RemoteStop, () => {
-    console.log('[PlaybackService] Remote Stop');
-    TrackPlayer.stop();
+  TrackPlayer.addEventListener(Event.RemoteStop, async () => {
+    console.log('[PlaybackService] Remote Stop - 强制同步状态');
+    const audioService = AudioService.getInstance();
+    
+    // 【关键修复】先更新 AudioService 状态，再调用 TrackPlayer
+    audioService.setIsActuallyPlaying(false);
+    await TrackPlayer.stop();
+    audioService.notifyListeners(); // 强制通知 UI 更新
   });
 
   // 2. 核心：处理播放器底层错误
@@ -38,9 +54,27 @@ export const PlaybackService = async function() {
     }
   });
 
-  // 4. 监听播放状态（用于调试）
-  TrackPlayer.addEventListener(Event.PlaybackState, (state) => {
-    console.log('[PlaybackService] 播放状态实时流:', state);
+  // 4. 【关键修复】监听播放状态变化，确保 UI 与状态栏同步
+  TrackPlayer.addEventListener(Event.PlaybackState, async (event) => {
+    try {
+      const state = (event as any).state ?? event;
+      console.log('[PlaybackService] 播放状态变化:', state);
+      
+      const audioService = AudioService.getInstance();
+      
+      // 强制同步状态到 AudioService
+      if (state === State.Playing) {
+        audioService.setIsActuallyPlaying(true);
+      } else if (state === State.Paused || state === State.Stopped) {
+        audioService.setIsActuallyPlaying(false);
+      }
+      
+      // 强制通知 UI 更新
+      audioService.notifyListeners();
+      console.log('[PlaybackService] ✅ 状态已同步到 UI');
+    } catch (error) {
+      console.error('[PlaybackService] 状态同步错误:', error);
+    }
   });
 };
 

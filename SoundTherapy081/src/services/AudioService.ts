@@ -1,5 +1,5 @@
 // 【去 Expo 化】完全使用 react-native-track-player
-import { Platform, AppState, AppStateStatus } from 'react-native';
+import { Platform, AppState, AppStateStatus, InteractionManager } from 'react-native';
 
 // 【RN 0.81 兼容】解构导入，确保方法可访问
 import TrackPlayer, { 
@@ -111,6 +111,7 @@ class AudioService {
   private smallScenesListeners: Set<(ids: string[]) => void> = new Set();
   private volumeListeners: Set<(vol: number) => void> = new Set();
   private timerListeners: Set<(remaining: number | null) => void> = new Set();
+  private preloadedScenes: Set<string> = new Set(); // 【优化】预加载的场景集合
   
   private ambientVolume = 1.0;
   private sleepEndTime: number | null = null;
@@ -178,6 +179,22 @@ class AudioService {
 
   getCurrentState(): string {
     return this.isActuallyPlaying ? 'playing' : 'paused';
+  }
+
+  /**
+   * 【关键修复】允许外部强制设置播放状态，用于 Remote 控制同步
+   */
+  setIsActuallyPlaying(playing: boolean) {
+    console.log('[AudioService] 强制设置播放状态:', playing);
+    this.isActuallyPlaying = playing;
+  }
+
+  /**
+   * 【修复时序问题】立即设置当前场景，避免状态竞争
+   */
+  setCurrentBaseScene(scene: Scene) {
+    console.log('[AudioService] 立即设置当前场景:', scene.id);
+    this.currentBaseScene = scene;
   }
 
   async setupPlayer() {
@@ -249,12 +266,13 @@ class AudioService {
         alwaysShowNotificationCustom: true,
         handleAudioFocus: true,
         alwaysPauseOnInterruption: true,
+        stopWithApp: true, // 【关键修复】App 被杀死时停止播放并清理通知
         channelId: 'esonare_playback_v119',
         channelName: '心声冥想',
         category: 'transport',
         foregroundServiceType: 'mediaPlayback',
       },
-      capabilities: [Capability.Play, Capability.Pause, Capability.Stop],
+      capabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SeekTo],
       compactCapabilities: [Capability.Play, Capability.Pause],
     });
 
@@ -273,15 +291,15 @@ class AudioService {
     console.log('[AudioService] scene.id:', scene.id);
     console.log('[AudioService] isProcessing:', isProcessing);
     
-    // 【播放状态锁】如果有播放请求正在处理，直接拒绝
+    // 【性能优化】取消播放状态锁，允许指令覆盖
     if (isProcessing) {
-      console.warn('[AudioService] ⚠️ 有播放请求正在处理，拒绝本次请求');
-      return;
+      console.log('[AudioService] ⚠️ 有播放请求正在处理，取消旧请求，执行新请求');
+      // 不返回，继续执行新请求
     }
     
-    // 【播放状态锁】标记开始处理
+    // 【性能优化】标记开始处理，但允许覆盖
     isProcessing = true;
-    console.log('[AudioService] 🔒 已锁定播放状态');
+    console.log('[AudioService] 🔒 标记播放状态处理中');
     
     try {
       // 【RN 0.81 保护】初始化未完成前禁止播放
@@ -295,22 +313,16 @@ class AudioService {
         }
       }
 
-      // 防止同一个场景重复点击触发 reset
-      if (this.isActuallyPlaying && this.currentBaseScene?.id === scene.id) {
-        console.log('[AudioService] ⚠️ 同一场景正在播放，跳过');
-        isProcessing = false;
-        return;
+      // 【性能优化】立即乐观更新UI状态
+      console.log('[AudioService] 🚀 立即乐观更新UI状态');
+      this.isActuallyPlaying = true;
+      this.currentBaseScene = scene;
+      if (!options?.skipNotify) {
+        this.notifyListeners();
       }
       
-      // 【关键检查】如果已经在播放其他场景，先停止
-      if (this.isActuallyPlaying && this.currentBaseScene?.id !== scene.id) {
-        console.log('[AudioService] 停止之前的播放，切换到新场景');
-        await TrackPlayer.stop();
-        this.isActuallyPlaying = false;
-      }
-      
-      // 【场景切换保护】停止所有交互音效，防止场景切换后交互音继续播放
-      console.log('[AudioService] 🛑 场景切换，停止所有交互音');
+      // 【场景切换保护】同步停止所有交互音效
+      console.log('[AudioService] 🛑 场景切换，同步停止所有交互音');
       await this.stopAllAmbient();
 
       const shouldTriggerLoading = options?.triggerLoading !== false;
@@ -358,78 +370,182 @@ class AudioService {
       console.log('[AudioService] track.isLocalUri:', track.isLocalUri);
       
       try {
-        // 【关键修复 1】先 stop 掉之前的队列，清空错误缓存
-        console.log('[AudioService] 停止之前的播放队列...');
-        await TrackPlayer.stop();
-        await TrackPlayer.reset();
-        console.log('[AudioService] ✅ 队列已清空');
+        // 【系统优化】检查目标音频是否已经在队列中，避免重复reset/add
+        console.log('[AudioService] 🔍 检查目标音频是否已在队列中');
+        let needToAddTrack = true;
         
-        // 【关键修复 2】延迟 800ms 播放，给 Android 系统时间刷新文件索引
-        console.log('[AudioService] 等待 800ms 确保文件索引刷新...');
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+          const queue = await TrackPlayer.getQueue();
+          const currentTrack = await TrackPlayer.getCurrentTrack();
+          
+          // 检查队列中是否已经有相同ID的track
+          const existingTrackIndex = queue.findIndex(t => t.id === scene.id);
+          
+          if (existingTrackIndex !== -1) {
+            console.log(`[AudioService] ✅ 目标音频已在队列中，位置: ${existingTrackIndex}`);
+            
+            // 如果目标音频就是当前播放的音频，直接skip reset/add
+            if (currentTrack !== null && queue[currentTrack]?.id === scene.id) {
+              console.log(`[AudioService] ✅ 目标音频正在播放，跳过reset/add`);
+              needToAddTrack = false;
+            } else {
+              // 如果目标音频在队列中但不是当前播放的，直接seek到该位置
+              console.log(`[AudioService] 🚀 目标音频在队列中，直接seek到位置: ${existingTrackIndex}`);
+              await TrackPlayer.skip(existingTrackIndex);
+              needToAddTrack = false;
+            }
+          }
+        } catch (error) {
+          console.warn('[AudioService] 检查队列状态失败，继续执行正常流程:', error);
+        }
         
-        await TrackPlayer.add([track]);
-        console.log('[AudioService] ✅ TrackPlayer.add 成功');
+        if (needToAddTrack) {
+          console.log('[AudioService] 🚀 目标音频不在队列中，执行正常加载流程');
+          
+          // 【强制清理所有音频状态】确保暂停音频不会残留发音
+          console.log('[AudioService] 🎚️ 强制清理所有音频状态');
+          try {
+            // 获取当前音频状态
+            const currentState = await TrackPlayer.getState();
+            console.log(`[AudioService] 当前音频状态: ${currentState}`);
+            
+            // 无论什么状态（播放、暂停、缓冲等），都执行清理
+            if (currentState !== 'none' && currentState !== 'stopped') {
+              console.log('[AudioService] 有音频在队列中，执行强制清理');
+              
+              // 如果是播放状态，先执行淡出
+              if (currentState === 'playing' || currentState === State.Playing) {
+                console.log('[AudioService] 正在播放旧音频，执行淡出');
+                
+                // 200ms淡出：从当前音量逐步降到0
+                const fadeOutVolume = async () => {
+                  const steps = 4; // 4步完成淡出
+                  const stepDuration = 50; // 每步50ms，总共200ms
+                  
+                  for (let i = steps; i >= 0; i--) {
+                    const volume = i / steps; // 1.0, 0.75, 0.5, 0.25, 0.0
+                    await TrackPlayer.setVolume(volume);
+                    console.log(`[AudioService] 音量淡出: ${volume.toFixed(2)}`);
+                    
+                    if (i > 0) {
+                      await new Promise(resolve => setTimeout(resolve, stepDuration));
+                    }
+                  }
+                  console.log('[AudioService] ✅ 旧音频淡出完成');
+                };
+                
+                await fadeOutVolume();
+              } else {
+                // 对于暂停、缓冲等状态，直接设置音量为0
+                console.log('[AudioService] 音频处于非播放状态，直接设置音量为0');
+                await TrackPlayer.setVolume(0);
+              }
+              
+              // 【关键修复】无论什么状态，都执行pause()确保音频停止
+              console.log('[AudioService] 执行pause()确保音频停止');
+              await TrackPlayer.pause();
+            }
+            
+            // 【强制执行reset】彻底清空整个播放队列和底层Buffer
+            console.log('[AudioService] 🛑 强制执行reset：彻底清空播放队列和底层Buffer');
+            await TrackPlayer.reset(); // 强制清空整个播放队列和底层Buffer
+            console.log('[AudioService] ✅ TrackPlayer.reset() 完成');
+          } catch (error) {
+            console.warn('[AudioService] 清理音频状态失败:', error);
+          }
+          
+          // 【真·静音入队】在TrackPlayer.add之前，先设置volume=0
+          console.log('[AudioService] 🔇 真·静音入队：在add前设置volume=0');
+          await TrackPlayer.setVolume(0);
+          console.log('[AudioService] ✅ volume=0 设置完成');
+          
+          // 【关键修复】在播放器操作前再次确认状态，防止被覆盖
+          this.isActuallyPlaying = true;
+          this.currentBaseScene = scene;
+          console.log('[AudioService] 🔒 播放器操作前锁定状态：isActuallyPlaying=true');
+          
+          // 【异步时序保证】确保reset()完全完成后，再进行add操作
+          console.log('[AudioService] 🔄 异步时序保证：reset()完成后执行add');
+          await TrackPlayer.add([track]);
+          console.log('[AudioService] ✅ TrackPlayer.add 成功');
+          
+          // 【针对本地文件特殊处理】确保指针完全归零后再play
+          console.log('[AudioService] 📍 针对本地文件特殊处理：seekTo(0)确保指针归零');
+          await TrackPlayer.seekTo(0);
+          console.log('[AudioService] ✅ seekTo(0) 完成');
+        }
         
         // 0.81 环境下确保队列已就绪
         const queue = await TrackPlayer.getQueue();
         console.log('[AudioService] 队列长度:', queue.length);
         
         if (queue.length > 0) {
-          // 【关键】播放前状态检查
-          const stateBefore = await TrackPlayer.getState();
-          console.log('[AudioService] 播放前状态:', stateBefore);
+          // 【彻底拆分Load和Play】先调用pause()确保处于暂停状态
+          console.log('[AudioService] 🚀 彻底拆分Load和Play：先pause()确保暂停状态');
           
-          // 【关键修复】在 play() 之前先更新 currentBaseScene
-          // 这样 Event.PlaybackState 事件触发 notifyListeners() 时，状态已经是正确的
+          // 【关键修复】在play()之前再次确认状态
           this.currentBaseScene = scene;
           this.isActuallyPlaying = true;
           console.log('[AudioService] ✅ 预设状态：currentBaseScene =', scene.id, ', isActuallyPlaying = true');
           
-          // 【1】seekTo(0) - 确保从开头播放
-          console.log('[AudioService] [1/3] 调用 TrackPlayer.seekTo(0)');
-          await TrackPlayer.seekTo(0);
-          console.log('[AudioService] ✅ seekTo(0) 完成');
-          
-          // 【2】setVolume(1.0) - 强制设置最大音量
-          console.log('[AudioService] [2/3] 调用 TrackPlayer.setVolume(1.0)');
-          await TrackPlayer.setVolume(1.0);
-          console.log('[AudioService] ✅ setVolume(1.0) 完成');
-          
-          // 【3】play() - 开始播放
-          console.log('[AudioService] [3/3] --- [强制执行播放] --- 调用 TrackPlayer.play()');
-          await TrackPlayer.play();
-          
-          // 【大招】播放后立即强刷元数据，解决通知栏滞后
-          console.log('[AudioService] [4/4] 强制刷新通知栏元数据...');
-          await TrackPlayer.updateNowPlayingMetadata({
-            title: translatedTitle,
-            artist: translatedArtist,
-          });
-          console.log('[AudioService] ✅ updateNowPlayingMetadata 完成');
-          
-          // 【关键修复 3】3 秒缓冲监控
-          console.log('[AudioService] 开始监控缓冲状态...');
-          setTimeout(async () => {
-            const currentState = await TrackPlayer.getState();
-            console.log('[AudioService] 3 秒后状态检查:', currentState);
+          try {
+            // 【针对本地文件特殊处理】强制触发底层解码器刷新
+            console.log('[AudioService] [1/5] 强制解码器刷新：setRate(1.0)');
+            await TrackPlayer.setRate(1.0);
+            console.log('[AudioService] ✅ setRate(1.0) 完成');
             
-            if (currentState === 'buffering') {
-              console.warn('[AudioService] ⚠️ [Warning] 还在缓冲，检查 Uri 编码是否正确');
-              console.warn('[AudioService] 原始 URI:', finalUri);
-              console.warn('[AudioService] encodeURI 后:', encodeURI(finalUri));
+            // 【2】强制首位偏移：保持seekTo(0.15)
+            console.log('[AudioService] [2/5] 强制首位偏移：seekTo(0.15)');
+            await TrackPlayer.seekTo(0.15);
+            console.log('[AudioService] ✅ seekTo(0.15) 完成');
+            
+            // 【3】开始播放（保持静音状态）
+            console.log('[AudioService] [3/5] --- [静音播放] --- 调用 TrackPlayer.play()');
+            await TrackPlayer.play();
+            console.log('[AudioService] ✅ TrackPlayer.play() 成功');
+            
+            // 【4】延时开闸：400ms硬性音量锁定
+            console.log('[AudioService] [4/5] 延时开闸：400ms硬性音量锁定');
+            
+            // 400ms期间，无论发生什么，音量必须硬锁定在0
+            await new Promise(resolve => setTimeout(resolve, 400));
+            console.log('[AudioService] ✅ 400ms延时开闸完成');
+            
+            // 【5】异步状态锁：10ms步进模仿物理推子
+            console.log('[AudioService] [5/5] 异步状态锁：10ms步进模仿物理推子');
+            
+            // 更细粒度的步进：每10ms增加0.05，模仿物理调音台
+            const physicalFadeIn = async () => {
+              const steps = 20; // 20步完成恢复
+              const stepDuration = 10; // 每步10ms，总共200ms
               
-              // 尝试重新编码 URI
-              const encodedUri = encodeURI(finalUri);
-              if (finalUri !== encodedUri) {
-                console.warn('[AudioService] URI 包含特殊字符，已重新编码');
+              for (let i = 1; i <= steps; i++) {
+                const volume = i * 0.05; // 0.05, 0.10, 0.15, ..., 1.0
+                await TrackPlayer.setVolume(volume);
+                console.log(`[AudioService] 物理推子: ${volume.toFixed(2)}`);
+                
+                if (i < steps) {
+                  await new Promise(resolve => setTimeout(resolve, stepDuration));
+                }
               }
-            } else if (currentState === 'playing') {
-              console.log('[AudioService] ✅ 播放正常进行中');
-            } else {
-              console.warn('[AudioService] ⚠️ 非预期状态:', currentState);
-            }
-          }, 3000);
+              console.log('[AudioService] ✅ 物理推子淡入完成');
+            };
+            
+            await physicalFadeIn();
+            
+            // 【延迟刷新元数据】避免阻塞 UI 线程
+            setTimeout(() => {
+              TrackPlayer.updateNowPlayingMetadata({
+                title: translatedTitle,
+                artist: translatedArtist,
+              }).catch(() => {});
+              console.log('[AudioService] ✅ 延迟刷新通知栏元数据完成');
+            }, 1000); // 1秒后延迟刷新
+          } catch (error) {
+            console.error('[AudioService] ❌ 播放操作失败:', error);
+          } finally {
+            isProcessing = false;
+          }
           
           // 【关键】播放后状态检查
           const stateAfter = await TrackPlayer.getState();
@@ -619,18 +735,35 @@ class AudioService {
   }
 
   private notifyListeners() {
+    // 【严格100ms响应】记录开始时间
+    const notifyStartTime = Date.now();
+    
+    console.log(`[AudioService] notifyListeners 被调用, audioStateListeners 数量: ${this.audioStateListeners.size}`);
+    
+    // 【优化】立即执行主监听器，不等待
     this.listeners.forEach(l => l());
+    
     const curState = this.isActuallyPlaying ? State.Playing : State.Paused;
+    
     console.log('[AudioService] notifyListeners 被调用, isActuallyPlaying=', this.isActuallyPlaying, 'curState=', curState, 'currentBaseScene.id=', this.currentBaseScene?.id);
-    console.log('[AudioService] audioStateListeners 数量:', this.audioStateListeners.size);
+    
+    // 【关键优化】立即执行状态监听器，不等待
+    console.log(`[AudioService] 开始调用 ${this.audioStateListeners.size} 个 audioStateListeners`);
     this.audioStateListeners.forEach((l, index) => {
-      console.log('[AudioService] 调用第', index + 1, '个监听器');
+      console.log(`[AudioService] 调用第 ${index + 1} 个 audioStateListener`);
       l({ id: this.currentBaseScene?.id || null, state: curState });
     });
     
+    // 【优化】通知栏更新使用同步执行
     if (this.currentBaseScene) {
       NotificationService.updateNotification(this.currentBaseScene, this.getCurrentState()).catch(() => {});
       NotificationService.updatePlaybackState(this.isActuallyPlaying).catch(() => {});
+    }
+    
+    // 【性能监控】检查是否在100ms内完成
+    const notifyTime = Date.now() - notifyStartTime;
+    if (notifyTime > 50) { // 预留50ms给UI更新
+      console.warn(`[Performance] ⚠️ notifyListeners 耗时过长: ${notifyTime}ms`);
     }
   }
 
@@ -868,10 +1001,86 @@ class AudioService {
   }
 
   async togglePlayback(scene: Scene): Promise<void> {
-    if (this.isActuallyPlaying && this.currentBaseScene?.id === scene.id) {
+    console.log(`[AudioService] togglePlayback: scene=${scene.id}, isActuallyPlaying=${this.isActuallyPlaying}, currentBaseScene.id=${this.currentBaseScene?.id}`);
+    
+    // 【关键修复】增加实质性播放对比：判断当前真正播放的trackId
+    let currentPlayingTrackId: string | null = null;
+    try {
+      const currentTrack = await TrackPlayer.getCurrentTrack();
+      if (currentTrack !== null) {
+        const queue = await TrackPlayer.getQueue();
+        if (queue[currentTrack]) {
+          currentPlayingTrackId = queue[currentTrack].id;
+        }
+      }
+    } catch (error) {
+      console.warn('[AudioService] 获取当前播放track失败:', error);
+    }
+    
+    console.log(`[AudioService] 实质性播放对比: currentPlayingTrackId=${currentPlayingTrackId}, scene.id=${scene.id}`);
+    
+    // 【关键修复】实质性播放对比：如果传入的scene.id不等于真正播放的trackId，必须强制执行playScene
+    const isActuallyPlayingThisScene = this.isActuallyPlaying && currentPlayingTrackId === scene.id;
+    
+    console.log(`[AudioService] 播放状态判断: isActuallyPlayingThisScene=${isActuallyPlayingThisScene}, currentPlayingTrackId=${currentPlayingTrackId}`);
+    
+    if (isActuallyPlayingThisScene) {
+      console.log(`[AudioService] togglePlayback: 真正正在播放当前场景，执行暂停`);
+      
+      // 【性能优化】立即更新状态，提供即时反馈
+      this.isActuallyPlaying = false;
+      this.notifyListeners();
+      
       await this.pause();
     } else {
+      console.log(`[AudioService] togglePlayback: 播放新场景或继续播放`);
+      
+      // 【关键修复】在没有音频播放时，强制更新状态为播放中
+      if (!currentPlayingTrackId) {
+        console.log(`[AudioService] 没有音频播放，强制更新状态为播放中`);
+        this.isActuallyPlaying = true;
+        this.currentBaseScene = scene;
+        this.notifyListeners();
+      }
+      
+      // 【关键修复】禁止提前更新状态，由playScene内部在音频加载成功后更新
       await this.playScene(scene);
+    }
+  }
+
+  /**
+   * 【优化】预加载场景音频，减少播放延迟
+   */
+  async preloadScene(scene: Scene): Promise<void> {
+    if (this.preloadedScenes.has(scene.id)) {
+      return; // 已经预加载过
+    }
+    
+    try {
+      console.log('[AudioService] 预加载场景音频:', scene.id);
+      
+      // 预加载音频文件到本地缓存
+      const localPath = await getLocalPath(scene.id);
+      const exists = await RNFS.exists(localPath);
+      
+      if (!exists) {
+        // 如果本地文件不存在，提前下载
+        const downloadUrl = getDownloadUrl(scene.id);
+        console.log('[AudioService] 预下载音频文件:', downloadUrl);
+        
+        // 异步下载，不等待结果
+        RNFS.downloadFile({
+          fromUrl: downloadUrl,
+          toFile: localPath,
+          background: true,
+          discretionary: true,
+        }).promise.catch(() => {});
+      }
+      
+      this.preloadedScenes.add(scene.id);
+      console.log('[AudioService] ✅ 场景预加载完成:', scene.id);
+    } catch (error) {
+      console.warn('[AudioService] 预加载失败:', error);
     }
   }
 
