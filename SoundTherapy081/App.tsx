@@ -137,7 +137,7 @@ function App() {
       <SafeAreaProvider>
         <NavigationContainer>
           <AudioProvider>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
             <MainNavigator />
           </AudioProvider>
         </NavigationContainer>
