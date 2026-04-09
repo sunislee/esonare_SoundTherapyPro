@@ -36,6 +36,13 @@ const MiniPlayer = () => {
     return currentRoute.name === 'ImmersivePlayer' || currentRoute.name === 'BreathDetail';
   });
 
+  // 【新增】检查是否在首页（有降噪按钮的页面）
+  const isHomeScreen = useNavigationState((state) => {
+    if (!state) return false;
+    const currentRoute = state.routes[state.index];
+    return currentRoute.name === 'MainTabs';
+  });
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const widthAnim = useRef(new Animated.Value(1)).current; // 1 = expanded, 0 = collapsed
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -69,14 +76,17 @@ const MiniPlayer = () => {
   }, []);
 
   useEffect(() => {
-    const shouldShow = !!currentScene && !isPlayerScreen;
+    // 【优化】只在首页隐藏 MiniPlayer（避免遮挡降噪按钮），其他页面正常显示
+    const shouldShow = !!currentScene && !isPlayerScreen && !isHomeScreen;
 
     Animated.timing(fadeAnim, {
       toValue: shouldShow ? 1 : 0,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, [currentScene, isPlayerScreen, fadeAnim]);
+    
+    console.log(`[MiniPlayer] currentScene=${!!currentScene}, isPlayerScreen=${isPlayerScreen}, isHomeScreen=${isHomeScreen}, shouldShow=${shouldShow}`);
+  }, [currentScene, isPlayerScreen, isHomeScreen, fadeAnim]);
 
   const handlePlayPause = (e: any) => {
     e.stopPropagation();
@@ -133,7 +143,7 @@ const MiniPlayer = () => {
     setIsInteracting(false);
   };
 
-  if (!currentScene || isPlayerScreen) return null;
+  if (!currentScene || isPlayerScreen || isHomeScreen) return null;
 
   // Calculate dynamic styles
   const containerWidth = widthAnim.interpolate({

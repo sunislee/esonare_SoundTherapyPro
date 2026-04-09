@@ -47,7 +47,38 @@
     "loading": "読み込み中...",
     "back": "戻る",
     "delete": "削除",
+    "settings": "設定",
     "comma": "、",
+    "noiseCancellation": {
+      "title": "ノイズキャンセレーション",
+      "status": "NC ステータス",
+      "statusDesc": "環境ノイズを智能的に識別し、没入型の聴覚体験を提供します",
+      "toggle": "NC をオンにする",
+      "modes": "NC モード",
+      "smart": "スマートシーン認識",
+      "smartDesc": "周囲のノイズタイプを自動検出し、最適なノイズキャンセレーションモードに智能的に切り替えます",
+      "smartEnable": "スマート認識を有効にする",
+      "stopAll": "すべての NC を停止",
+      "settings": "設定"
+    },
+    "noise": {
+      "wind": {
+        "title": "風切り音 NC",
+        "subtitle": "屋外の風切り音低減"
+      },
+      "traffic": {
+        "title": "交通 NC",
+        "subtitle": "車両のクラクション音低減"
+      },
+      "crowd": {
+        "title": "人声 NC",
+        "subtitle": "雑談声フィルタリング"
+      },
+      "balanced": {
+        "title": "バランス NC",
+        "subtitle": "総合環境ノイズ低減"
+      }
+    },
     "period": "。",
     "enter_scheme_name": "スキーム名を入力してください",
     "friend": "友達",

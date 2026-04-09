@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useBackHandler } from '../hooks/useBackHandler';
+import rnPackage from 'react-native/package.json';
 
 const AboutScreen = () => {
   const navigation = useNavigation();
@@ -82,7 +83,7 @@ const AboutScreen = () => {
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>{t('about.kernelVersion')}</Text>
-            <Text style={styles.infoValue}>React Native 0.73</Text>
+            <Text style={styles.infoValue}>React Native {rnPackage.version}</Text>
           </View>
           <View style={styles.divider} />
           <TouchableOpacity style={styles.infoItem} onPress={handleOpenPrivacyPolicy}>

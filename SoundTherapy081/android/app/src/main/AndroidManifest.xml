@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     
     <uses-permission android:name="android.permission.VIBRATE" />
+    
+    <!-- 麦克风权限：用于智能场景识别（环境噪音分析） -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
       android:name=".MainApplication"

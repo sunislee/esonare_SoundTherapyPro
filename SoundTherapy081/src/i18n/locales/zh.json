@@ -47,7 +47,38 @@
     "loading": "加载中...",
     "back": "返回",
     "delete": "删除",
+    "settings": "设置",
     "comma": "，",
+    "noiseCancellation": {
+      "title": "降噪模块",
+      "status": "降噪状态",
+      "statusDesc": "智能识别环境噪音，为您提供沉浸式的听觉体验",
+      "toggle": "开启降噪",
+      "modes": "降噪模式",
+      "smart": "智能场景识别",
+      "smartDesc": "自动检测周围环境噪音类型，智能切换最佳降噪模式",
+      "smartEnable": "启用智能识别",
+      "stopAll": "停止所有降噪",
+      "settings": "设置"
+    },
+    "noise": {
+      "wind": {
+        "title": "风声降噪",
+        "subtitle": "户外防风噪"
+      },
+      "traffic": {
+        "title": "交通降噪",
+        "subtitle": "车辆鸣笛声"
+      },
+      "crowd": {
+        "title": "人声降噪",
+        "subtitle": "嘈杂人声过滤"
+      },
+      "balanced": {
+        "title": "均衡降噪",
+        "subtitle": "综合环境降噪"
+      }
+    },
     "period": "。",
     "enter_scheme_name": "输入方案名称",
     "friend": "好友",

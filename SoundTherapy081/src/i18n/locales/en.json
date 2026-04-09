@@ -47,7 +47,38 @@
     "loading": "Loading...",
     "back": "Back",
     "delete": "Delete",
+    "settings": "Settings",
     "comma": ", ",
+    "noiseCancellation": {
+      "title": "Noise Cancellation",
+      "status": "NC Status",
+      "statusDesc": "Intelligently identify environmental noise and provide you with an immersive listening experience",
+      "toggle": "Enable NC",
+      "modes": "NC Modes",
+      "smart": "Smart Scene Recognition",
+      "smartDesc": "Automatically detect surrounding noise types and intelligently switch to the best noise cancellation mode",
+      "smartEnable": "Enable Smart Recognition",
+      "stopAll": "Stop All NC",
+      "settings": "Settings"
+    },
+    "noise": {
+      "wind": {
+        "title": "Wind NC",
+        "subtitle": "Outdoor wind noise reduction"
+      },
+      "traffic": {
+        "title": "Traffic NC",
+        "subtitle": "Vehicle horn noise reduction"
+      },
+      "crowd": {
+        "title": "Crowd NC",
+        "subtitle": "Noisy voice filtering"
+      },
+      "balanced": {
+        "title": "Balanced NC",
+        "subtitle": "Comprehensive environmental noise reduction"
+      }
+    },
     "period": ". ",
     "enter_scheme_name": "Enter scheme name",
     "friend": "Friend",
