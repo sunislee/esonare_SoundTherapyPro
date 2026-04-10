@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, NavigationProp } from '@react-navigation/native';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 
@@ -81,6 +81,9 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
 export function MainNavigator() {
   return (
     <>
+      {/* 全局状态栏配置：深色背景，白色文字和图标 */}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
+      
       <Stack.Navigator
         initialRouteName="CheckAndNavigate"
         screenOptions={{
