@@ -33,7 +33,9 @@ const MiniPlayer = () => {
   const isPlayerScreen = useNavigationState((state) => {
     if (!state) return false;
     const currentRoute = state.routes[state.index];
-    return currentRoute.name === 'ImmersivePlayer' || currentRoute.name === 'BreathDetail';
+    return currentRoute.name === 'ImmersivePlayer' || 
+           currentRoute.name === 'BreathDetail' ||
+           currentRoute.name === 'NoiseCancellationRoom';
   });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;

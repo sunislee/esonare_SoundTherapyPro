@@ -18,6 +18,8 @@ import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import PolicyWebView from '../screens/PolicyWebView';
+import NoiseCancellationExperiment from '../screens/NoiseCancellationExperiment';
+import NoiseCancellationRoom from '../screens/NoiseCancellationRoom';
 import { DownloadService } from '../services/DownloadService';
 import { OfflineService } from '../services/OfflineService';
 import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
@@ -36,6 +38,8 @@ export type RootStackParamList = {
   About: undefined;
   PolicyWebView: { url: string; title: string };
   Mixer: { presetId?: string } | undefined;
+  NoiseCancellationExperiment: undefined;
+  NoiseCancellationRoom: undefined;
 };
 
 type NavigationType = NavigationProp<RootStackParamList>;
@@ -153,6 +157,22 @@ export function MainNavigator() {
           component={PolicyWebView} 
           options={{
             headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="NoiseCancellationExperiment" 
+          component={NoiseCancellationExperiment} 
+          options={{
+            headerShown: false,
+            animation: 'slide_from_bottom',
+          }}
+        />
+        <Stack.Screen 
+          name="NoiseCancellationRoom" 
+          component={NoiseCancellationRoom} 
+          options={{
+            headerShown: false,
+            animation: 'slide_from_bottom',
           }}
         />
         {/* 

@@ -417,6 +417,15 @@ export const HomeScreen: React.FC = () => {
     init().catch(() => {});
   }, []);
 
+  // 导航到降噪冥想室
+  const navigateToNoiseCancellationRoom = useCallback(() => {
+    ReactNativeHapticFeedback.trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    navigation.navigate('NoiseCancellationRoom');
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <View style={styles.gradientBackground}>
@@ -474,6 +483,16 @@ export const HomeScreen: React.FC = () => {
           ))}
         </ScrollView>
       </View>
+
+      {/* 悬浮按钮：降噪冥想室 */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={navigateToNoiseCancellationRoom}
+        activeOpacity={0.8}
+      >
+        <Icon name="volume-high" size={24} color="#FFF" />
+        <Text style={styles.fabLabel}>降噪室</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -661,5 +680,29 @@ const styles = StyleSheet.create({
     marginLeft: 0,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // 悬浮按钮样式
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 100,
+    backgroundColor: 'rgba(108, 92, 211, 0.9)',
+    borderRadius: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 9999,
+  },
+  fabLabel: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
