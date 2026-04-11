@@ -11,6 +11,7 @@ import {
   Modal,
   BackHandler,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -153,6 +154,10 @@ const ImmersivePlayerNew: React.FC = () => {
           console.error('[ImmersivePlayer] Failed to refresh notification:', error);
         });
       }
+      
+      return () => {
+        // 清理逻辑
+      };
     }, [isPlaying, targetScene])
   );
 

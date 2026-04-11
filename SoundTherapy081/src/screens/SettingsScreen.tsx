@@ -250,6 +250,13 @@ const SettingsScreen: React.FC = () => {
               type: 'static',
             },
             {
+              key: 'noiseCancellation',
+              icon: '🎙️',
+              title: 'AI 降噪实验室',
+              subtitle: '实时环境噪音频谱分析',
+              type: 'action',
+            },
+            {
               key: 'developer',
               icon: '👨‍💻',
               title: t('settings.developer'),
@@ -316,6 +323,8 @@ const SettingsScreen: React.FC = () => {
         setLanguageModalVisible(true);
       } else if (item.key === 'devMenu') {
         setAdvancedDebugVisible(true);
+      } else if (item.key === 'noiseCancellation') {
+        navigation.navigate('NoiseCancellationExperiment');
       }
     } else if (item.type === 'switch') {
         if (item.key === 'fadeOutOnTimer') {

@@ -2,6 +2,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     
+    <!-- 麦克风权限（音频分析必需） -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
