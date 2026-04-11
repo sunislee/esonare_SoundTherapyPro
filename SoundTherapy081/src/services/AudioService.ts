@@ -6,9 +6,10 @@ import TrackPlayer, {
   State, 
   Capability, 
   Event, 
+  PlaybackState,
   RepeatMode,
-  PlaybackState
 } from 'react-native-track-player';
+import { NativeModules } from 'react-native';
 
 import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
 import RNFS from 'react-native-fs';
@@ -279,6 +280,26 @@ class AudioService {
     await TrackPlayer.setRepeatMode(RepeatMode.Track);
     await TrackPlayer.setVolume(this.ambientVolume);
     await NotificationService.setup();
+    
+    // 初始化 8 段均衡器
+    try {
+      const audioSessionId = await TrackPlayer.getAudioSessionId?.() || 0;
+      console.log('[AudioService] 获取 AudioSessionId:', audioSessionId);
+      
+      if (audioSessionId > 0) {
+        const { AudioLevelModule } = NativeModules;
+        if (AudioLevelModule) {
+          AudioLevelModule.initEqualizer(audioSessionId);
+          console.log('[AudioService] ✅ 8 段均衡器初始化成功');
+        } else {
+          console.warn('[AudioService] ⚠️ AudioLevelModule 不可用，跳过均衡器初始化');
+        }
+      } else {
+        console.warn('[AudioService] ⚠️ 无法获取 AudioSessionId，跳过均衡器初始化');
+      }
+    } catch (error) {
+      console.warn('[AudioService] ⚠️ 均衡器初始化失败:', error);
+    }
     
     this._isReady = true;
     console.log('[AudioService] ✅ 初始化完成，isReady = true');

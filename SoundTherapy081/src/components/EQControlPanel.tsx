@@ -6,13 +6,14 @@ import {
   Dimensions,
   PanResponder,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useAudio } from '../context/AudioContext';
 import { EQ_FREQUENCIES, EQ_GAIN_MIN, EQ_GAIN_MAX, EQ_GAIN_STEP } from '../constants/EQFrequencies';
 
 const { width } = Dimensions.get('window');
 const SLIDER_WIDTH = (width - 40) / 8; 
-const TRACK_HEIGHT = 160; 
+const TRACK_HEIGHT = 140; // 【优化】从 160 降至 140，节省垂直空间
 const THUMB_SIZE = 26;
 const MAX_POS = TRACK_HEIGHT - THUMB_SIZE;
 
@@ -125,6 +126,19 @@ const EQSlider: React.FC<EQSliderProps> = ({ index, label, description, gain, on
 
 const EQControlPanel: React.FC = () => {
   const { eqGains, updateEqGain } = useAudio();
+  
+  // 【冷启动优化】检查 eqGains 是否已加载完成
+  const isLoading = !eqGains || eqGains.length === 0 || eqGains.every(g => g === undefined || g === null);
+  
+  // 【Loading 状态降级】如果数据未就绪，显示加载指示器
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { minHeight: 240, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#6C5DD3" />
+        <Text style={styles.loadingText}>均衡器加载中...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -136,7 +150,7 @@ const EQControlPanel: React.FC = () => {
             index={index}
             label={freq.label}
             description={freq.description}
-            gain={eqGains[index] || 1.0}
+            gain={eqGains[index] || 0}
             onUpdateGain={updateEqGain}
           />
         ))}
@@ -154,7 +168,14 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 20,
     margin: 16,
-    elevation: 4,
+    // 【冷启动优化】设置硬编码最小高度，防止测量完成前高度为 0 导致黑屏
+    minHeight: 240,
+    // 【性能优化】简化阴影，减少低端机型渲染压力
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   title: {
     fontSize: 16,
@@ -167,6 +188,7 @@ const styles = StyleSheet.create({
   slidersContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    // 【硬编码高度】不再依赖 flex 或内容撑开
     height: 240,
   },
   sliderWrapper: {
@@ -206,7 +228,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#6C5DD3',
     borderWidth: 2,
     borderColor: '#FFF',
-    elevation: 3,
+    // 【性能优化】降低 elevation 减少渲染压力
+    elevation: 1,
   },
   infoContainer: {
     marginTop: 10,
@@ -232,7 +255,12 @@ const styles = StyleSheet.create({
     color: '#48484A',
     fontSize: 10,
     textAlign: 'center',
-  }
+  },
+  loadingText: {
+    color: '#8E8E93',
+    fontSize: 12,
+    marginTop: 10,
+  },
 });
 
 export default EQControlPanel;

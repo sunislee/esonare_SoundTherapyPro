@@ -187,7 +187,7 @@ export const HomeScreen: React.FC = () => {
 
         // 如果是点击（移动距离极小）
         if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
-          navigation.navigate('NoiseCancellation');
+          navigation.navigate('NoiseRoom');
           return;
         }
 
@@ -252,7 +252,7 @@ export const HomeScreen: React.FC = () => {
             style={styles.noiseCancelHexagon} 
             activeOpacity={0.8}
             onPress={() => {
-              navigation.navigate('NoiseCancellation');
+              navigation.navigate('NoiseRoom');
             }}
           >
             <Icon name="volume-mute-outline" size={32} color="#fff" />

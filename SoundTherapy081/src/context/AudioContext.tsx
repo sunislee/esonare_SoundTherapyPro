@@ -9,6 +9,7 @@ import { Scene } from '../constants/scenes';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
+import { NativeEQ } from '../modules/NativeEQ';
 
 interface AudioContextType {
   activeSoundId: string | null;
@@ -227,6 +228,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       newGains[index] = gain;
       return newGains;
     });
+    
+    // 调用原生均衡器 API
+    // gain 范围：-1.0 ~ 1.0，对应 -12dB ~ +12dB
+    NativeEQ.updateNativeEQ(index, gain);
   }, []);
 
   const setAmbient = useCallback(async (id: string | null) => {

@@ -18,7 +18,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import PolicyWebView from '../screens/PolicyWebView';
-import NoiseCancellationScreen from '../screens/NoiseCancellationScreen';
+import NoiseCancellationRoom from '../screens/NoiseCancellationRoom';
 import { DownloadService } from '../services/DownloadService';
 import { OfflineService } from '../services/OfflineService';
 import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
@@ -37,7 +37,7 @@ export type RootStackParamList = {
   About: undefined;
   PolicyWebView: { url: string; title: string };
   Mixer: { presetId?: string } | undefined;
-  NoiseCancellation: undefined;
+  NoiseRoom: undefined;
 };
 
 type NavigationType = NavigationProp<RootStackParamList>;
@@ -53,12 +53,13 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
       try {
         console.log('[CheckAndNavigate] 开始启动检查...');
         
-        // 【强制重构】只做一件事：进入 DownloadScreen，让它自己判断
-        console.log('[CheckAndNavigate] 进入 DownloadScreen');
-        navigation.replace('Download');
+        // 总是先进入 LandingScreen 显示 loading 动画
+        // LandingScreen 会负责检查用户信息和资源状态，并进行相应跳转
+        console.log('[CheckAndNavigate] 进入 LandingScreen 显示 loading 动画');
+        navigation.replace('Landing');
       } catch (e) {
         console.error('[CheckAndNavigate] 检查失败:', e);
-        navigation.replace('Download');
+        navigation.replace('Landing');
       } finally {
         setIsChecking(false);
       }
@@ -155,8 +156,8 @@ export function MainNavigator() {
           }}
         />
         <Stack.Screen 
-          name="NoiseCancellation" 
-          component={NoiseCancellationScreen} 
+          name="NoiseRoom" 
+          component={NoiseCancellationRoom} 
           options={{
             animation: 'slide_from_bottom',
             gestureEnabled: true,
