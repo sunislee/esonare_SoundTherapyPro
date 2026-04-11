@@ -49,11 +49,19 @@ const EQSlider: React.FC<EQSliderProps> = ({ index, label, description, gain, on
     thumbAnim.setValue(getPosFromGain(gain));
   }, []);
 
-  // 2. 核心手势逻辑：解决“闪现”和“不跟手”问题
+  // 2. 核心手势逻辑：解决"闪现"和"不跟手"问题，处理与 ScrollView 的手势冲突
   const panResponder = useRef(
     PanResponder.create({
+      // 【关键优化】只在垂直方向有明显移动时才捕获手势，避免与 ScrollView 冲突
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // 只有垂直移动距离大于水平移动时才捕获（防止误触）
+        const isVerticalMove = Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+        const isSignificantMove = Math.abs(gestureState.dy) > 5; // 5px 阈值
+        return isVerticalMove && isSignificantMove;
+      },
+      // 【关键】允许 PanResponder 阻止 ScrollView 的滚动
+      onPanResponderTerminationRequest: () => true,
       onPanResponderGrant: () => {
         // 开始拖拽时，锁定当前位置作为偏移量，防止瞬移
         thumbAnim.stopAnimation((value) => {
@@ -201,10 +209,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   trackContainer: {
-    width: 30,
+    width: 60, // 【优化】增加手势捕获区域宽度（从 30 到 60），提升触摸体验
     height: TRACK_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
+    // 【关键】确保手势区域在滑道两侧都有足够空间
+    paddingHorizontal: 15, // 左右各扩展 15px
   },
   trackBackground: {
     width: 2,
