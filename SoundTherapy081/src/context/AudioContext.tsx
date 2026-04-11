@@ -22,6 +22,7 @@ interface AudioContextType {
   initialRemaining: number | null;
   isTimerActive: boolean;
   ambientVolume: number;
+  eqGains: number[]; // 8 段均衡器增益值
   play: (scene?: Scene) => Promise<void>;
   pause: () => Promise<void>;
   togglePlayback: (scene: Scene) => Promise<void>;
@@ -29,6 +30,7 @@ interface AudioContextType {
   setSleepTimer: (minutes: number) => Promise<void>;
   clearSleepTimer: () => void;
   updateAmbientVolume: (volume: number) => void;
+  updateEqGain: (index: number, gain: number) => void; // 更新指定频段增益
   setAmbient: (id: string | null) => Promise<void>;
   getAmbientVolumeById: (id: string) => number;
   toggleAmbience: (scene: Scene, targetState: boolean) => Promise<void>;
@@ -92,6 +94,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [initialRemaining, setInitialRemaining] = useState<number | null>(null);
   const [ambientVolume, setAmbientVolume] = useState<number>(1.0);
+  const [eqGains, setEqGains] = useState<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 8 段均衡器，初始值均为 1.0
 
   // 检查 AudioService 是否已准备好
   useEffect(() => {
@@ -214,6 +217,18 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     audioService.updateAmbientVolume(volume);
   }, [isServiceReady]);
 
+  const updateEqGain = useCallback((index: number, gain: number) => {
+    if (index < 0 || index >= 8) {
+      console.warn('[AudioContext] ⚠️ EQ 频段索引超出范围:', index);
+      return;
+    }
+    setEqGains(prev => {
+      const newGains = [...prev];
+      newGains[index] = gain;
+      return newGains;
+    });
+  }, []);
+
   const setAmbient = useCallback(async (id: string | null) => {
     if (!isServiceReady) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 setAmbient');
@@ -319,6 +334,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         initialRemaining,
         isTimerActive,
         ambientVolume,
+        eqGains,
         play,
         pause,
         togglePlayback,
@@ -327,6 +343,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSleepTimer,
         clearSleepTimer,
         updateAmbientVolume,
+        updateEqGain,
         setAmbient,
         getAmbientVolumeById,
         toggleAmbience,

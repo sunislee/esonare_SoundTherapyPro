@@ -8,6 +8,7 @@ import {
   Image,
   BackHandler,
   Animated,
+  ScrollView,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +19,7 @@ import { RootStackParamList } from '../navigation/MainNavigator';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AudioAnalyzer, FrequencyDistribution } from '../services/AudioAnalyzer';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import EQControlPanel from '../components/EQControlPanel';
 
 const { width, height } = Dimensions.get('window');
 
@@ -299,6 +301,9 @@ const NoiseCancellationRoom: React.FC = () => {
           💡 提示：调节滑块播放对应频段的白噪音，对冲环境噪音
         </Text>
       </View>
+
+      {/* 8 段均衡器控制面板 */}
+      <EQControlPanel />
     </View>
   );
 };
