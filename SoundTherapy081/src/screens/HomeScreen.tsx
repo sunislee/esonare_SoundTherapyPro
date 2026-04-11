@@ -11,7 +11,9 @@ import {
   Easing,
   Image,
   Alert,
-  findNodeHandle
+  findNodeHandle,
+  PanResponder,
+  GestureResponderEvent,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -426,6 +428,139 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('NoiseCancellationRoom');
   }, [navigation]);
 
+  // ========== 悬浮按钮拖拽逻辑 ==========
+  const SCREEN_WIDTH = Dimensions.get('window').width;
+  const SCREEN_HEIGHT = Dimensions.get('window').height;
+  const FAB_WIDTH = 140; // 估算按钮宽度
+  const FAB_HEIGHT = 50; // 估算按钮高度
+  
+  // 使用 Ref 存储位置，避免状态更新导致的重渲染
+  const fabPosition = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const isDraggingRef = useRef(false);
+  const hasMovedRef = useRef(false);
+  const panResponderRef = useRef(PanResponder.create({}));
+  
+  // 使用 listener 记录最终位置，避免使用 setValue 导致的闪退
+  const lastPosition = useRef({ x: 0, y: 0 });
+  
+  // 初始化 PanResponder
+  useEffect(() => {
+    // 添加监听器记录位置
+    const listener = fabPosition.addListener((value) => {
+      lastPosition.current = { x: value.x, y: value.y };
+    });
+    
+    panResponderRef.current = PanResponder.create({
+      // 不拦截点击事件
+      onStartShouldSetPanResponder: () => false,
+      
+      // 移动距离超过阈值才拦截为拖拽
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        const moveThreshold = 5; // 5px 阈值
+        return Math.abs(gestureState.dx) > moveThreshold || 
+               Math.abs(gestureState.dy) > moveThreshold;
+      },
+      
+      onPanResponderGrant: () => {
+        isDraggingRef.current = true;
+        hasMovedRef.current = false;
+        // 设置偏移量
+        fabPosition.setOffset({
+          x: fabPosition.x._value,
+          y: fabPosition.y._value,
+        });
+        fabPosition.setValue({ x: 0, y: 0 });
+      },
+      
+      onPanResponderMove: (_, gestureState) => {
+        hasMovedRef.current = true;
+        // 实时更新位置
+        fabPosition.setValue({
+          x: gestureState.dx,
+          y: gestureState.dy,
+        });
+      },
+      
+      onPanResponderRelease: (_, gestureState) => {
+        isDraggingRef.current = false;
+        
+        // 合并偏移量
+        fabPosition.flattenOffset();
+        
+        // 如果移动距离很小，认为是点击，不执行吸附
+        if (!hasMovedRef.current || (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5)) {
+          return;
+        }
+        
+        // 计算最终位置（使用 flattenOffset 后的实际值）
+        const currentX = fabPosition.x._value;
+        const currentY = fabPosition.y._value;
+        
+        // ========== 优化 Y 轴边界：避开底部 MiniPlayer ==========
+        // 底部留出 180px 给 MiniPlayer
+        const minY = -(SCREEN_HEIGHT - FAB_HEIGHT - 150); // 顶部留出空间
+        const maxY = -(180 - FAB_HEIGHT); // 底部留出 180px 给 MiniPlayer（负值，因为在初始位置下方）
+        
+        // ========== 优化 X 轴吸附逻辑 ==========
+        // fabContainer 初始位置：right: 20, bottom: 100
+        // translateX = 0 表示在初始位置（右侧）
+        // translateX 为负值表示向右移动，正值表示向左移动
+        
+        const rightEdge = 0; // 右侧吸附位置（初始位置，translateX = 0）
+        const leftEdge = -(SCREEN_WIDTH - FAB_WIDTH - 40); // 左侧吸附位置（负值）
+        
+        let targetX = currentX;
+        let targetY = currentY;
+        
+        // 判断当前在屏幕的哪一半，决定吸附方向
+        // 注意：currentX 为负表示在右侧，为正表示在左侧
+        if (currentX > -(SCREEN_WIDTH / 2)) {
+          // 在右侧区域，吸附回初始位置（右侧）
+          targetX = rightEdge;
+        } else {
+          // 在左侧区域，吸附到左边
+          targetX = leftEdge;
+        }
+        
+        // ========== 物理坐标锁定：防止飞出屏幕 ==========
+        // 限制 Y 轴范围
+        targetY = Math.max(minY, Math.min(targetY, maxY));
+        
+        // 限制 X 轴范围
+        targetX = Math.max(leftEdge, Math.min(targetX, rightEdge));
+        
+        console.log('[FAB-Drag] 吸附位置:', {
+          currentX,
+          currentY,
+          targetX,
+          targetY,
+          leftEdge,
+          rightEdge,
+          minY,
+          maxY
+        });
+        
+        // 执行平滑吸附动画
+        Animated.spring(fabPosition, {
+          toValue: { x: targetX, y: targetY },
+          useNativeDriver: false,
+          tension: 50,
+          friction: 8,
+        }).start();
+        
+        // 触感反馈
+        ReactNativeHapticFeedback.trigger('selection', {
+          enableVibrateFallback: true,
+        });
+      },
+    });
+    
+    // 清理函数
+    return () => {
+      fabPosition.removeListener(listener);
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.gradientBackground}>
@@ -484,15 +619,29 @@ export const HomeScreen: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* 悬浮按钮：降噪冥想室 */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={navigateToNoiseCancellationRoom}
-        activeOpacity={0.8}
+      {/* 悬浮按钮：降噪冥想室（支持拖拽） */}
+      <Animated.View
+        style={[
+          styles.fabContainer,
+          {
+            transform: [
+              { translateX: fabPosition.x },
+              { translateY: fabPosition.y }
+            ]
+          }
+        ]}
+        {...panResponderRef.current.panHandlers}
       >
-        <Icon name="volume-high" size={24} color="#FFF" />
-        <Text style={styles.fabLabel}>降噪室</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={navigateToNoiseCancellationRoom}
+          activeOpacity={0.8}
+          disabled={isDraggingRef.current}
+        >
+          <Icon name="volume-high" size={24} color="#FFF" />
+          <Text style={styles.fabLabel}>降噪室</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 };
@@ -681,11 +830,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  // 悬浮按钮样式
-  fab: {
+  // 悬浮按钮容器（用于拖拽动画）
+  fabContainer: {
     position: 'absolute',
     right: 20,
     bottom: 100,
+    zIndex: 9999,
+  },
+  // 悬浮按钮样式
+  fab: {
     backgroundColor: 'rgba(108, 92, 211, 0.9)',
     borderRadius: 30,
     paddingVertical: 14,
@@ -697,7 +850,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    zIndex: 9999,
   },
   fabLabel: {
     color: '#FFF',
