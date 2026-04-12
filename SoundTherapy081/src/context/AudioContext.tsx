@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
 import AudioService from '../services/AudioService';
 
@@ -99,12 +99,14 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // 检查 AudioService 是否已准备好
   useEffect(() => {
-    const checkServiceReady = async () => {
+    let retryCount = 0;
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    const checkServiceReady = () => {
       try {
         if (audioService.isReady()) {
           console.log('[AudioContext] ✅ AudioService 已准备好，开始同步状态');
           setIsServiceReady(true);
-          setRetryCount(0); // 重置重试计数
           
           // 同步初始状态
           setActiveSoundId(audioService.getCurrentBaseSceneId());
@@ -122,38 +124,42 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         } else {
           // 增加重试计数
-          const newRetryCount = retryCount + 1;
-          console.log(`[AudioContext] ⚠️ AudioService 未准备好，延迟重试 (${newRetryCount}/${MAX_RETRY_COUNT})`);
+          retryCount++;
+          console.log(`[AudioContext] ⚠️ AudioService 未准备好，延迟重试 (${retryCount}/${MAX_RETRY_COUNT})`);
           
-          if (newRetryCount >= MAX_RETRY_COUNT) {
+          if (retryCount >= MAX_RETRY_COUNT) {
             console.warn('[AudioContext] ⚠️ 达到最大重试次数，使用降级模式继续运行');
-            // 即使未就绪也允许继续运行，使用降级模式
             setIsServiceReady(false);
             return;
           }
           
-          setRetryCount(newRetryCount);
-          setTimeout(checkServiceReady, 500);
+          // 延迟重试
+          timeoutId = setTimeout(checkServiceReady, 500);
         }
       } catch (error) {
         console.error('[AudioContext] ❌ checkServiceReady 失败:', error);
-        console.error('[AudioContext] ❌ 错误堆栈:', error?.stack);
         
         // 出错时也允许继续运行
-        const newRetryCount = retryCount + 1;
-        if (newRetryCount >= MAX_RETRY_COUNT) {
+        retryCount++;
+        if (retryCount >= MAX_RETRY_COUNT) {
           console.warn('[AudioContext] ⚠️ 错误次数过多，使用降级模式继续运行');
           setIsServiceReady(false);
           return;
         }
         
-        setRetryCount(newRetryCount);
-        setTimeout(checkServiceReady, 500);
+        timeoutId = setTimeout(checkServiceReady, 500);
       }
     };
     
     checkServiceReady();
-  }, [retryCount]);
+    
+    // 清理函数
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, []); // 空依赖，只执行一次
 
   const isPlaying = playbackState === State.Playing;
   const isBuffering = playbackState === State.Buffering;
@@ -207,6 +213,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       unsubscribeSmallScenes();
       unsubscribeVolume();
       unsubscribeTimer();
+      
+      // 【清理】清除所有 EQ 防抖计时器
+      Object.values(eqDebounceTimers.current).forEach(timer => {
+        if (timer) clearTimeout(timer);
+      });
+      console.log('[AudioContext] 🧹 已清理 EQ 防抖计时器');
     };
   }, [isServiceReady]);
 
@@ -218,21 +230,33 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     audioService.updateAmbientVolume(volume);
   }, [isServiceReady]);
 
+  // 【防抖优化】EQ 增益更新防抖计时器
+  const eqDebounceTimers = useRef<{ [key: number]: NodeJS.Timeout }>({});
+
   const updateEqGain = useCallback((index: number, gain: number) => {
     if (index < 0 || index >= 8) {
       console.warn('[AudioContext] ⚠️ EQ 频段索引超出范围:', index);
       return;
     }
+    
+    // 【防抖】清除之前的计时器
+    if (eqDebounceTimers.current[index]) {
+      clearTimeout(eqDebounceTimers.current[index]);
+    }
+    
     setEqGains(prev => {
       const newGains = [...prev];
       newGains[index] = gain;
       return newGains;
     });
     
-    // 调用原生均衡器 API
-    // gain 范围：-1.0 ~ 1.0，对应 -12dB ~ +12dB
-    NativeEQ.updateNativeEQ(index, gain);
-  }, []);
+    // 【防抖优化】延迟 50ms 调用原生 API，避免频繁更新导致音频引擎过载
+    eqDebounceTimers.current[index] = setTimeout(() => {
+      // 【虚拟 8 段 EQ】使用多轨混音映射，发送全部 8 段增益值
+      NativeEQ.set8BandEQ(eqGains);
+      console.log(`[AudioContext] ✅ EQ 更新：频段${index}, gain=${gain}, dB=${(gain * 12).toFixed(1)}dB`);
+    }, 50);
+  }, [eqGains]);
 
   const setAmbient = useCallback(async (id: string | null) => {
     if (!isServiceReady) {

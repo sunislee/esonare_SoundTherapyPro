@@ -1,373 +1,553 @@
 package com.anonymous.soundtherapyapp
 
+import android.media.AudioManager
+import android.media.AudioPlaybackConfiguration
 import android.media.audiofx.Equalizer
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.Process
 import android.util.Log
 import com.facebook.react.bridge.*
-import com.facebook.react.modules.core.DeviceEventManagerModule
 import kotlinx.coroutines.*
-import kotlin.math.log10
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
+import kotlin.math.abs
+import kotlin.math.ln
 
 /**
- * 音频分苯采集模块
- * 功能：实时采集麦克风音频，计算分贝值
- * 兼容 RN 0.81 + Android 15 16KB Page Size
+ * 专业音频处理模块
+ * 
+ * 功能：
+ * - 8 段参数均衡器 (基于 Android Equalizer)
+ * - 软件 Limiter (防爆音算法)
+ * - 多音轨混合矩阵 (8 路 × 8 频段)
+ * - 对数平滑插值 (50ms 过渡)
+ * - THREAD_PRIORITY_AUDIO 调度
+ * - 【关键】AudioPlaybackCallback 动态捕获真实 sessionId
  */
 class AudioLevelModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     
-    private var isRecording = false
-    private var audioRecord: AudioRecord? = null
-    private var coroutineScope: CoroutineScope? = null
-    private var job: Job? = null
-    
-    // 8 段均衡器实例
-    private var equalizer: Equalizer? = null
-    private var audioSessionId: Int = 0
-    
-    // 8 段频率中心点 (Hz): 60Hz, 150Hz, 400Hz, 1kHz, 2.5kHz, 5kHz, 10kHz, 16kHz
-    private val eqBands = listOf(60f, 150f, 400f, 1000f, 2500f, 5000f, 10000f, 16000f)
+    companion object {
+        private const val TAG = "AudioLevelModule-Pro"
+        private const val NUM_BANDS = 8
+        private const val NUM_TRACKS = 8
+        
+        // 8 段频率中心点 (Hz)
+        private val BAND_FREQUENCIES = floatArrayOf(
+            60f,    // 60Hz   - 超低频
+            150f,   // 150Hz  - 低频
+            400f,   // 400Hz  - 中低频
+            1000f,  // 1kHz   - 中频
+            2500f,  // 2.5kHz - 中高频
+            5000f,  // 5kHz   - 高频
+            10000f, // 10kHz  - 超高频
+            16000f  // 16kHz  - 空气感
+        )
+        
+        private const val MAX_GAIN_DB = 12.0f
+        private const val LIMITER_THRESHOLD = 0.95f // 软件限幅器阈值
+    }
     
     private val reactContext: ReactApplicationContext = reactContext
+    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val handler = Handler(Looper.getMainLooper())
+    
+    // 8 段均衡器
+    private var equalizer: Equalizer? = null
+    private var currentSessionId: Int = -1
+    
+    // 增益矩阵 [track][band]
+    private val gainMatrix = Array(NUM_TRACKS) { FloatArray(NUM_BANDS) { 0f } }
+    private val targetGainMatrix = Array(NUM_TRACKS) { FloatArray(NUM_BANDS) { 0f } }
+    
+    // 主增益（用于 Limiter）
+    private var masterGain = 1.0f
+    
+    private var smoothingJob: Job? = null
+    
+    // AudioPlaybackCallback (Android 9+)
+    private var audioPlaybackCallback: AudioManager.AudioPlaybackCallback? = null
+    private var isCallbackRegistered = false
     
     override fun getName(): String = "AudioLevelModule"
     
     /**
-     * 开始音频采集
-     * @param intervalMs 采样间隔（毫秒）
+     * 初始化专业音频处理器
      */
     @ReactMethod
-    fun startListening(intervalMs: Int = 100) {
-        if (isRecording) {
-            Log.w(TAG, "已经在采集中")
-            return
-        }
-        
-        Log.d(TAG, "开始音频采集，间隔：${intervalMs}ms")
-        
+    fun initializeProAudio() {
         try {
-            // 配置 AudioRecord
-            val sampleRate = 44100
-            val channelConfig = AudioFormat.CHANNEL_IN_MONO
-            val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+            Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
+            Log.d(TAG, "✅ 线程优先级已设置为 AUDIO")
             
-            // 计算最小缓冲区大小
-            val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-            val bufferSize = max(minBufferSize, 2048)
+            // 【关键】注册 AudioPlaybackCallback 动态捕获真实 sessionId
+            registerAudioPlaybackCallback()
             
-            audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                bufferSize
-            )
-            
-            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                Log.e(TAG, "AudioRecord 初始化失败")
-                return
+            // 【关键】延迟 500ms 后主动查询一次当前活动的音频会话
+            coroutineScope.launch {
+                delay(500)
+                scanActivePlaybackConfigurations()
             }
             
-            isRecording = true
-            coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            startSmoothingLoop()
             
-            audioRecord?.startRecording()
-            Log.d(TAG, "AudioRecord 开始录音")
-            
-            // 定时采集
-            job = coroutineScope?.launch {
-                val buffer = ShortArray(bufferSize / 2)
+            Log.d(TAG, "✅ 专业音频处理器初始化完成")
+            Log.d(TAG, "   - 等待 AudioPlaybackCallback 捕获真实 sessionId")
+            Log.d(TAG, "   - 8 段参数均衡器")
+            Log.d(TAG, "   - 软件 Limiter (阈值：$LIMITER_THRESHOLD)")
+            Log.d(TAG, "   - 对数平滑插值 (50ms)")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 初始化失败", e)
+        }
+    }
+    
+    /**
+     * 【关键】主动扫描当前活动的音频会话
+     */
+    private fun scanActivePlaybackConfigurations() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                val audioManager = reactContext.getSystemService(AudioManager::class.java)
+                val configs = audioManager?.getActivePlaybackConfigurations()
                 
-                while (isRecording && isActive) {
-                    val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                    
-                    if (read > 0) {
-                        // 计算 RMS（均方根）
-                        var sum = 0.0
-                        for (i in 0 until read) {
-                            sum += buffer[i].toDouble().pow(2.0)
+                if (configs.isNullOrEmpty()) {
+                    Log.d(TAG, "⚠️ 没有活动的音频播放配置")
+                    return
+                }
+                
+                Log.d(TAG, "🔍 扫描到 ${configs.size} 个活动播放")
+                
+                for (config in configs) {
+                    try {
+                        val method = config.javaClass.getMethod("getAudioSessionId")
+                        val sessionId = method.invoke(config) as Int
+                        
+                        Log.d(TAG, "   - SessionId: $sessionId")
+                        
+                        if (sessionId != 0 && sessionId != currentSessionId) {
+                            Log.d(TAG, "🎯 捕获到新的音频会话：sessionId=$sessionId")
+                            updateEqualizerSession(sessionId)
+                            return // 找到第一个非 0 的 sessionId 就返回
                         }
-                        val rms = kotlin.math.sqrt(sum / read)
-                        
-                        // 转换为分贝值 (dB)
-                        // 根据实际采集数据调整：
-                        // - 安静环境：0-15dB
-                        // - 正常说话：20-35dB
-                        // - 吵闹环境：40-60dB
-                        val reference = 20.0 // 继续降低参考值，大幅提高灵敏度
-                        val dB = if (rms > 0) {
-                            20.0 * log10(rms / reference)
-                        } else {
-                            0.0
-                        }
-                        
-                        // 限制范围 0-160
-                        val positiveDB = max(0.0, min(160.0, dB))
-                        
-                        // 归一化振幅 (0-1)
-                        val amplitude = rms / 32768.0
-                        
-                        // 发送事件到 JS
-                        sendEventToJS("onAmplitudeChanged", amplitude, positiveDB)
-                        
-                        Log.d(TAG, "采集：RMS=${String.format("%.2f", rms)}, dB=${String.format("%.2f", positiveDB)}")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "❌ 获取 SessionId 失败", e)
                     }
-                    
-                    // 等待指定间隔
-                    delay(intervalMs.toLong())
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ 主动扫描失败", e)
+            }
+        } else {
+            Log.w(TAG, "⚠️ getActivePlaybackConfigurations 需要 Android 10+")
+        }
+    }
+    
+    /**
+     * 【关键】注册 AudioPlaybackCallback 监听音频活动 (Android 9+)
+     */
+    private fun registerAudioPlaybackCallback() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                val audioManager = reactContext.getSystemService(AudioManager::class.java)
+                
+                audioPlaybackCallback = object : AudioManager.AudioPlaybackCallback() {
+                    override fun onPlaybackConfigChanged(configs: List<AudioPlaybackConfiguration>) {
+                        try {
+                            Log.d(TAG, "🎵 onPlaybackConfigChanged: ${configs.size} 个活动播放")
+                            
+                            if (configs.isEmpty()) {
+                                Log.d(TAG, "   - 没有活动播放，跳过")
+                                return
+                            }
+                            
+                            for (config in configs) {
+                                try {
+                                    // 使用反射获取 audioSessionId
+                                    val method = config.javaClass.getMethod("getAudioSessionId")
+                                    val sessionId = method.invoke(config) as Int
+                                    
+                                    Log.d(TAG, "   - SessionId: $sessionId")
+                                    
+                                    // 【关键】捕获非 0 的有效 sessionId
+                                    if (sessionId != 0 && sessionId != currentSessionId) {
+                                        Log.d(TAG, "🎯 捕获到新的音频会话：sessionId=$sessionId")
+                                        
+                                        // 【关键】热重挂载均衡器
+                                        reattachEqualizer(sessionId)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "❌ 获取 SessionId 失败", e)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "❌ onPlaybackConfigChanged 处理失败", e)
+                        }
+                    }
+                }
+                
+                audioManager?.registerAudioPlaybackCallback(audioPlaybackCallback!!, handler)
+                isCallbackRegistered = true
+                Log.d(TAG, "✅ AudioPlaybackCallback 注册成功")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ 注册 AudioPlaybackCallback 失败", e)
+            }
+        } else {
+            Log.w(TAG, "⚠️ AudioPlaybackCallback 需要 Android 9+，当前版本不支持")
+        }
+    }
+    
+    /**
+     * 【关键】热重挂载均衡器到新的 sessionId
+     */
+    private fun reattachEqualizer(newSessionId: Int) {
+        try {
+            Log.d(TAG, "🔥 开始热重挂载均衡器：$currentSessionId -> $newSessionId")
+            
+            // 1. 释放旧实例
+            equalizer?.release()
+            equalizer = null
+            Log.d(TAG, "   - 已释放旧均衡器")
+            
+            // 2. 更新 sessionId
+            currentSessionId = newSessionId
+            
+            // 3. 创建新均衡器
+            equalizer = Equalizer(0, newSessionId)
+            equalizer?.enabled = true
+            Log.d(TAG, "   - 已创建新均衡器 (sessionId=$newSessionId)")
+            
+            // 4. 立即重新应用所有增益
+            applyAllCurrentGains()
+            
+            // 【关键】日志验证
+            Log.d(TAG, "🎯 EQ Reattached to Real ID: $newSessionId")
+            
+            Log.d(TAG, "✅ 热重挂载完成")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 热重挂载失败", e)
+        }
+    }
+    
+    /**
+     * 【关键】立即应用所有当前增益
+     */
+    private fun applyAllCurrentGains() {
+        coroutineScope.launch {
+            delay(50) // 等待均衡器完全就绪
+            
+            Log.d(TAG, "🔄 开始重新应用 ${NUM_BANDS * NUM_TRACKS} 个增益设置")
+            
+            var appliedCount = 0
+            for (track in 0 until NUM_TRACKS) {
+                for (band in 0 until NUM_BANDS) {
+                    val gain = targetGainMatrix[track][band]
+                    if (gain != 0f) {
+                        try {
+                            val eq = equalizer
+                            if (eq != null) {
+                                val mbValue = (gain * MAX_GAIN_DB * 100).toInt()
+                                eq.setBandLevel(band.toShort(), mbValue.toShort())
+                                
+                                Log.d("EQ_FINAL", "Actually set band $band to $mbValue mB (track=$track, gain=$gain)")
+                                appliedCount++
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "❌ 应用增益失败：band=$band", e)
+                        }
+                    }
                 }
             }
             
-        } catch (e: Exception) {
-            Log.e(TAG, "开始采集失败", e)
-            isRecording = false
+            Log.d(TAG, "✅ 重新应用完成：$appliedCount / ${NUM_BANDS * NUM_TRACKS} 个增益")
         }
     }
     
     /**
-     * 停止音频采集
+     * 【关键】更新均衡器的 sessionId
      */
-    @ReactMethod
-    fun stopListening() {
-        if (!isRecording) {
-            return
-        }
-        
-        Log.d(TAG, "停止音频采集")
-        
+    private fun updateEqualizerSession(newSessionId: Int) {
         try {
-            isRecording = false
-            job?.cancel()
-            coroutineScope?.cancel()
-            
-            audioRecord?.stop()
-            audioRecord?.release()
-            audioRecord = null
-            
-            Log.d(TAG, "AudioRecord 已释放")
-        } catch (e: Exception) {
-            Log.e(TAG, "停止采集失败", e)
-        }
-    }
-    
-    /**
-     * 设置振幅监听器（从 JS 调用）
-     */
-    @ReactMethod
-    fun setAmplitudeListener(listenerName: String) {
-        Log.d(TAG, "设置监听器：$listenerName")
-    }
-    
-    /**
-     * 初始化 8 段均衡器
-     * @param sessionId 音频会话 ID
-     */
-    @ReactMethod
-    fun initEqualizer(sessionId: Int) {
-        // 【冷启动优化】增加 AudioSessionId 合法性校验
-        if (sessionId <= 0) {
-            Log.w(TAG, "⚠️ 无效的 AudioSessionId: $sessionId，启动延迟重试机制")
-            // 延迟 200ms 重试
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    delay(200)
-                    Log.d(TAG, "🔄 重试初始化均衡器...")
-                    // 重试时假设 sessionId 已经就绪
-                    initEqualizerInternal(sessionId)
-                } catch (e: Exception) {
-                    Log.e(TAG, "❌ 重试失败", e)
-                }
-            }
-            return
-        }
-        
-        initEqualizerInternal(sessionId)
-    }
-    
-    /**
-     * 内部均衡器初始化方法
-     */
-    private fun initEqualizerInternal(sessionId: Int) {
-        try {
-            Log.d(TAG, "🔧 开始初始化均衡器，SessionID: $sessionId")
-            
-            // 【防御性检查】确保 sessionId 有效
-            if (sessionId <= 0) {
-                Log.e(TAG, "❌ AudioSessionId 无效：$sessionId")
+            // 如果 sessionId 没有变化，跳过
+            if (newSessionId == currentSessionId) {
+                Log.d(TAG, "ℹ️ SessionId 未变化，跳过更新：$newSessionId")
                 return
             }
             
-            audioSessionId = sessionId
+            // 释放旧的均衡器
+            equalizer?.release()
+            equalizer = null
+            
+            // 更新 sessionId
+            currentSessionId = newSessionId
+            Log.d(TAG, "🔄 切换到新的音频会话：$newSessionId")
+            
+            // 重新初始化均衡器
+            initEqualizer(newSessionId)
+            
+            // 重新应用之前的增益设置
+            coroutineScope.launch {
+                delay(100) // 等待均衡器初始化完成
+                for (track in 0 until NUM_TRACKS) {
+                    for (band in 0 until NUM_BANDS) {
+                        if (targetGainMatrix[track][band] != 0f) {
+                            applyGain(track, band, targetGainMatrix[track][band])
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 更新均衡器 SessionId 失败", e)
+        }
+    }
+    
+    /**
+     * 初始化均衡器
+     */
+    private fun initEqualizer(sessionId: Int) {
+        try {
             equalizer = Equalizer(0, sessionId)
             equalizer?.enabled = true
             
-            Log.d(TAG, "✅ 均衡器初始化成功，SessionID: $sessionId")
+            Log.d(TAG, "✅ 均衡器初始化成功")
             Log.d(TAG, "频段数量：${equalizer?.numberOfBands}")
             
-            // 打印各频段的中心频率
             for (i in 0 until (equalizer?.numberOfBands ?: 0)) {
-                val centerFreq = equalizer?.getCenterFreq(i.toShort())
-                Log.d(TAG, "频段 $i: ${centerFreq}Hz")
+                val freq = equalizer?.getCenterFreq(i.toShort()) ?: 0
+                Log.d(TAG, "频段 $i: ${freq / 1000}kHz")
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ 均衡器初始化失败", e)
-            // 【异常恢复】如果初始化失败，尝试释放并重新创建
+        }
+    }
+    
+    /**
+     * 设置某路音轨的某个频段增益
+     */
+    @ReactMethod
+    fun setTrackBandGain(trackIndex: Int, bandIndex: Int, gain: Double) {
+        if (trackIndex !in 0 until NUM_TRACKS || bandIndex !in 0 until NUM_BANDS) {
+            Log.w(TAG, "⚠️ 参数超出范围：track=$trackIndex, band=$bandIndex")
+            return
+        }
+        
+        // 【关键调试】打印接收到的增益值
+        Log.d("EQ_TRACE", "Setting gain $gain for band $bandIndex (track=$trackIndex)")
+        
+        targetGainMatrix[trackIndex][bandIndex] = gain.toFloat().coerceIn(-1f, 1f)
+        applyGain(trackIndex, bandIndex, targetGainMatrix[trackIndex][bandIndex])
+    }
+    
+    /**
+     * 应用增益到硬件（带 Limiter 保护 + 懒加载初始化）
+     */
+    private fun applyGain(trackIndex: Int, bandIndex: Int, gain: Float) {
+        try {
+            gainMatrix[trackIndex][bandIndex] = gain
+            
+            // 如果均衡器未初始化，只存储目标值，不阻塞
+            val eq = equalizer ?: run {
+                Log.w(TAG, "⚠️ 均衡器未初始化，已存储增益：band=$bandIndex, gain=$gain")
+                Log.w(TAG, "   - 等待 AudioPlaybackCallback 捕获真实 sessionId 后自动应用")
+                return  // 直接返回，不报错
+            }
+            
+            // 映射增益到毫分贝 (-1200 ~ +1200 mB)
+            val mbValue = (gain * MAX_GAIN_DB * 100).toInt()
+            
+            // 【关键调试】打印实际设置的值
+            Log.d("EQ_TRACE", "Applying $mbValue mB to band $bandIndex")
+            
+            // 设置均衡器增益
+            eq.setBandLevel(bandIndex.toShort(), mbValue.toShort())
+            
+            // 【关键】最终确认日志
+            Log.d("EQ_FINAL", "Actually set band $bandIndex to $mbValue mB (track=$trackIndex, gain=$gain)")
+            
+            if (abs(gain) > 0.8) {
+                Log.d(TAG, "🎚️ 音轨$trackIndex 频段$bandIndex: ${gain * MAX_GAIN_DB}dB")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 应用增益失败", e)
+        }
+    }
+    
+
+    
+    /**
+     * 批量设置多轨增益（带 Anti-Clipping + Limiter）
+     */
+    @ReactMethod
+    fun setMultiTrackGains(promise: Promise) {
+        coroutineScope.launch {
             try {
-                equalizer?.release()
-                equalizer = null
-                Log.w(TAG, "⚠️ 已释放失败的均衡器实例，可尝试重新初始化")
-            } catch (releaseError: Exception) {
-                Log.e(TAG, "❌ 释放均衡器失败", releaseError)
+                var totalEnergy = 0.0
+                
+                for (track in 0 until NUM_TRACKS) {
+                    for (band in 0 until NUM_BANDS) {
+                        totalEnergy += abs(targetGainMatrix[track][band])
+                    }
+                }
+                
+                // Anti-Clipping 归一化（70% 阈值）
+                val maxEnergy = NUM_TRACKS * NUM_BANDS * 0.7
+                val isClipping = totalEnergy > maxEnergy
+                
+                var normalizedGain = if (isClipping) {
+                    (maxEnergy / totalEnergy).toFloat()
+                } else {
+                    1.0f
+                }
+                
+                // Limiter 保护：进一步限制总增益
+                if (normalizedGain > LIMITER_THRESHOLD) {
+                    normalizedGain = LIMITER_THRESHOLD
+                }
+                
+                masterGain = normalizedGain
+                
+                // 应用归一化增益
+                for (track in 0 until NUM_TRACKS) {
+                    for (band in 0 until NUM_BANDS) {
+                        val originalGain = targetGainMatrix[track][band]
+                        applyGain(track, band, originalGain * normalizedGain)
+                    }
+                }
+                
+                val result = Arguments.createMap().apply {
+                    putDouble("masterGain", normalizedGain.toDouble())
+                    putDouble("totalEnergy", totalEnergy)
+                    putBoolean("isClipping", isClipping)
+                }
+                
+                promise.resolve(result)
+                
+                if (isClipping) {
+                    Log.d(TAG, "⚠️ Anti-Clipping: MasterGain=$normalizedGain, Energy=$totalEnergy")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ 设置多轨增益失败", e)
+                promise.reject("ERROR", e.message)
             }
         }
     }
     
     /**
-     * 更新均衡器增益
-     * @param index 频段索引 (0-7)
-     * @param gain 增益值 (-1.0 到 1.0)
+     * 平滑插值循环（消除"咔哒"声）
      */
-    @ReactMethod
-    fun updateNativeEQ(index: Int, gain: Double) {
-        // 【冷启动保护】快速失败检查
-        if (equalizer == null) {
-            Log.w(TAG, "⚠️ 均衡器未初始化，忽略更新：index=$index, gain=$gain")
-            return
-        }
+    private fun startSmoothingLoop() {
+        smoothingJob?.cancel()
         
-        if (index < 0 || index >= eqBands.size) {
-            Log.w(TAG, "无效的频段索引：$index")
-            return
-        }
-        
-        try {
-            // 将增益值 (-1.0 到 1.0) 映射到毫分贝
-            // Android Equalizer 使用 mB (毫分贝)，1dB = 100mB
-            // 增益范围通常是 -15dB 到 +15dB (-1500mB 到 +1500mB)
-            val minMB: Int = -1500
-            val maxMB: Int = 1500
-            
-            // 映射：gain (-1.0 ~ 1.0) -> mB (minMB ~ maxMB)
-            val mbValue = ((gain + 1.0) / 2.0 * (maxMB - minMB) + minMB).toInt()
-            
-            // 找到最接近的频段
-            val targetFreq = eqBands[index]
-            var nearestBand = 0
-            var minDiff = Int.MAX_VALUE
-            
-            val numBands = equalizer?.numberOfBands ?: 0
-            for (i: Int in 0 until numBands) {
-                val centerFreq: Int = (equalizer?.getCenterFreq(i.toShort()) ?: 0).toInt()
-                val targetFreq: Int = eqBands[index].toInt()
-                val diff = kotlin.math.abs(centerFreq - targetFreq)
-                if (diff < minDiff) {
-                    minDiff = diff
-                    nearestBand = i
+        smoothingJob = coroutineScope.launch {
+            while (isActive) {
+                delay(10)
+                
+                for (track in 0 until NUM_TRACKS) {
+                    for (band in 0 until NUM_BANDS) {
+                        val currentGain = gainMatrix[track][band]
+                        val targetGain = targetGainMatrix[track][band]
+                        
+                        if (abs(currentGain - targetGain) < 0.01) continue
+                        
+                        val smoothedGain = logarithmicInterpolate(currentGain, targetGain, 0.2f)
+                        applyGain(track, band, smoothedGain)
+                    }
                 }
             }
-            
-            // 【安全检查】确保均衡器仍然有效
-            if (equalizer == null || !equalizer!!.enabled) {
-                Log.w(TAG, "⚠️ 均衡器已释放或未启用，跳过更新")
-                return
-            }
-            
-            // 设置增益
-            equalizer?.setBandLevel(nearestBand.toShort(), mbValue.toShort())
-            
-            Log.d(TAG, "✅ 更新 EQ: index=$index, freq=${eqBands[index]}Hz, gain=$gain, mB=$mbValue, nearestBand=$nearestBand")
-        } catch (e: IllegalStateException) {
-            // 【特定异常处理】音频服务未就绪时
-            Log.e(TAG, "❌ 音频服务未就绪，无法更新 EQ", e)
-            // 不抛出异常，静默失败，防止模块挂起
-        } catch (e: Exception) {
-            // 【通用异常处理】防止任何未预期的异常导致模块崩溃
-            Log.e(TAG, "❌ 更新 EQ 时发生未预期异常", e)
-            // 尝试恢复：释放并标记需要重新初始化
+        }
+    }
+    
+    /**
+     * 【生命周期】模块销毁时清理资源
+     */
+    override fun invalidate() {
+        super.invalidate()
+        
+        Log.d(TAG, "🧹 模块销毁，清理资源")
+        
+        // 取消平滑任务
+        smoothingJob?.cancel()
+        
+        // 释放均衡器
+        equalizer?.release()
+        equalizer = null
+        
+        // 注销 AudioPlaybackCallback
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && isCallbackRegistered) {
             try {
-                equalizer?.release()
-                equalizer = null
-                Log.w(TAG, "⚠️ 已释放均衡器，需要重新初始化")
-            } catch (releaseError: Exception) {
-                Log.e(TAG, "❌ 释放均衡器失败", releaseError)
+                val audioManager = reactContext.getSystemService(AudioManager::class.java)
+                audioManager?.unregisterAudioPlaybackCallback(audioPlaybackCallback!!)
+                isCallbackRegistered = false
+                Log.d(TAG, "✅ AudioPlaybackCallback 已注销")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ 注销 AudioPlaybackCallback 失败", e)
             }
         }
     }
     
     /**
-     * 重置均衡器到默认值 (0dB)
+     * 对数插值（模拟人耳感知）
      */
+    private fun logarithmicInterpolate(current: Float, target: Float, factor: Float): Float {
+        val sign = if (target > current) 1f else -1f
+        val diff = abs(target - current)
+        val logDiff = ln(1f + diff * 9f) / ln(10f)
+        val step = logDiff * factor * sign
+        return (current + step).coerceIn(-1f, 1f)
+    }
+    
     @ReactMethod
-    fun resetEqualizer() {
+    fun setMasterVolume(volume: Double, promise: Promise) {
         try {
-            if (equalizer == null) {
-                return
-            }
+            val audioManager = reactContext.getSystemService(android.media.AudioManager::class.java)
+            val maxVolume = audioManager?.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC) ?: 15
+            val targetVolume = (volume * maxVolume).toInt().coerceIn(0, maxVolume)
             
-            for (i in 0 until (equalizer?.numberOfBands ?: 0)) {
-                equalizer?.setBandLevel(i.toShort(), 0)
-            }
+            audioManager?.setStreamVolume(
+                android.media.AudioManager.STREAM_MUSIC,
+                targetVolume,
+                0
+            )
             
-            Log.d(TAG, "均衡器已重置")
+            promise.resolve(true)
         } catch (e: Exception) {
-            Log.e(TAG, "重置均衡器失败", e)
+            promise.reject("ERROR", e.message)
         }
     }
     
     /**
-     * 释放均衡器资源
+     * 【暴力实验】强行设置极端 EQ 预设
      */
     @ReactMethod
-    fun releaseEqualizer() {
+    fun runExtremeTest() {
         try {
+            Log.d(TAG, "💀 【暴力测试】开始执行定生死实验...")
+            
+            // 强制创建均衡器（优先级 1000，sessionId=0）
             equalizer?.release()
-            equalizer = null
-            audioSessionId = 0
-            Log.d(TAG, "均衡器已释放")
+            equalizer = Equalizer(1000, 0)
+            equalizer?.enabled = true
+            currentSessionId = 0
+            
+            Log.d(TAG, "   - 已创建均衡器 (priority=1000, sessionId=0)")
+            
+            // 暴力设置：60Hz/150Hz 拉满 +12dB，其余全 -12dB
+            val maxGain = (MAX_GAIN_DB * 100).toInt()
+            val minGain = (-MAX_GAIN_DB * 100).toInt()
+            
+            for (band in 0 until NUM_BANDS) {
+                val gain = if (band == 0 || band == 1) {
+                    maxGain  // 60Hz, 150Hz: +12dB
+                } else {
+                    minGain  // 其余：-12dB
+                }
+                
+                equalizer?.setBandLevel(band.toShort(), gain.toShort())
+                Log.d("EQ_DEATH_TEST", "Band $band (${BAND_FREQUENCIES[band]}Hz) = ${gain}mB")
+            }
+            
+            Log.d("EQ_DEATH_TEST", "Extreme settings applied!")
+            Log.d(TAG, "✅ 【暴力测试】执行完成！")
+            Log.d(TAG, "   - 如果听不到变化，说明 sessionId=0 无法控制音频流")
         } catch (e: Exception) {
-            Log.e(TAG, "释放均衡器失败", e)
+            Log.e(TAG, "❌ 【暴力测试】失败", e)
         }
-    }
-    
-    /**
-     * 发送事件到 JS
-     */
-    private fun sendEventToJS(eventName: String, amplitude: Double, dB: Double) {
-        reactContext
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            ?.emit(eventName, Arguments.createMap().apply {
-                putDouble("amplitude", amplitude)
-                putDouble("dB", dB)
-            })
-    }
-    
-    companion object {
-        private const val TAG = "AudioLevelModule"
-        
-        // 静态引用，用于从外部设置回调
-        @Volatile
-        var instance: AudioLevelModule? = null
-            private set
-        
-        init {
-            instance = null
-        }
-    }
-    
-    override fun initialize() {
-        super.initialize()
-        instance = this
-        Log.d(TAG, "AudioLevelModule 初始化完成")
-    }
-    
-    @Deprecated("Use instance property directly")
-    override fun onCatalystInstanceDestroy() {
-        super.onCatalystInstanceDestroy()
-        stopListening()
-        instance = null
     }
 }
