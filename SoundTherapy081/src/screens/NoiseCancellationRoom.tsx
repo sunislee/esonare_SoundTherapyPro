@@ -26,6 +26,7 @@ import {
   stopNoiseAudio,
   cleanupNoiseAudio,
   getCurrentMode,
+  warmupAudio,
 } from '../services/NoiseAudioService';
 
 const { width, height } = Dimensions.get('window');
@@ -82,6 +83,10 @@ const NoiseCancellationRoom: React.FC = () => {
   // 降噪模式状态
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false); // 加载中状态
+  
+  // 【关键修复】当前播放的场景 ID（强一致状态）
+  const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   
   // 三个频段的音量值（0-100）
   const [volumeValues, setVolumeValues] = useState({ low: 50, mid: 50, high: 50 });
@@ -95,6 +100,10 @@ const NoiseCancellationRoom: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       console.log('[NoiseCancellationRoom] 页面聚焦，启动音频分析器');
+      
+      // 【关键修复】静默预热：强迫 react-native-sound 底层初始化
+      console.log('[NoiseCancellationRoom] 🔥 开始预热音频底层...');
+      warmupAudio();
       
       // 初始化降噪音频服务
       initNoiseAudio();
@@ -172,34 +181,61 @@ const NoiseCancellationRoom: React.FC = () => {
     ReactNativeHapticFeedback.trigger('impactLight', options);
   };
 
-  // 处理模式切换
-  const handleModePress = (modeId: string) => {
+  // 处理模式切换（统一播放状态管理）
+  const handleModePress = async (modeId: string) => {
     console.log('[NoiseCancellationRoom] 点击模式:', modeId);
     
-    // 如果点击的是当前正在播放的模式，则停止播放
-    if (selectedMode === modeId && isPlaying) {
+    // 【关键修复】如果点击的是当前正在播放的模式，则停止播放
+    if (currentSceneId === modeId && isPlaying) {
       console.log('[NoiseCancellationRoom] 停止当前模式');
-      stopNoiseAudio();
+      setIsLoading(true);
+      await stopNoiseAudio();
       setIsPlaying(false);
+      setCurrentSceneId(null);
       setSelectedMode(null);
+      setIsLoading(false);
       return;
     }
     
-    // 否则播放新模式
+    // 【关键修复】否则播放新模式（自动停止旧场景）
+    console.log('[NoiseCancellationRoom] 切换到新模式:', modeId);
+    setIsLoading(true);
+    
+    // 【关键修复】立即更新 UI 状态（其他卡片立即失去播放态）
+    setCurrentSceneId(modeId);
     setSelectedMode(modeId);
+    
+    // 播放新场景（8TrackAudioService 会自动停止旧场景）
+    await playNoiseAudio(modeId);
+    
     setIsPlaying(true);
-    playNoiseAudio(modeId);
+    setIsLoading(false);
     triggerHaptic();
   };
 
-  // 停止所有降噪
-  const handleStopAll = () => {
+  // 停止所有降噪（同步播放按钮状态）
+  const handleStopAll = async () => {
     console.log('[NoiseCancellationRoom] 停止所有降噪');
-    stopNoiseAudio();
+    setIsLoading(true);
+    await stopNoiseAudio();
+    setCurrentSceneId(null);
     setSelectedMode(null);
     setIsPlaying(false);
+    setIsLoading(false);
     triggerHaptic();
   };
+
+  // EQ 控制面板播放状态变化
+  const handleEQPlayStateChange = useCallback((newIsPlaying: boolean) => {
+    console.log('[NoiseCancellationRoom] EQ 播放状态变化:', newIsPlaying);
+    // 如果 EQ 面板开始播放，清除页面级别的选中模式（避免冲突）
+    if (newIsPlaying) {
+      setSelectedMode(null);
+      setIsPlaying(true);
+    } else {
+      setIsPlaying(false);
+    }
+  }, []);
 
   // 处理滑块值变化
   const handleVolumeChange = (type: 'low' | 'mid' | 'high', value: number) => {
@@ -429,8 +465,27 @@ const NoiseCancellationRoom: React.FC = () => {
           </Text>
         </View>
 
-        {/* 8 段均衡器控制面板 */}
-        <EQControlPanel />
+        {/* 8 段均衡器控制面板（绑定 8 轨音频，统一播放状态） */}
+        <EQControlPanel 
+          sceneName={selectedMode ? `${selectedMode.replace('noise_', '')}_noise` : 'balanced_noise'}
+          isPlaying={isPlaying}
+          isLoading={isLoading}
+          onTogglePlay={async () => {
+            if (isPlaying) {
+              // 如果正在播放，点击播放按钮=停止
+              await handleStopAll();
+            } else {
+              // 如果已停止，点击播放按钮=播放当前选中的场景
+              if (selectedMode) {
+                setIsLoading(true);
+                await playNoiseAudio(selectedMode);
+                setIsPlaying(true);
+                setIsLoading(false);
+              }
+            }
+          }}
+          onPlayStateChange={handleEQPlayStateChange}
+        />
       </ScrollView>
     </View>
   );

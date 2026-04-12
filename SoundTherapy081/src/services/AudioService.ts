@@ -135,6 +135,11 @@ class AudioService {
 
   private constructor() {
     AppState.addEventListener('change', this.handleAppStateChange);
+    // 【生命周期管理】注册销毁钩子
+    if (Platform.OS === 'android') {
+      // 使用 AppState 的 change 事件检测应用退出
+      this.handleAppStateChange = this.handleAppStateChange.bind(this);
+    }
   }
 
   static getInstance(): AudioService {
@@ -162,11 +167,37 @@ class AudioService {
 
   private handleAppStateChange = (nextAppState: AppStateStatus) => {
     console.log(`[AudioService] AppState: ${this.appState} -> ${nextAppState}`);
+    
+    // 【生命周期管理】当应用进入后台或退出时，释放均衡器资源
+    if (this.appState === 'active' && (nextAppState === 'background' || nextAppState === 'inactive')) {
+      console.log('[AudioService] 应用进入后台，准备释放均衡器资源');
+      this.releaseEqualizerResources();
+    }
+    
     this.appState = nextAppState;
     
     if (nextAppState === 'active' && this.pendingSetup) {
       this.pendingSetup = false;
       this.performSetup();
+    }
+  }
+  
+  /**
+   * 【生命周期管理】释放均衡器资源，防止内存泄漏
+   */
+  private releaseEqualizerResources() {
+    if (Platform.OS === 'android') {
+      try {
+        const { NativeEQ } = require('../modules/NativeEQ');
+        if (NativeEQ && typeof NativeEQ.release === 'function') {
+          NativeEQ.release();
+          console.log('[AudioService] ✅ 均衡器资源已释放');
+        } else {
+          console.warn('[AudioService] ⚠️ NativeEQ.release 不可用');
+        }
+      } catch (error) {
+        console.error('[AudioService] ❌ 释放均衡器资源失败:', error);
+      }
     }
   };
 
@@ -200,6 +231,12 @@ class AudioService {
 
   async setupPlayer() {
     try {
+      // 【幂等性保护】如果已经初始化完成，直接返回
+      if (this._isReady) {
+        console.log('[AudioService] ✅ 已经初始化完成，跳过 setupPlayer');
+        return;
+      }
+      
       console.log('[AudioService-DIAGNOSE] ====== 开始初始化 AudioService ======');
       console.log('[AudioService-DIAGNOSE] [1/5] 检查 TrackPlayer 模块...');
       
@@ -281,29 +318,33 @@ class AudioService {
     await TrackPlayer.setVolume(this.ambientVolume);
     await NotificationService.setup();
     
-    // 初始化 8 段均衡器
-    try {
-      const audioSessionId = await TrackPlayer.getAudioSessionId?.() || 0;
-      console.log('[AudioService] 获取 AudioSessionId:', audioSessionId);
-      
-      if (audioSessionId > 0) {
+    // 【关键】设置 _isReady = true，确保 AudioContext 能检测到
+    this._isReady = true;
+    console.log('[AudioService] ✅ 初始化完成，isReady = true，均衡器将在首次播放时初始化');
+  }
+    
+    /**
+     * 【关键】初始化专业音频处理器 - 在播放音频后调用
+     * 使用 sessionId=0 作用于全局音频，让 EQ 同时影响主场景和降噪音频
+     */
+    private async initEqualizerIfNeeded() {
+      try {
+        // 【关键修复】使用 sessionId=0 作用于全局音频效果
+        // 这样 EQ 可以同时影响 TrackPlayer（主场景）和 react-native-sound（降噪音频）
+        console.log('[AudioService-EQ] 开始初始化专业音频处理器');
+        
         const { AudioLevelModule } = NativeModules;
         if (AudioLevelModule) {
-          AudioLevelModule.initEqualizer(audioSessionId);
-          console.log('[AudioService] ✅ 8 段均衡器初始化成功');
+          // 调用新的初始化方法
+          AudioLevelModule.initializeProAudio();
+          console.log('[AudioService-EQ] ✅ 专业音频处理器初始化成功（8 段 EQ + AGC + 平滑插值）');
         } else {
-          console.warn('[AudioService] ⚠️ AudioLevelModule 不可用，跳过均衡器初始化');
+          console.warn('[AudioService-EQ] ⚠️ AudioLevelModule 不可用，跳过均衡器初始化');
         }
-      } else {
-        console.warn('[AudioService] ⚠️ 无法获取 AudioSessionId，跳过均衡器初始化');
+      } catch (error) {
+        console.warn('[AudioService-EQ] ❌ 均衡器初始化失败:', error);
       }
-    } catch (error) {
-      console.warn('[AudioService] ⚠️ 均衡器初始化失败:', error);
     }
-    
-    this._isReady = true;
-    console.log('[AudioService] ✅ 初始化完成，isReady = true');
-  }
 
   async playScene(scene: Scene, options?: { triggerLoading?: boolean; skipNotify?: boolean }) {
     if (!scene || !scene.filename) return;
@@ -525,8 +566,11 @@ class AudioService {
             await TrackPlayer.play();
             console.log('[AudioService] ✅ TrackPlayer.play() 成功');
             
-            // 【4】延时开闸：400ms硬性音量锁定
-            console.log('[AudioService] [4/5] 延时开闸：400ms硬性音量锁定');
+            // 【关键】播放成功后初始化均衡器
+            await this.initEqualizerIfNeeded();
+            
+            // 【4】延时开闸：400ms 硬性音量锁定
+            console.log('[AudioService] [4/5] 延时开闸：400ms 硬性音量锁定');
             
             // 400ms期间，无论发生什么，音量必须硬锁定在0
             await new Promise(resolve => setTimeout(resolve, 400));

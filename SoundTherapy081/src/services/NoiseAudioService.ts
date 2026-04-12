@@ -6,11 +6,13 @@
  * 3. 独立音频通道（不影响主冥想音乐）
  * 4. 生命周期管理（Modal 关闭后自动停止）
  * 5. 16KB Page Size 合规
- * 6. 单例锁机制（全局唯一播放器实例）
+ * 6. **多轨并行混音** (方案 A：三轨分频段播放)
  */
 
 import Sound from 'react-native-sound';
+import { NativeModules } from 'react-native';
 import { NOISE_CANCELLATION_AUDIO, getNoiseCancellationAudio } from '../constants/noiseCancellationAudio';
+import { play8TrackAudio, stop8TrackAudio, warmupAudio, setLoadingProgressCallback } from './8TrackAudioService';
 
 // 初始化音频类别（Android 必需）
 Sound.setCategory('Playback');
@@ -42,6 +44,9 @@ export const initNoiseAudio = async () => {
       // 资源会在首次播放时自动加载
       console.log('[NoiseAudio] 预加载资源:', audio.id);
     }
+    
+    // 【多轨模式】初始化多轨音频服务
+    console.log('[NoiseAudio] 🎵 初始化多轨音频服务');
   } catch (error) {
     console.error('[NoiseAudio] 初始化失败:', error);
   }
@@ -53,71 +58,39 @@ export const playNoiseAudio = async (modeId: string) => {
     console.log('[NoiseAudio] 播放模式:', modeId);
     
     // 如果已经是当前模式，跳过
-    if (currentModeId === modeId && noisePlayer) {
+    if (currentModeId === modeId) {
       console.log('[NoiseAudio] 已是当前模式，跳过播放');
       return;
     }
     
     // 先彻底停止当前音频（如果有）- 1 秒交叉渐变
-    if (noisePlayer && currentModeId) {
+    if (currentModeId) {
       console.log('[NoiseAudio] 切换到新模式，执行 1 秒交叉渐变');
       await fadeOutAudio();
     }
     
-    // 确保旧实例已完全释放（单例锁保护）
-    if (noisePlayer) {
-      console.log('[NoiseAudio] 强制释放旧实例');
-      noisePlayer.stop();
-      noisePlayer.release();
-      noisePlayer = null;
+    // 【8 轨模式】根据 modeId 播放对应的 8 轨音频
+    // modeId 映射：'noise_wind' -> 'wind_noise', 'noise_traffic' -> 'traffic_noise', etc.
+    let audioGroupId = 'balanced_noise'; // 默认
+    
+    if (modeId === 'noise_wind') {
+      audioGroupId = 'wind_noise';
+    } else if (modeId === 'noise_traffic') {
+      audioGroupId = 'traffic_noise';
+    } else if (modeId === 'noise_crowd') {
+      audioGroupId = 'crowd_noise';
+    } else if (modeId === 'noise_balanced' || modeId === 'balanced') {
+      audioGroupId = 'balanced_noise';
     }
     
-    // 获取音频配置
-    const audioConfig = getNoiseCancellationAudio(modeId);
-    if (!audioConfig) {
-      console.error('[NoiseAudio] 未找到音频配置:', modeId);
-      return;
-    }
+    console.log('[NoiseAudio] 🎚️ 使用 8 轨混音模式播放:', audioGroupId);
+    await play8TrackAudio(audioGroupId);
     
-    console.log('[NoiseAudio] 准备加载音频:', audioConfig.title);
-    console.log('[NoiseAudio] 资源名称:', audioConfig.resourceName);
-    
-    // 创建新的播放器实例 - 使用原生 raw 资源
-    // 16KB Page Size 合规：使用 Sound 类的安全加载方式
-    console.log('[NoiseAudio] 准备创建 Sound 实例，使用 raw 资源');
-    noisePlayer = new Sound(audioConfig.resourceName, Sound.MAIN_BUNDLE, (error) => {
-      console.log('[NoiseAudio] Sound 回调触发');
-      if (error) {
-        console.error('[NoiseAudio] 加载失败:', error);
-        console.error('[NoiseAudio] 错误详情:', JSON.stringify(error));
-        return;
-      }
-      
-      console.log('[NoiseAudio] 加载成功，开始播放');
-      console.log('[NoiseAudio] 音频时长:', noisePlayer?.getDuration());
-      
-      // 设置无缝循环播放
-      noisePlayer?.setNumberOfLoops(-1);
-      
-      // 初始音量设为 0（淡入准备）
-      noisePlayer?.setVolume(0);
-      
-      // 开始播放
-      noisePlayer?.play(() => {
-        // 播放完成回调（循环播放不会触发）
-        console.log('[NoiseAudio] 播放完成');
-      });
-      
-      // 执行淡入效果（1 秒）
-      fadeInAudio();
-    });
-    
-    console.log('[NoiseAudio] Sound 实例创建完成');
     currentModeId = modeId;
     
+    console.log('[NoiseAudio] ✅ 8 轨音频播放成功');
   } catch (error) {
     console.error('[NoiseAudio] 播放失败:', error);
-    console.error('[NoiseAudio] 错误堆栈:', JSON.stringify(error));
   }
 };
 
@@ -227,16 +200,10 @@ export const stopNoiseAudio = async () => {
     fadeOutInterval = null;
   }
   
-  // 强制停止并释放资源
-  if (noisePlayer) {
-    console.log('[NoiseAudio] 停止并释放播放器');
-    isFadingOut = true;
-    noisePlayer.stop();
-    noisePlayer.release();
-    noisePlayer = null;
-    currentModeId = null;
-    console.log('[NoiseAudio] 播放器已释放');
-  }
+  // 【8 轨模式】调用 8TrackAudioService 停止
+  console.log('[NoiseAudio] 调用 8TrackAudioService 停止');
+  await stop8TrackAudio();
+  currentModeId = null;
 };
 
 // 清理资源（页面卸载时调用）
@@ -254,3 +221,6 @@ export const getCurrentMode = () => {
 export const isPlaying = () => {
   return noisePlayer !== null && currentModeId !== null;
 };
+
+// 【关键修复】导出预热函数
+export { warmupAudio } from './8TrackAudioService';
