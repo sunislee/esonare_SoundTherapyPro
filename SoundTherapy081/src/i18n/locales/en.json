@@ -63,20 +63,20 @@
     },
     "noise": {
       "wind": {
-        "title": "Wind NC",
-        "subtitle": "Outdoor wind noise reduction"
+        "title": "Gentle Breeze",
+        "subtitle": "Perfect for eliminating AC hum and household noise."
       },
       "traffic": {
-        "title": "Traffic NC",
-        "subtitle": "Vehicle horn noise reduction"
+        "title": "Pouring Cover",
+        "subtitle": "Counteracts engine roar and traffic flow."
       },
       "crowd": {
-        "title": "Crowd NC",
-        "subtitle": "Noisy voice filtering"
+        "title": "Fireside Isolation",
+        "subtitle": "Blurs voices and social noise."
       },
       "balanced": {
-        "title": "Balanced NC",
-        "subtitle": "Comprehensive environmental noise reduction"
+        "title": "Deep Space Focus",
+        "subtitle": "Blocks office conversations and keyboard typing."
       }
     },
     "period": ". ",

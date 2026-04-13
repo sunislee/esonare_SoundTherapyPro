@@ -63,20 +63,20 @@
     },
     "noise": {
       "wind": {
-        "title": "风声降噪",
-        "subtitle": "户外防风噪"
+        "title": "微风轻拂",
+        "subtitle": "适合消除空调底噪、居家杂音。"
       },
       "traffic": {
-        "title": "交通降噪",
-        "subtitle": "车辆鸣笛声"
+        "title": "倾盆掩盖",
+        "subtitle": "抵消引擎轰鸣、窗外车流。"
       },
       "crowd": {
-        "title": "人声降噪",
-        "subtitle": "嘈杂人声过滤"
+        "title": "围炉隔离",
+        "subtitle": "模糊人声嘈杂、社交噪音。"
       },
       "balanced": {
-        "title": "均衡降噪",
-        "subtitle": "综合环境降噪"
+        "title": "深空专注",
+        "subtitle": "屏蔽办公室交谈、键盘敲击。"
       }
     },
     "period": "。",

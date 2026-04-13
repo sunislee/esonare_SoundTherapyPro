@@ -63,20 +63,20 @@
     },
     "noise": {
       "wind": {
-        "title": "風切り音 NC",
-        "subtitle": "屋外の風切り音低減"
+        "title": "そよ風",
+        "subtitle": "エアコンの低周波や生活音の除去に。"
       },
       "traffic": {
-        "title": "交通 NC",
-        "subtitle": "車両のクラクション音低減"
+        "title": "豪雨マスキング",
+        "subtitle": "エンジン音や車の走行音を相殺。"
       },
       "crowd": {
-        "title": "人声 NC",
-        "subtitle": "雑談声フィルタリング"
+        "title": "炉辺隔離",
+        "subtitle": "話し声や社交騒音をぼかす。"
       },
       "balanced": {
-        "title": "バランス NC",
-        "subtitle": "総合環境ノイズ低減"
+        "title": "深宇宙集中",
+        "subtitle": "オフィスの会話やキーボード音を遮断。"
       }
     },
     "period": "。",
