@@ -12,10 +12,6 @@ import {
   Easing,
 } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop, Filter, FeGaussianBlur, Rect } from 'react-native-svg';
-import Animated from 'react-native';
-
-// 创建 Animated 版本的 SVG 组件
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -147,14 +143,7 @@ const NoiseCancellationRoom: React.FC = () => {
   const midBarHeight = useRef(new Animated.Value(0)).current;
   const highBarHeight = useRef(new Animated.Value(0)).current;
   
-  // 【核心】SVG 弥散层呼吸动画（极光/雾气流深度）
-  const circleAnims = useRef(
-    Array(3).fill(null).map(() => ({
-      cx: new Animated.Value(width * 0.5),
-      cy: new Animated.Value(height * 0.5),
-      r: new Animated.Value(Math.max(width, height) * 0.4),
-    }))
-  ).current;
+  // 【核心】简化背景：使用静态 SVG 弥散层（固定位置，无动画）
   const prevSceneRef = useRef('noise_balanced');
 
   // 页面获得焦点时启动音频分析器
@@ -162,79 +151,8 @@ const NoiseCancellationRoom: React.FC = () => {
     useCallback(() => {
       console.log('[NoiseCancellationRoom] 页面聚焦，启动音频分析器');
       
-      // 【核心】启动 SVG 弥散层呼吸动画（极光/雾气流深度）
-      const currentScene = prevSceneRef.current;
-      const colors = SCENE_SVG_COLORS[currentScene as keyof typeof SCENE_SVG_COLORS] || DEFAULT_SCENE;
-      
-      // 为每个圆启动独立的呼吸动画（位置 + 半径）
-      circleAnims.forEach((anim, index) => {
-        const offsetX = (index - 1) * width * 0.15;
-        const offsetY = (index - 1) * height * 0.1;
-        
-        // 坐标呼吸动画（不同圆有不同相位）
-        Animated.loop(
-          Animated.parallel([
-            Animated.sequence([
-              Animated.timing(anim.cx, {
-                toValue: width * 0.5 + offsetX,
-                duration: 8000 + index * 2000,  // 每个圆周期不同
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: false,
-              }),
-              Animated.timing(anim.cx, {
-                toValue: width * 0.5 - offsetX,
-                duration: 8000 + index * 2000,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: false,
-              }),
-              Animated.timing(anim.cx, {
-                toValue: width * 0.5,
-                duration: 8000 + index * 2000,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: false,
-              }),
-            ]),
-            Animated.sequence([
-              Animated.timing(anim.cy, {
-                toValue: height * 0.5 + offsetY,
-                duration: 10000 + index * 1500,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: false,
-              }),
-              Animated.timing(anim.cy, {
-                toValue: height * 0.5 - offsetY,
-                duration: 10000 + index * 1500,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: false,
-              }),
-              Animated.timing(anim.cy, {
-                toValue: height * 0.5,
-                duration: 10000 + index * 1500,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: false,
-              }),
-            ]),
-          ])
-        ).start();
-        
-        // 半径呼吸动画（营造膨胀/收缩感）
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(anim.r, {
-              toValue: Math.max(width, height) * 0.5,
-              duration: 6000 + index * 1000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-            Animated.timing(anim.r, {
-              toValue: Math.max(width, height) * 0.35,
-              duration: 6000 + index * 1000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-          ])
-        ).start();
-      });
+      // 【核心】简化：不启动动画，只更新场景引用
+      prevSceneRef.current = modeId;
       
       // 【关键修复】静默预热：强迫 react-native-sound 底层初始化
       console.log('[NoiseCancellationRoom] 🔥 开始预热音频底层...');
@@ -337,65 +255,8 @@ const NoiseCancellationRoom: React.FC = () => {
     console.log('[NoiseCancellationRoom] 切换到新模式:', modeId);
     setIsLoading(true);
     
-    // 【核心】切换场景时重启 SVG 弥散层动画
+    // 【核心】简化：只更新场景引用
     prevSceneRef.current = modeId;
-    const colors = SCENE_SVG_COLORS[modeId as keyof typeof SCENE_SVG_COLORS] || DEFAULT_SCENE;
-    
-    // 重启每个圆的动画（颜色已通过 SVG 自动更新）
-    circleAnims.forEach((anim, index) => {
-      // 重置位置到中心
-      anim.cx.setValue(width * 0.5);
-      anim.cy.setValue(height * 0.5);
-      
-      // 然后继续呼吸动画
-      const offsetX = (index - 1) * width * 0.15;
-      const offsetY = (index - 1) * height * 0.1;
-      
-      Animated.loop(
-        Animated.parallel([
-          Animated.sequence([
-            Animated.timing(anim.cx, {
-              toValue: width * 0.5 + offsetX,
-              duration: 8000 + index * 2000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-            Animated.timing(anim.cx, {
-              toValue: width * 0.5 - offsetX,
-              duration: 8000 + index * 2000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-            Animated.timing(anim.cx, {
-              toValue: width * 0.5,
-              duration: 8000 + index * 2000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-          ]),
-          Animated.sequence([
-            Animated.timing(anim.cy, {
-              toValue: height * 0.5 + offsetY,
-              duration: 10000 + index * 1500,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-            Animated.timing(anim.cy, {
-              toValue: height * 0.5 - offsetY,
-              duration: 10000 + index * 1500,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-            Animated.timing(anim.cy, {
-              toValue: height * 0.5,
-              duration: 10000 + index * 1500,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: false,
-            }),
-          ]),
-        ])
-      ).start();
-    });
     
     // 【关键修复】立即更新 UI 状态（其他卡片立即失去播放态）
     setCurrentSceneId(modeId);
@@ -446,7 +307,7 @@ const NoiseCancellationRoom: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* 【核心】SVG 弥散层背景（高斯模糊 + 呼吸动画） */}
+      {/* 【核心】SVG 弥散层背景（静态，无动画） */}
       <Svg style={styles.svgBackground} preserveAspectRatio="none">
         <Defs>
           {/* 高斯模糊滤镜：stdDeviation="60" 以上，营造极光/雾气效果 */}
@@ -458,13 +319,13 @@ const NoiseCancellationRoom: React.FC = () => {
         {/* 底色层 */}
         <Rect x="0" y="0" width={width} height={height} fill={colors.base} />
         
-        {/* 弥散圆层（3 个圆，不同位置/颜色/大小） */}
+        {/* 弥散圆层（3 个圆，固定位置） */}
         {colors.circles.map((circle, index) => (
-          <Animated.Circle
+          <Circle
             key={index}
-            cx={circleAnims[index].cx}
-            cy={circleAnims[index].cy}
-            r={circleAnims[index].r}
+            cx={width * 0.5 + (index - 1) * width * 0.2}
+            cy={height * 0.5 + (index - 1) * height * 0.15}
+            r={Math.max(width, height) * 0.4}
             fill={circle.color}
             opacity={circle.opacity}
             filter="url(#blurFilter)"
