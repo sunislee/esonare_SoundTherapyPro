@@ -12,7 +12,7 @@ import {
   Easing,
 } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop, Filter, FeGaussianBlur, Rect } from 'react-native-svg';
-import Animated from 'react-native-reanimated';
+import Animated from 'react-native';
 
 // 创建 Animated 版本的 SVG 组件
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
