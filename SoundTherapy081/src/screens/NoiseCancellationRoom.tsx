@@ -12,10 +12,10 @@ import {
   Easing,
 } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop, Filter, FeGaussianBlur, Rect } from 'react-native-svg';
-import { createAnimatedComponent } from 'react-native-svg';
+import Animated from 'react-native-reanimated';
 
 // 创建 Animated 版本的 SVG 组件
-const AnimatedCircle = createAnimatedComponent(Circle);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
