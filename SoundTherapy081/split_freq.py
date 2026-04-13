@@ -13,7 +13,7 @@ from pydub.effects import low_pass_filter, high_pass_filter
 # ==================== 配置区域 ====================
 
 # 输入输出目录
-INPUT_DIR = Path(__file__).parent / "android" / "app" / "src" / "main" / "res" / "raw"
+INPUT_DIR = Path(__file__).parent / "input_audio"
 OUTPUT_DIR = Path(__file__).parent / "output_tracks"
 
 # 8 段频率定义 (Hz)
@@ -78,6 +78,10 @@ def split_audio_to_8_tracks(audio_file: Path, output_folder: Path) -> bool:
                 # 再低通滤波（切除高频）
                 filtered = low_pass_filter(filtered, cutoff=high_freq)
                 
+                # 【关键修复】音量补偿：拆分后音量会下降，需要放大 20dB 补偿
+                # 使用 pydub 的 gain 方法增加音量
+                filtered = filtered.apply_gain(20)  # 增加 20dB
+                
                 # 导出文件
                 output_path = output_folder / f"track_{track_num}.{OUTPUT_FORMAT}"
                 filtered.export(
@@ -87,7 +91,7 @@ def split_audio_to_8_tracks(audio_file: Path, output_folder: Path) -> bool:
                     parameters=["-ar", str(original_audio.frame_rate)]  # 保持原采样率
                 )
                 
-                print(f"      ✅ 导出成功：{output_path.name}")
+                print(f"      ✅ 导出成功：{output_path.name} (+10dB)")
                 success_count += 1
                 
             except Exception as e:
