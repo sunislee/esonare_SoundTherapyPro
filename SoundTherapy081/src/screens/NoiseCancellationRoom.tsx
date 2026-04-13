@@ -152,7 +152,7 @@ const NoiseCancellationRoom: React.FC = () => {
       console.log('[NoiseCancellationRoom] 页面聚焦，启动音频分析器');
       
       // 【核心】简化：不启动动画，只更新场景引用
-      prevSceneRef.current = modeId;
+      // prevSceneRef.current 已在 handleModePress 中更新
       
       // 【关键修复】静默预热：强迫 react-native-sound 底层初始化
       console.log('[NoiseCancellationRoom] 🔥 开始预热音频底层...');
