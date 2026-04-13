@@ -9,7 +9,13 @@ import {
   BackHandler,
   Animated,
   ScrollView,
+  Easing,
 } from 'react-native';
+import Svg, { Circle, Defs, RadialGradient, Stop, Filter, FeGaussianBlur, Rect } from 'react-native-svg';
+import { createAnimatedComponent } from 'react-native-svg';
+
+// 创建 Animated 版本的 SVG 组件
+const AnimatedCircle = createAnimatedComponent(Circle);
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +36,51 @@ import {
 } from '../services/NoiseAudioService';
 
 const { width, height } = Dimensions.get('window');
+
+// SVG 弥散层色彩方案（每个场景 3-4 个圆，营造极光/雾气流深度）
+const SCENE_SVG_COLORS = {
+  noise_wind: {  // 微风轻拂：深灰底 + 浅青色圆
+    base: '#1A1C20',
+    circles: [
+      { color: '#2A3F4F', opacity: 0.3 },  // 浅青
+      { color: '#1F3A4A', opacity: 0.25 },  // 深青
+      { color: '#2D4F5F', opacity: 0.2 },   // 蓝青
+    ],
+  },
+  noise_balanced: {  // 深空专注：纯黑底 + 深紫圆 + 深蓝圆
+    base: '#000000',
+    circles: [
+      { color: '#1A1A3E', opacity: 0.35 },  // 深紫
+      { color: '#0F1A3A', opacity: 0.3 },   // 深蓝
+      { color: '#2A1A4E', opacity: 0.25 },  // 极深紫
+    ],
+  },
+  noise_crowd: {  // 围炉隔离：深褐底 + 暗红圆
+    base: '#261514',
+    circles: [
+      { color: '#3E2723', opacity: 0.35 },  // 暗红
+      { color: '#4A2A25', opacity: 0.3 },   // 深红褐
+      { color: '#2E1A15', opacity: 0.25 },  // 暗褐红
+    ],
+  },
+  noise_traffic: {  // 倾盆掩盖：墨黑底 + 深灰蓝色圆
+    base: '#212629',
+    circles: [
+      { color: '#2F3A4A', opacity: 0.35 },  // 深灰蓝
+      { color: '#253040', opacity: 0.3 },   // 深蓝灰
+      { color: '#3A4550', opacity: 0.25 },  // 灰蓝
+    ],
+  },
+};
+
+// 默认背景（兜底）
+const DEFAULT_SCENE = {
+  base: '#000000',
+  circles: [
+    { color: '#1A1A2E', opacity: 0.3 },
+    { color: '#0F1A2A', opacity: 0.25 },
+  ],
+};
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -95,11 +146,95 @@ const NoiseCancellationRoom: React.FC = () => {
   const lowBarHeight = useRef(new Animated.Value(0)).current;
   const midBarHeight = useRef(new Animated.Value(0)).current;
   const highBarHeight = useRef(new Animated.Value(0)).current;
+  
+  // 【核心】SVG 弥散层呼吸动画（极光/雾气流深度）
+  const circleAnims = useRef(
+    Array(3).fill(null).map(() => ({
+      cx: new Animated.Value(width * 0.5),
+      cy: new Animated.Value(height * 0.5),
+      r: new Animated.Value(Math.max(width, height) * 0.4),
+    }))
+  ).current;
+  const prevSceneRef = useRef('noise_balanced');
 
   // 页面获得焦点时启动音频分析器
   useFocusEffect(
     useCallback(() => {
       console.log('[NoiseCancellationRoom] 页面聚焦，启动音频分析器');
+      
+      // 【核心】启动 SVG 弥散层呼吸动画（极光/雾气流深度）
+      const currentScene = prevSceneRef.current;
+      const colors = SCENE_SVG_COLORS[currentScene as keyof typeof SCENE_SVG_COLORS] || DEFAULT_SCENE;
+      
+      // 为每个圆启动独立的呼吸动画（位置 + 半径）
+      circleAnims.forEach((anim, index) => {
+        const offsetX = (index - 1) * width * 0.15;
+        const offsetY = (index - 1) * height * 0.1;
+        
+        // 坐标呼吸动画（不同圆有不同相位）
+        Animated.loop(
+          Animated.parallel([
+            Animated.sequence([
+              Animated.timing(anim.cx, {
+                toValue: width * 0.5 + offsetX,
+                duration: 8000 + index * 2000,  // 每个圆周期不同
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: false,
+              }),
+              Animated.timing(anim.cx, {
+                toValue: width * 0.5 - offsetX,
+                duration: 8000 + index * 2000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: false,
+              }),
+              Animated.timing(anim.cx, {
+                toValue: width * 0.5,
+                duration: 8000 + index * 2000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: false,
+              }),
+            ]),
+            Animated.sequence([
+              Animated.timing(anim.cy, {
+                toValue: height * 0.5 + offsetY,
+                duration: 10000 + index * 1500,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: false,
+              }),
+              Animated.timing(anim.cy, {
+                toValue: height * 0.5 - offsetY,
+                duration: 10000 + index * 1500,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: false,
+              }),
+              Animated.timing(anim.cy, {
+                toValue: height * 0.5,
+                duration: 10000 + index * 1500,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: false,
+              }),
+            ]),
+          ])
+        ).start();
+        
+        // 半径呼吸动画（营造膨胀/收缩感）
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim.r, {
+              toValue: Math.max(width, height) * 0.5,
+              duration: 6000 + index * 1000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+            Animated.timing(anim.r, {
+              toValue: Math.max(width, height) * 0.35,
+              duration: 6000 + index * 1000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+          ])
+        ).start();
+      });
       
       // 【关键修复】静默预热：强迫 react-native-sound 底层初始化
       console.log('[NoiseCancellationRoom] 🔥 开始预热音频底层...');
@@ -194,12 +329,73 @@ const NoiseCancellationRoom: React.FC = () => {
       setCurrentSceneId(null);
       setSelectedMode(null);
       setIsLoading(false);
+      triggerHaptic();
       return;
     }
     
     // 【关键修复】否则播放新模式（自动停止旧场景）
     console.log('[NoiseCancellationRoom] 切换到新模式:', modeId);
     setIsLoading(true);
+    
+    // 【核心】切换场景时重启 SVG 弥散层动画
+    prevSceneRef.current = modeId;
+    const colors = SCENE_SVG_COLORS[modeId as keyof typeof SCENE_SVG_COLORS] || DEFAULT_SCENE;
+    
+    // 重启每个圆的动画（颜色已通过 SVG 自动更新）
+    circleAnims.forEach((anim, index) => {
+      // 重置位置到中心
+      anim.cx.setValue(width * 0.5);
+      anim.cy.setValue(height * 0.5);
+      
+      // 然后继续呼吸动画
+      const offsetX = (index - 1) * width * 0.15;
+      const offsetY = (index - 1) * height * 0.1;
+      
+      Animated.loop(
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(anim.cx, {
+              toValue: width * 0.5 + offsetX,
+              duration: 8000 + index * 2000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+            Animated.timing(anim.cx, {
+              toValue: width * 0.5 - offsetX,
+              duration: 8000 + index * 2000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+            Animated.timing(anim.cx, {
+              toValue: width * 0.5,
+              duration: 8000 + index * 2000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.timing(anim.cy, {
+              toValue: height * 0.5 + offsetY,
+              duration: 10000 + index * 1500,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+            Animated.timing(anim.cy, {
+              toValue: height * 0.5 - offsetY,
+              duration: 10000 + index * 1500,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+            Animated.timing(anim.cy, {
+              toValue: height * 0.5,
+              duration: 10000 + index * 1500,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: false,
+            }),
+          ]),
+        ])
+      ).start();
+    });
     
     // 【关键修复】立即更新 UI 状态（其他卡片立即失去播放态）
     setCurrentSceneId(modeId);
@@ -245,11 +441,36 @@ const NoiseCancellationRoom: React.FC = () => {
     // TODO: 这里将来可以连接实际的音频引擎，调节对应频段的音量
   };
 
+  // 获取当前场景的 SVG 颜色配置
+  const colors = SCENE_SVG_COLORS[(selectedMode || 'noise_balanced') as keyof typeof SCENE_SVG_COLORS] || DEFAULT_SCENE;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* 背景渐变（使用 View 模拟） */}
-      <View style={styles.backgroundGradient} />
-      <View style={styles.overlay} />
+      {/* 【核心】SVG 弥散层背景（高斯模糊 + 呼吸动画） */}
+      <Svg style={styles.svgBackground} preserveAspectRatio="none">
+        <Defs>
+          {/* 高斯模糊滤镜：stdDeviation="60" 以上，营造极光/雾气效果 */}
+          <Filter id="blurFilter">
+            <FeGaussianBlur in="SourceGraphic" stdDeviation="60" />
+          </Filter>
+        </Defs>
+        
+        {/* 底色层 */}
+        <Rect x="0" y="0" width={width} height={height} fill={colors.base} />
+        
+        {/* 弥散圆层（3 个圆，不同位置/颜色/大小） */}
+        {colors.circles.map((circle, index) => (
+          <Animated.Circle
+            key={index}
+            cx={circleAnims[index].cx}
+            cy={circleAnims[index].cy}
+            r={circleAnims[index].r}
+            fill={circle.color}
+            opacity={circle.opacity}
+            filter="url(#blurFilter)"
+          />
+        ))}
+      </Svg>
 
       {/* Header */}
       <View style={styles.header}>
@@ -496,13 +717,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-  backgroundGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#1a1a2e',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  svgBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: width,
+    height: height,
   },
   header: {
     flexDirection: 'row',
@@ -640,15 +862,24 @@ const styles = StyleSheet.create({
   },
   modeCard: {
     width: '48%',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'transparent',  // 完全透明
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',  // 极淡边框
     position: 'relative',
+    // 软阴影（大范围，微弱，营造浮起感）
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,  // Android 阴影
   },
   modeCardActive: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.03)',  // 选中时极淡高亮
+    borderColor: 'rgba(255,255,255,0.12)',
+    shadowOpacity: 0.2,  // 选中时阴影略强
   },
   modeIconContainer: {
     width: 48,
