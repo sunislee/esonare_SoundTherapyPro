@@ -29,6 +29,29 @@ const TRACK_FREQUENCIES = [
   { index: 8, label: '16kHz', description: '空气感', trackNum: 8 },
 ];
 
+// 四个降噪场景的渐变色配置（暗色版本，不抢 EQ Slider 风头）
+const SCENE_COLORS = {
+  balanced_noise: {  // 深空专注
+    start: '#0a0a1a',  // 深蓝黑
+    end: '#1a1a2e',    // 深蓝
+  },
+  wind_noise: {  // 微风轻拂
+    start: '#0a1a1a',  // 深青黑
+    end: '#1a2e2e',    // 深青
+  },
+  crowd_noise: {  // 围炉隔离
+    start: '#1a0a0a',  // 深红黑
+    end: '#2e1a1a',    // 深红棕
+  },
+  traffic_noise: {  // 倾盆掩盖
+    start: '#0a0a1a',  // 深紫黑
+    end: '#1a1a2e',    // 深紫
+  },
+};
+
+// 默认颜色（兜底）
+const DEFAULT_COLOR = { start: '#0a0a1a', end: '#1a1a2e' };
+
 interface EQSliderProps {
   index: number;
   label: string;
@@ -184,6 +207,10 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
   const [volumes, setVolumes] = useState<number[]>(Array(8).fill(100));
   
+  // 【新增】背景渐变动画（800ms 呼吸感过渡）
+  const backgroundColor = useRef(new Animated.Value(0)).current;
+  const currentColorIndex = useRef(0);
+  
   // 【关键修复】场景切换时重置滑块状态
   const prevSceneNameRef = useRef(sceneName);
   useEffect(() => {
@@ -197,6 +224,15 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
       
       // 【强制重置】后台音频服务归位
       _8TrackAudioService.resetAllVolumes();
+      
+      // 【新增】背景颜色平滑过渡
+      const targetColor = SCENE_COLORS[sceneName as keyof typeof SCENE_COLORS] || DEFAULT_COLOR;
+      Animated.timing(backgroundColor, {
+        toValue: currentColorIndex.current === 0 ? 1 : 0,
+        duration: 800,  // 800ms 呼吸感过渡
+        useNativeDriver: false,
+      }).start();
+      currentColorIndex.current = currentColorIndex.current === 0 ? 1 : 0;
       
       prevSceneNameRef.current = sceneName;
       
@@ -251,8 +287,16 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
     });
   }, []);
 
+  // 计算当前背景颜色（根据场景名称）
+  const targetColor = SCENE_COLORS[sceneName as keyof typeof SCENE_COLORS] || DEFAULT_COLOR;
+  const backgroundColorInterpolate = backgroundColor.interpolate({
+    inputRange: [0, 1],
+    outputRange: [targetColor.start, targetColor.end],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { backgroundColor: backgroundColorInterpolate }]}>
       <Text style={styles.title}>8 段均衡器实验室</Text>
       
       {/* 控制按钮 */}
@@ -298,32 +342,31 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
         ))}
       </View>
       <View style={styles.footer}>
-        <Text style={styles.footerText}>上下拖动滑块独立控制各频段音量</Text>
+        <Text style={styles.footerText}>上下拖动滑块，独立控制各频段音量</Text>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1A1B2E',
     borderRadius: 24,
     padding: 20,
-    margin: 16,
+    marginHorizontal: 16,
+    marginVertical: 8,
     minHeight: 320,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.04)',  // 极淡边框
+    // 完全透明背景，让全屏渐变色透过来
+    backgroundColor: 'transparent',
   },
   title: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.85)',  // 稍微降低文字透明度
     textAlign: 'center',
     marginBottom: 16,
-    opacity: 0.9,
+    letterSpacing: 0.5,
   },
   buttonRow: {
     flexDirection: 'row',
