@@ -85,7 +85,7 @@ const NoiseCancellationRoom: React.FC = () => {
       id: 'noise_balanced',
       title: '深空专注',
       subtitle: '屏蔽办公室交谈、键盘敲击',
-      icon: 'focus-outline',
+      icon: 'scan-outline',
       color: '#7ED321',
     },
   ];
