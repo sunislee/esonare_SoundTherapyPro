@@ -65,7 +65,37 @@ const zh = {
     "unableToOpen": "无法打开链接",
     "confirmExit": "确认退出",
     "confirmExitMessage": "确定要离开吗？",
-    "exit": "退出"
+    "exit": "退出",
+    "noiseCancellation": {
+      "title": "降噪模块",
+      "status": "降噪状态",
+      "statusDesc": "智能识别环境噪音，为您提供沉浸式的听觉体验",
+      "toggle": "开启降噪",
+      "modes": "降噪模式",
+      "smart": "智能场景识别",
+      "smartDesc": "自动检测周围环境噪音类型，智能切换最佳降噪模式",
+      "smartEnable": "启用智能识别",
+      "stopAll": "停止所有降噪",
+      "settings": "设置"
+    },
+    "noise": {
+      "wind": {
+        "title": "微风轻拂",
+        "subtitle": "适合消除空调底噪、居家杂音。"
+      },
+      "traffic": {
+        "title": "倾盆掩盖",
+        "subtitle": "抵消引擎轰鸣、窗外车流。"
+      },
+      "crowd": {
+        "title": "围炉隔离",
+        "subtitle": "模糊人声嘈杂、社交噪音。"
+      },
+      "balanced": {
+        "title": "深空专注",
+        "subtitle": "屏蔽办公室交谈、键盘敲击。"
+      }
+    }
   },
   "notification": {
     "artistDescription": "🎵 {{userName}}，正在深度放松"
