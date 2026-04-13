@@ -5,13 +5,13 @@ import {
   Text,
   TouchableOpacity,
   Dimensions,
-  Image,
+  ImageBackground,
   BackHandler,
   Animated,
   ScrollView,
   Easing,
+  Platform,
 } from 'react-native';
-import Svg, { Circle, Defs, RadialGradient, Stop, Filter, FeGaussianBlur, Rect } from 'react-native-svg';
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -33,50 +33,16 @@ import {
 
 const { width, height } = Dimensions.get('window');
 
-// SVG 弥散层色彩方案（每个场景 3-4 个圆，营造极光/雾气流深度）
-const SCENE_SVG_COLORS = {
-  noise_wind: {  // 微风轻拂：深灰底 + 浅青色圆
-    base: '#1A1C20',
-    circles: [
-      { color: '#2A3F4F', opacity: 0.3 },  // 浅青
-      { color: '#1F3A4A', opacity: 0.25 },  // 深青
-      { color: '#2D4F5F', opacity: 0.2 },   // 蓝青
-    ],
-  },
-  noise_balanced: {  // 深空专注：纯黑底 + 深紫圆 + 深蓝圆
-    base: '#000000',
-    circles: [
-      { color: '#1A1A3E', opacity: 0.35 },  // 深紫
-      { color: '#0F1A3A', opacity: 0.3 },   // 深蓝
-      { color: '#2A1A4E', opacity: 0.25 },  // 极深紫
-    ],
-  },
-  noise_crowd: {  // 围炉隔离：深褐底 + 暗红圆
-    base: '#261514',
-    circles: [
-      { color: '#3E2723', opacity: 0.35 },  // 暗红
-      { color: '#4A2A25', opacity: 0.3 },   // 深红褐
-      { color: '#2E1A15', opacity: 0.25 },  // 暗褐红
-    ],
-  },
-  noise_traffic: {  // 倾盆掩盖：墨黑底 + 深灰蓝色圆
-    base: '#212629',
-    circles: [
-      { color: '#2F3A4A', opacity: 0.35 },  // 深灰蓝
-      { color: '#253040', opacity: 0.3 },   // 深蓝灰
-      { color: '#3A4550', opacity: 0.25 },  // 灰蓝
-    ],
-  },
+// 场景背景图配置（真实高清图片）
+const SCENE_BACKGROUNDS = {
+  noise_wind: require('../assets/images/nc_backgrounds/noise_wind.jpg'),
+  noise_balanced: require('../assets/images/nc_backgrounds/noise_balanced.jpg'),
+  noise_crowd: require('../assets/images/nc_backgrounds/noise_crowd.jpg'),
+  noise_traffic: require('../assets/images/nc_backgrounds/noise_traffic.jpg'),
 };
 
 // 默认背景（兜底）
-const DEFAULT_SCENE = {
-  base: '#000000',
-  circles: [
-    { color: '#1A1A2E', opacity: 0.3 },
-    { color: '#0F1A2A', opacity: 0.25 },
-  ],
-};
+const DEFAULT_BACKGROUND = require('../assets/images/nc_backgrounds/noise_balanced.jpg');
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -96,29 +62,29 @@ const NoiseCancellationRoom: React.FC = () => {
   const noiseModes = [
     {
       id: 'noise_wind',
-      title: t('common.noise.wind.title'),
-      subtitle: t('common.noise.wind.subtitle'),
+      title: '微风轻拂',
+      subtitle: '适合消除空调底噪、居家杂音',
       icon: 'water-outline',
       color: '#4A90E2',
     },
     {
       id: 'noise_traffic',
-      title: t('common.noise.traffic.title'),
-      subtitle: t('common.noise.traffic.subtitle'),
+      title: '倾盆掩盖',
+      subtitle: '抵消引擎轰鸣、窗外车流',
       icon: 'bus-outline',
       color: '#F5A623',
     },
     {
       id: 'noise_crowd',
-      title: t('common.noise.crowd.title'),
-      subtitle: t('common.noise.crowd.subtitle'),
+      title: '围炉隔离',
+      subtitle: '模糊人声嘈杂、社交噪音',
       icon: 'people-outline',
       color: '#D0021B',
     },
     {
       id: 'noise_balanced',
-      title: t('common.noise.balanced.title'),
-      subtitle: t('common.noise.balanced.subtitle'),
+      title: '深空专注',
+      subtitle: '屏蔽办公室交谈、键盘敲击',
       icon: 'balance-outline',
       color: '#7ED321',
     },
@@ -130,7 +96,7 @@ const NoiseCancellationRoom: React.FC = () => {
   // 降噪模式状态
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false); // 加载中状态
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
   // 【关键修复】当前播放的场景 ID（强一致状态）
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
@@ -143,16 +109,14 @@ const NoiseCancellationRoom: React.FC = () => {
   const midBarHeight = useRef(new Animated.Value(0)).current;
   const highBarHeight = useRef(new Animated.Value(0)).current;
   
-  // 【核心】简化背景：使用静态 SVG 弥散层（固定位置，无动画）
+  // 【核心】背景淡入淡出动画
+  const backgroundOpacity = useRef(new Animated.Value(1)).current;
   const prevSceneRef = useRef('noise_balanced');
 
   // 页面获得焦点时启动音频分析器
   useFocusEffect(
     useCallback(() => {
       console.log('[NoiseCancellationRoom] 页面聚焦，启动音频分析器');
-      
-      // 【核心】简化：不启动动画，只更新场景引用
-      // prevSceneRef.current 已在 handleModePress 中更新
       
       // 【关键修复】静默预热：强迫 react-native-sound 底层初始化
       console.log('[NoiseCancellationRoom] 🔥 开始预热音频底层...');
@@ -255,8 +219,24 @@ const NoiseCancellationRoom: React.FC = () => {
     console.log('[NoiseCancellationRoom] 切换到新模式:', modeId);
     setIsLoading(true);
     
-    // 【核心】简化：只更新场景引用
-    prevSceneRef.current = modeId;
+    // 【核心】背景淡入淡出动画（1.5 秒平滑过渡）
+    Animated.timing(backgroundOpacity, {
+      toValue: 0,
+      duration: 750,
+      useNativeDriver: true,
+      easing: Easing.inOut(Easing.ease),
+    }).start(() => {
+      // 更新场景引用
+      prevSceneRef.current = modeId;
+      
+      // 淡入新背景（1.5 秒总时长）
+      Animated.timing(backgroundOpacity, {
+        toValue: 1,
+        duration: 750,
+        useNativeDriver: true,
+        easing: Easing.inOut(Easing.ease),
+      }).start();
+    });
     
     // 【关键修复】立即更新 UI 状态（其他卡片立即失去播放态）
     setCurrentSceneId(modeId);
@@ -285,7 +265,6 @@ const NoiseCancellationRoom: React.FC = () => {
   // EQ 控制面板播放状态变化
   const handleEQPlayStateChange = useCallback((newIsPlaying: boolean) => {
     console.log('[NoiseCancellationRoom] EQ 播放状态变化:', newIsPlaying);
-    // 如果 EQ 面板开始播放，清除页面级别的选中模式（避免冲突）
     if (newIsPlaying) {
       setSelectedMode(null);
       setIsPlaying(true);
@@ -299,39 +278,28 @@ const NoiseCancellationRoom: React.FC = () => {
     setVolumeValues(prev => ({ ...prev, [type]: value }));
     triggerHaptic();
     console.log(`[NoiseCancellationRoom] ${type} volume changed to ${Math.round(value)}`);
-    // TODO: 这里将来可以连接实际的音频引擎，调节对应频段的音量
   };
 
-  // 获取当前场景的 SVG 颜色配置
-  const colors = SCENE_SVG_COLORS[(selectedMode || 'noise_balanced') as keyof typeof SCENE_SVG_COLORS] || DEFAULT_SCENE;
+  // 获取当前场景的背景图片
+  const background = SCENE_BACKGROUNDS[(selectedMode || 'noise_balanced') as keyof typeof SCENE_BACKGROUNDS] || DEFAULT_BACKGROUND;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* 【核心】SVG 弥散层背景（静态，无动画） */}
-      <Svg style={styles.svgBackground} preserveAspectRatio="none">
-        <Defs>
-          {/* 高斯模糊滤镜：stdDeviation="60" 以上，营造极光/雾气效果 */}
-          <Filter id="blurFilter">
-            <FeGaussianBlur in="SourceGraphic" stdDeviation="60" />
-          </Filter>
-        </Defs>
-        
-        {/* 底色层 */}
-        <Rect x="0" y="0" width={width} height={height} fill={colors.base} />
-        
-        {/* 弥散圆层（3 个圆，固定位置） */}
-        {colors.circles.map((circle, index) => (
-          <Circle
-            key={index}
-            cx={width * 0.5 + (index - 1) * width * 0.2}
-            cy={height * 0.5 + (index - 1) * height * 0.15}
-            r={Math.max(width, height) * 0.4}
-            fill={circle.color}
-            opacity={circle.opacity}
-            filter="url(#blurFilter)"
-          />
-        ))}
-      </Svg>
+      {/* 【核心】真实图片背景 + 模糊效果 + 淡入淡出动画 */}
+      <Animated.View style={[styles.backgroundContainer, { opacity: backgroundOpacity }]}>
+        <ImageBackground
+          source={background}
+          style={styles.backgroundImage}
+          imageStyle={{
+            resizeMode: 'cover',
+            // 模糊效果：blurRadius 只在 Android 上有效，iOS 需要使用 BlurView
+            blurRadius: Platform.OS === 'android' ? 15 : 0,
+          }}
+        />
+      </Animated.View>
+
+      {/* 蒙层（降低背景干扰，opacity: 0.5） */}
+      <View style={styles.overlay} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -349,7 +317,7 @@ const NoiseCancellationRoom: React.FC = () => {
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
       >
-        {/* 提示文案 - 优化间距 */}
+        {/* 提示文案 */}
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
             背景条显示环境噪音分布，滑动调节对冲音量
@@ -503,7 +471,7 @@ const NoiseCancellationRoom: React.FC = () => {
           </View>
         )}
 
-        {/* 降噪模式选择 - 优化间距 */}
+        {/* 降噪模式选择 */}
         <View style={styles.modesSection}>
           <Text style={styles.modesTitle}>降噪模式</Text>
           <View style={styles.modesGrid}>
@@ -547,17 +515,15 @@ const NoiseCancellationRoom: React.FC = () => {
           </Text>
         </View>
 
-        {/* 8 段均衡器控制面板（绑定 8 轨音频，统一播放状态） */}
+        {/* 8 段均衡器控制面板 */}
         <EQControlPanel 
           sceneName={selectedMode ? `${selectedMode.replace('noise_', '')}_noise` : 'balanced_noise'}
           isPlaying={isPlaying}
           isLoading={isLoading}
           onTogglePlay={async () => {
             if (isPlaying) {
-              // 如果正在播放，点击播放按钮=停止
               await handleStopAll();
             } else {
-              // 如果已停止，点击播放按钮=播放当前选中的场景
               if (selectedMode) {
                 setIsLoading(true);
                 await playNoiseAudio(selectedMode);
@@ -578,7 +544,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-  svgBackground: {
+  backgroundContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -587,12 +553,25 @@ const styles = StyleSheet.create({
     width: width,
     height: height,
   },
+  backgroundImage: {
+    flex: 1,
+    width: width,
+    height: height,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginBottom: 16, // 【优化】从 24 降至 16
+    marginBottom: 16,
   },
   backButton: {
     padding: 8,
@@ -610,11 +589,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40, // 【优化】底部留白，防止被系统操作杆遮挡
+    paddingBottom: 40,
   },
   infoContainer: {
     paddingHorizontal: 24,
-    marginBottom: 20, // 【优化】从 32 降至 20
+    marginBottom: 20,
   },
   infoText: {
     color: 'rgba(255,255,255,0.9)',
@@ -629,12 +608,12 @@ const styles = StyleSheet.create({
   },
   freqContainer: {
     paddingHorizontal: 24,
-    marginBottom: 20, // 【优化】添加底部间距
+    marginBottom: 20,
   },
   freqRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24, // 【优化】从 32 降至 24
+    marginBottom: 24,
     position: 'relative',
   },
   freqLabelContainer: {
@@ -708,7 +687,7 @@ const styles = StyleSheet.create({
   modesSection: {
     paddingHorizontal: 24,
     paddingBottom: 16,
-    marginBottom: 8, // 【优化】减小与 8 段均衡器标题的间距
+    marginBottom: 8,
   },
   modesTitle: {
     color: '#FFF',
@@ -723,24 +702,23 @@ const styles = StyleSheet.create({
   },
   modeCard: {
     width: '48%',
-    backgroundColor: 'transparent',  // 完全透明
+    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',  // 极淡边框
+    borderColor: 'rgba(255,255,255,0.06)',
     position: 'relative',
-    // 软阴影（大范围，微弱，营造浮起感）
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
-    elevation: 8,  // Android 阴影
+    elevation: 8,
   },
   modeCardActive: {
-    backgroundColor: 'rgba(255,255,255,0.03)',  // 选中时极淡高亮
+    backgroundColor: 'rgba(255,255,255,0.03)',
     borderColor: 'rgba(255,255,255,0.12)',
-    shadowOpacity: 0.2,  // 选中时阴影略强
+    shadowOpacity: 0.2,
   },
   modeIconContainer: {
     width: 48,
