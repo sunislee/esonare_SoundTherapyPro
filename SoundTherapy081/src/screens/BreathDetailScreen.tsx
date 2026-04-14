@@ -23,6 +23,7 @@ import { Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import AnimatedFloatingButton from '../components/AnimatedFloatingButton';
 import useLFO, { LFOPresets } from '../hooks/useLFO';
+import { SCENE_LFO_CONFIGS, getSceneLFOConfig, LFOEffectType } from '../config/SceneLFOConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -54,100 +55,198 @@ const BreathDetailScreen: React.FC = () => {
   const sceneId = route.params?.sceneId || 'nature_deep_sea';
   const scene = SCENES.find(s => s.id === sceneId) || SCENES[0];
   
-  // 【LFO 集成】为深海呼吸场景启用 LFO 动态音量调制
-  const lfoCallback = useCallback((volume: number) => {
+  // ==================== 配置化 LFO 回调生成器 ====================
+  // 根据场景配置自动生成对应的 LFO 回调函数
+  
+  /**
+   * 生成音量调制回调（适用于深海呼吸、森林组、流水组等）
+   */
+  const createVolumeCallback = useCallback((sceneId: string) => {
+    const config = getSceneLFOConfig(sceneId);
+    const baseVolume = config.baseVolume || 0.75;
+    const fluctuation = config.volumeFluctuation || 0.05;
+    const period1 = config.randomPeriod1 || 5000;
+    const period2 = config.randomPeriod2 || 7000;
+    
+    return (lfoValue: number) => {
+      const audioService = AudioService.getInstance();
+      
+      // LFO 输出 0-1 映射到音量范围
+      const lfoVolume = config.preset === 'deepSeaBreath' 
+        ? lfoValue  // 深海呼吸使用完整 LFO 范围
+        : 0.5 + (lfoValue - 0.5) * 0.1; // 其他场景使用微小调制
+      
+      // 随机波动
+      const now = Date.now();
+      const randomSeed = Math.sin(now / period1) * Math.cos(now / period2);
+      const volumeFluctuation = randomSeed * fluctuation;
+      
+      const finalVolume = baseVolume * lfoVolume * (1 + volumeFluctuation);
+      
+      console.log(`[LFO-${sceneId}] Volume=${finalVolume.toFixed(2)}`);
+      
+      // 通过 TrackPlayer 设置主音量
+      audioService.setAmbientVolume(finalVolume);
+    };
+  }, []);
+  
+  /**
+   * 生成空间平移回调（适用于舟上雨、书店、禅意组、脑波组等）
+   */
+  const createPanningCallback = useCallback((sceneId: string) => {
+    const config = getSceneLFOConfig(sceneId);
+    const panRange = config.panRange || 0.25;
+    const baseVolume = config.baseVolume || 0.75;
+    const fluctuation = config.volumeFluctuation || 0.03;
+    const period1 = config.randomPeriod1 || 5000;
+    const period2 = config.randomPeriod2 || 7000;
+    
+    return (lfoValue: number) => {
+      const audioService = AudioService.getInstance();
+      
+      // LFO 输出 0-1 映射到 Pan 范围
+      const panValue = (lfoValue - 0.5) * panRange * 2;
+      
+      // 随机音量波动
+      const now = Date.now();
+      const randomSeed = Math.sin(now / period1) * Math.cos(now / period2);
+      const volumeFluctuation = randomSeed * fluctuation;
+      const finalVolume = baseVolume * (1 + volumeFluctuation);
+      
+      console.log(`[LFO-${sceneId}] Pan=${panValue.toFixed(2)}, Volume=${finalVolume.toFixed(2)}`);
+      
+      // 设置 Pan
+      audioService.setExtraSoundPan(sceneId, panValue);
+      
+      // 设置音量
+      audioService.setExtraSoundVolume(sceneId, finalVolume);
+    };
+  }, []);
+  
+  // ==================== 场景特定回调（向后兼容） ====================
+  
+  /** 深海呼吸 - 使用专用 LFO 回调 */
+  const lfoCallback = useCallback((lfoValue: number) => {
     const audioService = AudioService.getInstance();
     const baseVolume = audioService.getAmbientVolume();
+    const finalVolume = baseVolume * lfoValue;
+    console.log(`[DeepSea] Volume=${finalVolume.toFixed(2)}`);
     
-    // 公式：最终音量 = 用户设置音量 * LFO 调制因子
-    const finalVolume = baseVolume * volume;
-    console.log(`[LFO] 音量调制：基础=${baseVolume.toFixed(2)}, LFO=${volume.toFixed(2)}, 最终=${finalVolume.toFixed(2)}`);
-    
-    // 直接调用 TrackPlayer.setVolume（绕过 AudioService.setVolume 避免循环）
     import('react-native-track-player').then(({ default: TrackPlayer }) => {
       TrackPlayer.setVolume(finalVolume).catch(() => {});
     });
   }, []);
   
-  // 【舟上雨 - 空间平移】Pan 回调：LFO 输出 0-1 映射到 Pan -0.25 到 0.25
-  // 同时增加微小的音量随机波动（±5%），模拟自然雨势变化
+  /** 舟上雨 - 空间平移回调（向后兼容） */
   const panningCallback = useCallback((lfoValue: number) => {
     const audioService = AudioService.getInstance();
     
-    // LFO 输出 0-1 → Pan 范围 -0.25 到 0.25
-    // 公式：pan = (lfoValue - 0.5) * 0.5
     const panValue = (lfoValue - 0.5) * 0.5;
-    
-    // 【音量随机波动】极低频率的随机噪声（±5%）
-    // 使用简单的伪随机算法，基于时间生成平滑的随机值
     const now = Date.now();
-    const randomSeed = Math.sin(now / 5000) * Math.cos(now / 7000); // 超低频组合
-    const volumeFluctuation = randomSeed * 0.05; // ±5% 波动
-    
-    // 基础音量 0.8 + 随机波动 ±5%
+    const randomSeed = Math.sin(now / 5000) * Math.cos(now / 7000);
+    const volumeFluctuation = randomSeed * 0.05;
     const baseVolume = 0.8;
     const finalVolume = baseVolume * (1 + volumeFluctuation);
     
     console.log(`[Panning] LFO=${lfoValue.toFixed(2)}, Pan=${panValue.toFixed(2)}, Volume=${finalVolume.toFixed(2)}`);
     
-    // 设置 Pan（空间平移）
     audioService.setAmbientPan(panValue);
     
-    // 设置音量（微小随机波动）
     if (audioService.getBoatRainSound()) {
       audioService.getBoatRainSound().setVolume(finalVolume);
     }
   }, []);
   
-  // 【午后书店 - 空间聚焦】Pan 回调：LFO 输出 0-1 映射到 Pan -0.15 到 0.15
-  // 同时增加微小的音量随机波动（±3%），模拟咖啡馆/书店环境变化
+  /** 午后书店 - 空间聚焦回调（向后兼容） */
   const bookstoreCallback = useCallback((lfoValue: number) => {
     const audioService = AudioService.getInstance();
     
-    // LFO 输出 0-1 → Pan 范围 -0.15 到 0.15
-    // 公式：pan = (lfoValue - 0.5) * 0.3
     const panValue = (lfoValue - 0.5) * 0.3;
-    
-    // 【音量随机波动】超低频率的随机噪声（±3%）
-    // 使用更长周期的双正弦波算法
     const now = Date.now();
-    const randomSeed = Math.sin(now / 8000) * Math.cos(now / 11000); // 超低频组合
-    const volumeFluctuation = randomSeed * 0.03; // ±3% 波动
-    
-    // 基础音量 0.7 + 随机波动 ±3%
+    const randomSeed = Math.sin(now / 8000) * Math.cos(now / 11000);
+    const volumeFluctuation = randomSeed * 0.03;
     const baseVolume = 0.7;
     const finalVolume = baseVolume * (1 + volumeFluctuation);
     
     console.log(`[Bookstore] LFO=${lfoValue.toFixed(2)}, Pan=${panValue.toFixed(2)}, Volume=${finalVolume.toFixed(2)}`);
     
-    // 设置 Pan（空间平移）
     audioService.setBookstorePan(panValue);
     
-    // 设置音量（微小随机波动）
     if (audioService.getBookstoreSound()) {
       audioService.getBookstoreSound().setVolume(finalVolume);
     }
   }, []);
   
-  // 仅在深海呼吸场景启用 LFO
+  // ==================== 配置化 LFO 管理 ====================
+  // 根据场景配置自动启用对应的 LFO 效果
+  
+  // 获取当前场景配置
+  const sceneConfig = useMemo(() => getSceneLFOConfig(sceneId), [sceneId]);
+  
+  // 深海呼吸场景（特殊处理）
   const shouldEnableLFO = sceneId === 'nature_deep_sea';
   const { start: startLFO, stop: stopLFO } = useLFO(
     shouldEnableLFO ? LFOPresets.deepSeaBreath() : {},
     shouldEnableLFO ? lfoCallback : undefined
   );
   
-  // 仅在舟上雨场景启用 Panning
+  // 舟上雨场景（向后兼容）
   const shouldEnablePanning = sceneId === 'scene_boat_rain';
   const { start: startPanning, stop: stopPanning } = useLFO(
     shouldEnablePanning ? LFOPresets.boatRainPanning() : {},
     shouldEnablePanning ? panningCallback : undefined
   );
   
-  // 仅在书店场景启用 Panning
+  // 午后书店场景（向后兼容）
   const shouldEnableBookstore = sceneId === 'scene_bookstore';
   const { start: startBookstore, stop: stopBookstore } = useLFO(
     shouldEnableBookstore ? LFOPresets.bookstoreFocus() : {},
     shouldEnableBookstore ? bookstoreCallback : undefined
+  );
+  
+  // 配置化场景（森林组/禅意组/流水组/脑波组）
+  const shouldEnableConfigLFO = sceneConfig.enabled && 
+    !['nature_deep_sea', 'scene_boat_rain', 'scene_bookstore'].includes(sceneId);
+  
+  const configPreset = useMemo(() => {
+    if (!shouldEnableConfigLFO) return {};
+    
+    switch (sceneConfig.preset) {
+      case 'forestBreathing':
+        return LFOPresets.forestBreathing();
+      case 'zenVibration':
+        return LFOPresets.zenVibration();
+      case 'riverFlow':
+        return LFOPresets.riverFlow();
+      case 'brainwaveSync':
+        return LFOPresets.brainwaveSync();
+      default:
+        return {};
+    }
+  }, [shouldEnableConfigLFO, sceneConfig.preset]);
+  
+  // 根据效果类型选择回调
+  const configCallback = useMemo(() => {
+    if (!shouldEnableConfigLFO) return undefined;
+    
+    const hasPanning = sceneConfig.effects.includes(LFOEffectType.PANNING);
+    const hasVolume = sceneConfig.effects.includes(LFOEffectType.VOLUME);
+    const hasFilter = sceneConfig.effects.includes(LFOEffectType.LOWPASS_FILTER);
+    
+    if (hasPanning) {
+      return createPanningCallback(sceneId);
+    } else if (hasFilter) {
+      return createForestCallback(sceneId);
+    } else if (hasVolume) {
+      return createVolumeCallback(sceneId);
+    }
+    
+    return undefined;
+  }, [shouldEnableConfigLFO, sceneId, sceneConfig.effects]);
+  
+  const { start: startConfigLFO, stop: stopConfigLFO } = useLFO(
+    configPreset,
+    configCallback
   );
 
   const placeholderColor = useMemo(() => {
@@ -201,18 +300,42 @@ const BreathDetailScreen: React.FC = () => {
         await audioService.switchSoundscape(scene);
       }
       
-      // 【舟上雨 - 空间平移】为舟上雨场景启用 Panning LFO
+      // ==================== 配置化 LFO 启用逻辑 ====================
+      
+      // 1. 深海呼吸（特殊处理）
+      if (shouldEnableLFO) {
+        console.log('[BreathDetail] 🌊 启用深海呼吸 LFO');
+        startLFO();
+      }
+      
+      // 2. 舟上雨（向后兼容）
       if (shouldEnablePanning) {
-        console.log('[BreathDetail] 为舟上雨场景启用 Panning LFO');
+        console.log('[BreathDetail] 🌧️ 为舟上雨启用 Panning LFO');
         audioService.enablePanningForScene(scene.id);
         startPanning();
       }
       
-      // 【午后书店 - 空间聚焦】为书店场景启用 Panning LFO
+      // 3. 午后书店（向后兼容）
       if (shouldEnableBookstore) {
-        console.log('[BreathDetail] 为书店场景启用 Panning LFO (45 秒周期)');
+        console.log('[BreathDetail] 📚 为书店启用 Panning LFO (45 秒周期)');
         audioService.enableBookstorePanning(scene.id);
         startBookstore();
+      }
+      
+      // 4. 配置化场景（森林/禅意/流水/脑波）
+      if (shouldEnableConfigLFO) {
+        console.log(`[BreathDetail] 🎯 为场景 ${scene.id} 启用配置化 LFO (${sceneConfig.preset})`);
+        
+        // 加载 ExtraSound
+        await audioService.loadExtraSound(scene.id);
+        
+        // 注册 LFO Disposer
+        audioService.registerLFODisposer(scene.id, () => {
+          console.log(`[BreathDetail] 🧹 清理场景 ${scene.id} LFO`);
+        });
+        
+        // 启动 LFO
+        startConfigLFO();
       }
       
       setIsLoading(false);
@@ -225,27 +348,36 @@ const BreathDetailScreen: React.FC = () => {
       console.log('[BreathDetail] Stopping all ambient sounds on exit.');
       audioService.stopAllAmbient();
       
-      // 【LFO 集成】退出时停止 LFO
+      // ==================== 配置化 LFO 清理逻辑 ====================
+      
+      // 1. 深海呼吸
       if (shouldEnableLFO) {
         stopLFO();
-        console.log('[BreathDetail] ✅ LFO 已停止');
+        console.log('[BreathDetail] ✅ 深海呼吸 LFO 已停止');
       }
       
-      // 【舟上雨 - 空间平移】退出时停止 Panning
+      // 2. 舟上雨（向后兼容）
       if (shouldEnablePanning) {
         stopPanning();
         audioService.disablePanning();
-        console.log('[BreathDetail] ✅ Panning 已停止');
+        console.log('[BreathDetail] ✅ 舟上雨 Panning 已停止');
       }
       
-      // 【午后书店 - 空间聚焦】退出时停止 Panning
+      // 3. 午后书店（向后兼容）
       if (shouldEnableBookstore) {
         stopBookstore();
         audioService.disableBookstorePanning();
         console.log('[BreathDetail] ✅ 书店 Panning 已停止');
       }
+      
+      // 4. 配置化场景
+      if (shouldEnableConfigLFO) {
+        stopConfigLFO();
+        audioService.cleanupScene(sceneId);
+        console.log(`[BreathDetail] ✅ 场景 ${sceneId} 已清理`);
+      }
     };
-  }, [scene.id, shouldEnableLFO, stopLFO, shouldEnablePanning, stopPanning, shouldEnableBookstore, stopBookstore]);
+  }, [scene.id, sceneId, shouldEnableLFO, stopLFO, shouldEnablePanning, stopPanning, shouldEnableBookstore, stopBookstore, shouldEnableConfigLFO, stopConfigLFO]);
 
   const togglePlayback = async () => {
     const audioService = AudioService.getInstance();

@@ -252,6 +252,42 @@ export const LFOPresets = {
     crossfadeMode: false,
   }),
   
+  /** 森林组 - 呼吸：35 秒周期，音量 0.7 ± 8%，模拟雾气吸声 */
+  forestBreathing: (): LFOConfig => ({
+    period: 35,           // 35 秒周期，模拟森林呼吸
+    minVolume: 0.62,      // 0.7 - 8% = 0.62
+    maxVolume: 0.78,      // 0.7 + 8% = 0.78
+    inhaleRatio: 0.5,     // 对称呼吸
+    crossfadeMode: false,
+  }),
+  
+  /** 禅意组 - 共振：60 秒超长周期，音量 ±2%，Pan ±0.05，模拟能量场共振 */
+  zenVibration: (): LFOConfig => ({
+    period: 60,           // 60 秒超长周期，极慢速共振
+    minVolume: 0.0,       // 不用于音量调制（由回调控制）
+    maxVolume: 1.0,       // LFO 输出 0-1
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 流水组 - 流动：15 秒周期，双正弦波随机算法，音量 ±6% */
+  riverFlow: (): LFOConfig => ({
+    period: 15,           // 15 秒周期，模拟水流拍击
+    minVolume: 0.0,       // 不用于音量调制（由回调控制）
+    maxVolume: 1.0,       // LFO 输出 0-1
+    inhaleRatio: 0.5,     // 对称波形
+    crossfadeMode: false,
+  }),
+  
+  /** 脑波组 - 同步：120 秒超长周期，几乎静止的音量调制，声场极慢漂移 */
+  brainwaveSync: (): LFOConfig => ({
+    period: 120,          // 120 秒超长周期，几乎静止
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
   /** 森林鸟鸣：12 秒周期，70%-100% 音量，3:7 慢呼快吸 */
   forestBirds: (): LFOConfig => ({
     period: 12,
