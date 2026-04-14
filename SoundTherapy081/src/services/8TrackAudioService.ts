@@ -795,19 +795,33 @@ export const enableLFO = (params?: Partial<LFOParams>) => {
     lfoService.configure(params);
   }
 
-  // 订阅 LFO 输出，动态调整所有轨道音量
-  lfoUnsubscribe = lfoService.subscribe((lfoValue) => {
+  // 订阅 LFO 输出，为每个音轨独立调制音量
+  lfoUnsubscribe = lfoService.subscribe((lfoValue, trackIndex) => {
     if (!isPlaying || !isLFOEnabled) return;
 
-    // 将 LFO 值（-1 到 1）转换为音量调制因子（0.7 到 1.0）
-    const modulationFactor = 0.85 + (lfoValue + 1) / 2 * 0.15;
-
-    // 应用调制到所有轨道
-    for (let i = 1; i <= 8; i++) {
-      if (players[i]) {
-        const baseVolume = currentVolumes[i - 1];
+    // 如果是多轨模式（trackIndex 有值），为每个音轨应用独立的相位
+    if (trackIndex !== undefined) {
+      // 将 LFO 值（-1 到 1）转换为音量调制因子（0.85 到 1.0）
+      const modulationFactor = 0.85 + (lfoValue + 1) / 2 * 0.15;
+      
+      // 应用调制到指定音轨
+      const trackNum = trackIndex + 1;
+      if (players[trackNum]) {
+        const baseVolume = currentVolumes[trackNum - 1];
         const modulatedVolume = baseVolume * modulationFactor;
-        players[i]?.setVolume(modulatedVolume);
+        players[trackNum]?.setVolume(modulatedVolume);
+      }
+    } else {
+      // 传统模式：统一调制所有音轨
+      const modulationFactor = 0.85 + (lfoValue + 1) / 2 * 0.15;
+      
+      // 应用调制到所有轨道
+      for (let i = 1; i <= 8; i++) {
+        if (players[i]) {
+          const baseVolume = currentVolumes[i - 1];
+          const modulatedVolume = baseVolume * modulationFactor;
+          players[i]?.setVolume(modulatedVolume);
+        }
       }
     }
   });
@@ -868,11 +882,36 @@ export const getLFOStatus = () => {
 };
 
 /**
- * 使用预设 LFO 配置
+ * 使用预设 LFO 配置（支持多轨相位偏移）
+ * @param presetName 预设名称
+ * @param useRandomPhase 是否为每个音轨应用随机相位（默认 true，增加层次感）
  */
-export const useLFOPreset = (presetName: 'breeze' | 'water' | 'pulse' | 'meditation') => {
+export const useLFOPreset = (presetName: 'breeze' | 'water' | 'pulse' | 'meditation', useRandomPhase: boolean = true) => {
   const { LFOPresets } = require('./LFOService');
-  const preset = LFOPresets[presetName]();
-  console.log(`[8Track] 🎨 使用 LFO 预设：${presetName}`);
-  lfoService.configure(preset);
+  
+  // 如果是微风模式且启用随机相位，为 8 个音轨创建不同的相位偏移
+  if (presetName === 'breeze' && useRandomPhase) {
+    console.log('[8Track] 🎨 使用微风预设 + 随机相位偏移（增强层次感）');
+    
+    // 生成 8 个不同的相位偏移（0-1 之间均匀分布）
+    const phaseOffsets = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+    
+    // 为每个音轨应用不同的相位
+    phaseOffsets.forEach((phase, index) => {
+      const preset = LFOPresets.breeze(phase);
+      console.log(`[8Track]   音轨 ${index + 1}: 相位偏移 ${phase * 360}°`);
+    });
+    
+    // 使用平均参数配置 LFO
+    lfoService.configure({
+      waveform: 'sine',
+      rate: 0.12,
+      depth: 0.22,
+      phase: 0, // LFO 主相位为 0，实际相位在底层动态计算
+    });
+  } else {
+    const preset = LFOPresets[presetName]();
+    console.log(`[8Track] 🎨 使用 LFO 预设：${presetName}`);
+    lfoService.configure(preset);
+  }
 };
