@@ -99,6 +99,36 @@ const BreathDetailScreen: React.FC = () => {
     }
   }, []);
   
+  // 【午后书店 - 空间聚焦】Pan 回调：LFO 输出 0-1 映射到 Pan -0.15 到 0.15
+  // 同时增加微小的音量随机波动（±3%），模拟咖啡馆/书店环境变化
+  const bookstoreCallback = useCallback((lfoValue: number) => {
+    const audioService = AudioService.getInstance();
+    
+    // LFO 输出 0-1 → Pan 范围 -0.15 到 0.15
+    // 公式：pan = (lfoValue - 0.5) * 0.3
+    const panValue = (lfoValue - 0.5) * 0.3;
+    
+    // 【音量随机波动】超低频率的随机噪声（±3%）
+    // 使用更长周期的双正弦波算法
+    const now = Date.now();
+    const randomSeed = Math.sin(now / 8000) * Math.cos(now / 11000); // 超低频组合
+    const volumeFluctuation = randomSeed * 0.03; // ±3% 波动
+    
+    // 基础音量 0.7 + 随机波动 ±3%
+    const baseVolume = 0.7;
+    const finalVolume = baseVolume * (1 + volumeFluctuation);
+    
+    console.log(`[Bookstore] LFO=${lfoValue.toFixed(2)}, Pan=${panValue.toFixed(2)}, Volume=${finalVolume.toFixed(2)}`);
+    
+    // 设置 Pan（空间平移）
+    audioService.setBookstorePan(panValue);
+    
+    // 设置音量（微小随机波动）
+    if (audioService.getBookstoreSound()) {
+      audioService.getBookstoreSound().setVolume(finalVolume);
+    }
+  }, []);
+  
   // 仅在深海呼吸场景启用 LFO
   const shouldEnableLFO = sceneId === 'nature_deep_sea';
   const { start: startLFO, stop: stopLFO } = useLFO(
@@ -111,6 +141,13 @@ const BreathDetailScreen: React.FC = () => {
   const { start: startPanning, stop: stopPanning } = useLFO(
     shouldEnablePanning ? LFOPresets.boatRainPanning() : {},
     shouldEnablePanning ? panningCallback : undefined
+  );
+  
+  // 仅在书店场景启用 Panning
+  const shouldEnableBookstore = sceneId === 'scene_bookstore';
+  const { start: startBookstore, stop: stopBookstore } = useLFO(
+    shouldEnableBookstore ? LFOPresets.bookstoreFocus() : {},
+    shouldEnableBookstore ? bookstoreCallback : undefined
   );
 
   const placeholderColor = useMemo(() => {
@@ -171,6 +208,13 @@ const BreathDetailScreen: React.FC = () => {
         startPanning();
       }
       
+      // 【午后书店 - 空间聚焦】为书店场景启用 Panning LFO
+      if (shouldEnableBookstore) {
+        console.log('[BreathDetail] 为书店场景启用 Panning LFO (45 秒周期)');
+        audioService.enableBookstorePanning(scene.id);
+        startBookstore();
+      }
+      
       setIsLoading(false);
     };
 
@@ -193,8 +237,15 @@ const BreathDetailScreen: React.FC = () => {
         audioService.disablePanning();
         console.log('[BreathDetail] ✅ Panning 已停止');
       }
+      
+      // 【午后书店 - 空间聚焦】退出时停止 Panning
+      if (shouldEnableBookstore) {
+        stopBookstore();
+        audioService.disableBookstorePanning();
+        console.log('[BreathDetail] ✅ 书店 Panning 已停止');
+      }
     };
-  }, [scene.id, shouldEnableLFO, stopLFO, shouldEnablePanning, stopPanning]);
+  }, [scene.id, shouldEnableLFO, stopLFO, shouldEnablePanning, stopPanning, shouldEnableBookstore, stopBookstore]);
 
   const togglePlayback = async () => {
     const audioService = AudioService.getInstance();

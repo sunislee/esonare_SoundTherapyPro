@@ -143,6 +143,11 @@ class AudioService {
   private boatRainSound: Sound | null = null;
   private currentLFOPanDisposer: (() => void) | null = null;
   private isPanningEnabled: boolean = false;
+  
+  // 【午后书店 - 空间聚焦】
+  private bookstoreSound: Sound | null = null;
+  private currentLFOBookstoreDisposer: (() => void) | null = null;
+  private isBookstorePanningEnabled: boolean = false;
 
   private constructor() {
     AppState.addEventListener('change', this.handleAppStateChange);
@@ -1410,6 +1415,131 @@ class AudioService {
    */
   public getBoatRainSound = (): Sound | null => {
     return this.boatRainSound;
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】设置 Pan 值（-1.0 到 1.0）
+   * @param pan Pan 值，-1.0=最左，0=中央，1.0=最右
+   */
+  public setBookstorePan = async (pan: number): Promise<void> => {
+    const clampedPan = Math.max(-1.0, Math.min(1.0, pan));
+    
+    if (this.bookstoreSound && this.bookstoreSound.isLoaded()) {
+      this.bookstoreSound.pan(clampedPan);
+      console.log('[AudioService] 📚 设置书店 Pan:', clampedPan.toFixed(2));
+    } else {
+      console.warn('[AudioService] ⚠️ 书店 Sound 未加载，跳过 Pan 设置');
+    }
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】为书店场景启用 LFO Panning
+   * @param sceneId 场景 ID
+   */
+  public enableBookstorePanning = (sceneId: string) => {
+    // 清理旧的 Panning
+    this.disableBookstorePanning();
+    
+    // 仅对书店场景启用 Panning
+    if (sceneId !== 'scene_bookstore') {
+      console.log('[AudioService] ⚠️ 场景', sceneId, '不支持书店 Panning，跳过');
+      return;
+    }
+    
+    console.log('[AudioService] 📚 为书店场景启用 Panning LFO (45 秒周期)');
+    this.isBookstorePanningEnabled = true;
+    
+    // 加载书店音频到 Sound 实例
+    this.loadBookstoreSound().then(() => {
+      console.log('[AudioService] ✅ 书店 Sound 已加载，等待 Hook 调用');
+    }).catch(error => {
+      console.error('[AudioService] ❌ 加载书店 Sound 失败:', error);
+      this.isBookstorePanningEnabled = false;
+    });
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】禁用 Panning
+   */
+  public disableBookstorePanning = () => {
+    if (this.currentLFOBookstoreDisposer) {
+      console.log('[AudioService] 📚 禁用书店 Panning');
+      this.currentLFOBookstoreDisposer();
+      this.currentLFOBookstoreDisposer = null;
+    }
+    this.isBookstorePanningEnabled = false;
+    
+    // Pan 归零
+    this.setBookstorePan(0);
+    console.log('[AudioService] ✅ 书店 Panning 已禁用，Pan 归零');
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】加载书店音频到 Sound 实例
+   */
+  private loadBookstoreSound = async (): Promise<void> => {
+    // 先停止旧的实例
+    if (this.bookstoreSound) {
+      this.bookstoreSound.stop();
+      this.bookstoreSound.release();
+      this.bookstoreSound = null;
+    }
+    
+    // 获取书店音频路径
+    const audioAsset = AUDIO_MAP['scene_bookstore'];
+    if (!audioAsset) {
+      throw new Error('书店音频配置不存在');
+    }
+    
+    const localPath = await getLocalPath('scene_bookstore');
+    
+    return new Promise((resolve, reject) => {
+      Sound.setCategory('Playback', true); // 允许与其他音频混合
+      
+      const sound = new Sound(localPath, '', (error) => {
+        if (error) {
+          console.error('[AudioService] ❌ 加载书店 Sound 失败:', error);
+          reject(error);
+          return;
+        }
+        
+        console.log('[AudioService] ✅ 书店 Sound 加载成功');
+        this.bookstoreSound = sound;
+        
+        // 设置为循环播放
+        sound.setNumberOfLoops(-1);
+        
+        // 设置音量（不干扰 TrackPlayer 的主场景音量）
+        sound.setVolume(0.7);
+        
+        // 播放
+        sound.play((success) => {
+          if (success) {
+            console.log('[AudioService] ✅ 书店 Sound 播放完成');
+          } else {
+            console.warn('[AudioService] ⚠️ 书店 Sound 播放失败');
+          }
+        });
+        
+        resolve();
+      });
+    });
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】设置 Panning LFO 回调
+   * @param disposer 停止函数
+   */
+  public setBookstoreLFOCallback = (disposer: () => void) => {
+    this.currentLFOBookstoreDisposer = disposer;
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】获取 Sound 实例（用于音量控制）
+   * @returns Sound 实例或 null
+   */
+  public getBookstoreSound = (): Sound | null => {
+    return this.bookstoreSound;
   };
   
   /**
