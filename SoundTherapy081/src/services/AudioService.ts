@@ -139,12 +139,19 @@ class AudioService {
   private lfoBaseVolume: number = 1.0; // 用户设置的基础音量
   private isLFOEnabled: boolean = false;
   
-  // 【舟上雨 - 空间平移 Panning】
+  // 【全场景 ExtraSound 映射表】支持 14 个场景的独立 Sound 实例
+  // Key: sceneId, Value: Sound 实例
+  private activeExtraSounds: Map<string, Sound> = new Map();
+  
+  // 【全场景 LFO Disposer 映射表】
+  private activeLFODisposers: Map<string, () => void> = new Map();
+  
+  // 【舟上雨 - 空间平移 Panning】（保留向后兼容）
   private boatRainSound: Sound | null = null;
   private currentLFOPanDisposer: (() => void) | null = null;
   private isPanningEnabled: boolean = false;
   
-  // 【午后书店 - 空间聚焦】
+  // 【午后书店 - 空间聚焦】（保留向后兼容）
   private bookstoreSound: Sound | null = null;
   private currentLFOBookstoreDisposer: (() => void) | null = null;
   private isBookstorePanningEnabled: boolean = false;
@@ -1410,30 +1417,183 @@ class AudioService {
   };
 
   /**
-   * 【舟上雨 - 空间平移】获取 Sound 实例（用于音量控制）
+   * 【全场景通用】获取 ExtraSound 实例
+   * @param sceneId 场景 ID
    * @returns Sound 实例或 null
    */
-  public getBoatRainSound = (): Sound | null => {
-    return this.boatRainSound;
+  public getExtraSound = (sceneId: string): Sound | null => {
+    return this.activeExtraSounds.get(sceneId) || null;
   };
 
   /**
-   * 【午后书店 - 空间聚焦】设置 Pan 值（-1.0 到 1.0）
-   * @param pan Pan 值，-1.0=最左，0=中央，1.0=最右
+   * 【全场景通用】为场景加载 ExtraSound
+   * @param sceneId 场景 ID
    */
-  public setBookstorePan = async (pan: number): Promise<void> => {
-    const clampedPan = Math.max(-1.0, Math.min(1.0, pan));
+  public loadExtraSound = async (sceneId: string): Promise<void> => {
+    // 先停止旧的实例
+    const oldSound = this.activeExtraSounds.get(sceneId);
+    if (oldSound) {
+      oldSound.stop();
+      oldSound.release();
+      this.activeExtraSounds.delete(sceneId);
+    }
     
-    if (this.bookstoreSound && this.bookstoreSound.isLoaded()) {
-      this.bookstoreSound.pan(clampedPan);
-      console.log('[AudioService] 📚 设置书店 Pan:', clampedPan.toFixed(2));
+    // 获取音频路径
+    const audioAsset = AUDIO_MAP[sceneId];
+    if (!audioAsset) {
+      throw new Error(`场景 ${sceneId} 音频配置不存在`);
+    }
+    
+    const localPath = await getLocalPath(sceneId);
+    
+    return new Promise((resolve, reject) => {
+      Sound.setCategory('Playback', true);
+      
+      const sound = new Sound(localPath, '', (error) => {
+        if (error) {
+          console.error(`[AudioService] ❌ 加载场景 ${sceneId} Sound 失败:`, error);
+          reject(error);
+          return;
+        }
+        
+        console.log(`[AudioService] ✅ 场景 ${sceneId} Sound 加载成功`);
+        this.activeExtraSounds.set(sceneId, sound);
+        
+        // 设置为循环播放
+        sound.setNumberOfLoops(-1);
+        
+        // 默认音量 0.75
+        sound.setVolume(0.75);
+        
+        // 播放
+        sound.play((success) => {
+          if (success) {
+            console.log(`[AudioService] ✅ 场景 ${sceneId} Sound 播放完成`);
+          } else {
+            console.warn(`[AudioService] ⚠️ 场景 ${sceneId} Sound 播放失败`);
+          }
+        });
+        
+        resolve();
+      });
+    });
+  };
+
+  /**
+   * 【全场景通用】设置场景 Pan 值
+   * @param sceneId 场景 ID
+   * @param pan Pan 值（-1.0 到 1.0）
+   */
+  public setExtraSoundPan = async (sceneId: string, pan: number): Promise<void> => {
+    const clampedPan = Math.max(-1.0, Math.min(1.0, pan));
+    const sound = this.activeExtraSounds.get(sceneId);
+    
+    if (sound && sound.isLoaded()) {
+      sound.pan(clampedPan);
+      console.log(`[AudioService] 🎧 设置场景 ${sceneId} Pan:`, clampedPan.toFixed(2));
     } else {
-      console.warn('[AudioService] ⚠️ 书店 Sound 未加载，跳过 Pan 设置');
+      console.warn(`[AudioService] ⚠️ 场景 ${sceneId} Sound 未加载，跳过 Pan 设置`);
     }
   };
 
   /**
-   * 【午后书店 - 空间聚焦】为书店场景启用 LFO Panning
+   * 【全场景通用】设置场景音量
+   * @param sceneId 场景 ID
+   * @param volume 音量（0-1）
+   */
+  public setExtraSoundVolume = (sceneId: string, volume: number): void => {
+    const sound = this.activeExtraSounds.get(sceneId);
+    
+    if (sound && sound.isLoaded()) {
+      sound.setVolume(volume);
+      console.log(`[AudioService] 🔊 设置场景 ${sceneId} Volume:`, volume.toFixed(2));
+    } else {
+      console.warn(`[AudioService] ⚠️ 场景 ${sceneId} Sound 未加载，跳过音量设置`);
+    }
+  };
+
+  /**
+   * 【全场景通用】注册 LFO Disposer
+   * @param sceneId 场景 ID
+   * @param disposer 停止函数
+   */
+  public registerLFODisposer = (sceneId: string, disposer: () => void): void => {
+    // 先清理旧的
+    this.unregisterLFODisposer(sceneId);
+    
+    this.activeLFODisposers.set(sceneId, disposer);
+    console.log(`[AudioService] 📝 注册场景 ${sceneId} LFO Disposer`);
+  };
+
+  /**
+   * 【全场景通用】注销 LFO Disposer
+   * @param sceneId 场景 ID
+   */
+  public unregisterLFODisposer = (sceneId: string): void => {
+    const disposer = this.activeLFODisposers.get(sceneId);
+    if (disposer) {
+      disposer();
+      this.activeLFODisposers.delete(sceneId);
+      console.log(`[AudioService] 🗑️ 注销场景 ${sceneId} LFO Disposer`);
+    }
+  };
+
+  /**
+   * 【全场景通用】清理场景的所有资源
+   * @param sceneId 场景 ID
+   */
+  public cleanupScene = (sceneId: string): void => {
+    // 清理 LFO
+    this.unregisterLFODisposer(sceneId);
+    
+    // 清理 Sound 实例
+    const sound = this.activeExtraSounds.get(sceneId);
+    if (sound) {
+      sound.stop();
+      sound.release();
+      this.activeExtraSounds.delete(sceneId);
+      console.log(`[AudioService] 🧹 清理场景 ${sceneId} Sound 实例`);
+    }
+  };
+
+  /**
+   * 【全场景通用】清理所有场景资源
+   */
+  public cleanupAllScenes = (): void => {
+    // 清理所有 LFO
+    this.activeLFODisposers.forEach((disposer, sceneId) => {
+      disposer();
+      console.log(`[AudioService] 🧹 清理场景 ${sceneId} LFO`);
+    });
+    this.activeLFODisposers.clear();
+    
+    // 清理所有 Sound 实例
+    this.activeExtraSounds.forEach((sound, sceneId) => {
+      sound.stop();
+      sound.release();
+      console.log(`[AudioService] 🧹 清理场景 ${sceneId} Sound`);
+    });
+    this.activeExtraSounds.clear();
+  };
+
+  /**
+   * 【舟上雨 - 空间平移】获取 Sound 实例（向后兼容）
+   * @returns Sound 实例或 null
+   */
+  public getBoatRainSound = (): Sound | null => {
+    return this.boatRainSound || this.getExtraSound('scene_boat_rain');
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】设置 Pan 值（向后兼容）
+   * @param pan Pan 值，-1.0=最左，0=中央，1.0=最右
+   */
+  public setBookstorePan = async (pan: number): Promise<void> => {
+    return this.setExtraSoundPan('scene_bookstore', pan);
+  };
+
+  /**
+   * 【午后书店 - 空间聚焦】为书店场景启用 LFO Panning（向后兼容）
    * @param sceneId 场景 ID
    */
   public enableBookstorePanning = (sceneId: string) => {
@@ -1459,7 +1619,7 @@ class AudioService {
   };
 
   /**
-   * 【午后书店 - 空间聚焦】禁用 Panning
+   * 【午后书店 - 空间聚焦】禁用 Panning（向后兼容）
    */
   public disableBookstorePanning = () => {
     if (this.currentLFOBookstoreDisposer) {
@@ -1475,71 +1635,27 @@ class AudioService {
   };
 
   /**
-   * 【午后书店 - 空间聚焦】加载书店音频到 Sound 实例
+   * 【午后书店 - 空间聚焦】加载书店音频到 Sound 实例（向后兼容）
    */
   private loadBookstoreSound = async (): Promise<void> => {
-    // 先停止旧的实例
-    if (this.bookstoreSound) {
-      this.bookstoreSound.stop();
-      this.bookstoreSound.release();
-      this.bookstoreSound = null;
-    }
-    
-    // 获取书店音频路径
-    const audioAsset = AUDIO_MAP['scene_bookstore'];
-    if (!audioAsset) {
-      throw new Error('书店音频配置不存在');
-    }
-    
-    const localPath = await getLocalPath('scene_bookstore');
-    
-    return new Promise((resolve, reject) => {
-      Sound.setCategory('Playback', true); // 允许与其他音频混合
-      
-      const sound = new Sound(localPath, '', (error) => {
-        if (error) {
-          console.error('[AudioService] ❌ 加载书店 Sound 失败:', error);
-          reject(error);
-          return;
-        }
-        
-        console.log('[AudioService] ✅ 书店 Sound 加载成功');
-        this.bookstoreSound = sound;
-        
-        // 设置为循环播放
-        sound.setNumberOfLoops(-1);
-        
-        // 设置音量（不干扰 TrackPlayer 的主场景音量）
-        sound.setVolume(0.7);
-        
-        // 播放
-        sound.play((success) => {
-          if (success) {
-            console.log('[AudioService] ✅ 书店 Sound 播放完成');
-          } else {
-            console.warn('[AudioService] ⚠️ 书店 Sound 播放失败');
-          }
-        });
-        
-        resolve();
-      });
-    });
+    return this.loadExtraSound('scene_bookstore');
   };
 
   /**
-   * 【午后书店 - 空间聚焦】设置 Panning LFO 回调
+   * 【午后书店 - 空间聚焦】设置 Panning LFO 回调（向后兼容）
    * @param disposer 停止函数
    */
   public setBookstoreLFOCallback = (disposer: () => void) => {
     this.currentLFOBookstoreDisposer = disposer;
+    this.registerLFODisposer('scene_bookstore', disposer);
   };
 
   /**
-   * 【午后书店 - 空间聚焦】获取 Sound 实例（用于音量控制）
+   * 【午后书店 - 空间聚焦】获取 Sound 实例（向后兼容）
    * @returns Sound 实例或 null
    */
   public getBookstoreSound = (): Sound | null => {
-    return this.bookstoreSound;
+    return this.bookstoreSound || this.getExtraSound('scene_bookstore');
   };
   
   /**
