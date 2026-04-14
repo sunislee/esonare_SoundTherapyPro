@@ -225,12 +225,21 @@ export const LFOPresets = {
     crossfadeMode: false,
   }),
   
-  /** 舟上雨：8 秒周期，80%-100% 音量，5:5 对称呼吸 */
+  /** 舟上雨：20 秒周期，80%-100% 音量，5:5 对称呼吸，标准正弦波 */
   boatRain: (): LFOConfig => ({
-    period: 8,
+    period: 20,           // 极慢速晃动，消除机械感
     minVolume: 0.8,
     maxVolume: 1.0,
-    inhaleRatio: 0.5,
+    inhaleRatio: 0.5,     // 对称呼吸
+    crossfadeMode: false,
+  }),
+  
+  /** 舟上雨 - 空间平移：20 秒周期，Pan 范围 -0.25 到 0.25，标准正弦波 */
+  boatRainPanning: (): LFOConfig => ({
+    period: 20,           // 20 秒超慢周期，模拟缓慢晃动
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.25 到 0.25
+    inhaleRatio: 0.5,     // 对称波形
     crossfadeMode: false,
   }),
   

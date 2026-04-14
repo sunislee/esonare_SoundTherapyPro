@@ -69,11 +69,30 @@ const BreathDetailScreen: React.FC = () => {
     });
   }, []);
   
+  // 【舟上雨 - 空间平移】Pan 回调：LFO 输出 0-1 映射到 Pan -0.25 到 0.25
+  const panningCallback = useCallback((lfoValue: number) => {
+    const audioService = AudioService.getInstance();
+    
+    // LFO 输出 0-1 → Pan 范围 -0.25 到 0.25
+    // 公式：pan = (lfoValue - 0.5) * 0.5
+    const panValue = (lfoValue - 0.5) * 0.5;
+    
+    console.log(`[Panning] LFO=${lfoValue.toFixed(2)}, Pan=${panValue.toFixed(2)}`);
+    audioService.setAmbientPan(panValue);
+  }, []);
+  
   // 仅在深海呼吸场景启用 LFO
   const shouldEnableLFO = sceneId === 'nature_deep_sea';
   const { start: startLFO, stop: stopLFO } = useLFO(
     shouldEnableLFO ? LFOPresets.deepSeaBreath() : {},
     shouldEnableLFO ? lfoCallback : undefined
+  );
+  
+  // 仅在舟上雨场景启用 Panning
+  const shouldEnablePanning = sceneId === 'scene_boat_rain';
+  const { start: startPanning, stop: stopPanning } = useLFO(
+    shouldEnablePanning ? LFOPresets.boatRainPanning() : {},
+    shouldEnablePanning ? panningCallback : undefined
   );
 
   const placeholderColor = useMemo(() => {
@@ -105,8 +124,9 @@ const BreathDetailScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // 初始进入逻辑 - 优化：不等待音频初始化即渲染页面架构
     const audioService = AudioService.getInstance();
+    
+    // 初始进入逻辑 - 优化：不等待音频初始化即渲染页面架构
     const initPage = async () => {
       // 内容稍后浮现
       Animated.timing(contentFadeAnim, {
@@ -126,6 +146,13 @@ const BreathDetailScreen: React.FC = () => {
         await audioService.switchSoundscape(scene);
       }
       
+      // 【舟上雨 - 空间平移】为舟上雨场景启用 Panning LFO
+      if (shouldEnablePanning) {
+        console.log('[BreathDetail] 为舟上雨场景启用 Panning LFO');
+        audioService.enablePanningForScene(scene.id);
+        startPanning();
+      }
+      
       setIsLoading(false);
     };
 
@@ -141,8 +168,15 @@ const BreathDetailScreen: React.FC = () => {
         stopLFO();
         console.log('[BreathDetail] ✅ LFO 已停止');
       }
+      
+      // 【舟上雨 - 空间平移】退出时停止 Panning
+      if (shouldEnablePanning) {
+        stopPanning();
+        audioService.disablePanning();
+        console.log('[BreathDetail] ✅ Panning 已停止');
+      }
     };
-  }, [scene.id, shouldEnableLFO, stopLFO]); // Add scene.id to dependency array to handle navigation between breath scenes
+  }, [scene.id, shouldEnableLFO, stopLFO, shouldEnablePanning, stopPanning]);
 
   const togglePlayback = async () => {
     const audioService = AudioService.getInstance();
