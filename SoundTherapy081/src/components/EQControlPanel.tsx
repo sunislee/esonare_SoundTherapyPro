@@ -12,7 +12,8 @@ import {
 import * as _8TrackAudioService from '../services/8TrackAudioService';
 
 const { width } = Dimensions.get('window');
-const SLIDER_WIDTH = (width - 40) / 8; 
+const CONTAINER_PADDING = 32; // 左右各 16px
+const SLIDER_WIDTH = (width - CONTAINER_PADDING) / 8; 
 const TRACK_HEIGHT = 180;
 const THUMB_SIZE = 26;
 const MAX_POS = TRACK_HEIGHT - THUMB_SIZE;
@@ -395,7 +396,7 @@ const styles = StyleSheet.create({
     height: TRACK_HEIGHT + 70,
   },
   sliderWrapper: {
-    width: SLIDER_WIDTH,
+    width: SLIDER_WIDTH * 0.9,  // 缩小 10%，留出间隙
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
@@ -404,14 +405,14 @@ const styles = StyleSheet.create({
     fontSize: 9,
     marginBottom: 4,
     textAlign: 'center',
-    height: 20,
+    height: 16,
+    width: SLIDER_WIDTH * 0.9,
   },
   trackContainer: {
-    width: 60,
+    width: 40,  // 减小宽度
     height: TRACK_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 15,
   },
   trackBackground: {
     width: 2,
@@ -433,18 +434,20 @@ const styles = StyleSheet.create({
   infoContainer: {
     marginTop: 6,
     alignItems: 'center',
-    height: 40,
+    height: 36,
+    width: SLIDER_WIDTH * 0.9,
   },
   volumeText: {
     color: '#FFF',
-    fontSize: 10,
+    fontSize: 9,  // 减小字体
     fontWeight: '600',
     marginBottom: 2,
   },
   descText: {
     color: '#8E8E93',
-    fontSize: 8,
+    fontSize: 7,  // 减小字体
     textAlign: 'center',
+    numberOfLines: 2,
   },
   footer: {
     marginTop: 15,

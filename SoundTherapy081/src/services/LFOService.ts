@@ -34,7 +34,10 @@ class LFOService {
   };
   private isRunning: boolean = false;
   private animationFrame: number | null = null;
-  private callbacks: Set<(value: number) => void> = new Set();
+  private callbacks: Set<(value: number, trackIndex?: number) => void> = new Set();
+  
+  // 8 轨相位偏移（用于微风模式）
+  private trackPhaseOffsets: number[] = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
 
   constructor() {
     this.startTime = Date.now();
@@ -76,34 +79,44 @@ class LFOService {
   }
 
   /**
-   * 注册回调函数（接收 LFO 输出值）
+   * 订阅 LFO 更新
+   * @param callback 回调函数 (value: number, trackIndex?: number) => void
+   * @param trackIndex 音轨索引（0-7），用于多轨相位偏移
    */
-  subscribe(callback: (value: number) => void) {
+  subscribe(callback: (value: number, trackIndex?: number) => void, trackIndex?: number) {
     this.callbacks.add(callback);
     return () => this.callbacks.delete(callback);
   }
 
   /**
    * 计算当前时刻的 LFO 值（-1.0 到 1.0）
+   * @param trackIndex 音轨索引（0-7），用于多轨相位偏移
    */
-  private calculateLFOValue(): number {
+  private calculateLFOValue(trackIndex?: number): number {
     const elapsed = (Date.now() - this.startTime) / 1000; // 转换为秒
-    const phase = this.params.phase || 0;
+    
+    // 如果是微风模式，使用音轨特定的相位偏移
+    let phase = this.params.phase || 0;
+    if (trackIndex !== undefined && this.params.rate === 0.12) {
+      // 微风模式：应用 8 轨相位偏移
+      phase = this.trackPhaseOffsets[trackIndex] || 0;
+    }
+    
     const angle = (elapsed * this.params.rate + phase) * Math.PI * 2;
-
+    
     switch (this.params.waveform) {
       case 'sine':
         return Math.sin(angle);
-      
+        
       case 'triangle':
         // 三角波：从 -1 到 1 线性变化
         const triangleValue = 2 * Math.abs(2 * ((elapsed * this.params.rate + phase) % 1)) - 1;
         return triangleValue * (triangleValue < 0 ? -1 : 1);
-      
+        
       case 'square':
         // 方波：在 -1 和 1 之间切换
         return Math.sin(angle) >= 0 ? 1 : -1;
-      
+        
       default:
         return Math.sin(angle);
     }
@@ -132,16 +145,32 @@ class LFOService {
       return;
     }
 
-    const lfoValue = this.calculateLFOValue();
-    
-    // 通知所有订阅者
-    this.callbacks.forEach(callback => {
-      try {
-        callback(lfoValue);
-      } catch (error) {
-        console.error('[LFO] 回调执行失败:', error);
+    // 为每个音轨计算独立的 LFO 值（微风模式）
+    if (this.params.rate === 0.12) {
+      // 8 轨微风模式：为每个音轨发送独立的 LFO 值
+      for (let i = 0; i < 8; i++) {
+        const value = this.calculateLFOValue(i);
+        this.callbacks.forEach(callback => {
+          try {
+            callback(value, i);
+          } catch (error) {
+            console.error('[LFO] 回调执行失败:', error);
+          }
+        });
       }
-    });
+    } else {
+      // 其他模式：统一 LFO 值
+      const lfoValue = this.calculateLFOValue();
+      
+      // 通知所有订阅者
+      this.callbacks.forEach(callback => {
+        try {
+          callback(lfoValue);
+        } catch (error) {
+          console.error('[LFO] 回调执行失败:', error);
+        }
+      });
+    }
 
     // 下一帧（目标 60fps）
     this.animationFrame = requestAnimationFrame(this.tick);
@@ -177,13 +206,14 @@ export const lfoService = new LFOService();
  */
 export const LFOPresets = {
   /**
-   * 微风呼吸：慢速正弦波，轻度调制
+   * 微风呼吸：慢速正弦波，中度调制
+   * 更新：更慢的速率（0.12Hz），更深的调制（22%），随机相位
    */
-  breeze: (): LFOParams => ({
+  breeze: (phaseOffset: number = 0): LFOParams => ({
     waveform: 'sine',
-    rate: 0.2,       // 每 5 秒一个周期
-    depth: 0.15,     // 15% 深度
-    phase: 0,
+    rate: 0.12,      // 每 8.3 秒一个周期（更慢、更自然）
+    depth: 0.22,     // 22% 深度（更有呼吸感）
+    phase: phaseOffset,  // 随机相位偏移，增加层次感
   }),
 
   /**
