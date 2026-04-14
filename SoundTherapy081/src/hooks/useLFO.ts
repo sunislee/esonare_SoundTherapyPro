@@ -243,6 +243,15 @@ export const LFOPresets = {
     crossfadeMode: false,
   }),
   
+  /** 午后书店 - 空间聚焦：45 秒超长周期，Pan 范围 -0.15 到 0.15，标准正弦波 */
+  bookstoreFocus: (): LFOConfig => ({
+    period: 45,           // 45 秒极长周期，产生不可察觉的环境变化
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.15 到 0.15
+    inhaleRatio: 0.5,     // 对称正弦波（5:5）
+    crossfadeMode: false,
+  }),
+  
   /** 森林鸟鸣：12 秒周期，70%-100% 音量，3:7 慢呼快吸 */
   forestBirds: (): LFOConfig => ({
     period: 12,
