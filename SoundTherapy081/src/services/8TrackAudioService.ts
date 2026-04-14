@@ -4,15 +4,21 @@
  * 1. 8 轨并行播放：track_1.mp3 ~ track_8.mp3
  * 2. 独立音量控制：每个频段独立 setVolume()
  * 3. 同步播放/暂停/循环
- * 4. 动态加载任意音频组
- * 5. 相位对齐保护
+ * 5. 动态加载任意音频组
+ * 6. 相位对齐保护
+ * 7. LFO 动态音量调制（呼吸感/流动感）
  */
 
 import Sound from 'react-native-sound';
+import { lfoService, type LFOParams } from './LFOService';
 
 // 初始化音频类别
 Sound.setCategory('Playback');
 Sound.setMode('Default');
+
+// LFO 启用状态
+let isLFOEnabled = false;
+let lfoUnsubscribe: (() => void) | null = null;
 
 // 8 轨播放器实例
 type TrackPlayers = {
@@ -768,4 +774,105 @@ export const preload8TrackAudio = async (audioGroupId: string): Promise<boolean>
     console.error('[8Track] 预加载失败:', error);
     return false;
   }
+};
+
+// ==================== LFO 动态音量调制 ====================
+
+/**
+ * 启用 LFO 动态音量调制
+ * @param params LFO 参数配置
+ */
+export const enableLFO = (params?: Partial<LFOParams>) => {
+  if (isLFOEnabled) {
+    console.log('[8Track] LFO 已启用，跳过');
+    return;
+  }
+
+  console.log('[8Track]  启用 LFO 动态音量调制');
+
+  // 配置 LFO 参数
+  if (params) {
+    lfoService.configure(params);
+  }
+
+  // 订阅 LFO 输出，动态调整所有轨道音量
+  lfoUnsubscribe = lfoService.subscribe((lfoValue) => {
+    if (!isPlaying || !isLFOEnabled) return;
+
+    // 将 LFO 值（-1 到 1）转换为音量调制因子（0.7 到 1.0）
+    const modulationFactor = 0.85 + (lfoValue + 1) / 2 * 0.15;
+
+    // 应用调制到所有轨道
+    for (let i = 1; i <= 8; i++) {
+      if (players[i]) {
+        const baseVolume = currentVolumes[i - 1];
+        const modulatedVolume = baseVolume * modulationFactor;
+        players[i]?.setVolume(modulatedVolume);
+      }
+    }
+  });
+
+  isLFOEnabled = true;
+  lfoService.start();
+
+  console.log('[8Track] ✅ LFO 已启动 - 波形:', lfoService.getParams().waveform);
+};
+
+/**
+ * 禁用 LFO 动态音量调制
+ */
+export const disableLFO = () => {
+  if (!isLFOEnabled) {
+    return;
+  }
+
+  console.log('[8Track] 🚫 禁用 LFO');
+
+  // 取消订阅
+  if (lfoUnsubscribe) {
+    lfoUnsubscribe();
+    lfoUnsubscribe = null;
+  }
+
+  lfoService.stop();
+  isLFOEnabled = false;
+
+  // 恢复所有轨道到基础音量
+  for (let i = 1; i <= 8; i++) {
+    if (players[i]) {
+      players[i]?.setVolume(currentVolumes[i - 1]);
+    }
+  }
+
+  console.log('[8Track] ✅ LFO 已停止 - 音量已恢复');
+};
+
+/**
+ * 更新 LFO 参数
+ */
+export const updateLFOParams = (params: Partial<LFOParams>) => {
+  console.log('[8Track] 🎛️ 更新 LFO 参数:', params);
+  lfoService.configure(params);
+};
+
+/**
+ * 获取 LFO 状态
+ */
+export const getLFOStatus = () => {
+  return {
+    isEnabled: isLFOEnabled,
+    isRunning: lfoService.getIsRunning(),
+    params: lfoService.getParams(),
+    currentValue: lfoService.getCurrentValue(),
+  };
+};
+
+/**
+ * 使用预设 LFO 配置
+ */
+export const useLFOPreset = (presetName: 'breeze' | 'water' | 'pulse' | 'meditation') => {
+  const { LFOPresets } = require('./LFOService');
+  const preset = LFOPresets[presetName]();
+  console.log(`[8Track] 🎨 使用 LFO 预设：${presetName}`);
+  lfoService.configure(preset);
 };
