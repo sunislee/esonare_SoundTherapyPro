@@ -49,33 +49,49 @@ export interface LFOOutput {
 }
 
 /**
- * 非线性呼吸曲线函数
+ * 非线性呼吸曲线函数（增强版）
  * 
- * 使用改进的三角波模拟真实呼吸：
- * - 吸气阶段（0 - 0.4）：较快上升（40% 时间）
- * - 呼气阶段（0.4 - 1.0）：较慢下降（60% 时间）
- * - 使用正弦函数平滑过渡，避免线性突变
+ * 使用 S-Curve + 幂函数模拟真实呼吸：
+ * - 吸气阶段（0 - 0.4）：较快上升，顶部平滑
+ * - 呼气阶段（0.4 - 1.0）：较慢下降，底部平滑
+ * - 引入 Sigmoid 曲线，让最高点和最低点停留更久（模拟屏息瞬间）
+ * - 加入微小频率抖动（±0.5 秒），避免机械感
  * 
  * @param phase 相位（0.0 - 1.0）
  * @param inhaleRatio 吸气比例（默认 0.4）
+ * @param jitter 频率抖动（默认 0，范围 -0.05 到 0.05）
  * @returns 归一化的呼吸强度（0.0 - 1.0）
  */
-const calculateBreathCurve = (phase: number, inhaleRatio = 0.4): number => {
+const calculateBreathCurve = (phase: number, inhaleRatio = 0.4, jitter = 0): number => {
   'worklet';
   
-  // 归一化相位到 0-1 范围
-  const normalizedPhase = phase % 1.0;
+  // 应用频率抖动（±0.5 秒 = ±5% 周期）
+  const jitteredPhase = phase + jitter;
+  const normalizedPhase = ((jitteredPhase % 1.0) + 1.0) % 1.0; // 确保在 0-1 范围
   
   if (normalizedPhase < inhaleRatio) {
-    // 吸气阶段（0.0 - 0.4）：从 0 上升到 1
-    // 使用正弦函数的上升段，更自然
+    // 吸气阶段（0.0 - 0.4）：S 形上升曲线
     const inhalePhase = normalizedPhase / inhaleRatio; // 0.0 - 1.0
-    return Math.sin(inhalePhase * Math.PI / 2);
+    
+    // 使用 S-Curve（Sigmoid 变体）让两端更平滑
+    // 公式：3x² - 2x³（smoothstep 函数）
+    const smoothedInhale = 3 * inhalePhase * inhalePhase - 2 * inhalePhase * inhalePhase * inhalePhase;
+    
+    // 再应用幂函数，让顶部更圆润
+    const powerAdjusted = Math.pow(smoothedInhale, 0.8);
+    
+    return powerAdjusted;
   } else {
-    // 呼气阶段（0.4 - 1.0）：从 1 下降到 0
-    // 使用正弦函数的下降段，更缓慢
+    // 呼气阶段（0.4 - 1.0）：S 形下降曲线
     const exhalePhase = (normalizedPhase - inhaleRatio) / (1 - inhaleRatio); // 0.0 - 1.0
-    return Math.cos(exhalePhase * Math.PI / 2);
+    
+    // 使用 S-Curve 下降
+    const smoothedExhale = 1 - (3 * exhalePhase * exhalePhase - 2 * exhalePhase * exhalePhase * exhalePhase);
+    
+    // 应用幂函数，让底部停留更久（模拟屏息）
+    const powerAdjusted = Math.pow(smoothedExhale, 1.2);
+    
+    return powerAdjusted;
   }
 };
 
@@ -90,11 +106,15 @@ const calculateLFO = (
   
   const { period, minVolume, maxVolume, inhaleRatio, crossfadeMode } = config;
   
-  // 计算当前相位（0.0 - 1.0）
-  const phase = (elapsedMs / 1000) / period;
+  // 计算基础相位（0.0 - 1.0）
+  const basePhase = (elapsedMs / 1000) / period;
+  
+  // 加入微小频率抖动（±0.5 秒 = ±5% 周期）
+  // 使用简单的正弦抖动，周期约 30 秒，避免重复模式
+  const jitter = 0.05 * Math.sin(elapsedMs / 30000);
   
   // 计算呼吸曲线强度（0.0 - 1.0）
-  const breathIntensity = calculateBreathCurve(phase, inhaleRatio);
+  const breathIntensity = calculateBreathCurve(basePhase, inhaleRatio, jitter);
   
   // 映射到目标音量范围
   const volumeRange = maxVolume - minVolume;
@@ -196,10 +216,10 @@ export const useLFO = (
  * 工具函数：生成预设 LFO 配置
  */
 export const LFOPresets = {
-  /** 深海呼吸：10 秒周期，75%-100% 音量，4:6 非对称呼吸 */
+  /** 深海呼吸：10 秒周期，65%-100% 音量，4:6 非对称呼吸，S-Curve 平滑 */
   deepSeaBreath: (): LFOConfig => ({
     period: 10,
-    minVolume: 0.75,
+    minVolume: 0.65,      // 从 0.75 改为 0.65，增加动态范围
     maxVolume: 1.0,
     inhaleRatio: 0.4,
     crossfadeMode: false,
