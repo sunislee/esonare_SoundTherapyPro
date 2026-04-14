@@ -9,6 +9,7 @@ import TrackPlayer, {
   PlaybackState,
   RepeatMode,
 } from 'react-native-track-player';
+import Sound from 'react-native-sound';
 import { NativeModules } from 'react-native';
 
 import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
@@ -137,6 +138,11 @@ class AudioService {
   private currentLFOVolumeDisposer: (() => void) | null = null;
   private lfoBaseVolume: number = 1.0; // 用户设置的基础音量
   private isLFOEnabled: boolean = false;
+  
+  // 【舟上雨 - 空间平移 Panning】
+  private boatRainSound: Sound | null = null;
+  private currentLFOPanDisposer: (() => void) | null = null;
+  private isPanningEnabled: boolean = false;
 
   private constructor() {
     AppState.addEventListener('change', this.handleAppStateChange);
@@ -1274,6 +1280,128 @@ class AudioService {
     this.ambientVolume = this.lfoBaseVolume;
     TrackPlayer.setVolume(this.lfoBaseVolume).catch(() => {});
     console.log('[AudioService] ✅ LFO 已禁用，恢复基础音量:', this.lfoBaseVolume);
+  };
+
+  /**
+   * 【舟上雨 - 空间平移】设置 Pan 值（-1.0 到 1.0）
+   * @param pan Pan 值，-1.0=最左，0=中央，1.0=最右
+   */
+  public setAmbientPan = async (pan: number): Promise<void> => {
+    // 限制范围在 -1.0 到 1.0
+    const clampedPan = Math.max(-1.0, Math.min(1.0, pan));
+    
+    if (this.boatRainSound && this.boatRainSound.isLoaded()) {
+      this.boatRainSound.pan(clampedPan);
+      console.log('[AudioService] 🎧 设置 Pan:', clampedPan.toFixed(2));
+    } else {
+      console.warn('[AudioService] ⚠️ 舟上雨 Sound 未加载，跳过 Pan 设置');
+    }
+  };
+
+  /**
+   * 【舟上雨 - 空间平移】为舟上雨场景启用 LFO Panning
+   * @param sceneId 场景 ID
+   * @param onPanChange Pan 值变化回调
+   */
+  public enablePanningForScene = (
+    sceneId: string,
+    onPanChange?: (pan: number) => void
+  ) => {
+    // 清理旧的 Panning
+    this.disablePanning();
+    
+    // 仅对舟上雨场景启用 Panning
+    if (sceneId !== 'scene_boat_rain') {
+      console.log('[AudioService] ⚠️ 场景', sceneId, '不支持 Panning，跳过');
+      return;
+    }
+    
+    console.log('[AudioService] 🎧 为舟上雨场景启用 Panning LFO');
+    this.isPanningEnabled = true;
+    
+    // 加载舟上雨音频到 Sound 实例
+    this.loadBoatRainSound().then(() => {
+      console.log('[AudioService] ✅ 舟上雨 Sound 已加载，等待 Hook 调用');
+    }).catch(error => {
+      console.error('[AudioService] ❌ 加载舟上雨 Sound 失败:', error);
+      this.isPanningEnabled = false;
+    });
+  };
+
+  /**
+   * 【舟上雨 - 空间平移】禁用 Panning
+   */
+  public disablePanning = () => {
+    if (this.currentLFOPanDisposer) {
+      console.log('[AudioService] 🎧 禁用 Panning');
+      this.currentLFOPanDisposer();
+      this.currentLFOPanDisposer = null;
+    }
+    this.isPanningEnabled = false;
+    
+    // Pan 归零
+    this.setAmbientPan(0);
+    console.log('[AudioService] ✅ Panning 已禁用，Pan 归零');
+  };
+
+  /**
+   * 【舟上雨 - 空间平移】加载舟上雨音频到 Sound 实例
+   */
+  private loadBoatRainSound = async (): Promise<void> => {
+    // 先停止旧的实例
+    if (this.boatRainSound) {
+      this.boatRainSound.stop();
+      this.boatRainSound.release();
+      this.boatRainSound = null;
+    }
+    
+    // 获取舟上雨音频路径
+    const audioAsset = AUDIO_MAP['scene_boat_rain'];
+    if (!audioAsset) {
+      throw new Error('舟上雨音频配置不存在');
+    }
+    
+    const localPath = await getLocalPath('scene_boat_rain');
+    
+    return new Promise((resolve, reject) => {
+      Sound.setCategory('Playback', true); // 允许与其他音频混合
+      
+      const sound = new Sound(localPath, '', (error) => {
+        if (error) {
+          console.error('[AudioService] ❌ 加载舟上雨 Sound 失败:', error);
+          reject(error);
+          return;
+        }
+        
+        console.log('[AudioService] ✅ 舟上雨 Sound 加载成功');
+        this.boatRainSound = sound;
+        
+        // 设置为循环播放
+        sound.setNumberOfLoops(-1);
+        
+        // 设置音量（不干扰 TrackPlayer 的主场景音量）
+        sound.setVolume(0.8);
+        
+        // 播放
+        sound.play((success) => {
+          if (success) {
+            console.log('[AudioService] ✅ 舟上雨 Sound 播放完成');
+          } else {
+            console.warn('[AudioService] ⚠️ 舟上雨 Sound 播放失败');
+          }
+        });
+        
+        resolve();
+      });
+    });
+  };
+
+  /**
+   * 【舟上雨 - 空间平移】设置 Panning LFO 回调
+   * @param disposer 停止函数
+   */
+  public setPanningLFOCallback = (disposer: () => void) => {
+    this.currentLFOPanDisposer = disposer;
   };
   
   /**
