@@ -70,6 +70,7 @@ const BreathDetailScreen: React.FC = () => {
   }, []);
   
   // 【舟上雨 - 空间平移】Pan 回调：LFO 输出 0-1 映射到 Pan -0.25 到 0.25
+  // 同时增加微小的音量随机波动（±5%），模拟自然雨势变化
   const panningCallback = useCallback((lfoValue: number) => {
     const audioService = AudioService.getInstance();
     
@@ -77,8 +78,25 @@ const BreathDetailScreen: React.FC = () => {
     // 公式：pan = (lfoValue - 0.5) * 0.5
     const panValue = (lfoValue - 0.5) * 0.5;
     
-    console.log(`[Panning] LFO=${lfoValue.toFixed(2)}, Pan=${panValue.toFixed(2)}`);
+    // 【音量随机波动】极低频率的随机噪声（±5%）
+    // 使用简单的伪随机算法，基于时间生成平滑的随机值
+    const now = Date.now();
+    const randomSeed = Math.sin(now / 5000) * Math.cos(now / 7000); // 超低频组合
+    const volumeFluctuation = randomSeed * 0.05; // ±5% 波动
+    
+    // 基础音量 0.8 + 随机波动 ±5%
+    const baseVolume = 0.8;
+    const finalVolume = baseVolume * (1 + volumeFluctuation);
+    
+    console.log(`[Panning] LFO=${lfoValue.toFixed(2)}, Pan=${panValue.toFixed(2)}, Volume=${finalVolume.toFixed(2)}`);
+    
+    // 设置 Pan（空间平移）
     audioService.setAmbientPan(panValue);
+    
+    // 设置音量（微小随机波动）
+    if (audioService.getBoatRainSound()) {
+      audioService.getBoatRainSound().setVolume(finalVolume);
+    }
   }, []);
   
   // 仅在深海呼吸场景启用 LFO

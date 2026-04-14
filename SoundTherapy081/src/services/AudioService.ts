@@ -1403,6 +1403,14 @@ class AudioService {
   public setPanningLFOCallback = (disposer: () => void) => {
     this.currentLFOPanDisposer = disposer;
   };
+
+  /**
+   * 【舟上雨 - 空间平移】获取 Sound 实例（用于音量控制）
+   * @returns Sound 实例或 null
+   */
+  public getBoatRainSound = (): Sound | null => {
+    return this.boatRainSound;
+  };
   
   /**
    * 【LFO 集成】设置 LFO 音量调制回调（由 React 组件调用）
