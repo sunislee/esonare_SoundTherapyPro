@@ -22,6 +22,7 @@ import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
 import { Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import AnimatedFloatingButton from '../components/AnimatedFloatingButton';
+import useLFO, { LFOPresets } from '../hooks/useLFO';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,6 +53,28 @@ const BreathDetailScreen: React.FC = () => {
 
   const sceneId = route.params?.sceneId || 'nature_deep_sea';
   const scene = SCENES.find(s => s.id === sceneId) || SCENES[0];
+  
+  // 【LFO 集成】为深海呼吸场景启用 LFO 动态音量调制
+  const lfoCallback = useCallback((volume: number) => {
+    const audioService = AudioService.getInstance();
+    const baseVolume = audioService.getAmbientVolume();
+    
+    // 公式：最终音量 = 用户设置音量 * LFO 调制因子
+    const finalVolume = baseVolume * volume;
+    console.log(`[LFO] 音量调制：基础=${baseVolume.toFixed(2)}, LFO=${volume.toFixed(2)}, 最终=${finalVolume.toFixed(2)}`);
+    
+    // 直接调用 TrackPlayer.setVolume（绕过 AudioService.setVolume 避免循环）
+    import('react-native-track-player').then(({ default: TrackPlayer }) => {
+      TrackPlayer.setVolume(finalVolume).catch(() => {});
+    });
+  }, []);
+  
+  // 仅在深海呼吸场景启用 LFO
+  const shouldEnableLFO = sceneId === 'nature_deep_sea';
+  const { start: startLFO, stop: stopLFO } = useLFO(
+    shouldEnableLFO ? LFOPresets.deepSeaBreath() : {},
+    shouldEnableLFO ? lfoCallback : undefined
+  );
 
   const placeholderColor = useMemo(() => {
     if (scene.id.includes('ocean') || scene.id.includes('deep_sea')) return '#001a33';
@@ -112,8 +135,14 @@ const BreathDetailScreen: React.FC = () => {
       // 状态同步检查：退出页面时立即停止所有互动音效
       console.log('[BreathDetail] Stopping all ambient sounds on exit.');
       audioService.stopAllAmbient();
+      
+      // 【LFO 集成】退出时停止 LFO
+      if (shouldEnableLFO) {
+        stopLFO();
+        console.log('[BreathDetail] ✅ LFO 已停止');
+      }
     };
-  }, [scene.id]); // Add scene.id to dependency array to handle navigation between breath scenes
+  }, [scene.id, shouldEnableLFO, stopLFO]); // Add scene.id to dependency array to handle navigation between breath scenes
 
   const togglePlayback = async () => {
     const audioService = AudioService.getInstance();

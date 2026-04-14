@@ -132,6 +132,11 @@ class AudioService {
   
   // 【交互音效独立播放器】
   private sfxPlayer: SFXPlayer = SFXPlayer.getInstance();
+  
+  // 【LFO 动态音量调制】
+  private currentLFOVolumeDisposer: (() => void) | null = null;
+  private lfoBaseVolume: number = 1.0; // 用户设置的基础音量
+  private isLFOEnabled: boolean = false;
 
   private constructor() {
     AppState.addEventListener('change', this.handleAppStateChange);
@@ -752,6 +757,9 @@ class AudioService {
       return;
     }
     
+    // 【LFO 集成】清理 LFO
+    this.disableLFO();
+    
     await TrackPlayer.reset();
     this.isActuallyPlaying = false;
     this.currentBaseScene = null;
@@ -1056,6 +1064,15 @@ class AudioService {
       return;
     }
     
+    // 【LFO 集成】保存用户设置的基础音量
+    this.lfoBaseVolume = volume;
+    
+    // 如果 LFO 已启用，不直接设置音量，由 LFO Hook 动态调制
+    if (this.isLFOEnabled) {
+      console.log('[AudioService] 🎵 LFO 已启用，音量由 LFO 动态调制，基础音量:', volume);
+      return;
+    }
+    
     this.ambientVolume = volume;
     await TrackPlayer.setVolume(volume);
     this.volumeListeners.forEach(l => l(volume));
@@ -1213,6 +1230,66 @@ class AudioService {
 
   // 【新增】资源缺失回调接口（用于 UI 层下载引导）
   public onResourceNotFound?: (scene: Scene) => void;
+  
+  /**
+   * 【LFO 集成】为指定场景启用 LFO 动态音量调制
+   * @param sceneId 场景 ID（如 'nature_deep_sea'）
+   */
+  public enableLFOForScene = (sceneId: string, onVolumeChange?: (volume: number) => void) => {
+    // 清理旧的 LFO
+    this.disableLFO();
+    
+    // 仅对支持的场景启用 LFO
+    if (sceneId !== 'nature_deep_sea') {
+      console.log('[AudioService] ⚠️ 场景', sceneId, '不支持 LFO，跳过');
+      return;
+    }
+    
+    console.log('[AudioService] 🎵 为场景启用 LFO:', sceneId);
+    this.isLFOEnabled = true;
+    
+    // 动态导入 useLFO Hook（避免循环依赖）
+    import('../hooks/useLFO').then(({ useLFO, LFOPresets }) => {
+      // 注意：useLFO 是 React Hook，不能在普通类方法中直接调用
+      // 这里我们采用回调模式，由 React 组件调用 Hook 并传入回调
+      console.log('[AudioService] ✅ LFO 模块已加载，等待组件调用 Hook');
+    }).catch(error => {
+      console.error('[AudioService] ❌ 加载 LFO 模块失败:', error);
+      this.isLFOEnabled = false;
+    });
+  };
+  
+  /**
+   * 【LFO 集成】禁用 LFO 动态音量调制
+   */
+  public disableLFO = () => {
+    if (this.currentLFOVolumeDisposer) {
+      console.log('[AudioService] 🎵 禁用 LFO');
+      this.currentLFOVolumeDisposer();
+      this.currentLFOVolumeDisposer = null;
+    }
+    this.isLFOEnabled = false;
+    
+    // 恢复到用户设置的基础音量
+    this.ambientVolume = this.lfoBaseVolume;
+    TrackPlayer.setVolume(this.lfoBaseVolume).catch(() => {});
+    console.log('[AudioService] ✅ LFO 已禁用，恢复基础音量:', this.lfoBaseVolume);
+  };
+  
+  /**
+   * 【LFO 集成】设置 LFO 音量调制回调（由 React 组件调用）
+   * @param disposer 清理函数
+   */
+  public setLFOVolumeCallback = (disposer: () => void) => {
+    this.currentLFOVolumeDisposer = disposer;
+  };
+  
+  /**
+   * 【LFO 集成】获取 LFO 启用状态
+   */
+  public getIsLFOEnabled = (): boolean => {
+    return this.isLFOEnabled;
+  };
 
   // ... 其余 SleepTimer 等逻辑保持一致 ...
 }
