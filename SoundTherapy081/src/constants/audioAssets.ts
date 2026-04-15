@@ -41,9 +41,9 @@ export const AMBIENT_RESOURCES = {
 
 export const AUDIO_MANIFEST = [ 
   { id: 'nature_ocean', filename: 'base/deep_ocean_abyss.m4a', category: 'nature', title: 'scenes.nature_ocean.title', description: 'scenes.nature_ocean.desc', size: 1429191 }, 
-  { id: 'nature_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 1732906 }, 
+  { id: 'nature_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 680336 }, 
   { id: 'nature_deep_sea', filename: 'base/deep_sea_breathing_rhythm.m4a', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 456030 },
-  { id: 'nature_misty_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 680336 },
+  { id: 'nature_misty_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 1732906 },
   { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 7201196 }, 
   { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 7201196 },
 
@@ -81,9 +81,9 @@ if (Array.isArray(AUDIO_MANIFEST)) {
 // 【核心】定义 ASSET_LIST，手动写好每个文件的 expectedSize（根据实际下载大小更新）
 export const ASSET_LIST = [
   { id: 'nature_ocean', expectedSize: 1429191 },        // 实际：1.43MB
-  { id: 'nature_forest', expectedSize: 1732906 },       // 实际：1.73MB
+  { id: 'nature_forest', expectedSize: 680336 },        // 已替换为纯净森林素材：680KB
   { id: 'nature_deep_sea', expectedSize: 456030 },      // 实际：456KB
-  { id: 'nature_misty_forest', expectedSize: 680336 },  // 实际：680KB
+  { id: 'nature_misty_forest', expectedSize: 1732906 }, // 实际：1.73MB
   { id: 'nature_river', expectedSize: 7201196 },        // 实际：7.2MB
   { id: 'nature_night', expectedSize: 7201196 },        // 实际：7.2MB
   { id: 'life_rain_boat', expectedSize: 7201196 },      // 实际：7.2MB
