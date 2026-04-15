@@ -68,7 +68,9 @@ const ImmersivePlayerNew: React.FC = () => {
   };
 
   // DO NOT TOUCH: Stable logic for scene switching - 获取目标场景
-  const targetSceneId = currentBaseSceneId || route.params?.sceneId || SCENES[0].id;
+  // 【关键修复】优先使用 route params，确保每次点击都触发场景切换
+  const routeSceneId = route.params?.sceneId;
+  const targetSceneId = routeSceneId || currentBaseSceneId || SCENES[0].id;
   const targetScene = useMemo(() => 
     SCENES.find(s => s.id === targetSceneId) || SCENES[0]
   , [targetSceneId]);

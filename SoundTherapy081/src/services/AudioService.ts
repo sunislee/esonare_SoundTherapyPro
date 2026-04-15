@@ -17,6 +17,7 @@ import RNFS from 'react-native-fs';
 import { NotificationService } from './NotificationService';
 import { OfflineService } from './OfflineService';
 import { Scene, SCENES } from '../constants/scenes';
+import { EQManager } from './EQManager';
 
 // 【多语言支持 - 终极补丁】直接导入 JSON 文件，手动取值
 import zh from '../i18n/locales/zh.json';
@@ -396,24 +397,17 @@ class AudioService {
   async playScene(scene: Scene, options?: { triggerLoading?: boolean; skipNotify?: boolean }) {
     if (!scene || !scene.filename) return;
 
-    console.log('[AudioService] ====== playScene 被调用 ======');
-    console.log('[AudioService] scene.id:', scene.id);
-    console.log('[AudioService] isProcessing:', isProcessing);
-    
     // 【性能优化】取消播放状态锁，允许指令覆盖
     if (isProcessing) {
-      console.log('[AudioService] ⚠️ 有播放请求正在处理，取消旧请求，执行新请求');
       // 不返回，继续执行新请求
     }
     
     // 【性能优化】标记开始处理，但允许覆盖
     isProcessing = true;
-    console.log('[AudioService] 🔒 标记播放状态处理中');
     
     try {
       // 【RN 0.81 保护】初始化未完成前禁止播放
       if (!this._isReady) {
-        console.warn('[AudioService] ⚠️ 初始化未完成，延迟播放');
         await new Promise(resolve => setTimeout(resolve, 500));
         if (!this._isReady) {
           console.error('[AudioService] ❌ 初始化超时，无法播放');
@@ -422,8 +416,7 @@ class AudioService {
         }
       }
 
-      // 【性能优化】立即乐观更新UI状态
-      console.log('[AudioService] 🚀 立即乐观更新UI状态');
+      // 【性能优化】立即乐观更新 UI 状态
       this.isActuallyPlaying = true;
       this.currentBaseScene = scene;
       if (!options?.skipNotify) {
@@ -821,7 +814,11 @@ class AudioService {
   }
 
   // --- 监听器管理 ---
-  addListener(l: () => void) { this.listeners.add(l); }
+  addListener(l: () => void) {
+    this.listeners.add(l);
+    // 【关键修复】返回取消订阅函数，让 useSyncExternalStore 可以正确清理
+    return () => { this.listeners.delete(l); };
+  }
   removeListener(l: () => void) { this.listeners.delete(l); }
   
   addLoadingListener(l: (state: { id: string | null; loading: boolean }) => void) {
@@ -1454,21 +1451,35 @@ class AudioService {
    * @param sceneId 场景 ID
    */
   public loadExtraSound = async (sceneId: string): Promise<void> => {
+    console.log(`\n========== [LOAD SOUND] ${sceneId} ==========`);
+    
     // 先停止旧的实例
     const oldSound = this.activeExtraSounds.get(sceneId);
     if (oldSound) {
       oldSound.stop();
       oldSound.release();
       this.activeExtraSounds.delete(sceneId);
+      console.log(`[AudioService] 🗑️ 已清理旧实例：${sceneId}`);
     }
     
-    // 获取音频路径
-    const audioAsset = AUDIO_MAP[sceneId];
+    // 【唯一真理源】从 AUDIO_MANIFEST 获取资源配置
+    const { AUDIO_MANIFEST } = await import('../constants/audioAssets');
+    const audioAsset = AUDIO_MANIFEST.find(item => item.id === sceneId);
+    
     if (!audioAsset) {
+      console.error(`[AudioService] ❌ 场景 ${sceneId} 音频配置不存在 (AUDIO_MANIFEST 中未找到)`);
       throw new Error(`场景 ${sceneId} 音频配置不存在`);
     }
     
-    const localPath = await getLocalPath(sceneId);
+    console.log(`📍 Loading AUDIO [${audioAsset.filename}] for SCENE [${sceneId}]`);
+    console.log(`[AudioService] 📂 资源配置：category=${audioAsset.category}, filename=${audioAsset.filename}`);
+    
+    const { getLocalPath } = await import('../constants/audioAssets');
+    const localPath = getLocalPath(audioAsset.category, audioAsset.filename);
+    
+    console.log(`[AudioService] 📂 完整本地路径：${localPath}`);
+    console.log(`[AudioService] 📂 DocumentDirectoryPath: ${RNFS.DocumentDirectoryPath}`);
+    console.log(`===========================================\n`);
     
     return new Promise((resolve, reject) => {
       Sound.setCategory('Playback', true);
@@ -1476,11 +1487,12 @@ class AudioService {
       const sound = new Sound(localPath, '', (error) => {
         if (error) {
           console.error(`[AudioService] ❌ 加载场景 ${sceneId} Sound 失败:`, error);
+          console.error(`[AudioService] ❌ 路径检查：${localPath}`);
           reject(error);
           return;
         }
         
-        console.log(`[AudioService] ✅ 场景 ${sceneId} Sound 加载成功`);
+        console.log(`[AudioService] ✅ 场景 ${sceneId} Sound 加载成功 (duration=${sound.getDuration()}s)`);
         this.activeExtraSounds.set(sceneId, sound);
         
         // 设置为循环播放
@@ -1807,6 +1819,7 @@ class AudioService {
    * @returns Sound 实例或 null
    */
   public getOrLoadExtraSound = async (sceneId: string): Promise<Sound | null> => {
+    console.log(`\n========== [GET OR LOAD] ${sceneId} ==========`);
     console.log(`[AudioService] 🔍 请求加载场景：${sceneId}`);
     
     // 优先：检查实例池
@@ -1816,17 +1829,21 @@ class AudioService {
       return existingSound;
     }
     
-    // 【关键修复】检查资源是否已下载到本地
-    const { getLocalPath } = await import('../constants/audioAssets');
-    const { AUDIO_MAP } = await import('../constants/audioAssets');
-    const audioAsset = AUDIO_MAP[sceneId];
+    // 【唯一真理源】从 AUDIO_MANIFEST 获取资源配置
+    const { AUDIO_MANIFEST } = await import('../constants/audioAssets');
+    const audioAsset = AUDIO_MANIFEST.find(item => item.id === sceneId);
     
     if (!audioAsset) {
-      console.error(`[AudioService] ❌ 场景 ${sceneId} 音频配置不存在`);
+      console.error(`[AudioService] ❌ 场景 ${sceneId} 音频配置不存在 (AUDIO_MANIFEST 中未找到)`);
       return null;
     }
     
+    console.log(`📍 Loading AUDIO [${audioAsset.filename}] for SCENE [${sceneId}]`);
+    console.log(`[AudioService] 📂 资源配置：category=${audioAsset.category}, filename=${audioAsset.filename}`);
+    
+    const { getLocalPath } = await import('../constants/audioAssets');
     const localPath = getLocalPath(audioAsset.category, audioAsset.filename);
+    
     const RNFS = await import('react-native-fs');
     const isDownloaded = await RNFS.exists(localPath);
     
@@ -1934,7 +1951,16 @@ class AudioService {
     targetVolume: number = 0.75,
     fadeDuration: number = 300
   ): Promise<void> => {
-    console.log(`[AudioService] 🎵 开始播放场景：${sceneId} (目标音量：${targetVolume}, 渐入：${fadeDuration}ms)`);
+    console.log(`[AudioService] 🎵 开始播放场景：${sceneId}`);
+    
+    // 【强制同步】第一行就执行 setActiveScene，确保 UI 状态与播放引擎 100% 同步
+    const scene = SCENES.find(s => s.id === sceneId);
+    if (scene) {
+      this.currentBaseScene = scene;
+      this.notifyListeners();
+    } else {
+      console.error(`[AudioService] ❌ 场景 ${sceneId} 在 SCENES 配置中不存在`);
+    }
     
     const sound = await this.getOrLoadExtraSound(sceneId);
     if (!sound) {
@@ -1942,8 +1968,8 @@ class AudioService {
       return;
     }
     
-    // 【关键校验】确保播放的是正确的场景
-    console.log(`[AudioService] 🔊 准备播放：${sceneId} (已加载：${sound.isLoaded()})`);
+    // 【新增】应用场景 EQ 预设
+    EQManager.applyScenePreset(sound, sceneId, true);
     
     // 从 0 音量开始播放
     sound.setVolume(0);

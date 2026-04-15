@@ -70,8 +70,8 @@ export const SCENE_LFO_CONFIGS: Record<string, SceneLFOConfig> = {
     effects: [LFOEffectType.VOLUME],
     baseVolume: 1.0,
     volumeFluctuation: 0.35, // ±35% (0.65-1.0)
-    randomPeriod1: 5000,
-    randomPeriod2: 7000,
+    randomPeriod1: 7200, // 延长 20%：6000 → 7200，模拟更深沉的海洋脉动
+    randomPeriod2: 10080, // 延长 20%：8400 → 10080
     enabled: true,
   },
 

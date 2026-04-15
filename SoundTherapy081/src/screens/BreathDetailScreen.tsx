@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback, useSyncExternalStore } from 'react';
 import {
   Animated,
   StyleSheet,
@@ -54,8 +54,14 @@ const BreathDetailScreen: React.FC = () => {
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
 
-  const sceneId = route.params?.sceneId || 'nature_deep_sea';
-  const scene = SCENES.find(s => s.id === sceneId) || SCENES[0];
+  // 【route params】每次 navigation 都会更新（仅作为初始值）
+  const routeSceneId = route.params?.sceneId || 'nature_deep_sea';
+
+  // 使用 route params 作为场景 ID
+  const currentSceneId = routeSceneId;
+  const audioServiceActiveId = routeSceneId;
+  
+  const scene = SCENES.find(s => s.id === currentSceneId) || SCENES[0];
   
   // ==================== 配置化 LFO 回调生成器 ====================
   // 根据场景配置自动生成对应的 LFO 回调函数
@@ -301,12 +307,10 @@ const BreathDetailScreen: React.FC = () => {
         console.log('[BreathDetail] 🎬 启动背景动效...');
         
         // 【强制暴露】无论资源是否存在，先显示下载 UI 3 秒
-        console.log('[BreathDetail] ⚠️ [强制] 设置下载状态，显示紫色 UI...');
         setIsDownloading(true);
         setDownloadProgress(0);
         
         // 【强制等待】3 秒强制 Loading 延迟，让紫色 UI 显示更清楚
-        console.log('[BreathDetail] ⏱️ 启动 3 秒强制 Loading 延迟...');
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         // 【音频秒开】优先复用预加载实例
@@ -314,7 +318,6 @@ const BreathDetailScreen: React.FC = () => {
         const existingSound = audioService.getExtraSound(sceneId);
         
         if (existingSound && existingSound.isLoaded()) {
-          console.log('[BreathDetail] ⚡ 复用预加载 Sound，秒开！');
           
           // 隐藏下载 UI
           setIsDownloading(false);
@@ -340,7 +343,6 @@ const BreathDetailScreen: React.FC = () => {
             const isDownloaded = await RNFS.exists(localPath);
             
             if (!isDownloaded) {
-              console.log('[BreathDetail] ⚠️ 资源未下载，触发下载流程');
               // 下载状态已经在上面设置为 true
               
               // 订阅下载进度
@@ -351,7 +353,6 @@ const BreathDetailScreen: React.FC = () => {
               
               try {
                 // 触发下载
-                console.log('[BreathDetail] 📥 开始下载资源...');
                 await DownloadService.checkAndDownload(downloadProgressHandler);
                 
                 console.log('[BreathDetail] ✅ 下载完成，等待 500ms 落盘');
