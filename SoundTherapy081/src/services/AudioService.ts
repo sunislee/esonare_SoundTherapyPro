@@ -146,6 +146,30 @@ class AudioService {
   // 【全场景 LFO Disposer 映射表】
   private activeLFODisposers: Map<string, () => void> = new Map();
   
+  // 【预加载状态标记】
+  private isPreloadInitialized = false;
+  private preloadPromise: Promise<void> | null = null;
+  
+  // 【下载回调订阅】用于监听资源下载完成事件
+  private downloadCompleteCallbacks: Set<(assetId: string) => void> = new Set();
+  
+  /**
+   * 【下载回调通知】由 DownloadService 调用，通知资源下载完成
+   * @param assetId 已下载的资产 ID
+   */
+  public notifyDownloadComplete = (assetId: string): void => {
+    console.log(`[AudioService] 📢 收到下载完成通知：${assetId}`);
+    
+    // 触发所有回调
+    this.downloadCompleteCallbacks.forEach(callback => {
+      try {
+        callback(assetId);
+      } catch (error) {
+        console.error(`[AudioService] ❌ 下载回调执行失败:`, error);
+      }
+    });
+  };
+  
   // 【舟上雨 - 空间平移 Panning】（保留向后兼容）
   private boatRainSound: Sound | null = null;
   private currentLFOPanDisposer: (() => void) | null = null;
@@ -1567,13 +1591,381 @@ class AudioService {
     });
     this.activeLFODisposers.clear();
     
-    // 清理所有 Sound 实例
+    // 清理所有 Sound 实例（不释放，只停止）
     this.activeExtraSounds.forEach((sound, sceneId) => {
       sound.stop();
-      sound.release();
-      console.log(`[AudioService] 🧹 清理场景 ${sceneId} Sound`);
+      sound.setVolume(0);
+      console.log(`[AudioService] 🧹 停止场景 ${sceneId} Sound`);
     });
-    this.activeExtraSounds.clear();
+    // 注意：不清理 activeExtraSounds，保持实例池
+  };
+
+  /**
+   * 【强制测试】清除所有普通场景的音频文件（保留降噪资源）
+   * 目的：强制触发下载流程，验证进度条 UI
+   */
+  public clearAllSceneAudio = async (): Promise<void> => {
+    console.log(`[AudioService] 🧹 [强制测试] 开始清除普通场景音频...`);
+    
+    try {
+      const RNFS = await import('react-native-fs');
+      const { AUDIO_MANIFEST, getLocalPath } = await import('../constants/audioAssets');
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      
+      let deletedCount = 0;
+      let skippedCount = 0;
+      
+      for (const asset of AUDIO_MANIFEST) {
+        const localPath = getLocalPath(asset.category, asset.filename);
+        const exists = await RNFS.exists(localPath);
+        
+        if (exists) {
+          // 检查是否是降噪资源
+          if (asset.category === 'noise_cancellation') {
+            console.log(`[AudioService] 🛡️ 保留降噪资源：${asset.id}`);
+            skippedCount++;
+          } else {
+            await RNFS.unlink(localPath);
+            console.log(`[AudioService] ✅ 已删除：${asset.id} (${asset.category})`);
+            deletedCount++;
+          }
+        }
+      }
+      
+      // 【关键修复】清除资源就绪标记，强制触发下载
+      await AsyncStorage.removeItem('RESOURCE_READY');
+      console.log('[AudioService] 🧹 已清除 RESOURCE_READY 标记');
+      
+      console.log(`[AudioService] 🧹 清除完成！删除：${deletedCount} 个，保留：${skippedCount} 个`);
+    } catch (error) {
+      console.error(`[AudioService] ❌ 清除失败:`, error);
+    }
+  };
+
+  /**
+   * 【音频秒开】预加载所有场景音频
+   * 在 App 启动或空闲时调用，确保进入场景时音频立即可用
+   */
+  public preloadAllSounds = async (): Promise<void> => {
+    // 如果已预加载或正在预加载，直接返回
+    if (this.isPreloadInitialized || this.preloadPromise) {
+      console.log('[AudioService] ⚡ 音频已预加载或正在加载，跳过');
+      return this.preloadPromise || Promise.resolve();
+    }
+    
+    console.log('[AudioService] 🚀 开始预加载所有场景音频...');
+    
+    this.preloadPromise = (async () => {
+      // 导入配置
+      const { SCENE_LFO_CONFIGS } = await import('../config/SceneLFOConfig');
+      
+      const sceneIds = Object.keys(SCENE_LFO_CONFIGS);
+      const preloadStartTime = Date.now();
+      let successCount = 0;
+      let skipCount = 0;
+      
+      console.log(`[AudioService] 📋 待预加载场景列表：${sceneIds.join(', ')}`);
+      
+      // 【关键修复】使用 for...of 替代 map，确保闭包正确捕获 sceneId
+      for (const sceneId of sceneIds) {
+        try {
+          // 跳过已加载的
+          if (this.activeExtraSounds.has(sceneId)) {
+            skipCount++;
+            console.log(`[AudioService] ⚠️ 场景 ${sceneId} 已预加载，跳过`);
+            continue;
+          }
+          
+          // 获取音频路径
+          const audioAsset = AUDIO_MAP[sceneId];
+          if (!audioAsset) {
+            console.warn(`[AudioService] ❌ 场景 ${sceneId} 音频配置不存在`);
+            continue;
+          }
+          
+          // 【关键修复】检查资源是否已下载
+          const localPath = await getLocalPath(sceneId);
+          if (!localPath) {
+            console.log(`[AudioService] ⚠️ 场景 ${sceneId} 资源未下载，跳过预加载`);
+            continue;
+          }
+          
+          // 【关键修复】打印路径映射，确保一一对应
+          console.log(`[AudioService] 🔈 正在预加载：${sceneId} → ${localPath}`);
+          
+          // 创建 Sound 实例
+          await new Promise<void>((resolve, reject) => {
+            Sound.setCategory('Playback', true);
+            
+            // 【关键修复】使用 const 确保 sceneId 在闭包中正确捕获
+            const currentSceneId = sceneId;
+            const sound = new Sound(localPath, '', (error) => {
+              if (error) {
+                console.warn(`[AudioService] ❌ 预加载 ${currentSceneId} 失败:`, error);
+                resolve();
+                return;
+              }
+              
+              // 【双重校验】确保存储的 sceneId 和加载的一致
+              console.log(`[AudioService] ✅ 预加载成功：${currentSceneId} → ${this.activeExtraSounds.has(currentSceneId) ? '已存在' : '存入实例池'}`);
+              
+              // 配置 Sound 实例
+              sound.setNumberOfLoops(-1);
+              sound.setVolume(0); // 静音待命
+              sound.pause(); // 暂停状态
+              
+              // 存入实例池
+              this.activeExtraSounds.set(currentSceneId, sound);
+              successCount++;
+              
+              resolve();
+            });
+          });
+        } catch (error) {
+          console.warn(`[AudioService] ❌ 预加载 ${sceneId} 异常:`, error);
+        }
+      }
+      
+      const preloadDuration = Date.now() - preloadStartTime;
+      this.isPreloadInitialized = true;
+      
+      console.log(`[AudioService] ✅ 预加载完成！成功：${successCount}, 跳过：${skipCount}, 实例池大小：${this.activeExtraSounds.size}, 总耗时 ${preloadDuration}ms`);
+      console.log(`[AudioService] 📊 实例池内容：${Array.from(this.activeExtraSounds.keys()).join(', ')}`);
+      
+      // 【关键修复】触发下载完成回调，通知所有订阅者
+      this.downloadCompleteCallbacks.forEach(callback => {
+        // 遍历所有已下载的场景 ID
+        this.activeExtraSounds.forEach((_, sceneId) => {
+          callback(sceneId);
+        });
+      });
+    })();
+    
+    return this.preloadPromise;
+  };
+
+  /**
+   * 【音频秒开】预加载单个场景音频（增量预加载）
+   * @param sceneId 场景 ID
+   */
+  private preloadSingleSound = async (sceneId: string): Promise<void> => {
+    console.log(`[AudioService] 🚀 开始增量预加载：${sceneId}`);
+    
+    try {
+      // 跳过已加载的
+      if (this.activeExtraSounds.has(sceneId)) {
+        console.log(`[AudioService] ⚠️ 场景 ${sceneId} 已预加载，跳过`);
+        return;
+      }
+      
+      // 获取音频路径
+      const audioAsset = AUDIO_MAP[sceneId];
+      if (!audioAsset) {
+        console.warn(`[AudioService] ❌ 场景 ${sceneId} 音频配置不存在`);
+        return;
+      }
+      
+      const localPath = await getLocalPath(sceneId);
+      if (!localPath) {
+        console.warn(`[AudioService] ❌ 场景 ${sceneId} 本地路径不存在`);
+        return;
+      }
+      
+      console.log(`[AudioService] 🔈 增量预加载：${sceneId} → ${localPath}`);
+      
+      // 创建 Sound 实例
+      await new Promise<void>((resolve, reject) => {
+        Sound.setCategory('Playback', true);
+        
+        const sound = new Sound(localPath, '', (error) => {
+          if (error) {
+            console.warn(`[AudioService] ❌ 增量预加载 ${sceneId} 失败:`, error);
+            resolve();
+            return;
+          }
+          
+          // 配置 Sound 实例
+          sound.setNumberOfLoops(-1);
+          sound.setVolume(0);
+          sound.pause();
+          
+          // 存入实例池
+          this.activeExtraSounds.set(sceneId, sound);
+          console.log(`[AudioService] ✅ 增量预加载成功：${sceneId}`);
+          
+          resolve();
+        });
+      });
+    } catch (error) {
+      console.error(`[AudioService] ❌ 增量预加载 ${sceneId} 异常:`, error);
+    }
+  };
+
+  /**
+   * 【音频秒开】获取或加载场景 Sound 实例（优先复用）
+   * @param sceneId 场景 ID
+   * @returns Sound 实例或 null
+   */
+  public getOrLoadExtraSound = async (sceneId: string): Promise<Sound | null> => {
+    console.log(`[AudioService] 🔍 请求加载场景：${sceneId}`);
+    
+    // 优先：检查实例池
+    const existingSound = this.activeExtraSounds.get(sceneId);
+    if (existingSound && existingSound.isLoaded()) {
+      console.log(`[AudioService] ⚡ 复用已加载的 ${sceneId} Sound (实例池命中)`);
+      return existingSound;
+    }
+    
+    // 【关键修复】检查资源是否已下载到本地
+    const { getLocalPath } = await import('../constants/audioAssets');
+    const { AUDIO_MAP } = await import('../constants/audioAssets');
+    const audioAsset = AUDIO_MAP[sceneId];
+    
+    if (!audioAsset) {
+      console.error(`[AudioService] ❌ 场景 ${sceneId} 音频配置不存在`);
+      return null;
+    }
+    
+    const localPath = getLocalPath(audioAsset.category, audioAsset.filename);
+    const RNFS = await import('react-native-fs');
+    const isDownloaded = await RNFS.exists(localPath);
+    
+    // 【强制暴露】路径全链路检查
+    console.log(`\n========== [PATH CHECK] ${sceneId} ==========`);
+    console.log(`[AudioService] 📂 场景 ID: ${sceneId}`);
+    console.log(`[AudioService] 📂 资源配置：${audioAsset.category}/${audioAsset.filename}`);
+    console.log(`[AudioService] 📂 当前本地路径：${localPath}`);
+    console.log(`[AudioService] 📂 路径存在：${await RNFS.exists(localPath)}`);
+    console.log(`[AudioService] 📂 DocumentDirectoryPath: ${RNFS.DocumentDirectoryPath}`);
+    console.log(`[AudioService] 📂 资源检测：${sceneId} → ${isDownloaded ? '已下载' : '未下载'}`);
+    
+    // 【路径审计】检查是否指向非法的本地资源
+    if (localPath.includes('res/raw') || localPath.includes('require(')) {
+      console.error(`\n⚠️⚠️⚠️ [PATH AUDIT] 发现非法路径引用！⚠️⚠️⚠️`);
+      console.error(`[PATH AUDIT] 场景：${sceneId}`);
+      console.error(`[PATH AUDIT] 路径：${localPath}`);
+      console.error(`[PATH AUDIT] 普通场景严禁引用 res/raw 或 require()！\n`);
+    }
+    
+    // 【强制触发】对于普通场景，强制触发下载流程（即使文件已存在）
+    const isNoiseCancellation = audioAsset.category === 'noise_cancellation';
+    let forceTriggerDownload = false;
+    
+    if (!isNoiseCancellation && isDownloaded) {
+      console.log(`[AudioService] ⚠️ [强制触发] 检测到普通场景已下载，强制删除文件以触发下载流程`);
+      console.log(`[AudioService] ⚠️ [强制触发] 目的：验证 DownloadService 下载进度条 UI`);
+      
+      // 实际删除文件，强制触发下载
+      try {
+        const RNFS = await import('react-native-fs');
+        await RNFS.unlink(localPath);
+        console.log(`[AudioService] ✅ [强制触发] 文件已删除：${localPath}`);
+        forceTriggerDownload = true;
+        isDownloaded = false; // 重置状态
+      } catch (error) {
+        console.error(`[AudioService] ❌ [强制触发] 删除文件失败:`, error);
+      }
+    }
+    
+    console.log(`==========================================\n`);
+    
+    if (!isDownloaded || forceTriggerDownload) {
+      // 【资源未下载】触发下载流程
+      console.log(`[AudioService] 📥 资源未下载，触发下载：${sceneId}`);
+      
+      // 订阅下载完成事件
+      const downloadCompleteHandler = async (completedAssetId: string) => {
+        if (completedAssetId === sceneId) {
+          console.log(`[AudioService] ✅ 下载完成回调触发：${sceneId}`);
+          
+          // 延迟 500ms 确保文件完全落盘
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // 自动预加载刚下载的资源
+          try {
+            await this.preloadSingleSound(sceneId);
+            console.log(`[AudioService] ✅ 下载后自动预加载完成：${sceneId}`);
+          } catch (error) {
+            console.error(`[AudioService] ❌ 下载后预加载失败：${sceneId}`, error);
+          }
+        }
+      };
+      
+      this.downloadCompleteCallbacks.add(downloadCompleteHandler);
+      
+      // 触发下载
+      const { DownloadService } = await import('./DownloadService');
+      const downloadResult = await DownloadService.downloadAudio(sceneId);
+      
+      // 移除回调
+      this.downloadCompleteCallbacks.delete(downloadCompleteHandler);
+      
+      if (!downloadResult) {
+        console.error(`[AudioService] ❌ 下载失败：${sceneId}`);
+        return null;
+      }
+      
+      console.log(`[AudioService] ✅ 下载完成，尝试加载：${sceneId}`);
+    }
+    
+    // 【拦截检查】再次确认资源存在性，严禁加载不存在的资源
+    const finalCheck = await RNFS.exists(localPath);
+    if (!finalCheck) {
+      console.error(`[AudioService] ❌ 拦截：资源 ${sceneId} 不存在，禁止进入播放逻辑！`);
+      return null;
+    }
+    
+    // 兜底：动态加载（资源已下载）
+    console.log(`[AudioService] 📥 动态加载 ${sceneId} Sound (资源已下载)`);
+    await this.loadExtraSound(sceneId);
+    const loadedSound = this.activeExtraSounds.get(sceneId);
+    console.log(`[AudioService] 🔍 加载后检查：${sceneId} → ${loadedSound ? '成功获取' : '获取失败'}`);
+    return loadedSound || null;
+  };
+
+  /**
+   * 【音频秒开】播放场景音频（带渐入效果）
+   * @param sceneId 场景 ID
+   * @param targetVolume 目标音量（0-1）
+   * @param fadeDuration 渐入时长（毫秒）
+   */
+  public playSceneWithFade = async (
+    sceneId: string,
+    targetVolume: number = 0.75,
+    fadeDuration: number = 300
+  ): Promise<void> => {
+    console.log(`[AudioService] 🎵 开始播放场景：${sceneId} (目标音量：${targetVolume}, 渐入：${fadeDuration}ms)`);
+    
+    const sound = await this.getOrLoadExtraSound(sceneId);
+    if (!sound) {
+      console.error(`[AudioService] ❌ 无法播放 ${sceneId}: Sound 未加载`);
+      return;
+    }
+    
+    // 【关键校验】确保播放的是正确的场景
+    console.log(`[AudioService] 🔊 准备播放：${sceneId} (已加载：${sound.isLoaded()})`);
+    
+    // 从 0 音量开始播放
+    sound.setVolume(0);
+    sound.play();
+    
+    console.log(`[AudioService] ▶️ ${sceneId} 开始播放，启动渐入效果...`);
+    
+    // 渐入效果
+    const startTime = Date.now();
+    const fadeInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / fadeDuration, 1);
+      
+      // 平滑渐入曲线
+      const currentVolume = targetVolume * (0.5 + 0.5 * Math.sin(progress * Math.PI - Math.PI / 2));
+      sound.setVolume(currentVolume);
+      
+      if (progress >= 1) {
+        clearInterval(fadeInterval);
+        console.log(`[AudioService] ✅ ${sceneId} 播放渐入完成 (最终音量：${sound.getVolume()})`);
+      }
+    }, 16); // ~60fps
   };
 
   /**
