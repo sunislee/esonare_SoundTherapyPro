@@ -264,6 +264,28 @@ export const ProfileScreen = () => {
     ]);
   };
 
+  const handleForceDownloadTest = () => {
+    triggerHaptic('impactMedium');
+    Alert.alert('🧪 强制下载测试', '此操作将删除所有普通场景音频（保留降噪资源），然后重新触发下载流程。确认执行？', [
+      { text: '取消', style: 'cancel' },
+      { 
+        text: '执行测试', 
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const audioService = AudioService.getInstance();
+            await audioService.clearAllSceneAudio();
+            Alert.alert('✅ 清除完成', '现在进入任意场景卡片，将触发下载流程并显示紫色进度条 UI。', [
+              { text: '好的' }
+            ]);
+          } catch (error) {
+            Alert.alert('❌ 清除失败', String(error));
+          }
+        }
+      }
+    ]);
+  };
+
   const handleComingSoon = (feature: string) => {
     triggerHaptic('impactMedium');
     ToastUtil.info(t('profile.menu.comingSoon', { feature }), t('profile.menu.comingSoonDesc'));
@@ -543,6 +565,7 @@ export const ProfileScreen = () => {
           }} /> */}
           <MenuItem icon="settings" title={t('profile.menu.settings')} onPress={() => navigation.navigate('Settings')} />
           <MenuItem icon="trash-2" title={t('profile.menu.clearCache')} onPress={handleClearCache} />
+          <MenuItem icon="download" title="🧪 强制下载测试" onPress={handleForceDownloadTest} />
         </View>
 
         <View style={styles.section}>

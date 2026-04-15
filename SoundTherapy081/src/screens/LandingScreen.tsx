@@ -64,6 +64,7 @@ export const LandingScreen = ({ navigation }: any) => {
         console.log(`[LandingScreen] 启动检查:`);
         console.log(`  - USER_NAME: ${userName ? '存在 (' + userName + ')' : '不存在'}`);
         console.log(`  - HAS_SET_NAME: ${hasSkipped === 'true' ? 'true' : (hasSkipped || 'null')}`);
+        console.log(`  - 资源就绪状态：${resourceReady}`);
         
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
@@ -78,7 +79,11 @@ export const LandingScreen = ({ navigation }: any) => {
             hasSkipped: hasSkipped === 'true'
           });
           
-          if (hasUserInfo) {
+          if (!resourceReady) {
+            // 资源未就绪，强制跳转到下载页面
+            console.log('[LandingScreen] ❌ 资源未就绪，跳转到下载页面');
+            navigation.replace('Download');
+          } else if (hasUserInfo) {
             // 用户已经设置过信息，直接进入主应用
             console.log('[LandingScreen] ✅ 用户已设置信息，进入主应用');
             navigation.replace('MainTabs');

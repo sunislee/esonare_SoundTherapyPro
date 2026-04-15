@@ -212,15 +212,6 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       try { 
         console.log('[ResourceDownloadScreen] 开始检查资源状态...');
         
-        // 【关键修复 1】请求存储权限，确保下载文件可以写入
-        console.log('[ResourceDownloadScreen] 请求存储权限...');
-        const storageGranted = await PermissionService.requestStoragePermission();
-        if (!storageGranted) {
-          console.warn('[ResourceDownloadScreen] 存储权限被拒绝，但仍然尝试下载');
-        } else {
-          console.log('[ResourceDownloadScreen] 存储权限已授予');
-        }
-        
         // 【100% 还原】核心修复逻辑
         console.log('[ResourceDownloadScreen] ====== 开始异步并行预检 ======');
         
@@ -235,6 +226,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         console.log(`[ResourceDownloadScreen] 用户名：${savedName || 'null'}`);
         
         // 2. UI 状态锁死：一旦资源完整，立即设置禅意模式
+        console.log('[ResourceDownloadScreen] 资源完整性判断：', { isResourcesReady });
         if (isResourcesReady) {
           console.log('[ResourceDownloadScreen] 3. 资源完整，立即锁死禅意模式（隐藏进度条）');
           setIsResourceAlreadyExists(true);

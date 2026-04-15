@@ -44,6 +44,8 @@ const BreathDetailScreen: React.FC = () => {
   const { toggleAmbience } = useAudio();
   
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [activeSmallSceneIds, setActiveSmallSceneIds] = useState<string[]>(() => {
     const audioService = AudioService.getInstance();
     return audioService.getActiveSmallSceneIds();
@@ -277,73 +279,179 @@ const BreathDetailScreen: React.FC = () => {
     };
   }, []);
 
+  // 页面挂载时：预加载所有音频
   useEffect(() => {
     const audioService = AudioService.getInstance();
+    console.log('[BreathDetail] 🚀 页面挂载，触发预加载所有场景音频...');
+    audioService.preloadAllSounds().catch(console.error);
     
-    // 初始进入逻辑 - 优化：不等待音频初始化即渲染页面架构
-    const initPage = async () => {
-      // 内容稍后浮现
-      Animated.timing(contentFadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
+    return () => {
+      console.log('[BreathDetail] 🧹 页面卸载，清理资源');
+    };
+  }, []);
 
+  // 场景切换时的加载逻辑 - 优化：优先复用预加载实例，实现秒开体验
+  useEffect(() => {
+    const loadScene = async () => {
       setIsLoading(true);
-      const currentPlayingId = audioService.getCurrentScene()?.id;
+      const audioService = AudioService.getInstance();
       
-      // 保存最后播放的场景 ID，用于首页高亮记忆
-      AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', scene.id).catch(() => {});
-
-      if (currentPlayingId !== scene.id) {
-        console.log(`[BreathDetail] Switching to scene ${scene.id}.`);
-        await audioService.switchSoundscape(scene);
-      }
-      
-      // ==================== 配置化 LFO 启用逻辑 ====================
-      
-      // 1. 深海呼吸（特殊处理）
-      if (shouldEnableLFO) {
-        console.log('[BreathDetail] 🌊 启用深海呼吸 LFO');
-        startLFO();
-      }
-      
-      // 2. 舟上雨（向后兼容）
-      if (shouldEnablePanning) {
-        console.log('[BreathDetail] 🌧️ 为舟上雨启用 Panning LFO');
-        audioService.enablePanningForScene(scene.id);
-        startPanning();
-      }
-      
-      // 3. 午后书店（向后兼容）
-      if (shouldEnableBookstore) {
-        console.log('[BreathDetail] 📚 为书店启用 Panning LFO (45 秒周期)');
-        audioService.enableBookstorePanning(scene.id);
-        startBookstore();
-      }
-      
-      // 4. 配置化场景（森林/禅意/流水/脑波）
-      if (shouldEnableConfigLFO) {
-        console.log(`[BreathDetail] 🎯 为场景 ${scene.id} 启用配置化 LFO (${sceneConfig.preset})`);
+      try {
+        // 【UI 优先】先启动背景动效，掩盖音频加载时间
+        console.log('[BreathDetail] 🎬 启动背景动效...');
         
-        // 加载 ExtraSound
-        await audioService.loadExtraSound(scene.id);
+        // 【强制暴露】无论资源是否存在，先显示下载 UI 3 秒
+        console.log('[BreathDetail] ⚠️ [强制] 设置下载状态，显示紫色 UI...');
+        setIsDownloading(true);
+        setDownloadProgress(0);
         
-        // 注册 LFO Disposer
-        audioService.registerLFODisposer(scene.id, () => {
-          console.log(`[BreathDetail] 🧹 清理场景 ${scene.id} LFO`);
-        });
+        // 【强制等待】3 秒强制 Loading 延迟，让紫色 UI 显示更清楚
+        console.log('[BreathDetail] ⏱️ 启动 3 秒强制 Loading 延迟...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // 启动 LFO
-        startConfigLFO();
+        // 【音频秒开】优先复用预加载实例
+        const sceneId = scene.id;
+        const existingSound = audioService.getExtraSound(sceneId);
+        
+        if (existingSound && existingSound.isLoaded()) {
+          console.log('[BreathDetail] ⚡ 复用预加载 Sound，秒开！');
+          
+          // 隐藏下载 UI
+          setIsDownloading(false);
+          
+          // 立即播放（带渐入）
+          await audioService.playSceneWithFade(sceneId, 0.75, 300);
+          
+          // 然后启动 LFO
+          await initializeLFOForScene(sceneId);
+          
+          setIsLoading(false);
+        } else {
+          console.log('[BreathDetail] 📥 首次加载 Sound...');
+          
+          // 【新增】检查资源是否已下载
+          const { getLocalPath } = await import('../constants/audioAssets');
+          const { AUDIO_MAP } = await import('../constants/audioAssets');
+          const audioAsset = AUDIO_MAP[sceneId];
+          
+          if (audioAsset) {
+            const localPath = getLocalPath(audioAsset.category, audioAsset.filename);
+            const RNFS = await import('react-native-fs');
+            const isDownloaded = await RNFS.exists(localPath);
+            
+            if (!isDownloaded) {
+              console.log('[BreathDetail] ⚠️ 资源未下载，触发下载流程');
+              // 下载状态已经在上面设置为 true
+              
+              // 订阅下载进度
+              const { DownloadService } = await import('../services/DownloadService');
+              const downloadProgressHandler = (progress: { progress: number }) => {
+                setDownloadProgress(Math.round(progress.progress * 100));
+              };
+              
+              try {
+                // 触发下载
+                console.log('[BreathDetail] 📥 开始下载资源...');
+                await DownloadService.checkAndDownload(downloadProgressHandler);
+                
+                console.log('[BreathDetail] ✅ 下载完成，等待 500ms 落盘');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                setIsDownloading(false);
+                console.log('[BreathDetail] 🎉 下载完成，开始播放');
+                
+                // 下载完成后重新尝试加载
+                await audioService.playSceneWithFade(sceneId, 0.75, 300);
+                await initializeLFOForScene(sceneId);
+              } catch (downloadError) {
+                console.error('[BreathDetail] ❌ 下载失败:', downloadError);
+                setIsDownloading(false);
+                setIsLoading(false);
+              }
+              
+              return; // 下载流程结束，返回
+            }
+            
+            // 【强制暴露】即使资源已下载，也显示一下下载 UI
+            console.log('[BreathDetail] ✅ 资源已下载，但仍显示 UI 2 秒');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            setIsDownloading(false);
+          }
+          
+          // 兜底：传统加载方式（资源已下载）
+          const currentPlayingId = audioService.getCurrentScene()?.id;
+          if (currentPlayingId !== scene.id) {
+            console.log(`[BreathDetail] Switching to scene ${scene.id}.`);
+            await audioService.switchSoundscape(scene);
+          }
+          
+          // ==================== 配置化 LFO 启用逻辑 ====================
+          
+          // 1. 深海呼吸（特殊处理）
+          if (shouldEnableLFO) {
+            console.log('[BreathDetail] 🌊 启用深海呼吸 LFO');
+            startLFO();
+          }
+          
+          // 2. 舟上雨（向后兼容）
+          if (shouldEnablePanning) {
+            console.log('[BreathDetail] 🌧️ 为舟上雨启用 Panning LFO');
+            audioService.enablePanningForScene(scene.id);
+            startPanning();
+          }
+          
+          // 3. 午后书店（向后兼容）
+          if (shouldEnableBookstore) {
+            console.log('[BreathDetail] 📚 为书店启用 Panning LFO (45 秒周期)');
+            audioService.enableBookstorePanning(scene.id);
+            startBookstore();
+          }
+          
+          // 4. 配置化场景（森林/禅意/流水/脑波）
+          if (shouldEnableConfigLFO) {
+            console.log(`[BreathDetail] 🎯 为场景 ${scene.id} 启用配置化 LFO (${sceneConfig.preset})`);
+            
+            // 加载 ExtraSound
+            await audioService.loadExtraSound(scene.id);
+            
+            // 注册 LFO Disposer
+            audioService.registerLFODisposer(scene.id, () => {
+              console.log(`[BreathDetail] 🧹 清理场景 ${scene.id} LFO`);
+            });
+            
+            // 启动 LFO
+            startConfigLFO();
+          }
+          
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('[BreathDetail] ❌ 加载场景失败:', error);
+        setIsLoading(false);
+        setIsDownloading(false);
       }
-      
-      setIsLoading(false);
     };
 
-    initPage();
-
+    loadScene();
+  }, [
+    scene.id,
+    sceneId,
+    shouldEnableLFO,
+    stopLFO,
+    shouldEnablePanning,
+    stopPanning,
+    shouldEnableBookstore,
+    stopBookstore,
+    shouldEnableConfigLFO,
+    stopConfigLFO,
+    sceneConfig
+  ]);
+  
+  // 页面卸载时清理资源
+  useEffect(() => {
     return () => {
+      const audioService = AudioService.getInstance();
+      
       // 状态同步检查：退出页面时立即停止所有互动音效
       console.log('[BreathDetail] Stopping all ambient sounds on exit.');
       audioService.stopAllAmbient();
@@ -377,7 +485,17 @@ const BreathDetailScreen: React.FC = () => {
         console.log(`[BreathDetail] ✅ 场景 ${sceneId} 已清理`);
       }
     };
-  }, [scene.id, sceneId, shouldEnableLFO, stopLFO, shouldEnablePanning, stopPanning, shouldEnableBookstore, stopBookstore, shouldEnableConfigLFO, stopConfigLFO]);
+  }, [
+    shouldEnableLFO,
+    stopLFO,
+    shouldEnablePanning,
+    stopPanning,
+    shouldEnableBookstore,
+    stopBookstore,
+    shouldEnableConfigLFO,
+    stopConfigLFO,
+    sceneId
+  ]);
 
   const togglePlayback = async () => {
     const audioService = AudioService.getInstance();
@@ -426,6 +544,23 @@ const BreathDetailScreen: React.FC = () => {
         <Text style={styles.sceneTitle}>
           {t(`scenes.${scene.id}.title`, { defaultValue: scene.title })}
         </Text>
+
+        {/* 【新增】下载进度 UI */}
+        {isDownloading && (
+          <View style={styles.downloadOverlay}>
+            <View style={styles.downloadContent}>
+              <Icon name="cloud-download-outline" size={60} color="#6C5DD3" />
+              <Text style={styles.downloadText}>正在同步宁静资源...</Text>
+              <Text style={styles.downloadProgress}>{downloadProgress}%</Text>
+              <View style={styles.progressBarContainer}>
+                <View 
+                  style={[styles.progressBar, { width: `${downloadProgress}%` }]} 
+                />
+              </View>
+              <Text style={styles.downloadHint}>完成后将自动播放</Text>
+            </View>
+          </View>
+        )}
 
         {/* Content - 移除呼吸球，保持中间留白或仅显示互动图标 */}
         <Animated.View style={[styles.content, { opacity: contentFadeAnim }]}>
@@ -538,6 +673,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
+  },
+  downloadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  downloadContent: {
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  downloadText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  downloadProgress: {
+    color: '#6C5DD3',
+    fontSize: 32,
+    fontWeight: '700',
+    marginTop: 10,
+  },
+  progressBarContainer: {
+    width: 200,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 3,
+    marginTop: 20,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#6C5DD3',
+    borderRadius: 3,
+  },
+  downloadHint: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    marginTop: 15,
+    textAlign: 'center',
   },
 });
 

@@ -189,10 +189,12 @@ export const useLFO = (
   
   // 启动/停止控制
   const start = useCallback(() => {
+    console.log('🔥 LFO Started');
     frameCallback.setActive(true);
   }, [frameCallback]);
   
   const stop = useCallback(() => {
+    console.log('❄️ LFO Stopped');
     frameCallback.setActive(false);
   }, [frameCallback]);
   
