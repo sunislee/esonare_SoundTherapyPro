@@ -18,6 +18,7 @@ import { NotificationService } from './NotificationService';
 import { OfflineService } from './OfflineService';
 import { Scene, SCENES } from '../constants/scenes';
 import { EQManager } from './EQManager';
+import { DownloaderServiceInstance, isDownloaded } from '../services/DownloaderService';
 
 // 【多语言支持 - 终极补丁】直接导入 JSON 文件，手动取值
 import zh from '../i18n/locales/zh.json';
@@ -2091,6 +2092,37 @@ class AudioService {
     return this.isLFOEnabled;
   };
 
+  /**
+   * 【资源降级保护】检查音频资源是否就绪
+   * 用于播放器 UI 降级显示，防止未下载完成时报错崩溃
+   * @param type 资源类型（如：'balanced_noise_1', 'crowd_noise_2' 等）
+   * @returns 资源是否可用
+   */
+  public isAssetReady = async (type: string): Promise<boolean> => {
+    try {
+      // 1. 检查是否在 RESOURCE_MAP 中（远程资源）
+      const { RESOURCE_MAP } = await import('../config/ResourceConfig');
+      if (RESOURCE_MAP[type]) {
+        // 远程资源：检查是否已下载
+        return await isDownloaded(type);
+      }
+
+      // 2. 检查是否为本地场景资源
+      const scene = SCENES.find(s => s.id === type);
+      if (scene && scene.filename) {
+        // 场景资源：检查 Sound 实例是否已加载
+        const sound = this.getExtraSound(type);
+        return sound?.isLoaded() ?? false;
+      }
+
+      // 3. 其他情况：默认不可用
+      return false;
+    } catch (error) {
+      console.error('[AudioService] isAssetReady 检查失败:', error);
+      return false;
+    }
+  };
+
   // ... 其余 SleepTimer 等逻辑保持一致 ...
 }
 
@@ -2119,5 +2151,6 @@ export const toggleAmbience = (scene: any, targetState: boolean) => AudioService
 export const getRealIsPlaying = () => AudioService.getInstance().getRealIsPlaying();
 export const getVolume = () => AudioService.getInstance().getVolume();
 export const setVolume = (volume: number) => AudioService.getInstance().setVolume(volume);
+export const isAssetReady = (type: string) => AudioService.getInstance().isAssetReady(type);
 
 export default AudioService;

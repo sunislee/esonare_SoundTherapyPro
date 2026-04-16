@@ -7,7 +7,6 @@ import { MainNavigator } from './src/navigation/MainNavigator';
 import { AudioProvider } from './src/context/AudioContext';
 import AudioService from './src/services/AudioService';
 import { initLanguage } from './src/i18n';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -16,10 +15,11 @@ function App() {
 
   useEffect(() => {
     const initApp = async () => {
+      const startTime = Date.now();
       try {
         console.log('[App] ====== 开始初始化应用 ======');
         
-        // 【关键】第一步：初始化语言
+        // 第一步：初始化语言
         console.log('[App] [1/2] 初始化语言...');
         await initLanguage();
         console.log('[App] [1/2] ✅ 语言初始化完成');
@@ -30,8 +30,12 @@ function App() {
         await audioService.setupPlayer();
         console.log('[App] [2/2] ✅ AudioService 初始化完成');
         
-        setIsAudioReady(true);
+        const initTime = Date.now() - startTime;
+        console.log(`[App] ⏱️ 应用初始化总耗时：${initTime}ms`);
         console.log('[App] ====== 应用初始化完成 ======');
+        
+        // 设置 isAudioReady 为 true，显示主界面
+        setIsAudioReady(true);
       } catch (error: any) {
         console.error('[App] ❌ 初始化失败:', error);
         console.error('[App] ❌ 错误信息:', error?.message);
@@ -126,11 +130,68 @@ function App() {
     return (
       <SafeAreaProvider>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F5F5' }}>
-          <Text style={{ color: 'red' }}>初始化失败: {error}</Text>
+          <Text style={{ color: 'red' }}>初始化失败：{error}</Text>
         </View>
       </SafeAreaProvider>
     );
   }
+
+  // 【下载进度 UI】轻量级状态提示
+  const renderDownloadProgress = () => {
+    if (!downloadState || !downloadState.isDownloading) return null;
+
+    return (
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          padding: 12,
+          borderRadius: 12,
+          zIndex: 9998,
+        }}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
+            📥 下载音频资源
+          </Text>
+          <Text style={{ color: '#4CAF50', fontSize: 12 }}>
+            {downloadState.downloadedCount}/{downloadState.totalCount}
+          </Text>
+        </View>
+        
+        {/* 进度条 */}
+        <View style={{
+          height: 4,
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}>
+          <View style={{
+            width: `${downloadState.progress}%`,
+            height: '100%',
+            backgroundColor: '#6C5DD3',
+            borderRadius: 2,
+          }}
+          />
+        </View>
+
+        {/* 详细信息 */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+          <Text style={{ color: '#aaa', fontSize: 11 }}>
+            进度：{Math.round(downloadState.progress)}%
+          </Text>
+          {downloadState.speed && (
+            <Text style={{ color: '#aaa', fontSize: 11 }}>
+              速度：{downloadState.speed}
+            </Text>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -139,6 +200,55 @@ function App() {
           <AudioProvider>
             <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
             <MainNavigator />
+            
+            {/* 【下载进度 UI】轻量级状态提示 */}
+            {renderDownloadProgress()}
+            
+            {/* 【Firebase Crashlytics 测试】临时测试按钮 */}
+            {enableCrashTest && (
+              <View style={{
+                position: 'absolute',
+                top: 100,
+                right: 10,
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                padding: 10,
+                borderRadius: 8,
+                zIndex: 9999
+              }}>
+                <Text style={{ color: '#fff', fontSize: 12, marginBottom: 8 }}>
+                  🔥 Crash Test
+                </Text>
+                <Button
+                  title="触发 JS 崩溃"
+                  onPress={() => {
+                    console.log('[CrashTest] 准备触发 JS 崩溃...');
+                    setTimeout(() => {
+                      throw new Error('[CrashlyticsTest] 这是一个测试崩溃！');
+                    }, 500);
+                  }}
+                />
+                <View style={{ height: 8 }} />
+                <Button
+                  title="触发 Native 崩溃"
+                  onPress={() => {
+                    console.log('[CrashTest] 准备触发 Native 崩溃...');
+                    // 通过访问 null 对象触发 Native 崩溃
+                    const obj: any = null;
+                    obj.someMethod();
+                  }}
+                />
+                <View style={{ height: 8 }} />
+                <Button
+                  title="记录非致命异常"
+                  onPress={() => {
+                    console.log('[CrashTest] 记录非致命异常...');
+                    // 这里应该调用 Firebase Crashlytics API
+                    // 但目前只是 console.log
+                    console.warn('[Crashlytics] 模拟记录非致命异常');
+                  }}
+                />
+              </View>
+            )}
           </AudioProvider>
         </NavigationContainer>
       </SafeAreaProvider>

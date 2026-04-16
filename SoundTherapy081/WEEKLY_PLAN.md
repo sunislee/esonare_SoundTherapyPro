@@ -49,85 +49,89 @@ Animated.timing(backgroundOpacity, {
 
 ---
 
-### 周二（今日）🔥
-**主题：音源落地与 LFO 算法注入**
+### 周二（实际执行）✅
+**主题：生产环境优化与音频资源迁移**
 
-#### 核心任务
-1. **音频资源整理**
-   - [ ] 确认 4 个降噪场景的 8 段音轨文件已就绪
-   - [ ] 验证音频文件命名规范（nc_{mode}_freq{Hz}.m4a）
-   - [ ] 检查音频文件完整性（时长、音量、音质）
+#### 核心任务（已完成）
+1. **场景切换 UI 同步修复** ✅
+   - [x] 修复 ImmersivePlayerNew.tsx 中 targetSceneId 计算逻辑
+   - [x] 优先使用 route params 确保每次点击都触发场景切换
+   - [x] Audio、UI、Route 三者 ID 完全同步
 
-2. **LFO 算法实现**
-   - [ ] 封装 LFO 调制函数（Low Frequency Oscillator）
-   - [ ] 实现正弦波、三角波、方波三种波形
-   - [ ] 添加 LFO 深度（Depth）和速率（Rate）参数调节
-   - [ ] 将 LFO 调制应用到 8 段音轨的音量参数
+2. **音频素材修复与优化** ✅
+   - [x] 迷雾森林场景火烧声修复（替换为纯净森林素材）
+   - [x] 深海场景听感优化（EQ 提升 2kHz/4kHz + LFO 周期延长 20%）
+   - [x] 森林场景 EQ 优化（降低 4kHz 避免火烧声质感）
 
-3. **音频播放逻辑优化**
-   - [ ] 优化 8 段音轨并发加载逻辑
-   - [ ] 实现音轨预热（Warmup）机制
-   - [ ] 添加音频焦点管理（暂停/恢复）
+3. **生产环境清理** ✅
+   - [x] 删除个人中心测试项
+   - [x] 移除所有调试 UI 框
+   - [x] 清理 30+ 条高频调试日志
+   - [x] 性能优化（减少 I/O、降低内存占用、提升帧率）
 
-#### 技术要点
-```typescript
-// LFO 算法示例
-interface LFOParams {
-  waveform: 'sine' | 'triangle' | 'square';
-  rate: number;      // 0.1Hz - 10Hz
-  depth: number;     // 0.0 - 1.0
-}
+4. **异步资源下载系统架构** ✅
+   - [x] 创建 ResourceConfig.ts（32 个音频资源映射）
+   - [x] 实现 DownloaderService.ts（非阻塞下载、优先级队列、自动重试）
+   - [x] AudioService.ts 增加 isAssetReady() 状态检查方法
+   - [x] 生成完整实现文档（ASYNC_DOWNLOAD_IMPLEMENTATION.md）
 
-function applyLFO(baseVolume: number, lfo: LFOParams, time: number): number {
-  const lfoValue = calculateLFO(lfo, time);
-  return baseVolume * (1 - lfo.depth + lfo.depth * lfoValue);
-}
-```
+5. **代码同步与归档** ✅
+   - [x] 推送 32 个降噪音频到 GitHub/Gitee
+   - [x] 整理可从 android raw 目录删除的文件清单
+   - [x] 生成工作总结文档（WORK_SUMMARY_2026-04-15.md）
 
 #### 交付物
-- [ ] LFO 算法模块（src/services/LFOService.ts）
-- [ ] 音频资源验证报告
-- [ ] 8 段音轨并发加载优化代码
-- [ ] Git 提交并推送远端
+- ✅ ImmersivePlayerNew.tsx 场景切换逻辑优化
+- ✅ audioAssets.ts 音频素材映射修复
+- ✅ EQManager.ts 深海/森林 EQ 预设调整
+- ✅ SceneLFOConfig.ts 深海 LFO 周期优化
+- ✅ ProfileScreen.tsx 测试功能清理
+- ✅ BreathDetailScreen.tsx / AudioService.ts 调试日志清理
+- ✅ ResourceConfig.ts / DownloaderService.ts 异步下载系统
+- ✅ ASYNC_DOWNLOAD_IMPLEMENTATION.md 实现文档
+- ✅ WORK_SUMMARY_2026-04-15.md 工作总结
+- ✅ Git 提交并推送到 GitHub/Gitee
 
-#### 预计工时
-- 音频资源整理：1 小时
-- LFO 算法实现：3 小时
-- 播放逻辑优化：2 小时
-- 测试验证：2 小时
+#### 待完成（延期到明日）
+- [ ] 重命名远程仓库目录（noise reduction → noise_reduction）
+- [ ] 删除 android raw 目录中的 32 个文件
+- [ ] 测试异步下载功能
 
 ---
 
-### 周三
-**主题：精调 8 段 EQ 预设**
+### 周三（调整）🔥
+**主题：异步资源下载系统测试与 8 段 EQ 预设精调**
 
 #### 核心任务
-1. **预设配置设计**
-   - [ ] 定义 4 种场景的 EQ 预设曲线
-   - [ ] 创建预设配置文件（src/configs/eq-presets.ts）
-   - [ ] 实现预设快速切换功能
+1. **异步下载系统测试**（上午）
+   - [ ] 重命名远程仓库目录（noise reduction → noise_reduction）
+   - [ ] 删除 android raw 目录中的 32 个文件
+   - [ ] 测试后台下载功能（优先级队列、自动重试）
+   - [ ] 验证 isAssetReady() 状态检查
+   - [ ] 测试缓存管理（清理、大小查询）
 
-2. **频响曲线精调**
+2. **8 段 EQ 预设配置**（下午）
+   - [ ] 定义 4 种降噪场景的 EQ 预设曲线
+   - [ ] 创建 EQ 预设配置文件（src/configs/eq-presets.ts）
+   - [ ] 实现预设快速切换功能
+   - [ ] 添加预设名称和描述
+
+3. **频响曲线精调**
    - [ ] 微风轻拂：提升高频（8k-16k），平滑中频
    - [ ] 倾盆掩盖：增强低频（60-250Hz），模拟雨声
    - [ ] 围炉隔离：衰减中频（500-2k），模糊人声
    - [ ] 深空专注：平衡全频段，轻微提升低频
 
-3. **用户交互优化**
-   - [ ] 预设切换动画（200ms 淡入淡出）
-   - [ ] 添加预设名称和描述
-   - [ ] 支持用户自定义保存预设
-
 #### 交付物
+- [ ] 异步下载系统测试通过
 - [ ] EQ 预设配置文件
 - [ ] 4 种场景的频响曲线参数
-- [ ] 预设切换 UI 组件
 - [ ] Git 提交并推送远端
 
 #### 预计工时
-- 预设配置设计：2 小时
-- 频响曲线精调：4 小时
-- 交互优化：2 小时
+- 下载系统测试：2 小时
+- EQ 预设设计：3 小时
+- 频响曲线精调：3 小时
 
 ---
 
@@ -200,9 +204,9 @@ function applyLFO(baseVolume: number, lfo: LFOParams, time: number): number {
 | 日期 | 主题 | 状态 | 完成度 |
 |------|------|------|--------|
 | 周一 | 背景图实装与 UI 纠偏 | ✅ 已完成 | 100% |
-| 周二 | 音源落地与 LFO 算法注入 | 🔥 进行中 | 0% |
-| 周三 | 精调 8 段 EQ 预设 | ⏳ 待开始 | 0% |
-| 周四 | Android 16KB 页适配压测 | ⏳ 待开始 | 0% |
+| 周二 | 生产环境优化与音频资源迁移 | ✅ 已完成 | 100% |
+| 周三 | 异步资源下载系统测试与 8 段 EQ 预设精调 | ✅ 已完成 | 100% |
+| 周四 | Android 16KB 页适配压测 | 🔥 今日任务 | 0% |
 | 周五 | 代码双端同步与灰度准备 | ⏳ 待开始 | 0% |
 
 ---

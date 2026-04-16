@@ -1,0 +1,70 @@
+Applications Memory Usage (in Kilobytes):
+Uptime: 73506159 Realtime: 146625122
+
+** MEMINFO in pid 7647 [com.anonymous.soundtherapyapp] **
+                   Pss  Private  Private  SwapPss      Rss     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty    Total     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------   ------
+  Native Heap    77810    77612      128      348    79280   108332    91044    12445
+  Dalvik Heap    23166    18080     4896       10    25148    47417    11854    35563
+ Dalvik Other     4748     4020       48       12     6204                           
+        Stack     2332     2332        0       16     2340                           
+       Ashmem      292        0        0        0     2128                           
+      Gfx dev     4932     4804      128        0     4936                           
+    Other dev      128        0       24        0     1136                           
+     .so mmap    20180     1056    12264      117    72832                           
+    .jar mmap     1384        0        0        0    49208                           
+    .apk mmap     2346        0     2088        0     5152                           
+    .ttf mmap     3926        0     1632        0    14744                           
+    .dex mmap    21939        4    21848        0    23204                           
+    .oat mmap      259        0        0        0    16052                           
+    .art mmap     2050      604      956       41    16860                           
+   Other mmap      381        4       44        0     1624                           
+   EGL mtrack    38536    38536        0        0    38536                           
+    GL mtrack      384      384        0        0      384                           
+      Unknown    23761    23564      172      793    24504                           
+        TOTAL   229891   171000    44228     1337   384272   155749   102898    48008
+ 
+ App Summary
+                       Pss(KB)                        Rss(KB)
+                        ------                         ------
+           Java Heap:    19640                          42008
+         Native Heap:    77612                          79280
+                Code:    38908                         182532
+               Stack:     2332                           2340
+            Graphics:    43852                          43856
+       Private Other:    32884
+              System:    14663
+             Unknown:                                   34256
+ 
+           TOTAL PSS:   229891            TOTAL RSS:   384272       TOTAL SWAP PSS:     1337
+ 
+ Objects
+               Views:      289         ViewRootImpl:        1
+         AppContexts:        6           Activities:        1
+              Assets:       33        AssetManagers:        0
+       Local Binders:      123        Proxy Binders:      222
+       Parcel memory:       25         Parcel count:       98
+    Death Recipients:        5             WebViews:        0
+ 
+ Native Allocations
+                         Count                       Total(kB)
+                        ------                         ------
+   Bitmap (malloced):       87                          32002
+Bitmap (nonmalloced):        2                           1552
+    Other (malloced):     1932                            183
+ Other (nonmalloced):      257                            168
+ 
+ SQL
+         MEMORY_USED:      174
+  PAGECACHE_OVERFLOW:       54          MALLOC_SIZE:       46
+ 
+ DATABASES
+      pgsz     dbsz   Lookaside(b) cache hits cache misses cache size  Dbname
+PER CONNECTION STATS
+         4       20             34    58   101     3  /data/user/0/com.anonymous.soundtherapyapp/databases/RKStorage
+         4       32             51    12    76     5  /data/user/0/com.anonymous.soundtherapyapp/databases/exoplayer_internal.db
+POOL STATS
+     cache hits  cache misses    cache size  Dbname
+             58           102           160  /data/user/0/com.anonymous.soundtherapyapp/databases/RKStorage
+             12            77            89  /data/user/0/com.anonymous.soundtherapyapp/databases/exoplayer_internal.db
