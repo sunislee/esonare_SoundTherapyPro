@@ -112,6 +112,18 @@ cd /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/SoundTherapy0
 **修复**：删除 Firebase Crashlytics 测试按钮
 **提交**：同上
 
+#### 问题 3：EQ 预设映射错误
+**症状**：倾盆掩盖和围炉隔离的声音听感相似
+**原因**：EQManager.ts 中 traffic_noise 和 crowd_noise 的 EQ 预设映射反了
+**修复**：修正映射关系 traffic_noise -> heavyRain, crowd_noise -> fireside
+**提交**：`fix: restore 32 noise reduction audio tracks and fix EQ mapping for traffic/crowd scenes`
+
+#### 问题 4：音频文件内容重复
+**症状**：traffic_noise 和 crowd_noise 的音频文件 MD5 相同
+**原因**：从 Git 历史恢复文件时误用了相同版本
+**修复**：从 commit 6ef94f96 恢复正确的 traffic_noise 和 crowd_noise 音频文件
+**提交**：同上
+
 ### ✅ 最终验证
 - **启动测试**：通过（10 秒内完成启动）
 - **稳定性**：通过（无崩溃，无闪退）
@@ -265,17 +277,53 @@ feat: add 4 noise reduction scene EQ presets
 - EQ 预设注入：Jazz-Funk、Deep Sleep + 4 种降噪场景
 - 压测脚本：3 个自动化测试脚本已创建
 - 编译安装：Release 版本成功安装到 Redmi K80 Pro
+- Bug 修复：downloadState、enableCrashTest 未定义变量
+- EQ 映射修正：traffic_noise -> heavyRain, crowd_noise -> fireside
+- 音频文件恢复：从 commit 6ef94f96 恢复正确的 32 个降噪音轨
 
-### ⏳ 待验证
+###  待验证
 - 8 段音轨并发加载内存峰值（目标：< 200MB）
 - 音频播放延迟（目标：< 500ms）
 - EQ 循环切换稳定性（目标：50 次无崩溃）
+
+### 🔴 遗留问题（待解决）
+**问题**：4 个降噪场景（均衡白噪音、倾盆掩盖、围炉隔离、深空专注）的声音听感区别不明显
+
+**已尝试的修复**：
+- ✅ 恢复了 32 个音频文件到 raw 目录
+- ✅ 验证了 traffic_noise 和 crowd_noise 的 MD5 不同
+- ✅ 修复了 EQ 预设映射
+- ✅ 清除了应用数据
+
+**可能的原因**（需进一步排查）：
+1. 8TrackAudioService 可能还在加载错误的音频路径
+2. 音频文件的 8 个音轨之间差异太小，听感上不明显
+3. EQ 预设的增益变化不够显著
 
 ### 📊 预期成果
 - ✅ APK 体积减少 48MB
 - ✅ 内存稳定在 200MB 以内
 - ✅ 音频延迟 < 500ms
 - ✅ EQ 切换无泄漏/崩溃
+-  4 个降噪场景声音有明显区别
+
+---
+
+## 📅 明日（周五）待办事项
+
+### 优先级 1：解决降噪场景音频听感问题
+1. 检查 8TrackAudioService.ts 中的音频加载逻辑
+2. 验证每个场景实际播放的音频文件路径
+3. 对比 4 个场景的音频文件内容（波形分析）
+4. 调整 EQ 预设增益参数，增强差异化
+
+### 优先级 2：执行压测脚本
+1. 运行 `stress_test_memory.sh` - 记录内存峰值
+2. 运行 `test_audio_latency.sh` - 记录播放延迟
+3. 运行 `stress_test_eq_switching.sh` - 记录稳定性
+
+### 优先级 3：更新压测报告
+根据实际测试结果，更新本报告并归档。
 
 ---
 
