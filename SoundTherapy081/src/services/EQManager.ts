@@ -98,6 +98,32 @@ export const SCENE_EQ_PRESETS: Record<string, EQPreset> = {
     gains: [6, 5, 3, 1, 0, -2, -4, -6], // 63Hz/125Hz +6/+5dB (包裹感), 4kHz/8kHz -4/-6dB (削减高频)
   },
   
+  // ==================== 新增 4 种降噪场景 EQ 预设 ====================
+  
+  // 微风轻拂：提升高频（8k-16k），增强空气感
+  breeze: {
+    name: '微风轻拂',
+    gains: [0, 0, 0, 1, 2, 2, 3, 3], // 8kHz +3dB (高频空气感)
+  },
+  
+  // 倾盆掩盖：增强低频（60-250Hz），营造雨幕包裹感
+  heavyRain: {
+    name: '倾盆掩盖',
+    gains: [4, 4, 3, 1, 0, 0, -1, -2], // 63Hz/125Hz +4dB, 250Hz +3dB (低频雨幕)
+  },
+  
+  // 围炉隔离：衰减中频（500-2k），减少人声干扰
+  fireside: {
+    name: '围炉隔离',
+    gains: [2, 2, 1, -1, -3, -3, -2, -1], // 500Hz -1dB, 1kHz -3dB, 2kHz -3dB (衰减中频人声)
+  },
+  
+  // 深空专注：平衡全频段 Flat + 低功耗模式（通过降低采样率实现）
+  deepSpace: {
+    name: '深空专注',
+    gains: [0, 0, 0, 0, 0, 0, 0, 0], // 全频段 Flat，低功耗由 AudioService 控制
+  },
+  
   // 默认/平坦
   flat: {
     name: '默认',
@@ -122,6 +148,12 @@ export const getSceneEQPreset = (sceneId: string): EQPreset => {
   // 新增：Jazz-Funk 和 Deep Sleep 模式
   if (sceneId.includes('jazz') || sceneId.includes('funk')) return SCENE_EQ_PRESETS.jazzFunk;
   if (sceneId.includes('sleep') || sceneId.includes('deep_sleep')) return SCENE_EQ_PRESETS.deepSleep;
+  
+  // 新增：4 种降噪场景
+  if (sceneId.includes('breeze') || sceneId.includes('balanced_noise')) return SCENE_EQ_PRESETS.breeze;
+  if (sceneId.includes('rain') || sceneId.includes('heavy_rain') || sceneId.includes('crowd_noise')) return SCENE_EQ_PRESETS.heavyRain;
+  if (sceneId.includes('fire') || sceneId.includes('fireside') || sceneId.includes('traffic_noise')) return SCENE_EQ_PRESETS.fireside;
+  if (sceneId.includes('space') || sceneId.includes('deep_space') || sceneId.includes('wind_noise')) return SCENE_EQ_PRESETS.deepSpace;
   
   // 默认返回平坦预设
   return SCENE_EQ_PRESETS.flat;
