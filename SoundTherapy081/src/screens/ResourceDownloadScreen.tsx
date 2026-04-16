@@ -59,6 +59,64 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   const skipClickCount = useRef(0);
   const skipClickTimer = useRef<NodeJS.Timeout | null>(null);
   
+  /**
+   * 下载 32 个降噪音频资源
+   */
+  const downloadNoiseReductionResources = async () => {
+    try {
+      console.log('[ResourceDownloadScreen]  开始下载降噪音频资源...');
+      const { NOISE_REDUCTION_RESOURCES } = await import('../config/ResourceConfig');
+      
+      const NOISE_REDUCTION_COUNT = NOISE_REDUCTION_RESOURCES.length;
+      let downloadedCount = 0;
+      
+      // 并发下载所有降噪音频
+      const downloadPromises = NOISE_REDUCTION_RESOURCES.map(async (resource) => {
+        try {
+          const localPath = `${RNFS.DocumentDirectoryPath}/${resource.category}/${resource.filename}`;
+          const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+          
+          // 确保目录存在
+          if (!(await RNFS.mkdir(dirPath))) {
+            await RNFS.mkdir(dirPath);
+          }
+          
+          // 检查文件是否已存在
+          if (await RNFS.exists(localPath)) {
+            console.log(`[ResourceDownloadScreen] ✅ ${resource.id} 已存在，跳过`);
+            downloadedCount++;
+            return;
+          }
+          
+          // 下载文件
+          console.log(`[ResourceDownloadScreen] 📥 开始下载：${resource.id}`);
+          
+          const result = await RNFS.downloadFile({
+            fromUrl: resource.remoteUrl,
+            toFile: localPath,
+          }).promise;
+          
+          if (result.statusCode === 200) {
+            downloadedCount++;
+            console.log(`[ResourceDownloadScreen] ✅ ${resource.id} 下载成功 (${downloadedCount}/${NOISE_REDUCTION_COUNT})`);
+          } else {
+            console.error(`[ResourceDownloadScreen] ❌ ${resource.id} 下载失败：HTTP ${result.statusCode}`);
+          }
+        } catch (error: any) {
+          console.error(`[ResourceDownloadScreen] ❌ ${resource.id} 下载异常:`, error.message || error);
+        }
+      });
+      
+      // 等待所有下载完成
+      await Promise.all(downloadPromises);
+      console.log(`[ResourceDownloadScreen] ✅ 降噪音频下载完成！成功：${downloadedCount}/${NOISE_REDUCTION_COUNT}`);
+      
+    } catch (error) {
+      console.error('[ResourceDownloadScreen] ❌ 降噪音频下载失败:', error);
+      throw error;
+    }
+  };
+  
   const handleSkipDownload = async () => {
     skipClickCount.current += 1;
     console.log(`[SkipDebug] 点击次数：${skipClickCount.current}/5`);
@@ -246,6 +304,11 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         if (isResourcesReady && savedName) {
           // IF (资源齐 && 有名字) -> 老用户进主页
           console.log('[ResourceDownloadScreen] ✅ 老用户：资源完整 + 有用户名 -> 跳转到 MainTabs');
+          console.log('[ResourceDownloadScreen] 🔄 后台触发降噪音频下载...');
+          // 后台静默触发降噪音频下载（不阻塞）
+          downloadNoiseReductionResources().catch(err => {
+            console.error('[ResourceDownloadScreen] ❌ 后台下载降噪音频失败:', err);
+          });
           navigation.replace('MainTabs');
           return; // ⚠️ 关键：立即返回，禁止继续执行
         }
@@ -253,6 +316,11 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         if (isResourcesReady && !savedName) {
           // IF (资源齐 && 没名字) -> 新用户去起名
           console.log('[ResourceDownloadScreen] ✅ 新用户：资源完整 + 无用户名 -> 跳转到 NameEntry');
+          console.log('[ResourceDownloadScreen] 🔄 后台触发降噪音频下载...');
+          // 后台静默触发降噪音频下载（不阻塞）
+          downloadNoiseReductionResources().catch(err => {
+            console.error('[ResourceDownloadScreen] ❌ 后台下载降噪音频失败:', err);
+          });
           navigation.replace('NameEntry');
           return; // ⚠️ 关键：立即返回，禁止继续执行
         }
@@ -292,11 +360,18 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           }
         }); 
 
-        // 下载完成后，进行完整性校验
+        // 【关键】18 个核心资源下载完成后，进行完整性校验
         const integrity = await OfflineService.checkResourceIntegrity();
         if (integrity.isComplete) {
           await OfflineService.markAsReady();
           console.log('[ResourceDownloadScreen] 下载完成，资源完整性校验通过');
+          
+          // 【双轨制】后台静默触发 32 个降噪音频下载（不阻塞）
+          console.log('[ResourceDownloadScreen] 🔄 后台触发降噪音频下载...');
+          downloadNoiseReductionResources().catch(err => {
+            console.error('[ResourceDownloadScreen] ❌ 后台下载降噪音频失败:', err);
+          });
+          
           // 设置完成状态，触发跳转
           setIsDownloadCompleted(true);
           setIsUiCompleted(true);

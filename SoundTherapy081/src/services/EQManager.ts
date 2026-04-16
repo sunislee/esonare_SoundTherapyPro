@@ -84,6 +84,20 @@ export const SCENE_EQ_PRESETS: Record<string, EQPreset> = {
     gains: [3, 3, 2, 1, 0, 0, -1, -2], // 63Hz/125Hz +3dB
   },
   
+  // ==================== 新增 8 段 EQ 预设 ====================
+  
+  // Jazz-Funk 模式：强化 60Hz 鼓点与 4kHz 乐器明亮度
+  jazzFunk: {
+    name: 'Jazz-Funk',
+    gains: [5, 4, 2, 0, -1, 3, 4, 2], // 63Hz +5dB (鼓点), 4kHz +4dB (乐器明亮度), 8kHz +2dB
+  },
+  
+  // Deep Sleep 模式：削减高频，增强 100Hz 以下的稳态包裹感
+  deepSleep: {
+    name: 'Deep Sleep',
+    gains: [6, 5, 3, 1, 0, -2, -4, -6], // 63Hz/125Hz +6/+5dB (包裹感), 4kHz/8kHz -4/-6dB (削减高频)
+  },
+  
   // 默认/平坦
   flat: {
     name: '默认',
@@ -104,6 +118,10 @@ export const getSceneEQPreset = (sceneId: string): EQPreset => {
   if (sceneId.includes('zen') || sceneId.includes('bowl') || sceneId.includes('clean')) return SCENE_EQ_PRESETS.zen;
   if (sceneId.includes('alpha')) return SCENE_EQ_PRESETS.alpha;
   if (sceneId.includes('delta')) return SCENE_EQ_PRESETS.delta;
+  
+  // 新增：Jazz-Funk 和 Deep Sleep 模式
+  if (sceneId.includes('jazz') || sceneId.includes('funk')) return SCENE_EQ_PRESETS.jazzFunk;
+  if (sceneId.includes('sleep') || sceneId.includes('deep_sleep')) return SCENE_EQ_PRESETS.deepSleep;
   
   // 默认返回平坦预设
   return SCENE_EQ_PRESETS.flat;
