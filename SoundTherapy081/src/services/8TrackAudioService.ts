@@ -748,7 +748,7 @@ export const preload8TrackAudio = async (audioGroupId: string): Promise<boolean>
     // 加载 8 个轨道但不播放
     const loadPromises = [];
     for (let i = 1; i <= 8; i++) {
-      const resourceName = `${audioConfig.folder}_track_${i}`;
+      const resourceName = `${audioConfig.folder}_track_${i}`.toLowerCase();
       loadPromises.push(
         new Promise<Sound>((resolve, reject) => {
           const sound = new Sound(resourceName, Sound.MAIN_BUNDLE, (error) => {

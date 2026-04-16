@@ -96,6 +96,26 @@ cd /Users/sunislee/Documents/trae_projects/esonare_SoundTherapyPro/SoundTherapy0
 - **编译状态**：成功 (2m 3s)
 - **安装状态**：成功 (Redmi K80 Pro)
 - **应用启动**：正常
+- **运行状态**：✅ 稳定运行（PID: 15205）
+
+### ✅ Bug 修复记录
+
+#### 问题 1：ReferenceError: downloadState
+**症状**：应用启动后闪退
+**原因**：App.tsx 中引用了未定义的 `downloadState` 变量
+**修复**：删除 `renderDownloadProgress` 函数及调用
+**提交**：`fix: remove undefined variables (downloadState, enableCrashTest) from App.tsx`
+
+#### 问题 2：ReferenceError: enableCrashTest
+**症状**：应用启动后闪退
+**原因**：App.tsx 中引用了未定义的 `enableCrashTest` 变量
+**修复**：删除 Firebase Crashlytics 测试按钮
+**提交**：同上
+
+### ✅ 最终验证
+- **启动测试**：通过（10 秒内完成启动）
+- **稳定性**：通过（无崩溃，无闪退）
+- **进程状态**：正常运行（PID: 15205）
 
 ### ⏳ 待执行测试（需手动操作）
 

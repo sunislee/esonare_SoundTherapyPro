@@ -151,8 +151,8 @@ export const getSceneEQPreset = (sceneId: string): EQPreset => {
   
   // 新增：4 种降噪场景
   if (sceneId.includes('breeze') || sceneId.includes('balanced_noise')) return SCENE_EQ_PRESETS.breeze;
-  if (sceneId.includes('rain') || sceneId.includes('heavy_rain') || sceneId.includes('crowd_noise')) return SCENE_EQ_PRESETS.heavyRain;
-  if (sceneId.includes('fire') || sceneId.includes('fireside') || sceneId.includes('traffic_noise')) return SCENE_EQ_PRESETS.fireside;
+  if (sceneId.includes('rain') || sceneId.includes('heavy_rain') || sceneId.includes('traffic_noise')) return SCENE_EQ_PRESETS.heavyRain;
+  if (sceneId.includes('fire') || sceneId.includes('fireside') || sceneId.includes('crowd_noise')) return SCENE_EQ_PRESETS.fireside;
   if (sceneId.includes('space') || sceneId.includes('deep_space') || sceneId.includes('wind_noise')) return SCENE_EQ_PRESETS.deepSpace;
   
   // 默认返回平坦预设
