@@ -1,0 +1,100 @@
+04-17 18:32:20.839 27679 27698 D MiuiMonitorThread: Shared singleton Thread for stability monitor start
+04-17 18:32:20.839 27679 27679 D HWUI    : [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+04-17 18:32:20.839 27679 27679 D HWUI    : [HWUI] EnhanceVkPipelineCache is enabled
+04-17 18:32:20.839 27679 27679 D HWUI    : [HWUI] Flag ddre enabled
+04-17 18:32:20.840 27679 27679 V GraphicsEnvironment: Currently set values for:
+04-17 18:32:20.840 27679 27679 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+04-17 18:32:20.840 27679 27679 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+04-17 18:32:20.840 27679 27679 V GraphicsEnvironment: com.miui.packageinstaller is not listed in per-application setting
+04-17 18:32:20.840 27679 27679 V GraphicsEnvironment: ANGLE allowlist from config: 
+04-17 18:32:20.840 27679 27679 V GraphicsEnvironment: com.miui.packageinstaller is not listed in ANGLE allowlist or settings, returning default
+04-17 18:32:20.840  9803 11837 I VideoBoxUtils: isSupportVideoBox: true
+04-17 18:32:20.841 27679 27701 D ActivityThread: the event that target app starts is : AppLaunchEvent{mType='441', mProcessName='com.miui.packageinstaller', mPackageName='com.miui.packageinstaller', mIsMainProcess='true', mVersionCode='54900', mVersionName='', mLaunchTime='2026-04-17'}
+04-17 18:32:20.841 27679 27700 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+04-17 18:32:20.841  8770  8790 W MQSEventManager: 441 occur
+04-17 18:32:20.841 27679 27698 I Perf    : Connecting to perf service.
+04-17 18:32:20.841  3285  3373 I system_server: AssetManager2(0xb400007770fef278) locale list changing from [] to [zh-CN]
+04-17 18:32:20.841  9803 11837 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1295 android.content.ContextWrapper.sendBroadcast:527 P3.e.f:25 P3.e.d:1 P3.e$c$a.run:19 
+04-17 18:32:20.841  3285  5219 W ActivityManagerServiceImpl: Sending non-protected broadcast com.miui.gamebooster.UNINSTALLAPP from system 9803:com.miui.securitycenter.remote/1000 pkg com.miui.securitycenter. Callers=
+04-17 18:32:20.842 27679 27698 I ActivityThread: TrafficStats init done
+04-17 18:32:20.843 27679 27698 I ForceDarkHelperStubImpl: initialize for com.miui.packageinstaller , ForceDarkOrigin
+04-17 18:32:20.843 27679 27698 D nativeloader: Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+04-17 18:32:20.843 27679 27698 D HWUI    : JNI_OnLoad success
+04-17 18:32:20.844 27679 27698 I MiuiForceDarkConfig: setConfig density:3.750000, mainRule:0, secondaryRule:0, tertiaryRule:0
+04-17 18:32:20.845 27679 27679 D ResMonitorStub: The current process type is: system_app, process name is: com.miui.packageinstaller
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: Java heap leak ratio threshold from RMS: 80%, Max: 256M, Process name: com.miui.packageinstaller
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: Java heap loop intervals: (Count: 5)
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: 0: 0.0, 300s
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: 1: 0.2, 180s
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: 2: 0.4, 60s
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: 3: 0.6, 30s
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: 4: 0.8, 10s
+04-17 18:32:20.845 27679 27679 I JavaheapMonitor: Java heap monitor start in proc: com.miui.packageinstaller
+04-17 18:32:20.846 27679 27679 D ResMonitorStub: The current process type supports enabling Java heap monitoring
+04-17 18:32:20.847 27679 27698 I ActivityThread: Miui Feature Init done
+04-17 18:32:20.849  9803 11615 I ThumbnailBlurUtils: loadPrivacyThumbnailBlurMonthly successd{"com.ss.android.ugc.aweme":27,"com.mipay.wallet":1,"com.tencent.mm":5,"com.xunmeng.pinduoduo":9,"com.xiaomi.vipaccount":2,"com.android.fileexplorer":5,"com.ss.android.ugc.livelite":27,"com.autonavi.minimap":3,"com.miui.calculator":5,"com.android.contacts":5,"com.android.deskclock":5,"com.xiaomi.scanner":5,"com.miui.passwords":-1,"com.miui.securitycenter":5,"com.xiaomi.finddevice":-1,"com.xingin.xhs":5,"tv.danmaku.bili":27,"com.duokan.phone.remotecontroller":5,"com.miui.gallery":6,"com.ss.android.article.video":27,"com.soulmix":-1,"com.ss.android.ugc.aweme.hubble":-1,"com.eg.android.AlipayGphone":1,"com.anonymous.soundtherapyapp":-1,"com.xiaomi.market":5,"com.miui.notes":5,"com.alibaba.wireless":9,"com.cainiao.wireless":5,"com.xiaomi.shop":9,"com.xiaomi.youpin":9,"com.smile.gifmaker":27,"com.xiaomi.gamecenter":5,"com.ss.android.ugc.aweme.lite":6,"com.android.browser":5,"com.miui.virtualsim":5,"com.miui.weather2":5,"com.miui.video":27,"com.google.android.documentsui":-1,"com.xiaomi.smarthome":4,"com.aliyun.tongyi":-1,"com.miui.voiceassistProxy":-1,"com.android.mms":5,"com.android.providers.downloads.ui":5,"com.android.camera":6,"com.android.calendar":10,"com.android.settings":-1,"com.jingdong.app.mall":9,"com.larus.nova":-1,"com.android.soundrecorder":5}
+04-17 18:32:20.849 27679 27679 D WM-WrkMgrInitializer: Initializing WorkManager with default configuration.
+04-17 18:32:20.852 27679 27679 D WM-PackageManagerHelper: Skipping component enablement for androidx.work.impl.background.systemjob.SystemJobService
+04-17 18:32:20.852 27679 27679 D WM-Schedulers: Created SystemJobScheduler and enabled SystemJobService
+04-17 18:32:20.853 27679 27679 I MarketLogSdk-SecurityModeGuideProvider: onCreate
+04-17 18:32:20.855 27679 27679 D MiLogUploader: MiLogUploader init.
+04-17 18:32:20.856 27679 27679 D OneTrackSdk: updateDebugSwitch sEnable: false sDebugMode：false sDebugProperty：false
+04-17 18:32:20.856 27679 27679 D OneTrackSdk: updateTestSwitch sTestEnable: false sTestMode：false sTestProperty：false
+04-17 18:32:20.856 27679 27679 D OneTrackSdk: log on: false, quick upload on: false
+04-17 18:32:20.857 27679 27679 I NativeTurboSchedManager: Load libmiui_runtime
+04-17 18:32:20.857 27679 27679 E TurboSchedMonitor: failed to find setSchedAffinity method com.miui.packageinstaller
+04-17 18:32:20.857 27679 27679 E TurboSchedMonitor: failed to find setSchedAffinity method com.miui.packageinstaller
+04-17 18:32:20.858 27679 27679 D OneTrackImp: OneTrackImp init : Configuration{appId='10***65', pluginId='null', channel='appstore', international=false, region='null', overrideMiuiRegionSetting=false, mode=SDK, GAIDEnable=true, IMSIEnable=true, IMEIEnable=true, ExceptionCatcherEnable=false, instanceId=null}
+04-17 18:32:20.858 27679 27679 D OneTrackImp: OneTrackImp sdk ver : 2.2.2
+04-17 18:32:20.858  3285  5219 D CompatChangeReporter: Compat change id reported: 261072174; UID 10133; state: ENABLED
+04-17 18:32:20.858  1756  1756 I vendor.qti.hardware.servicetrackeraidl-service: bindService is called for service : com.miui.analytics/.onetrack.OneTrackService and for client com.miui.packageinstaller
+04-17 18:32:20.858  1756  1756 I vendor.qti.hardware.servicetrackeraidl-service: total connections for service : com.miui.analytics/.onetrack.OneTrackServiceare :26
+04-17 18:32:20.858  1756  1756 I vendor.qti.hardware.servicetrackeraidl-service: total connections for client : com.miui.packageinstallerare :1
+04-17 18:32:20.859  3285  5367 D CompatChangeReporter: Compat change id reported: 161145287; UID 10133; state: ENABLED
+04-17 18:32:20.859 27679 27679 I MIUIPI_Log: Logger init completed!
+04-17 18:32:20.860 27679 27718 I MIUIPI_ImportantSystemEnvironment: persist.sys.miui_optimization=[]
+04-17 18:32:20.860  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:32:20.860 27679 27712 D IdProviderImpl: getOAID from com.miui.packageinstaller
+04-17 18:32:20.860  1749  3131 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:32:20.860 27679 27718 I MIUIPI_ImportantSystemEnvironment: accessibility enabled=[false], services=[]
+04-17 18:32:20.861 27679 27679 E TurboSchedMonitor: failed to find setSchedAffinity method com.miui.packageinstaller
+04-17 18:32:20.862 27679 27679 E TurboSchedMonitor: failed to find setSchedAffinity method com.miui.packageinstaller
+04-17 18:32:20.864 27679 27679 E TurboSchedMonitor: failed to find setSchedAffinity method com.miui.packageinstaller
+04-17 18:32:20.865 27679 27679 E TurboSchedMonitor: failed to find setSchedAffinity method com.miui.packageinstaller
+04-17 18:32:20.865 27679 27725 D OneTrack-Api-BroadcastManager: register screen receiver
+04-17 18:32:20.866 27679 27679 D IdProviderImpl: getOAID from com.miui.packageinstaller
+04-17 18:32:20.868 27679 27679 W Settings: Setting device_provisioned has moved from android.provider.Settings.Secure to android.provider.Settings.Global.
+04-17 18:32:20.868 27679 27679 D OneTrackSdk: updateDebugSwitch sEnable: false sDebugMode：false sDebugProperty：false
+04-17 18:32:20.868 27679 27679 D OneTrackSdk: updateTestSwitch sTestEnable: false sTestMode：false sTestProperty：false
+04-17 18:32:20.868 27679 27679 D OneTrackSdk: log on: false, quick upload on: false
+04-17 18:32:20.868 27679 27679 D OneTrackImp: OneTrackImp init : Configuration{appId='31*******45', pluginId='null', channel='com.miui.packageinstaller', international=false, region='null', overrideMiuiRegionSetting=false, mode=APP, GAIDEnable=true, IMSIEnable=true, IMEIEnable=true, ExceptionCatcherEnable=true, instanceId=null}
+04-17 18:32:20.868 27679 27679 D OneTrackImp: OneTrackImp sdk ver : 2.2.2
+04-17 18:32:20.868 27679 27679 D OneTrackSdk: updateDebugSwitch sEnable: false sDebugMode：false sDebugProperty：false
+04-17 18:32:20.868 27679 27679 D OneTrackSdk: updateTestSwitch sTestEnable: false sTestMode：false sTestProperty：false
+04-17 18:32:20.868 27679 27679 D OneTrackSdk: log on: false, quick upload on: false
+04-17 18:32:20.869 27679 27679 D OneTrackImp: OneTrackImp init : Configuration{appId='28***************88', pluginId='null', channel='com.miui.packageinstaller', international=false, region='null', overrideMiuiRegionSetting=false, mode=APP, GAIDEnable=true, IMSIEnable=true, IMEIEnable=true, ExceptionCatcherEnable=true, instanceId=null}
+04-17 18:32:20.869 27679 27679 D OneTrackImp: OneTrackImp sdk ver : 2.2.2
+04-17 18:32:20.869 27679 27679 D AutoDensity: autodensity debugEnable = 
+04-17 18:32:20.870 27679 27679 D AutoDensity: 	getAccessibilityDpi Exception: android.provider.Settings$SettingNotFoundException: display_density_forced
+04-17 18:32:20.872 27679 27730 D nativeloader: Load /data/app/~~7NC3xT8YWm1DLrnbOiszHA==/com.miui.packageinstaller-THX2v9GfpO9XtEn_PW_zsA==/base.apk!/lib/arm64-v8a/libxcrash.so using class loader ns clns-11 (caller=/data/app/~~7NC3xT8YWm1DLrnbOiszHA==/com.miui.packageinstaller-THX2v9GfpO9XtEn_PW_zsA==/base.apk!classes2.dex): ok
+04-17 18:32:20.873 27679 27679 D IdProviderImpl: getOAID from com.miui.packageinstaller
+04-17 18:32:20.876  1749  2537 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+04-17 18:32:20.878  3285  5219 I BroadcastQueue: Restricted Intent : android.intent.action.PACKAGE_ADDED received
+04-17 18:32:20.878  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:32:20.878 27679 27679 I ActivityThread: currentPkg not in xmlPackages
+04-17 18:32:20.878  3285  3376 D MiuiEmbeddingWindow: blacklistedAppRunningOnPhone: package=com.xiaomi.finddeviceisNotProjeciton=true isHavingJeppackDisabledConfig=false isRunningOnPhone=true isAppleConnection=false
+04-17 18:32:20.878  3285  3376 D MiuiEmbeddingWindow: MiuiEmbeddingWindowService: updateApplicationInfo for com.xiaomi.finddevice, blacklistedAppRunningOnPhone updated: clear
+04-17 18:32:20.878  3285  4157 I MiuiNetworkPolicy: updateUidState uid = 10133, uidState = 11
+04-17 18:32:20.879 27679 27679 W libc    : Access denied finding property "vendor.boostfwk.frameprefetcher"
+04-17 18:32:20.879  3285  3376 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@ffc33a70 does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+04-17 18:32:20.879  3285  3376 D CompatChangeReporter: Compat change id reported: 151861875; UID 6110; state: ENABLED
+04-17 18:32:20.879 27679 27698 E ANDR-PERF-CLIENT-SYS: death recipent object is fine
+04-17 18:32:20.879 27679 27698 W ackageinstaller: AIBinder_linkToDeath is being called with a non-null cookie and no onUnlink callback set. This might not be intended. AIBinder_DeathRecipient_setOnUnlinked should be called first.
+04-17 18:32:20.880 27679 27679 D FramePredict: FramePredict init: true
+04-17 18:32:20.880  3285  5367 D ConnectivityService: requestNetwork for uid/pid:10133/27679 activeRequest: null callbackRequest: 1357 [NetworkRequest [ REQUEST id=1358, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10133 RequestorUid: 10133 RequestorPkg: com.miui.packageinstaller UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST
+04-17 18:32:20.880  3285  5367 D ConnectivityService: Returning UNBLOCKED NetworkInfo to uid=10133
+04-17 18:32:20.881  3285  4217 D ConnectivityServiceImpl: teardown wifi type 1 state: CONNECTED primary: true
+04-17 18:32:20.881  3285  4217 D ConnectivityServiceImpl: nai type 1 state: CONNECTED primary: true
+04-17 18:32:20.882  3285  4217 D ConnectivityServiceImpl: teardown wifi type 1 state: CONNECTED primary: true
+04-17 18:32:20.882  3285  4217 D ConnectivityServiceImpl: nai type 1 state: CONNECTED primary: true
+04-17 18:32:20.883 27679 27742 D CrashAnalysis: xc_trace_dumper->waiting for quit signal!

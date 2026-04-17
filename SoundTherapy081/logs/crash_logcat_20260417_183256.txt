@@ -1,0 +1,100 @@
+04-17 18:32:56.770  1849  3041 V EffectModule: setOffloaded_l offloaded 0 io 13 status 0
+04-17 18:32:56.770  1849  3041 V EffectModule: configure_l 0xb40000782f872bd0 chain 0xb4000076cf8955f0 buffer 0xb40000777f90c280 framecount 960
+04-17 18:32:56.770  1849  7523 I AudioEffect: commandExecuted(): 0xb4000077bf883a30, cmdCode = 5
+04-17 18:32:56.770  1738  1757 D AHAL_DlbEffectContext: setCommon()
+04-17 18:32:56.770  1738  1757 D AHAL_DlbEffectContext: setConfig() input configure: 0x3.
+04-17 18:32:56.770  1738  1757 D AHAL_DlbDapEffectContext: updateInputFormat() mIsDecContentProcEnabled: 1, channels: 0x3, mCurrentDevice: 0x2, mAudioFlags: 0x0
+04-17 18:32:56.770  1849  3041 V EffectModule: configure_l 0xb40000782f871f50 chain 0xb4000076cf8955f0 buffer 0xb40000789f8b6e00 framecount 960
+04-17 18:32:56.770  1849  3041 V EffectChain: addEffect_l effect 0xb40000782f872bd0, added in chain 0xb4000076cf8955f0 at rank 1
+04-17 18:32:56.770  1849  3041 V EffectModule: configure_l 0xb40000782f872bd0 chain 0xb4000076cf8955f0 buffer 0xb40000789f8b6e00 framecount 960
+04-17 18:32:56.770  1849  3041 D EffectHalAidl: setDevices AUDIO_DEVICE_OUT_SPEAKER, @:
+04-17 18:32:56.770  1738  1757 D AHAL_DlbDapHwEffectContext: setOutputDevice()
+04-17 18:32:56.770  1738  1757 I DlbQdspGefDriver: setOutputDevice()
+04-17 18:32:56.770  1738  1757 D AHAL_DlbDapEffectContext: setOutputDevice()
+04-17 18:32:56.770  1738  1757 D AHAL_DlbEffectContext: setOutputDevice(): device.size()=1
+04-17 18:32:56.770  1738  1757 D AHAL_DlbEffectContext: setOutputDevice(): active device=2
+04-17 18:32:56.770  1738  1757 D AHAL_DlbDlbEffectDapHw: setBypass(bypass = 0)
+04-17 18:32:56.770  1738  1757 D DlbQdspGefDriver: setDevice(device=0x00000002): old device 0x00000002
+04-17 18:32:56.770  1738  1757 D AHAL_DlbDapEffectContext: updateInputFormat() mIsDecContentProcEnabled: 1, channels: 0x3, mCurrentDevice: 0x2, mAudioFlags: 0x0
+04-17 18:32:56.770  1739  1953 D DolbyManagerService: setActiveDevice called with device = 0x2 (original 0x2)
+04-17 18:32:56.770  1738  1757 D AHAL_DlbEffectContext: setAudioMode()
+04-17 18:32:56.770  1738  1757 D AHAL_DlbEffectContext: setAudioMode(): legacy audio mode is 0
+04-17 18:32:56.770  1849  3041 V EffectModule: command, DAP_offload cmdCode: 5, mEffectInterface: 0xb40000781f88eb80
+04-17 18:32:56.770  1738  1738 D AHAL_DlbEffectContext: Create DlbEffectPregainHandler 0xb4000070c7f240a8
+04-17 18:32:56.770  1738  1738 D AHAL_DlbEffectContext: Destroy DlbEffectPregainHandler 0xb4000070c7f26168, mEffectContext.use_count=6
+04-17 18:32:56.770  1738  1738 D AHAL_DlbEffectContext: addPregainObserver(): Pregain observer added for audio io 13 and Dolby effect type 3
+04-17 18:32:56.770  1849  3041 D AudioFlinger: updateOffloaded() => offload 1 on audio io 13
+04-17 18:32:56.770  1849  3041 V EffectModule: setOffloaded_l offloaded 1 io 13 status 0
+04-17 18:32:56.770  9803 17750 I AudioEffect: commandExecuted(): 0xb4000076f0f68df0, cmdCode = 5
+04-17 18:32:56.770  1849  7523 I AudioEffect: commandExecuted(): 0xb4000077bf883a30, cmdCode = 5
+04-17 18:32:56.770  1738  1738 D AHAL_EffectImplQti: DAP_offload  command: receive command: START at state IDLE
+04-17 18:32:56.770  1738  1738 D AHAL_DlbEffectContext: enable(): mState=1
+04-17 18:32:56.770  1738  1738 D AHAL_DlbEffectContext: enable(): session = 0, ioHandle = 13.
+04-17 18:32:56.770  1738  1738 D AHAL_DlbDlbEffectDapHw: setEnabled(enabled = 1)
+04-17 18:32:56.770  1738  1738 D AHAL_DlbDlbEffectDapHw: updateEnabled(enabled=1, bypassed=0)
+04-17 18:32:56.770  3285  4734 I AudioEffect: commandExecuted(): 0xb4000076f0f6b540, cmdCode = 5
+04-17 18:32:56.770  1738  1738 D DlbQdspGefDriver: setEnabled(enable=1)
+04-17 18:32:56.770  1738  1738 D DlbQdspGefDriver: setEnabled(): the enabled state is already 1
+04-17 18:32:56.770  1738  1738 D AHAL_EffectImplQti: DAP_offload  command transfer to state: PROCESSING
+04-17 18:32:56.770  1849  3041 D AudioFlinger: moveEffectChain_ll: successful move of session 0 from srcThread 0xb40000793f319fe8 to dstThread 0xb40000793f55efe8 (2 effects moved, 1 effects started)
+04-17 18:32:56.770  1849  3041 W AudioFlinger: moveEffectChain_ll: effect chain for session 0 not on source thread 0xb40000793f319fe8
+04-17 18:32:56.770  1849  3041 V audio_utils::mutex: mutex_impl: audio_mutex initialized: ret:0  order:6
+04-17 18:32:56.770  1849  3040 D AudioFlingerImpl: meetingpowerpolicy showMap from other ++++++
+04-17 18:32:56.770  1849  3040 D AudioFlingerImpl: meetingpowerpolicy mVoipTxAppCount 0 mTargetRecordMode 1 mSupportMeetingPower 0 mIsSpeakerMic 1
+04-17 18:32:56.770  1849  3040 D AudioFlingerImpl: meetingpowerpolicy showMap from other ------
+04-17 18:32:56.770  1849  3040 V audio_utils::mutex: mutex_impl: audio_mutex initialized: ret:0  order:21
+04-17 18:32:56.771  4615  4615 D HWUI    : DDRE Debug DrawPath: smoothCornerEnabled = true
+04-17 18:32:56.771  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 18:32:56.779  4615  4615 D HWUI    : DDRE Debug DrawPath: smoothCornerEnabled = true
+04-17 18:32:56.779  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 18:32:56.785  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:32:56.785  1749  3133 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:32:56.787  4615  4615 D HWUI    : DDRE Debug DrawPath: smoothCornerEnabled = true
+04-17 18:32:56.788  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 18:32:56.796  4615  4615 D HWUI    : DDRE Debug DrawPath: smoothCornerEnabled = true
+04-17 18:32:56.796  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 18:32:56.801  1749  2537 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+04-17 18:32:56.802  1849  3052 D StreamHalAidl: [out|ioHandle:21] setParameters: parameters: "appname=-com.anonymous.soundtherapyapp"
+04-17 18:32:56.802  1849  3052 D StreamHalAidl: [out|ioHandle:21] setParameters: parameters: appname=-com.anonymous.soundtherapyapp
+04-17 18:32:56.802  1738  1757 I AHAL_StreamOut_MI: setVendorParameters: parameter count 1, async: 0
+04-17 18:32:56.802  1738  1757 D AHAL_StreamOut_MI: setVendorParameters Set appname -com.anonymous.soundtherapyapp
+04-17 18:32:56.802  1849  3041 V audio_utils::mutex: mutex_impl: audio_mutex initialized: ret:0  order:6
+04-17 18:32:56.802  1849  3041 V AudioPolicyInterfaceImpl: doReleaseOutput from tid 3041
+04-17 18:32:56.802  1849  3041 D APM_AudioPolicyManager: releaseOutput portId 1899
+04-17 18:32:56.802  1849  3041 D APM_AudioPolicyManager: releaseOutput() output 21, stream 3, session 13217 [uid=10968]
+04-17 18:32:56.802  1849  3041 D ClientInfoStub: ~ClientInfoStub()
+04-17 18:32:56.804  4615  4615 D HWUI    : DDRE Debug DrawPath: smoothCornerEnabled = true
+04-17 18:32:56.804  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 18:32:56.810  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de31d0) status 0 for display-0.
+04-17 18:32:56.810  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:32:56.812  4615  4615 D HWUI    : DDRE Debug DrawPath: smoothCornerEnabled = true
+04-17 18:32:56.813  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 18:32:56.820  4615  4615 I RectFSpringAnim_166579493: TransitionTest MultiSpringDynamicAnimation on end. this=com.miui.home.recents.util.RectFSpringAnim@9edcd25
+04-17 18:32:56.820  4615  4615 I RectFSpringAnim_166579493: changeAnimStart start=false
+04-17 18:32:56.820  4615  4615 I LocalWindowAnimImplementor: reset mDisableStateManagerListener false.
+04-17 18:32:56.821  4615  4615 I RectFSpringAnim_166579493: getPropertyVelocity old, value = 0.0
+04-17 18:32:56.821  4615  4615 I RectFSpringAnim_166579493: getPropertyVelocity old, value = 0.0
+04-17 18:32:56.821  4615  4615 I RectFSpringAnim_166579493: getPropertyVelocity old, value = 0.0
+04-17 18:32:56.821  4615  4615 I RectFSpringAnim_166579493: getPropertyVelocity old, value = 0.0
+04-17 18:32:56.821  4615  4615 I RectFSpringAnim_166579493: getPropertyVelocity old, value = 0.0
+04-17 18:32:56.821  4615  4615 I RectFSpringAnim_166579493: getPropertyVelocity old, value = 0.0
+04-17 18:32:56.821  4615  4615 E MultiSpringDynamicAnimatione5fcefa: ERROR Not Found Bundle Radius
+04-17 18:32:56.821  4615  4615 I RectFSpringAnim_166579493: getPropertyVelocity old, value = 0.0
+04-17 18:32:56.821  4615  4615 I WindowElementf377cab: com.miui.home.recents.anim.WindowElement@f377cab TransitionTest onAnimationEnd AnimType = CLOSE_TO_HOME allowShellListener = true, isDuringMerge=false, mUserAnimListener=com.miui.home.recents.anim.WindowAnimParamsProvider$getClosingWindowAnimParams$animListener$1@6512502
+04-17 18:32:56.822  4615  4615 D WindowElementf377cab: com.miui.home.recents.anim.WindowElement@f377cab mOnShellAnimListener end CLOSE_TO_HOME com.miui.home.recents.anim.WindowElement@f377cab needFinish = true
+04-17 18:32:56.822  4615  4615 I ScenarioRecognitionUtil: setScenarioState, type: 320, isStart: false
+04-17 18:32:56.822  4615  4615 D WindowElementf377cab: onWindowAnimEnd: resetFloatingIcon
+04-17 18:32:56.822  4615  4615 I LaunchAppAndBackHomeAnimTarget: resetShortcutIcon, icon=com.miui.home.launcher.ShortcutIcon{81dea11 VFED..CL. ......ID 720,0-1058,367}(心声冥想)
+04-17 18:32:56.822  4615  4615 D FloatingIconView278aca49: finishImmediately 
+04-17 18:32:56.822  4615  4615 I LaunchAppAndBackHomeAnimTarget: resetShortcutIcon, icon=com.miui.home.launcher.ShortcutIcon{81dea11 VFED..CL. ......ID 720,0-1058,367}(心声冥想)
+04-17 18:32:56.822  4615  4615 E FloatingIconView278aca49: recycleView
+04-17 18:32:56.822  4615  4615 D FloatingIconView278aca49: setIsDrawIcon, isDraw=true
+04-17 18:32:56.822  3285  4342 D SchedBoost: handleSceneBoost type: 320, active :false
+04-17 18:32:56.822  4615  4615 D FloatingIconView278aca49: recycleView post: com.miui.home.recents.views.FloatingIconView2$$ExternalSyntheticLambda4@d308f4e
+04-17 18:32:56.822  4615  4615 D NavStubView: setWindowAnimType  type=null
+04-17 18:32:56.822  3285  4342 I ProcessManager: getRenderThreadTidByPid, caller=3285
+04-17 18:32:56.822  4615  4615 D NavStubView: setIsAnimatingToLauncher  isAnimatingToLauncher=false
+04-17 18:32:56.822  3285  4342 D PerfStubImpl: perfLockReleaseHandler: 38743
+04-17 18:32:56.822  3285  4342 D QcomSchedBoost: stopFreqBoost
+04-17 18:32:56.823  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 18:32:56.823  4615  4615 D Launcher.BlurUtilities: clearAllBlur: View=com.miui.home.recents.views.FloatingIconView2{78aca49 G.ED..... ......ID 720,283-945,509}
