@@ -22,6 +22,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import { useAudio } from '../context/AudioContext';
 import Icon from 'react-native-vector-icons/Ionicons';
+import NoiseLabIcon from '../components/NoiseLabIcon';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
@@ -255,7 +256,7 @@ export const HomeScreen: React.FC = () => {
               navigation.navigate('NoiseRoom');
             }}
           >
-            <Icon name="volume-mute-outline" size={32} color="#fff" />
+            <NoiseLabIcon size={40} />
           </TouchableOpacity>
           <Text style={styles.noiseCancelLabel}>一键降噪</Text>
         </Animated.View>

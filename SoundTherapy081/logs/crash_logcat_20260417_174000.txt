@@ -1,0 +1,100 @@
+04-17 17:39:54.526  3285  4281 D GreezeManager: ignore sig uid=10373 pid=26635
+04-17 17:39:54.539  3285  4281 D GreezeManager:  report signal uid = 10382 pid = 29223is not frozen.
+04-17 17:39:54.539  3285  4281 D GreezeManager:  report signal uid = 10382 pid = 29196is not frozen.
+04-17 17:39:54.540  3285  4281 D GreezeManager:  report signal uid = 10382 pid = 29038is not frozen.
+04-17 17:39:54.541  3285  4281 D GreezeManager:  report signal uid = 10382 pid = 32186is not frozen.
+04-17 17:39:54.544  3285  4281 D GreezeManager:  report signal uid = 10382 pid = 14696is not frozen.
+04-17 17:39:54.546  3285  4281 D GreezeManager:  report signal uid = 10382 pid = 28736is not frozen.
+04-17 17:39:54.555  3285  4281 D GreezeManager:  report signal uid = 10967 pid = 30623is not frozen.
+04-17 17:39:54.566  3285  3373 D JavaheapMonitor: Java heap used=176M max=512M, proc: system_server
+04-17 17:39:54.566  3285  3373 V JavaheapMonitor: Check java heap usage finished! Next check delay: 180000
+04-17 17:39:54.613  3285  3417 D WindowProcessUtils: getPerceptibleRecentAppList: []
+04-17 17:39:54.613  3285  3417 D SmartPower.CpuPolicy: update process cpu time
+04-17 17:39:54.633  9036 10136 D JavaheapMonitor: Java heap used=18M max=256M, proc: com.miui.personalassistant
+04-17 17:39:54.633  9036 10136 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:54.826  2359  2463 E MiuiBooster: "Unkwnow sched policy:-1073741825!!!"
+04-17 17:39:54.823  2359  2359 W binder:2359_2: type=1400 audit(0.0:37001): avc:  denied  { getsched } for  scontext=u:r:miuibooster:s0 tcontext=u:r:kernel:s0 tclass=process permissive=0
+04-17 17:39:54.837  9351 10062 D MyLog   : -->log(0): [Tid:397] pcc handle intent in sjm android.intent.action.PACKAGE_RESTARTED
+04-17 17:39:54.838  9351 10062 D MyLog   : -->log(0): [Tid:397] pcc handle intent in sjm android.intent.action.PACKAGE_RESTARTED
+04-17 17:39:54.840  4615  5287 I Launcher.ApplicationsMessage: onReceive true
+04-17 17:39:54.840  4615  5287 I Launcher.ApplicationsMessage: update com.anonymous.soundtherapyapp/ to null
+04-17 17:39:54.840  4644  4644 I MiuiWallpaper-MiuiWallpaperManagerService: receive broadcast action = android.intent.action.PACKAGE_RESTARTED
+04-17 17:39:54.840  4615  4615 D ShortcutIcon: setMessage textnull
+04-17 17:39:54.841  4644  4644 I MiuiWallpaper-MiuiWallpaperManagerService: receive broadcast action = android.intent.action.PACKAGE_RESTARTED
+04-17 17:39:54.846  3285  4281 D Aurogon : sendPendingAlarm  uid = 10382
+04-17 17:39:54.847  3285  4281 D AlarmManager: [xiaomi_power]sending alarm Alarm{2953c57 type 2 origWhen 81044953 whenElapsed 81075000 com.eg.android.AlipayGphone} with listener tag null stats tag *walarm*:ALARM_ACTION(14696) package name com.eg.android.AlipayGphone at 82148364 ms
+04-17 17:39:54.848  3285  4281 D AlarmManager: mBroadcastRefCount -> 1
+04-17 17:39:54.848  3285  4281 D PowerManagerService: [xiaomi_power]acquireWakeLockInternal: lock=204623409, flags=0x1, tag="*alarm*", ws=WorkSource{10382 chains=WorkChain{(1000), (1000, JobScheduler)}}, uid=1000, pid=3285
+04-17 17:39:54.849  3285  4281 I whetstone.activity: Power Event callback listener is empty for resId=128
+04-17 17:39:54.849  3285  4281 D BatteryStatsManagerStub: notifyEvent for resId=128 used 0ms
+04-17 17:39:54.849  3285  4281 D AlarmManager: [xiaomi_power]sending alarm Alarm{9f44f42 type 1 origWhen 1776398400000 whenElapsed 82147818 com.android.systemui} with listener tag lock_screen_next_alarm stats tag *alarm*:lock_screen_next_alarm package name com.android.systemui at 82148364 ms
+04-17 17:39:54.850  3285  4281 D AlarmManager: mBroadcastRefCount -> 2
+04-17 17:39:54.850  3285  3285 D AlarmManager: mBroadcastRefCount -> 1
+04-17 17:39:54.850  3285  3285 D AlarmManager: mPendingIntent -> PendingIntent{4376344: PendingIntentRecord{66c2c2d com.eg.android.AlipayGphone broadcastIntent}}
+04-17 17:39:54.851  3285  6013 D AlarmManager: mBroadcastRefCount -> 0
+04-17 17:39:54.851  3285  6013 D AlarmManager: mPendingIntent -> null
+04-17 17:39:54.851  3285  6013 D PowerManagerService: [xiaomi_power]releaseWakeLockInternal: lock=204623409 [*alarm*], flags=0x0
+04-17 17:39:54.999  2780  2780 I adbd    : in ShellService: dumpsys meminfo com.anonymous.soundtherapyapp
+04-17 17:39:55.012  3285  3414 D AurogonBandwidthController: skinTemperature:26.893
+04-17 17:39:55.013  3285  3414 D AurogonBandwidthController: skinTemperature:26.893
+04-17 17:39:55.013  8425  8570 I dist:vtcamera:PhoneTemperatureReader: onEvent: null
+04-17 17:39:55.014  8425  8898 I dist:vtcamera:PhoneTemperatureReader: read-temp:26893
+04-17 17:39:55.014  8425  8898 D dist:vtcamera:PhoneTemperatureNotifier: tempV=26893, highTemperature state=false
+04-17 17:39:55.034   589   589 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 17:39:55.170 10301 19894 D JavaheapMonitor: Java heap used=7M max=256M, proc: com.xiaomi.xmsf:services
+04-17 17:39:55.171 10301 19894 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:55.242  7129 16726 D JavaheapMonitor: Java heap used=3M max=256M, proc: com.xiaomi.misettings:remote
+04-17 17:39:55.243  7129 16726 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:55.358 16241 19969 D JavaheapMonitor: Java heap used=7M max=512M, proc: com.miui.core
+04-17 17:39:55.359 16241 19969 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:55.709  3285  3414 D AurogonBandwidthController: skinTemperature:26.893
+04-17 17:39:55.858 10498 10940 D JavaheapMonitor: Java heap used=14M max=256M, proc: com.miui.powerkeeper
+04-17 17:39:55.858 10498 10940 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:55.993  1728  4019 I sensors-hal: handle_sns_std_sensor_event:67, light_event: ts=82149508030903, lux: 51.9, powermode=0 
+04-17 17:39:56.447  3285  3316 D PowerManagerService: [xiaomi_power]releaseWakeLockInternal: lock=160011925 [AudioMix], flags=0x0
+04-17 17:39:56.784  3285  4157 I MiuiNetworkPolicy: bandwidth: 0 KB/s, Max bandwidth: 432 KB/s
+04-17 17:39:56.843  6830  6850 D QLM-Service: check_headroom_zone: Timer EVT, Temp: 29484
+04-17 17:39:56.909  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 17:39:56.909  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 17:39:56.909  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 17:39:56.910  5144  5144 E VRI[NotificationShade]: performDraw: Not drawing due to screen off
+04-17 17:39:56.911  5144  5144 E VRI[StatusBar]: performDraw: Not drawing due to screen off
+04-17 17:39:56.911  5144  5144 E VRI[StatusBar1]: performDraw: Not drawing due to screen off
+04-17 17:39:57.160  9418 19783 D JavaheapMonitor: Java heap used=4M max=256M, proc: com.xiaomi.metoknlp
+04-17 17:39:57.160  9418 19783 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:57.167  2780  2780 I adbd    : in ShellService: dumpsys meminfo com.anonymous.soundtherapyapp
+04-17 17:39:57.195   593   593 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 17:39:57.271  7300  7384 D JavaheapMonitor: Java heap used=6M max=256M, proc: com.xiaomi.cameramind
+04-17 17:39:57.272  7300  7384 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:57.342  3285  8729 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+04-17 17:39:57.700  3285  3340 D NetworkManagement: wlan0 <====> 1
+04-17 17:39:57.700  3285  3340 I MiuiNetworkPolicy: label wlan0, uid -1, active false, tsNanos 82151215519274
+04-17 17:39:57.701  3285  4157 D MiuiNetworkPolicy: updateLimit mLimitEnabled=true,enabled=false,mNetworkPriorityMode=1,mThermalForceMode=0
+04-17 17:39:57.710  3285  3414 D AurogonBandwidthController: skinTemperature:26.893
+04-17 17:39:58.166 22066 22307 D JavaheapMonitor: Java heap used=10M max=256M, proc: com.android.bluetooth
+04-17 17:39:58.166 22066 22307 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:39:58.204  3285  4283 D GreezeManager: freezeBinder pid=19405 block=true state=-11
+04-17 17:39:58.209  3285  4283 D GreezeManager: freezeBinder pid=19103 block=true state=-11
+04-17 17:39:58.217  3285  4283 D GreezeManager: FZ uid = 10145 reason =check binder success !
+04-17 17:39:58.218  3285  4283 D ActionExecute: frozen uid = 10145 reason=check binder
+04-17 17:39:58.219  3285  4283 D ActionExecute: setPkgData uid = 10145 time=0
+04-17 17:39:58.219  3285  4283 D ExternalInterface: setUidState, uid = 10145 allow = false
+04-17 17:39:58.227  3285  6013 D GreezeManager: THAW uid = 10145 pid = [ 19103 19405 ]  reason : Check Binder caller : 1
+04-17 17:39:58.227  3285  6013 D ExternalInterface: setUidState, uid = 10145 allow = true
+04-17 17:39:58.227  3285  4283 D ActionExecute: setPkgData uid = 10145 time=3000
+04-17 17:39:59.262  2780  2780 I adbd    : in ShellService: dumpsys meminfo com.anonymous.soundtherapyapp
+04-17 17:39:59.291   596   596 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 17:39:59.434  2530  3941 D AidlBufferPoolAcc: evictor expired: 1, evicted: 0
+04-17 17:39:59.714  3285  3414 D AurogonBandwidthController: skinTemperature:26.893
+04-17 17:39:59.788  3285  4157 I MiuiNetworkPolicy: bandwidth: 0 KB/s, Max bandwidth: 432 KB/s
+04-17 17:39:59.834  8950 10078 D JavaheapMonitor: Java heap used=13M max=512M, proc: com.xiaomi.aicr
+04-17 17:39:59.834  8950 10078 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 17:40:00.437  2530  3941 D AidlBufferPoolAcc: evictor expired: 1, evicted: 0
+04-17 17:40:00.454  2780  2780 I adbd    : in ShellService: pidof com.anonymous.soundtherapyapp
+04-17 17:40:00.520  2780  2780 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+04-17 17:40:00.910  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 17:40:00.911  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 17:40:00.911  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 17:40:00.911  5144  5144 E VRI[NotificationShade]: performDraw: Not drawing due to screen off
+04-17 17:40:00.912  5144  5144 E VRI[StatusBar]: performDraw: Not drawing due to screen off
+04-17 17:40:00.912  5144  5144 E VRI[StatusBar1]: performDraw: Not drawing due to screen off

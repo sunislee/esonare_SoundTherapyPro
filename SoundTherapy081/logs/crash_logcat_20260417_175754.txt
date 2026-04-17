@@ -1,0 +1,100 @@
+04-17 17:57:55.280  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1164697
+04-17 17:57:55.280  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChanged
+04-17 17:57:55.281  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChangedWithContrast
+04-17 17:57:55.281  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onLightDarkTintChanged
+04-17 17:57:55.281  4615  4615 D PassBlur: textureState not update, view com.miui.home.launcher.BlurView{afea74a V.ED..... ........ 0,0-1440,3200 #7f0a026a app:id/launcher_blur_view} visible is true
+04-17 17:57:55.281  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.281  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.286  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.289  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.289  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChanged
+04-17 17:57:55.289  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1178459
+04-17 17:57:55.289  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChangedWithContrast
+04-17 17:57:55.289  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onLightDarkTintChanged
+04-17 17:57:55.290  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.290  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.292  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:3710.4,R:1276.9,G:1443.7,B:218.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 17:57:55.292  2737  4148 D libsensor-boledalgo: brightness:392,R:1.0,G:2851.0,B:3075.6,EVENT C:51096.0,R:14204.0,G:13258.0,B:4004.0, lux: 136.2, clone:839
+04-17 17:57:55.294  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.295  1893  2043 D RenderEngine: makePassBlurBetterDownShader layers:1 layername:Wallpaper BBQ wrapper#63,WH:1440x3200
+04-17 17:57:55.297  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.297  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1191458
+04-17 17:57:55.297  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChanged
+04-17 17:57:55.297  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChangedWithContrast
+04-17 17:57:55.297  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onLightDarkTintChanged
+04-17 17:57:55.298  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.298  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.299  4615  4615 D Launcher_UnlockAnimationStateMachine: mResetIdleStateRunnable
+04-17 17:57:55.303  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.304  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 17:57:55.304  1749  3131 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 17:57:55.305  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.305  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.120373
+04-17 17:57:55.306  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChanged
+04-17 17:57:55.306  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChangedWithContrast
+04-17 17:57:55.306  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onLightDarkTintChanged
+04-17 17:57:55.306  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.307  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.311  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.314  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChanged
+04-17 17:57:55.314  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.314  5144  5144 D DynamicIslandWindowViewController: handleDynamicIsland: action_update_light
+04-17 17:57:55.314  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1215312
+04-17 17:57:55.314  5144  5144 D DynamicIslandWindowViewController: handleDynamicIsland: isLight false
+04-17 17:57:55.315  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.315  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onDarkChangedWithContrast
+04-17 17:57:55.315  5144  5144 D ShadeDarkIconDispatcher: receiver delegate onLightDarkTintChanged
+04-17 17:57:55.315  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.319  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.320  1749  2537 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+04-17 17:57:55.322  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.322  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.122624
+04-17 17:57:55.323  3285  4342 D SchedBoostThread: thread tid=5441, priority is set to 0
+04-17 17:57:55.323  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.323  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.328  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.328  1893  2043 D RenderEngine: makePassBlurBetterDownShader layers:1 layername:Wallpaper BBQ wrapper#63,WH:1440x3200
+04-17 17:57:55.329  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de5dd0) status 0 for display-0.
+04-17 17:57:55.329  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 17:57:55.331  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.331  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1236548
+04-17 17:57:55.331  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.332  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.332  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 17:57:55.332  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 17:57:55.332  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 17:57:55.332  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 17:57:55.335 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:EA:8F, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-53, periodicAdvInt=0x0, originalAddress=5E:6F:84:EA:EA:8F
+04-17 17:57:55.335 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 17:57:55.335 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 17:57:55.336 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 17:57:55.336 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 17:57:55.336  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.339  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.339  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1246266
+04-17 17:57:55.340  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.340  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.340  3285  5803 D MiuiInputManagerService: registerSrollToTopListener, windowId: 82575719, listener: miui.hardware.input.IScrollToTopListener$Stub$Proxy@b6a7f07
+04-17 17:57:55.344  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.347  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.347  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1255426
+04-17 17:57:55.348  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.348  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.353  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.353  1749  3131 I MiClstc : DropLayers erase layer 1508
+04-17 17:57:55.353  1749  3131 I MiClstc : DropLayers erase layer 1511
+04-17 17:57:55.356  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.356  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.126406
+04-17 17:57:55.356  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.356  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.361  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.361  1893  2043 D RenderEngine: makePassBlurBetterDownShader layers:1 layername:Wallpaper BBQ wrapper#63,WH:1440x3200
+04-17 17:57:55.364  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.364  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1272192
+04-17 17:57:55.365  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.365  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.369  1893  1893 D RefreshRateSelector: Touch Boost
+04-17 17:57:55.372  3285  3362 I MiuiWallpaperSurfaceAnimation: wallpaperOffsets:xOffset=0.0,yOffset=0.0
+04-17 17:57:55.372  3285  3362 D MiuiWallpaperSurfaceAnimation: updateScaleIfNeeded mPivotX: 0.5, mPivotY: 0.5, x: 0, y: 0, zoom: 1.1279851
+04-17 17:57:55.373  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (ShortcutMenuLayer-6-0xb400007880f81380), blurRadius(183), blurType(-1), blurScaleRatio(0.000000)
+04-17 17:57:55.373  4615  5386 D com.miui.home: backgroundBlur makeBackgroundImage (BlurView-6-0xb400007880fcc0e0), blurRadius(119), blurType(-1), blurScaleRatio(0.000000)
