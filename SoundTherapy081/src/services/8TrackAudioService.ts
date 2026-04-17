@@ -235,8 +235,9 @@ export const warmupAudio = async () => {
   
   try {
     // 加载第一个轨道（任意轨道都可以）
+    // 【关键修复】Android 使用 '' (空字符串) 加载 raw 资源
     const warmupSound = await new Promise<Sound>((resolve, reject) => {
-      const s = new Sound('balanced_noise_track_1', Sound.MAIN_BUNDLE, (error) => {
+      const s = new Sound('balanced_noise_track_1', '', (error) => {
         if (error) {
           console.error('[8Track] ⚠️ 预热加载失败:', error);
           reject(error);
@@ -402,10 +403,10 @@ export const play8TrackAudio = async (audioGroupId: string) => {
             }
           }, LOAD_TIMEOUT_MS);
           
-          // 【关键修复】立即启动加载（无延迟）
+          // 【关键修复】Android 使用 '' (空字符串) 加载 raw 资源，iOS 使用 Sound.MAIN_BUNDLE
           console.log(`[8Track] ⏳ [${trackNum}/8] 正在加载 Track ${trackNum}: ${resourceName}`);
           
-          const s = new Sound(resourceName, Sound.MAIN_BUNDLE, (error) => {
+          const s = new Sound(resourceName, '', (error) => {
             clearTimeout(trackTimeout);
             isResolved = true;
             
@@ -751,7 +752,8 @@ export const preload8TrackAudio = async (audioGroupId: string): Promise<boolean>
       const resourceName = `${audioConfig.folder}_track_${i}`.toLowerCase();
       loadPromises.push(
         new Promise<Sound>((resolve, reject) => {
-          const sound = new Sound(resourceName, Sound.MAIN_BUNDLE, (error) => {
+          // 【关键修复】Android 使用 '' (空字符串) 加载 raw 资源
+          const sound = new Sound(resourceName, '', (error) => {
             if (error) reject(error);
             else resolve(sound);
           });
