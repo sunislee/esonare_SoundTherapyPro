@@ -280,49 +280,65 @@ feat: add 4 noise reduction scene EQ presets
 - Bug 修复：downloadState、enableCrashTest 未定义变量
 - EQ 映射修正：traffic_noise -> heavyRain, crowd_noise -> fireside
 - 音频文件恢复：从 commit 6ef94f96 恢复正确的 32 个降噪音轨
+- **音频加载路径修复**：Android 使用 `''` (空字符串) 加载 raw 资源
+- **balanced_noise 文件修复**：从 commit 6ef94f96 恢复正确的深空专注音频
 
 ###  待验证
 - 8 段音轨并发加载内存峰值（目标：< 200MB）
 - 音频播放延迟（目标：< 500ms）
 - EQ 循环切换稳定性（目标：50 次无崩溃）
 
-### 🔴 遗留问题（待解决）
-**问题**：4 个降噪场景（均衡白噪音、倾盆掩盖、围炉隔离、深空专注）的声音听感区别不明显
+### ✅ 已解决问题
 
-**已尝试的修复**：
-- ✅ 恢复了 32 个音频文件到 raw 目录
-- ✅ 验证了 traffic_noise 和 crowd_noise 的 MD5 不同
-- ✅ 修复了 EQ 预设映射
-- ✅ 清除了应用数据
+#### 问题：4 个降噪场景声音听感不正确
 
-**可能的原因**（需进一步排查）：
-1. 8TrackAudioService 可能还在加载错误的音频路径
-2. 音频文件的 8 个音轨之间差异太小，听感上不明显
-3. EQ 预设的增益变化不够显著
+**症状**：
+- 用户反馈"深空专注和以前不一样"、"四个场景声音对不上"
+- 实际表现：场景播放的音频文件与期望不匹配
+
+**根本原因**：
+1. **音频加载路径错误**：代码中使用 `Sound.MAIN_BUNDLE` 加载 Android raw 资源（正确应该是空字符串 `''`）
+2. **balanced_noise 文件错误**：当前的 `balanced_noise_track_1~8.mp3` 文件不是原始版本（MD5 不匹配）
+   - 当前文件 MD5: `0846f878f418e77b1cd5b38a4d5b800c`
+   - 原始文件 MD5: `b393f41b15777d14d4c7d86c4962c60f`
+
+**修复方案**：
+1. ✅ 修改 `8TrackAudioService.ts` 中所有 `new Sound(resourceName, Sound.MAIN_BUNDLE, ...)` 为 `new Sound(resourceName, '', ...)`
+   - `play8TrackAudio` 函数（第 408 行）
+   - `preload8TrackAudio` 函数（第 754 行）
+   - `warmupAudio` 函数（第 239 行）
+2. ✅ 从 commit 6ef94f96 恢复正确的 `balanced_noise_track_1~8.mp3` 文件
+3. ✅ 重新编译并安装到真机验证
+
+**验证结果**：
+- ✅ 4 个降噪场景声音全部正确
+- ✅ 深空专注（balanced_noise）声音与原始版本一致
+- ✅ 倾盆掩盖（traffic_noise）、围炉隔离（crowd_noise）、风声白噪音（wind_noise）声音均有明显区别
 
 ### 📊 预期成果
 - ✅ APK 体积减少 48MB
 - ✅ 内存稳定在 200MB 以内
 - ✅ 音频延迟 < 500ms
 - ✅ EQ 切换无泄漏/崩溃
--  4 个降噪场景声音有明显区别
+- ✅ 4 个降噪场景声音有明显区别
 
 ---
 
-## 📅 明日（周五）待办事项
+## 📅 周五待办事项（已完成）
 
-### 优先级 1：解决降噪场景音频听感问题
-1. 检查 8TrackAudioService.ts 中的音频加载逻辑
-2. 验证每个场景实际播放的音频文件路径
-3. 对比 4 个场景的音频文件内容（波形分析）
-4. 调整 EQ 预设增益参数，增强差异化
+### ✅ 优先级 1：解决降噪场景音频听感问题
+- ✅ 检查 8TrackAudioService.ts 中的音频加载逻辑
+- ✅ 发现并修复 Android 音频加载路径错误（`Sound.MAIN_BUNDLE` -> `''`）
+- ✅ 恢复正确的 `balanced_noise` 音频文件
+- ✅ 重新编译并真机验证
+- ✅ 4 个场景声音全部正确
 
-### 优先级 2：执行压测脚本
+###  待执行：压测脚本
 1. 运行 `stress_test_memory.sh` - 记录内存峰值
 2. 运行 `test_audio_latency.sh` - 记录播放延迟
 3. 运行 `stress_test_eq_switching.sh` - 记录稳定性
 
-### 优先级 3：更新压测报告
+###  待执行：更新压测报告
 根据实际测试结果，更新本报告并归档。
 
 ---
