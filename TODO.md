@@ -1,5 +1,17 @@
 # HeartSound Meditation - Development Roadmap
 
+## v1.4.0+ Next Week Plan (2026.04.20 - 2026.04.24)
+
+### Monday First Feature
+- [ ] **[Feature] Jazz-Funk 场景 UI 实装**
+  - 在 `src/constants/scenes.ts` 中定义 Jazz-Funk 场景
+  - 在首页场景列表中添加入口
+  - 关联 `EQManager.ts` 中已注入的 `jazzFunk` EQ 预设
+  - 配置对应音频文件（需确认音频资源）
+  - 测试 EQ 预设切换效果
+
+---
+
 ## v1.3.0+ Optimization Focus
 
 ### High Priority

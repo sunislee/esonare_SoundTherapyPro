@@ -30,6 +30,7 @@ import {
   getCurrentMode,
   warmupAudio,
 } from '../services/NoiseAudioService';
+import AudioService from '../services/AudioService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -117,6 +118,20 @@ const NoiseCancellationRoom: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       console.log('[NoiseCancellationRoom] 页面聚焦，启动音频分析器');
+      
+      // 【关键修复】进入降噪房间时，停止主场景音频（互斥播放）
+      const stopMainAudio = async () => {
+        try {
+          const audioService = AudioService.getInstance();
+          console.log('[NoiseCancellationRoom] 🛑 停止主场景音频，确保与降噪场景互斥');
+          await audioService.stopAllAmbient();
+          await audioService.stop();
+          console.log('[NoiseCancellationRoom] ✅ 主场景音频已停止');
+        } catch (e) {
+          console.error('[NoiseCancellationRoom] 停止主场景音频失败:', e);
+        }
+      };
+      stopMainAudio();
       
       // 【关键修复】静默预热：强迫 react-native-sound 底层初始化
       console.log('[NoiseCancellationRoom] 🔥 开始预热音频底层...');
