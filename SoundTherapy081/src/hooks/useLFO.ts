@@ -316,6 +316,97 @@ export const LFOPresets = {
     inhaleRatio: 0.5,     // 对称三角波效果（使用正弦波近似）
     crossfadeMode: false,
   }),
+  
+  // ==================== 西方教会子场景差异化配置 ====================
+  
+  /** 西班牙圣咏 - 人声类 Volume LFO：18 秒周期，88%-100%，更舒缓突出延续性 */
+  westernChurchGregorianVolume: (): LFOConfig => ({
+    period: 18,           // 18 秒周期，更舒缓
+    minVolume: 0.88,      // 88% 最小音量
+    maxVolume: 1.0,       // 100% 最大音量
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 西班牙圣咏 - 人声类 Panning LFO：32 秒周期，-0.03 到 0.03，极微小保持人声居中 */
+  westernChurchGregorianPanning: (): LFOConfig => ({
+    period: 32,           // 32 秒超长周期
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.03 到 0.03
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 烛光禅定(都市禅定) - 人声类 Volume LFO：18 秒周期，88%-100% */
+  westernChurchUrbanChantVolume: (): LFOConfig => ({
+    period: 18,           // 18 秒周期，更舒缓
+    minVolume: 0.88,      // 88% 最小音量
+    maxVolume: 1.0,       // 100% 最大音量
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 烛光禅定(都市禅定) - 人声类 Panning LFO：32 秒周期，-0.03 到 0.03 */
+  westernChurchUrbanChantPanning: (): LFOConfig => ({
+    period: 32,           // 32 秒超长周期
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.03 到 0.03
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 石廊回响 - 空间类 Volume LFO：12 秒周期，82%-100%，起伏略大模拟风道空气流动 */
+  westernChurchForestEchoVolume: (): LFOConfig => ({
+    period: 12,           // 12 秒周期，较快
+    minVolume: 0.82,      // 82% 最小音量，更大动态范围
+    maxVolume: 1.0,       // 100% 最大音量
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 石廊回响 - 空间类 Panning LFO：22 秒周期，-0.08 到 0.08，扩大声场偏移 */
+  westernChurchForestEchoPanning: (): LFOConfig => ({
+    period: 22,           // 22 秒周期
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.08 到 0.08
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 神圣光流 - 空间类 Volume LFO：12 秒周期，82%-100% */
+  westernChurchHolyWavesVolume: (): LFOConfig => ({
+    period: 12,           // 12 秒周期，较快
+    minVolume: 0.82,      // 82% 最小音量，更大动态范围
+    maxVolume: 1.0,       // 100% 最大音量
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 神圣光流 - 空间类 Panning LFO：22 秒周期，-0.08 到 0.08 */
+  westernChurchHolyWavesPanning: (): LFOConfig => ({
+    period: 22,           // 22 秒周期
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.08 到 0.08
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  /** 晨祷钟声 - 保持默认配置（15 秒 Volume + 28 秒 Panning） */
+  westernChurchMorningBellVolume: (): LFOConfig => ({
+    period: 15,           // 15 秒周期
+    minVolume: 0.85,      // 85% 最小音量
+    maxVolume: 1.0,       // 100% 最大音量
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
+  
+  westernChurchMorningBellPanning: (): LFOConfig => ({
+    period: 28,           // 28 秒周期
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.05 到 0.05
+    inhaleRatio: 0.5,     // 对称正弦波
+    crossfadeMode: false,
+  }),
 };
 
 export default useLFO;

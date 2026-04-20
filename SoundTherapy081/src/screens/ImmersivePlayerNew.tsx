@@ -31,6 +31,50 @@ import { useBackHandler } from '../hooks/useBackHandler';
 
 const { width, height } = Dimensions.get('window');
 
+// ==================== 呼吸动画配置（可按场景分类调整） ====================
+interface BreathingConfig {
+  duration: number;      // 单程动画时长（毫秒），完整周期 = duration * 2
+  maxScale: number;      // 最大缩放值（1.0 为原始大小）
+}
+
+// 默认配置：所有场景通用
+const DEFAULT_BREATHING_CONFIG: BreathingConfig = {
+  duration: 7500,    // 7.5 秒放大 + 7.5 秒缩小 = 15 秒完整周期
+  maxScale: 1.08,    // 放大到 108%
+};
+
+// 按场景分类的差异化配置（未来可扩展）
+const BREATHING_CONFIGS: Record<string, BreathingConfig> = {
+  // 自然场景：较慢节奏
+  nature: { duration: 9000, maxScale: 1.06 },
+  
+  // 西方教会场景：中等节奏
+  western_church: { duration: 7500, maxScale: 1.08 },
+  
+  // 生活场景：较快节奏
+  life: { duration: 6000, maxScale: 1.05 },
+  
+  // 疗愈场景：缓慢节奏
+  healing: { duration: 10000, maxScale: 1.04 },
+  
+  // 脑波场景：极慢节奏
+  brainwave: { duration: 12000, maxScale: 1.03 },
+};
+
+/**
+ * 根据场景 ID 获取对应的呼吸动画配置
+ */
+function getBreathingConfig(sceneId: string): BreathingConfig {
+  // 匹配场景分类前缀
+  for (const [prefix, config] of Object.entries(BREATHING_CONFIGS)) {
+    if (sceneId.startsWith(prefix)) {
+      return config;
+    }
+  }
+  return DEFAULT_BREATHING_CONFIG;
+}
+// ========================================================================
+
 const events = [
   Event.PlaybackQueueEnded,
   Event.PlaybackTrackChanged,
@@ -51,6 +95,7 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
+  const bgScaleAnim = useRef(new Animated.Value(1.0)).current;
   const pendingSceneIdRef = useRef<string | null>(null);
 
   const {
@@ -111,6 +156,46 @@ const ImmersivePlayerNew: React.FC = () => {
     if (targetScene.id.includes('forest')) return '#1a2e1a';
     return '#121212';
   }, [targetScene.id]);
+
+  // 背景图呼吸感缩放动画 - 使用可配置参数
+  useEffect(() => {
+    const config = getBreathingConfig(targetScene.id);
+    console.log('[BreathingAnim] Starting for scene:', targetScene.id, 
+      '| Duration:', config.duration, 'ms | MaxScale:', config.maxScale);
+    
+    // 重置动画状态
+    bgScaleAnim.setValue(1.0);
+    
+    const breathingLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bgScaleAnim, {
+          toValue: config.maxScale,
+          duration: config.duration,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bgScaleAnim, {
+          toValue: 1.0,
+          duration: config.duration,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    
+    // 添加监听器确认数值变化
+    const listenerId = bgScaleAnim.addListener(({ value }) => {
+      console.log(`[BreathingAnim] Scale=${value.toFixed(4)}`);
+    });
+    
+    breathingLoop.start(() => {
+      console.log('[BreathingAnim] Animation completed');
+    });
+    
+    return () => {
+      console.log('[BreathingAnim] Stopping for scene:', targetScene.id);
+      breathingLoop.stop();
+      bgScaleAnim.removeListener(listenerId);
+    };
+  }, [targetScene.id]);  // 场景切换时重新触发动画
 
   // DO NOT TOUCH: Stable logic for scene switching - 路由参数变化时重新初始化播放器
   useEffect(() => {
@@ -287,10 +372,13 @@ const ImmersivePlayerNew: React.FC = () => {
       <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
         {/* 背景图：使用 fade 过渡避免翻转 */}
         {scene.backgroundSource ? (
-          <Image 
+          <Animated.Image 
             key={scene.id}
             source={scene.backgroundSource} 
-            style={styles.backgroundImage}
+            style={[
+              styles.backgroundImage,
+              { transform: [{ scale: bgScaleAnim }] }
+            ]}
             fadeDuration={300}
           />
         ) : (
@@ -385,13 +473,13 @@ const ImmersivePlayerNew: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  page: { width, minHeight: height },
+  page: { width, minHeight: height, overflow: 'hidden' },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
     width,
     minHeight: height,
     resizeMode: 'cover',
-    zIndex: 0, // 背景层最底
+    zIndex: 0,
   },
   backgroundFallback: {
     ...StyleSheet.absoluteFillObject,

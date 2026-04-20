@@ -212,30 +212,88 @@ const BreathDetailScreen: React.FC = () => {
     shouldEnableBookstore ? bookstoreCallback : undefined
   );
   
-  // 西方教会场景 - 音量呼吸 LFO
+  // 西方教会场景 - 差异化 LFO 配置
   const shouldEnableWesternChurchVolume = sceneId.startsWith('western_church_');
+  
+  // 根据子场景 ID 选择不同的 Volume LFO 预设
+  const westernChurchVolumePreset = useMemo(() => {
+    if (!shouldEnableWesternChurchVolume) return {};
+    
+    if (sceneId === 'western_church_gregorian' || sceneId === 'western_church_urban_chant') {
+      // 人声类：西班牙圣咏 & 烛光禅定
+      return sceneId === 'western_church_gregorian' 
+        ? LFOPresets.westernChurchGregorianVolume() 
+        : LFOPresets.westernChurchUrbanChantVolume();
+    } else if (sceneId === 'western_church_forest_echo' || sceneId === 'western_church_holy_waves') {
+      // 空间类：石廊回响 & 神圣光流
+      return sceneId === 'western_church_forest_echo'
+        ? LFOPresets.westernChurchForestEchoVolume()
+        : LFOPresets.westernChurchHolyWavesVolume();
+    } else {
+      // 默认：晨祷钟声
+      return LFOPresets.westernChurchMorningBellVolume();
+    }
+  }, [shouldEnableWesternChurchVolume, sceneId]);
+  
   const westernChurchVolumeCallback = useCallback((lfoValue: number) => {
     const audioService = AudioService.getInstance();
-    // LFO 输出 0-1 映射到 85%-100% 音量范围
-    const volume = 0.85 + lfoValue * 0.15;
+    // 根据子场景计算不同的音量范围
+    let minVol = 0.85, maxVol = 1.0;
+    
+    if (sceneId === 'western_church_gregorian' || sceneId === 'western_church_urban_chant') {
+      minVol = 0.88; maxVol = 1.0;  // 人声类：88%-100%
+    } else if (sceneId === 'western_church_forest_echo' || sceneId === 'western_church_holy_waves') {
+      minVol = 0.82; maxVol = 1.0;  // 空间类：82%-100%
+    }
+    
+    const volume = minVol + lfoValue * (maxVol - minVol);
     audioService.setAmbientVolume(volume);
-  }, []);
+  }, [sceneId]);
+  
   const { start: startWesternChurchVolume, stop: stopWesternChurchVolume } = useLFO(
-    shouldEnableWesternChurchVolume ? LFOPresets.westernChurchVolume() : {},
+    westernChurchVolumePreset,
     shouldEnableWesternChurchVolume ? westernChurchVolumeCallback : undefined
   );
   
-  // 西方教会场景 - 动态声场 Panning LFO
+  // 西方教会场景 - 差异化 Panning LFO 配置
   const shouldEnableWesternChurchPanning = sceneId.startsWith('western_church_');
+  
+  // 根据子场景 ID 选择不同的 Panning LFO 预设
+  const westernChurchPanningPreset = useMemo(() => {
+    if (!shouldEnableWesternChurchPanning) return {};
+    
+    if (sceneId === 'western_church_gregorian' || sceneId === 'western_church_urban_chant') {
+      // 人声类：极微小 Pan
+      return sceneId === 'western_church_gregorian'
+        ? LFOPresets.westernChurchGregorianPanning()
+        : LFOPresets.westernChurchUrbanChantPanning();
+    } else if (sceneId === 'western_church_forest_echo' || sceneId === 'western_church_holy_waves') {
+      // 空间类：扩大 Pan 范围
+      return sceneId === 'western_church_forest_echo'
+        ? LFOPresets.westernChurchForestEchoPanning()
+        : LFOPresets.westernChurchHolyWavesPanning();
+    } else {
+      // 默认：晨祷钟声
+      return LFOPresets.westernChurchMorningBellPanning();
+    }
+  }, [shouldEnableWesternChurchPanning, sceneId]);
+  
   const westernChurchPanningCallback = useCallback((lfoValue: number) => {
-    const audioService = AudioService.getInstance();
-    // LFO 输出 0-1 映射到 -0.05 到 0.05 的 Pan 范围
-    const panValue = -0.05 + lfoValue * 0.1;
-    // TrackPlayer.setPan 可能不存在，使用备用方案
-    console.log(`[LFO-WesternChurch-Pan] Pan=${panValue.toFixed(3)}`);
-  }, []);
+    // 根据子场景计算不同的 Pan 范围
+    let minPan = -0.05, maxPan = 0.05;
+    
+    if (sceneId === 'western_church_gregorian' || sceneId === 'western_church_urban_chant') {
+      minPan = -0.03; maxPan = 0.03;  // 人声类：-0.03 到 0.03
+    } else if (sceneId === 'western_church_forest_echo' || sceneId === 'western_church_holy_waves') {
+      minPan = -0.08; maxPan = 0.08;  // 空间类：-0.08 到 0.08
+    }
+    
+    const panValue = minPan + lfoValue * (maxPan - minPan);
+    console.log(`[LFO-WesternChurch-Pan] Scene=${sceneId}, Pan=${panValue.toFixed(3)}`);
+  }, [sceneId]);
+  
   const { start: startWesternChurchPanning, stop: stopWesternChurchPanning } = useLFO(
-    shouldEnableWesternChurchPanning ? LFOPresets.westernChurchPanning() : {},
+    westernChurchPanningPreset,
     shouldEnableWesternChurchPanning ? westernChurchPanningCallback : undefined
   );
   
