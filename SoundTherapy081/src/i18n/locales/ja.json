@@ -10,7 +10,8 @@
     "healing": "深いヒーリング",
     "brainwave": "脳波集中",
     "life": "生活の片隅",
-    "interactive": "環境音"
+    "interactive": "環境音",
+    "westernchurch": "西洋教会"
   },
   "actions": {
     "play": "再生",
@@ -226,6 +227,15 @@
     "interactive_wind_chime": { "title": "風鈴", "desc": "空霊の響き" },
     "interactive_breath": { "title": "呼吸", "desc": "マインドフルネスガイド" },
     "interactive_apple": { "title": "リンゴをかじる", "desc": "ストレス解消音" },
-    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" }
+    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" },
+    "western_church_gregorian": { "title": "スペインのグレゴリオ聖歌", "desc": "古い教会のグレゴリオ聖歌" },
+    "western_church_morning_bell": { "title": "朝の祈りの鐘", "desc": "修道院の朝の鐘" },
+    "western_church_holy_waves": { "title": "神聖な光の流れ", "desc": "光と音の霊的な交わり" },
+    "western_church_forest_echo": { "title": "石の回廊の残響", "desc": "古い修道院の反響" },
+    "western_church_urban_chant": { "title": "揺れるキャンドルの瞑想", "desc": "キャンドルの中の静かな聖歌" }
+  },
+  "disclaimer": {
+    "title": "健康に関する免責事項",
+    "content": "本アプリで提供される音声コンテンツは、リラックスおよび瞑想を目的としており、専門的な医療アドバイス、診断、治療に代わるものではありません。健康上の問題がある場合は、専門の医療従事者に相談してください。"
   }
 }
