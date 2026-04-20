@@ -78,6 +78,22 @@
       "balanced": {
         "title": "Deep Space Focus",
         "subtitle": "Blocks office conversations and keyboard typing."
+      },
+      "deep": {
+        "title": "Deep Silence",
+        "subtitle": "Erase ambient noise for ultimate tranquility."
+      },
+      "office": {
+        "title": "Deep Focus",
+        "subtitle": "Block out chatter and boost productivity."
+      },
+      "sleep": {
+        "title": "Sleep Well",
+        "subtitle": "Gentle pink noise for a restful night's sleep."
+      },
+      "travel": {
+        "title": "Travel Calm",
+        "subtitle": "Cancel out engine roar for a peaceful journey."
       }
     },
     "period": ". ",

@@ -78,6 +78,22 @@
       "balanced": {
         "title": "深空专注",
         "subtitle": "屏蔽办公室交谈、键盘敲击。"
+      },
+      "deep": {
+        "title": "深度降噪",
+        "subtitle": "消除环境杂音，营造极致静谧空间。"
+      },
+      "office": {
+        "title": "专注办公",
+        "subtitle": "屏蔽人声干扰，提升工作学习效率。"
+      },
+      "sleep": {
+        "title": "助眠舒压",
+        "subtitle": "柔和粉红噪音，伴你安稳入睡。"
+      },
+      "travel": {
+        "title": "旅途静谧",
+        "subtitle": "抵消引擎轰鸣，享受舒适旅程。"
       }
     },
     "period": "。",

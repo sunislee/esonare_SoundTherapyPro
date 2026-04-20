@@ -60,36 +60,64 @@ const NoiseCancellationRoom: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
   
-  const noiseModes = [
+  const noiseModes = useMemo(() => [
     {
       id: 'noise_wind',
-      title: '微风轻拂',
-      subtitle: '适合消除空调底噪、居家杂音',
+      title: t('common.noise.wind.title'),
+      subtitle: t('common.noise.wind.subtitle'),
       icon: 'water-outline',
       color: '#4A90E2',
     },
     {
       id: 'noise_traffic',
-      title: '倾盆掩盖',
-      subtitle: '抵消引擎轰鸣、窗外车流',
+      title: t('common.noise.traffic.title'),
+      subtitle: t('common.noise.traffic.subtitle'),
       icon: 'bus-outline',
       color: '#F5A623',
     },
     {
       id: 'noise_crowd',
-      title: '围炉隔离',
-      subtitle: '模糊人声嘈杂、社交噪音',
+      title: t('common.noise.crowd.title'),
+      subtitle: t('common.noise.crowd.subtitle'),
       icon: 'people-outline',
       color: '#D0021B',
     },
     {
       id: 'noise_balanced',
-      title: '深空专注',
-      subtitle: '屏蔽办公室交谈、键盘敲击',
+      title: t('common.noise.balanced.title'),
+      subtitle: t('common.noise.balanced.subtitle'),
       icon: 'scan-outline',
       color: '#7ED321',
     },
-  ];
+    {
+      id: 'noise_deep',
+      title: t('common.noise.deep.title'),
+      subtitle: t('common.noise.deep.subtitle'),
+      icon: 'volume-off-outline',
+      color: '#9B59B6',
+    },
+    {
+      id: 'noise_office',
+      title: t('common.noise.office.title'),
+      subtitle: t('common.noise.office.subtitle'),
+      icon: 'briefcase-outline',
+      color: '#3498DB',
+    },
+    {
+      id: 'noise_sleep',
+      title: t('common.noise.sleep.title'),
+      subtitle: t('common.noise.sleep.subtitle'),
+      icon: 'moon-outline',
+      color: '#E91E63',
+    },
+    {
+      id: 'noise_travel',
+      title: t('common.noise.travel.title'),
+      subtitle: t('common.noise.travel.subtitle'),
+      icon: 'car-outline',
+      color: '#F39C12',
+    },
+  ], [t]);
   
   const [frequencyDist, setFrequencyDist] = useState<FrequencyDistribution | null>(null);
   const [hasPermission, setHasPermission] = useState(true);
@@ -321,7 +349,7 @@ const NoiseCancellationRoom: React.FC = () => {
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Icon name="chevron-down" size={32} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>降噪冥想室</Text>
+        <Text style={styles.title}>{t('common.noiseCancellation.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -488,7 +516,7 @@ const NoiseCancellationRoom: React.FC = () => {
 
         {/* 降噪模式选择 */}
         <View style={styles.modesSection}>
-          <Text style={styles.modesTitle}>降噪模式</Text>
+          <Text style={styles.modesTitle}>{t('common.noiseCancellation.modes')}</Text>
           <View style={styles.modesGrid}>
             {noiseModes.map((mode) => (
               <TouchableOpacity
@@ -518,7 +546,7 @@ const NoiseCancellationRoom: React.FC = () => {
           {selectedMode && (
             <TouchableOpacity style={styles.stopAllButton} onPress={handleStopAll}>
               <Icon name="stop-circle-outline" size={24} color="#FF453A" />
-              <Text style={styles.stopAllText}>停止所有降噪</Text>
+              <Text style={styles.stopAllText}>{t('common.noiseCancellation.stopAll')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -526,7 +554,7 @@ const NoiseCancellationRoom: React.FC = () => {
         {/* 底部说明 */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            💡 提示：调节滑块播放对应频段的白噪音，对冲环境噪音
+            💡 {t('common.noiseCancellation.statusDesc')}
           </Text>
         </View>
 
