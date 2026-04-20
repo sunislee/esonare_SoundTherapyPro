@@ -452,5 +452,10 @@
   "noise_fireplace_title": "围炉隔离",
   "noise_fireplace_desc": "温暖舒适的壁炉噼啪声，营造专属的安全感与专注力",
   "noise_deepspace_title": "深空专注",
-  "noise_deepspace_desc": "深沉而纯净的低频脉冲，辅助高效办公，提升认知表现"
+  "noise_deepspace_desc": "深沉而纯净的低频脉冲，辅助高效办公，提升认知表现",
+  "eq_title": "均衡器实验室",
+  "eq_reset": "恢复默认",
+  "eq_save": "保存预设",
+  "eq_saved_success": "预设已保存",
+  "eq_custom_name": "自定义预设"
 }

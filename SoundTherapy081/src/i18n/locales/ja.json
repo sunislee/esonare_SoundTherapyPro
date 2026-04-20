@@ -261,5 +261,10 @@
   "noise_fireplace_title": "暖炉の隔離",
   "noise_fireplace_desc": "暖炉の心地よい薪の音が、自分だけの安心感と集中力を。",
   "noise_deepspace_title": "深宇宙の集中",
-  "noise_deepspace_desc": "深く純粋な低周波パルスが、作業のパフォーマンスを最大化。"
+  "noise_deepspace_desc": "深く純粋な低周波パルスが、作業のパフォーマンスを最大化。",
+  "eq_title": "イコライザーラボ",
+  "eq_reset": "リセット",
+  "eq_save": "プリセット保存",
+  "eq_saved_success": "保存しました",
+  "eq_custom_name": "カスタムプリセット"
 }

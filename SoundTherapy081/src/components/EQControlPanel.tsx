@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Button,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as _8TrackAudioService from '../services/8TrackAudioService';
 
 const { width } = Dimensions.get('window');
@@ -205,6 +206,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
   onTogglePlay: externalOnTogglePlay,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
   const [volumes, setVolumes] = useState<number[]>(Array(8).fill(100));
   
@@ -298,7 +300,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
 
   return (
     <Animated.View style={[styles.container, { backgroundColor: backgroundColorInterpolate }]}>
-      <Text style={styles.title}>8 段均衡器实验室</Text>
+      <Text style={styles.title}>{t('eq_title')}</Text>
       
       {/* 控制按钮 */}
       <View style={styles.buttonRow}>
@@ -309,7 +311,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
           disabled={isLoading}
         />
         <Button
-          title="🔄 重置音量"
+          title={t('eq_reset')}
           color="#5856D6"
           onPress={handleResetVolumes}
           disabled={isLoading}
@@ -373,7 +375,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
+    gap: 8,
   },
   statusRow: {
     flexDirection: 'row',

@@ -454,5 +454,10 @@
   "noise_fireplace_title": "Cozy Fireplace",
   "noise_fireplace_desc": "The warm crackle of a fireplace, creating a safe space for focus.",
   "noise_deepspace_title": "Deep Space",
-  "noise_deepspace_desc": "Deep, pure low-frequency pulses for peak productivity."
+  "noise_deepspace_desc": "Deep, pure low-frequency pulses for peak productivity.",
+  "eq_title": "EQ Laboratory",
+  "eq_reset": "Reset",
+  "eq_save": "Save Preset",
+  "eq_saved_success": "Preset Saved",
+  "eq_custom_name": "Custom Preset"
 }
