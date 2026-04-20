@@ -10,7 +10,8 @@
     "healing": "Deep Relaxation",
     "brainwave": "Focus Brainwaves",
     "life": "Life Corners",
-    "interactive": "Ambient Decor"
+    "interactive": "Ambient Decor",
+    "westernchurch": "Western Church"
   },
   "actions": {
     "play": "Play",
@@ -280,7 +281,8 @@
       "Nature": "Nature",
       "Healing": "Healing",
       "Brainwave": "Brainwave",
-      "Life": "Life"
+      "Life": "Life",
+      "WesternChurch": "Western Church"
     }
   },
   "miniPlayer": {
@@ -418,7 +420,12 @@
     "interactive_wind_chime": { "title": "Wind Chimes", "desc": "Ethereal sounds" },
     "interactive_breath": { "title": "Breathing", "desc": "Mindfulness guidance" },
     "interactive_apple": { "title": "Apple Crunch", "desc": "Relaxing sound" },
-    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" }
+    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" },
+    "western_church_gregorian": { "title": "Gregorian Chant", "desc": "Ancient Gregorian chants in a cathedral" },
+    "western_church_morning_bell": { "title": "Morning Bell", "desc": "Morning bells from the monastery" },
+    "western_church_holy_waves": { "title": "Holy Light", "desc": "Spiritual convergence of light and sound" },
+    "western_church_forest_echo": { "title": "Stone Corridor Echo", "desc": "Echoes from an ancient monastery" },
+    "western_church_urban_chant": { "title": "Candlelight Meditation", "desc": "Peaceful chants in candlelight" }
   },
   "disclaimer": {
     "title": "Health Disclaimer",

@@ -217,8 +217,10 @@ const MiniPlayer = () => {
         <Animated.View style={[styles.expandedView, { opacity: contentOpacity }]}>
           {currentScene.backgroundSource ? (
             <Image 
+              key={currentScene.id}
               source={currentScene.backgroundSource} 
-              style={styles.thumbnail} 
+              style={styles.thumbnail}
+              fadeDuration={0}
             />
           ) : (
             <View style={[styles.thumbnail, { backgroundColor: currentScene.primaryColor }]} />

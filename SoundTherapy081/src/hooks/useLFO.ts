@@ -298,6 +298,24 @@ export const LFOPresets = {
     inhaleRatio: 0.3,
     crossfadeMode: false,
   }),
+  
+  /** 西方教会 - 音量呼吸：15 秒周期，85%-100% 音量，模拟教堂空气压力自然起伏 */
+  westernChurchVolume: (): LFOConfig => ({
+    period: 15,           // 15 秒周期（12-18 秒范围内）
+    minVolume: 0.85,      // 85% 最小音量
+    maxVolume: 1.0,       // 100% 最大音量
+    inhaleRatio: 0.5,     // 对称正弦波，模拟自然空气压力变化
+    crossfadeMode: false,
+  }),
+  
+  /** 西方教会 - 动态声场：28 秒周期，Pan 范围 -0.05 到 0.05，模拟大教堂回声方位漂移 */
+  westernChurchPanning: (): LFOConfig => ({
+    period: 28,           // 28 秒周期（25-30 秒范围内）
+    minVolume: 0.0,       // 不用于音量调制
+    maxVolume: 1.0,       // LFO 输出 0-1，映射到 Pan -0.05 到 0.05
+    inhaleRatio: 0.5,     // 对称三角波效果（使用正弦波近似）
+    crossfadeMode: false,
+  }),
 };
 
 export default useLFO;

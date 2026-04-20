@@ -4,14 +4,26 @@ import {
   AUDIO_MANIFEST, 
   ASSET_LIST, 
   getLocalPath as getLocalPathHelper,
-  IS_GOOGLE_PLAY_VERSION
+  IS_GOOGLE_PLAY_VERSION,
+  LOCAL_RESOURCE_PATH
 } from '../constants/audioAssets';
+import { Platform, NativeModules } from 'react-native';
 
 // 资源版本标记（用于强制重新下载时使用）
 const RESOURCE_VERSION = '1.0.7';
 const SOURCE_ID = IS_GOOGLE_PLAY_VERSION ? 'GITHUB' : 'GITEE';
 // 简化 key，不再包含版本号，避免版本更新后要求重新下载
 const READY_KEY = 'RESOURCE_READY';
+const BUNDLED_ASSETS_COPIED_KEY = 'BUNDLED_ASSETS_COPIED_V1';
+
+// 内置音频文件列表（从 res/raw 复制）
+const BUNDLED_AUDIO_FILES = [
+  'western_church_gregorian_chant.mp3',
+  'western_church_morning_bell.m4a',
+  'western_church_holy_waves.m4a',
+  'western_church_forest_echo.m4a',
+  'western_church_urban_chant.m4a',
+];
 
 export interface ResourceIntegrityResult {
   isComplete: boolean;
@@ -32,6 +44,65 @@ export interface DownloadProgressState {
 }
 
 export const OfflineService = {
+  /**
+   * 复制内置音频文件从 res/raw 到 DocumentDirectory
+   * 仅在首次安装或资源未复制时执行
+   */
+  async copyBundledAssets(): Promise<void> {
+    try {
+      const alreadyCopied = await AsyncStorage.getItem(BUNDLED_ASSETS_COPIED_KEY);
+      if (alreadyCopied === 'true') {
+        console.log('[OfflineService] ✅ 内置音频已复制，跳过');
+        return;
+      }
+
+      console.log('[OfflineService] 📦 开始复制内置音频文件...');
+      
+      // 确保目标目录存在
+      if (!(await RNFS.exists(LOCAL_RESOURCE_PATH))) {
+        await RNFS.mkdir(LOCAL_RESOURCE_PATH);
+      }
+
+      let copiedCount = 0;
+      for (const filename of BUNDLED_AUDIO_FILES) {
+        const destPath = `${LOCAL_RESOURCE_PATH}/${filename}`;
+        
+        // 检查目标文件是否已存在
+        if (await RNFS.exists(destPath)) {
+          console.log(`[OfflineService] ⏭️ 文件已存在，跳过：${filename}`);
+          copiedCount++;
+          continue;
+        }
+
+        try {
+          // Android: 从 assets 目录复制
+          if (Platform.OS === 'android') {
+            const assetPath = `audio/${filename}`;
+            await RNFS.copyFileAssets(assetPath, destPath);
+            console.log(`[OfflineService] ✅ 复制成功：${filename}`);
+            copiedCount++;
+          } else {
+            // iOS: 从 Bundle 复制
+            const bundlePath = RNFS.MainBundlePath + `/${filename}`;
+            if (await RNFS.exists(bundlePath)) {
+              await RNFS.copyFile(bundlePath, destPath);
+              console.log(`[OfflineService] ✅ 复制成功：${filename}`);
+              copiedCount++;
+            }
+          }
+        } catch (error) {
+          console.warn(`[OfflineService] ⚠️ 复制失败：${filename}`, error);
+        }
+      }
+
+      // 标记已复制
+      await AsyncStorage.setItem(BUNDLED_ASSETS_COPIED_KEY, 'true');
+      console.log(`[OfflineService] 📦 内置音频复制完成：${copiedCount}/${BUNDLED_AUDIO_FILES.length}`);
+    } catch (error) {
+      console.error('[OfflineService] ❌ 复制内置音频失败:', error);
+    }
+  },
+
   /**
    * 检测当前是否处于离线模式
    * 优化：资源已下载完成，直接返回在线状态

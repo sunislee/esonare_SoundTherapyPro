@@ -1,7 +1,7 @@
 import { Platform, ImageSourcePropType, Image } from 'react-native';
 import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL } from './audioAssets';
 
-export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life';
+export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life' | 'WesternChurch';
 
 export class Scene {
   id: string;
@@ -88,6 +88,10 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
     source: require('../assets/images/categories/category_life.webp'),
     color: '#8b7355',
   },
+  'WesternChurch': {
+    source: require('../assets/images/categories/category_western_church.webp'),
+    color: '#4a3728',
+  },
 };
 
 const getCategory = (cat: string): SceneCategory => {
@@ -100,6 +104,8 @@ const getCategory = (cat: string): SceneCategory => {
       return 'Brainwave';
     case 'life':
       return 'Life';
+    case 'western_church':
+      return 'WesternChurch';
     default:
       return 'Nature';
   }

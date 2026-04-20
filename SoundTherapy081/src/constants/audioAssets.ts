@@ -62,6 +62,12 @@ export const AUDIO_MANIFEST = [
   { id: 'interactive_breath', filename: AMBIENT_RESOURCES.BREATH, category: 'interactive', title: 'scenes.interactive_breath.title', description: 'scenes.interactive_breath.desc', size: 1048576 }, 
   { id: 'interactive_apple', filename: AMBIENT_RESOURCES.APPLE_CRUNCH, category: 'interactive', title: 'scenes.interactive_apple.title', description: 'scenes.interactive_apple.desc', size: 32853 }, 
   { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: 'scenes.interactive_match.title', description: 'scenes.interactive_match.desc', size: 846284 },
+
+  { id: 'western_church_gregorian', filename: 'western_church_gregorian_chant.mp3', category: 'western_church', title: 'scenes.western_church_gregorian.title', description: 'scenes.western_church_gregorian.desc', size: 427008 },
+  { id: 'western_church_morning_bell', filename: 'western_church_morning_bell.m4a', category: 'western_church', title: 'scenes.western_church_morning_bell.title', description: 'scenes.western_church_morning_bell.desc', size: 194560 },
+  { id: 'western_church_holy_waves', filename: 'western_church_holy_waves.m4a', category: 'western_church', title: 'scenes.western_church_holy_waves.title', description: 'scenes.western_church_holy_waves.desc', size: 617472 },
+  { id: 'western_church_forest_echo', filename: 'western_church_forest_echo.m4a', category: 'western_church', title: 'scenes.western_church_forest_echo.title', description: 'scenes.western_church_forest_echo.desc', size: 732160 },
+  { id: 'western_church_urban_chant', filename: 'western_church_urban_chant.m4a', category: 'western_church', title: 'scenes.western_church_urban_chant.title', description: 'scenes.western_church_urban_chant.desc', size: 414720 },
 ]; 
 
 // 【核心】初始化 AUDIO_MAP，将 filename 映射到本地路径
@@ -98,6 +104,11 @@ export const ASSET_LIST = [
   { id: 'interactive_breath', expectedSize: 1048576 },     // 保持原值
   { id: 'interactive_apple', expectedSize: 32853 },        // 实际：33KB
   { id: 'interactive_match', expectedSize: 846284 },       // 实际：846KB
+  { id: 'western_church_gregorian', expectedSize: 427008 },    // 实际：427KB
+  { id: 'western_church_morning_bell', expectedSize: 194560 }, // 实际：195KB
+  { id: 'western_church_holy_waves', expectedSize: 617472 },   // 实际：617KB
+  { id: 'western_church_forest_echo', expectedSize: 732160 },  // 实际：732KB
+  { id: 'western_church_urban_chant', expectedSize: 414720 },  // 实际：415KB
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）

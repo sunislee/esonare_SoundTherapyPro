@@ -48,6 +48,9 @@ export const LandingScreen = ({ navigation }: any) => {
         // 初始化完成后触发一次强制刷新
         setTick(t => t + 1);
 
+        // 1.5 复制内置音频资源（首次安装时）
+        await OfflineService.copyBundledAssets();
+
         // 2. 使用 OfflineService 进行统一的资源就绪检查
         const integrity = await OfflineService.checkResourceIntegrity();
         const resourceReady = await OfflineService.isResourceReady();

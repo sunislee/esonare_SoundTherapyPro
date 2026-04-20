@@ -288,6 +288,7 @@ const ImmersivePlayerNew: React.FC = () => {
         {/* 背景图：使用 fade 过渡避免翻转 */}
         {scene.backgroundSource ? (
           <Image 
+            key={scene.id}
             source={scene.backgroundSource} 
             style={styles.backgroundImage}
             fadeDuration={300}

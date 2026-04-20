@@ -181,6 +181,13 @@ class AudioService {
   private bookstoreSound: Sound | null = null;
   private currentLFOBookstoreDisposer: (() => void) | null = null;
   private isBookstorePanningEnabled: boolean = false;
+  
+  // 【西方教会 - LFO 动态调制】
+  private westernChurchSound: Sound | null = null;
+  private currentLFOVolumeDisposerWC: (() => void) | null = null;
+  private currentLFOPanDisposerWC: (() => void) | null = null;
+  private isWesternChurchLFOEnabled: boolean = false;
+  private westernChurchBaseVolume: number = 1.0;
 
   private constructor() {
     AppState.addEventListener('change', this.handleAppStateChange);
@@ -2121,6 +2128,107 @@ class AudioService {
       console.error('[AudioService] isAssetReady 检查失败:', error);
       return false;
     }
+  };
+
+  // ==================== 西方教会 - LFO 动态调制 ====================
+
+  /**
+   * 【西方教会 - 音量呼吸】为西方教会场景启用 LFO Volume 调制
+   * @param sceneId 场景 ID（如 'western_church_gregorian'）
+   * @param onVolumeChange 音量变化回调
+   */
+  public enableWesternChurchVolumeLFO = (
+    sceneId: string,
+    onVolumeChange?: (volume: number) => void
+  ) => {
+    // 清理旧的 LFO
+    this.disableWesternChurchVolumeLFO();
+    
+    // 仅对西方教会场景启用
+    if (!sceneId.startsWith('western_church_')) {
+      console.log('[AudioService] ⚠️ 场景', sceneId, '不是西方教会场景，跳过 Volume LFO');
+      return;
+    }
+    
+    console.log('[AudioService] 🎵 为西方教会场景启用 Volume LFO:', sceneId);
+    this.isWesternChurchLFOEnabled = true;
+    this.westernChurchBaseVolume = this.ambientVolume;
+  };
+
+  /**
+   * 【西方教会 - 音量呼吸】禁用 Volume LFO
+   */
+  public disableWesternChurchVolumeLFO = () => {
+    if (this.currentLFOVolumeDisposerWC) {
+      console.log('[AudioService] 🎵 禁用西方教会 Volume LFO');
+      this.currentLFOVolumeDisposerWC();
+      this.currentLFOVolumeDisposerWC = null;
+    }
+    this.isWesternChurchLFOEnabled = false;
+    
+    // 恢复到基础音量
+    TrackPlayer.setVolume(this.westernChurchBaseVolume).catch(() => {});
+    console.log('[AudioService] ✅ 西方教会 Volume LFO 已禁用，恢复基础音量:', this.westernChurchBaseVolume);
+  };
+
+  /**
+   * 【西方教会 - 音量呼吸】设置 Volume LFO 回调
+   * @param disposer 停止函数
+   */
+  public setWesternChurchVolumeLFOCallback = (disposer: () => void) => {
+    this.currentLFOVolumeDisposerWC = disposer;
+  };
+
+  /**
+   * 【西方教会 - 动态声场】为西方教会场景启用 LFO Panning 调制
+   * @param sceneId 场景 ID
+   * @param onPanChange Pan 值变化回调
+   */
+  public enableWesternChurchPanningLFO = (
+    sceneId: string,
+    onPanChange?: (pan: number) => void
+  ) => {
+    // 清理旧的 Panning
+    this.disableWesternChurchPanningLFO();
+    
+    // 仅对西方教会场景启用
+    if (!sceneId.startsWith('western_church_')) {
+      console.log('[AudioService] ⚠️ 场景', sceneId, '不是西方教会场景，跳过 Panning LFO');
+      return;
+    }
+    
+    console.log('[AudioService] 🎧 为西方教会场景启用 Panning LFO:', sceneId);
+    this.isWesternChurchLFOEnabled = true;
+  };
+
+  /**
+   * 【西方教会 - 动态声场】禁用 Panning LFO
+   */
+  public disableWesternChurchPanningLFO = () => {
+    if (this.currentLFOPanDisposerWC) {
+      console.log('[AudioService] 🎧 禁用西方教会 Panning LFO');
+      this.currentLFOPanDisposerWC();
+      this.currentLFOPanDisposerWC = null;
+    }
+    
+    // Pan 归零
+    TrackPlayer.setPan?.(0).catch(() => {});
+    console.log('[AudioService] ✅ 西方教会 Panning LFO 已禁用，Pan 归零');
+  };
+
+  /**
+   * 【西方教会 - 动态声场】设置 Panning LFO 回调
+   * @param disposer 停止函数
+   */
+  public setWesternChurchPanningLFOCallback = (disposer: () => void) => {
+    this.currentLFOPanDisposerWC = disposer;
+  };
+
+  /**
+   * 【西方教会 - LFO】获取启用状态
+   */
+  public getIsWesternChurchLFOEnabled = (): boolean => {
+    return this.isWesternChurchLFOEnabled;
   };
 
   // ... 其余 SleepTimer 等逻辑保持一致 ...

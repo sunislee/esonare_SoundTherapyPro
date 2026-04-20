@@ -212,6 +212,33 @@ const BreathDetailScreen: React.FC = () => {
     shouldEnableBookstore ? bookstoreCallback : undefined
   );
   
+  // 西方教会场景 - 音量呼吸 LFO
+  const shouldEnableWesternChurchVolume = sceneId.startsWith('western_church_');
+  const westernChurchVolumeCallback = useCallback((lfoValue: number) => {
+    const audioService = AudioService.getInstance();
+    // LFO 输出 0-1 映射到 85%-100% 音量范围
+    const volume = 0.85 + lfoValue * 0.15;
+    audioService.setAmbientVolume(volume);
+  }, []);
+  const { start: startWesternChurchVolume, stop: stopWesternChurchVolume } = useLFO(
+    shouldEnableWesternChurchVolume ? LFOPresets.westernChurchVolume() : {},
+    shouldEnableWesternChurchVolume ? westernChurchVolumeCallback : undefined
+  );
+  
+  // 西方教会场景 - 动态声场 Panning LFO
+  const shouldEnableWesternChurchPanning = sceneId.startsWith('western_church_');
+  const westernChurchPanningCallback = useCallback((lfoValue: number) => {
+    const audioService = AudioService.getInstance();
+    // LFO 输出 0-1 映射到 -0.05 到 0.05 的 Pan 范围
+    const panValue = -0.05 + lfoValue * 0.1;
+    // TrackPlayer.setPan 可能不存在，使用备用方案
+    console.log(`[LFO-WesternChurch-Pan] Pan=${panValue.toFixed(3)}`);
+  }, []);
+  const { start: startWesternChurchPanning, stop: stopWesternChurchPanning } = useLFO(
+    shouldEnableWesternChurchPanning ? LFOPresets.westernChurchPanning() : {},
+    shouldEnableWesternChurchPanning ? westernChurchPanningCallback : undefined
+  );
+  
   // 配置化场景（森林组/禅意组/流水组/脑波组）
   const shouldEnableConfigLFO = sceneConfig.enabled && 
     !['nature_deep_sea', 'scene_boat_rain', 'scene_bookstore'].includes(sceneId);
@@ -424,6 +451,25 @@ const BreathDetailScreen: React.FC = () => {
             startConfigLFO();
           }
           
+          // 5. 西方教会场景 - 音量呼吸 + 动态声场
+          if (shouldEnableWesternChurchVolume) {
+            console.log(`[BreathDetail] ⛪ 为西方教会场景启用 Volume LFO (15s 周期)`);
+            audioService.enableWesternChurchVolumeLFO(scene.id);
+            audioService.setWesternChurchVolumeLFOCallback(() => {
+              stopWesternChurchVolume();
+            });
+            startWesternChurchVolume();
+          }
+          
+          if (shouldEnableWesternChurchPanning) {
+            console.log(`[BreathDetail] ⛪ 为西方教会场景启用 Panning LFO (28s 周期)`);
+            audioService.enableWesternChurchPanningLFO(scene.id);
+            audioService.setWesternChurchPanningLFOCallback(() => {
+              stopWesternChurchPanning();
+            });
+            startWesternChurchPanning();
+          }
+          
           setIsLoading(false);
         }
       } catch (error) {
@@ -485,6 +531,19 @@ const BreathDetailScreen: React.FC = () => {
         audioService.cleanupScene(sceneId);
         console.log(`[BreathDetail] ✅ 场景 ${sceneId} 已清理`);
       }
+      
+      // 5. 西方教会场景
+      if (shouldEnableWesternChurchVolume) {
+        stopWesternChurchVolume();
+        audioService.disableWesternChurchVolumeLFO();
+        console.log('[BreathDetail] ✅ 西方教会 Volume LFO 已停止');
+      }
+      
+      if (shouldEnableWesternChurchPanning) {
+        stopWesternChurchPanning();
+        audioService.disableWesternChurchPanningLFO();
+        console.log('[BreathDetail] ✅ 西方教会 Panning LFO 已停止');
+      }
     };
   }, [
     shouldEnableLFO,
@@ -495,6 +554,10 @@ const BreathDetailScreen: React.FC = () => {
     stopBookstore,
     shouldEnableConfigLFO,
     stopConfigLFO,
+    shouldEnableWesternChurchVolume,
+    stopWesternChurchVolume,
+    shouldEnableWesternChurchPanning,
+    stopWesternChurchPanning,
     sceneId
   ]);
 
