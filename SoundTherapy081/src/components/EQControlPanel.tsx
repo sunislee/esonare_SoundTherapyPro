@@ -321,7 +321,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
       {/* 状态显示 */}
       <View style={styles.statusRow}>
         <Text style={styles.statusText}>
-          当前音源：{sceneName.replace(/_/g, ' ')}
+          {t('eq_current_source')}: {sceneName.replace(/_/g, ' ')}
         </Text>
         <Text style={[
           styles.playStatus,

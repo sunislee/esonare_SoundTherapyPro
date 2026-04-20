@@ -470,5 +470,6 @@
   "home_noise_desc": "Create an ultra-quiet space for deep focus.",
   "home_eq_desc": "Professional-grade audio tuning laboratory.",
   "noise_room_desc": "Background bars show ambient noise distribution. Slide to adjust counter-volume.",
-  "noise_room_ai_hint": "AI provides visual reference only. You're in full control."
+  "noise_room_ai_hint": "AI provides visual reference only. You're in full control.",
+  "eq_current_source": "Current Source"
 }
