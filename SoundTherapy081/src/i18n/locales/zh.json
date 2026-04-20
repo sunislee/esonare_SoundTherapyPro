@@ -444,5 +444,13 @@
   "disclaimer": {
     "title": "健康声明",
     "content": "本应用提供的声音内容仅用于放松和冥想目的，不能替代专业的医疗建议、诊断或治疗。如有健康问题，请咨询专业医疗人员。"
-  }
+  },
+  "noise_breeze_title": "微风轻抚",
+  "noise_breeze_desc": "如丝般轻柔的白噪音，抚平心绪，静享安宁",
+  "noise_downpour_title": "倾盆覆盖",
+  "noise_downpour_desc": "模拟大雨倾盆的白噪音，隔绝外界嘈杂，深度入定",
+  "noise_fireplace_title": "围炉隔离",
+  "noise_fireplace_desc": "温暖舒适的壁炉噼啪声，营造专属的安全感与专注力",
+  "noise_deepspace_title": "深空专注",
+  "noise_deepspace_desc": "深沉而纯净的低频脉冲，辅助高效办公，提升认知表现"
 }

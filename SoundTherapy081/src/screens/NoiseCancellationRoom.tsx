@@ -56,68 +56,40 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
  * 3. AI 仅提供视觉参考，控制权完全在用户手中
  */
 const NoiseCancellationRoom: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
   
   const noiseModes = useMemo(() => [
     {
       id: 'noise_wind',
-      title: t('common.noise.wind.title'),
-      subtitle: t('common.noise.wind.subtitle'),
+      title: t('noise_breeze_title'),
+      subtitle: t('noise_breeze_desc'),
       icon: 'water-outline',
       color: '#4A90E2',
     },
     {
       id: 'noise_traffic',
-      title: t('common.noise.traffic.title'),
-      subtitle: t('common.noise.traffic.subtitle'),
-      icon: 'bus-outline',
+      title: t('noise_downpour_title'),
+      subtitle: t('noise_downpour_desc'),
+      icon: 'cloudy-outline',
       color: '#F5A623',
     },
     {
       id: 'noise_crowd',
-      title: t('common.noise.crowd.title'),
-      subtitle: t('common.noise.crowd.subtitle'),
-      icon: 'people-outline',
+      title: t('noise_fireplace_title'),
+      subtitle: t('noise_fireplace_desc'),
+      icon: 'flame-outline',
       color: '#D0021B',
     },
     {
       id: 'noise_balanced',
-      title: t('common.noise.balanced.title'),
-      subtitle: t('common.noise.balanced.subtitle'),
-      icon: 'scan-outline',
+      title: t('noise_deepspace_title'),
+      subtitle: t('noise_deepspace_desc'),
+      icon: 'planet-outline',
       color: '#7ED321',
     },
-    {
-      id: 'noise_deep',
-      title: t('common.noise.deep.title'),
-      subtitle: t('common.noise.deep.subtitle'),
-      icon: 'volume-off-outline',
-      color: '#9B59B6',
-    },
-    {
-      id: 'noise_office',
-      title: t('common.noise.office.title'),
-      subtitle: t('common.noise.office.subtitle'),
-      icon: 'briefcase-outline',
-      color: '#3498DB',
-    },
-    {
-      id: 'noise_sleep',
-      title: t('common.noise.sleep.title'),
-      subtitle: t('common.noise.sleep.subtitle'),
-      icon: 'moon-outline',
-      color: '#E91E63',
-    },
-    {
-      id: 'noise_travel',
-      title: t('common.noise.travel.title'),
-      subtitle: t('common.noise.travel.subtitle'),
-      icon: 'car-outline',
-      color: '#F39C12',
-    },
-  ], [t]);
+  ], [t, i18n.language]);
   
   const [frequencyDist, setFrequencyDist] = useState<FrequencyDistribution | null>(null);
   const [hasPermission, setHasPermission] = useState(true);

@@ -253,5 +253,13 @@
   "disclaimer": {
     "title": "健康に関する免責事項",
     "content": "本アプリで提供される音声コンテンツは、リラックスおよび瞑想を目的としており、専門的な医療アドバイス、診断、治療に代わるものではありません。健康上の問題がある場合は、専門の医療従事者に相談してください。"
-  }
+  },
+  "noise_breeze_title": "そよ風の愛撫",
+  "noise_breeze_desc": "シルクのようなホワイトノイズが心を癒し、安らぎを。",
+  "noise_downpour_title": "土砂降りの包囲",
+  "noise_downpour_desc": "激しい雨音が外界の騒音を遮断し、深い集中へ。",
+  "noise_fireplace_title": "暖炉の隔離",
+  "noise_fireplace_desc": "暖炉の心地よい薪の音が、自分だけの安心感と集中力を。",
+  "noise_deepspace_title": "深宇宙の集中",
+  "noise_deepspace_desc": "深く純粋な低周波パルスが、作業のパフォーマンスを最大化。"
 }

@@ -445,6 +445,14 @@
   },
   "disclaimer": {
     "title": "Health Disclaimer",
-    "content": "The sound content provided by this app is for relaxation and meditation purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Please consult a qualified healthcare provider for any health concerns."
-  }
+    "content": "The audio content provided by this app is for relaxation and meditation purposes only and cannot replace professional medical advice, diagnosis, or treatment. Please consult a healthcare professional for any health concerns."
+  },
+  "noise_breeze_title": "Gentle Breeze",
+  "noise_breeze_desc": "Silky smooth white noise to calm your mind and find peace.",
+  "noise_downpour_title": "Heavy Downpour",
+  "noise_downpour_desc": "Enveloping rain noise to shield you from external distractions.",
+  "noise_fireplace_title": "Cozy Fireplace",
+  "noise_fireplace_desc": "The warm crackle of a fireplace, creating a safe space for focus.",
+  "noise_deepspace_title": "Deep Space",
+  "noise_deepspace_desc": "Deep, pure low-frequency pulses for peak productivity."
 }
