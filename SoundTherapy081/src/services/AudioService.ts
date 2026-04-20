@@ -196,6 +196,43 @@ class AudioService {
       // 使用 AppState 的 change 事件检测应用退出
       this.handleAppStateChange = this.handleAppStateChange.bind(this);
     }
+    
+    // 【v1.4.1 关键修复】清理旧版本的持久化播放状态
+    this.cleanupLegacyPlaybackState();
+  }
+  
+  /**
+   * 【v1.4.1 新增】清理旧版本可能遗留的持久化播放状态
+   * 防止旧版本指向已删除本地路径的状态导致闪退
+   */
+  private async cleanupLegacyPlaybackState() {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      
+      // 清理可能存在的旧状态 key
+      const legacyKeys = [
+        '@soundtherapy_current_track',
+        '@soundtherapy_playing_state',
+        '@soundtherapy_audio_state',
+      ];
+      
+      for (const key of legacyKeys) {
+        try {
+          const value = await AsyncStorage.getItem(key);
+          if (value) {
+            console.log(`[AudioService] 🧹 清理旧版本状态：${key}`);
+            await AsyncStorage.removeItem(key);
+          }
+        } catch (error) {
+          // 忽略单个 key 的清理错误
+          console.warn(`[AudioService] 清理 ${key} 失败:`, error);
+        }
+      }
+      
+      console.log('[AudioService] ✅ 旧版本状态清理完成');
+    } catch (error) {
+      console.warn('[AudioService] 清理旧版本状态失败:', error);
+    }
   }
 
   static getInstance(): AudioService {
@@ -450,7 +487,19 @@ class AudioService {
       if (isLocal) {
         uri = localPath;
       } else if (!isOffline) {
-        uri = getDownloadUrl(scene.id)[0];
+        const downloadUrls = getDownloadUrl(scene.id);
+        // 【防御性检查】确保下载 URL 有效
+        if (!downloadUrls || downloadUrls.length === 0 || !downloadUrls[0]) {
+          console.error('[AudioService] ❌ 远程 URL 无效:', scene.id);
+          throw new Error('INVALID_REMOTE_URL');
+        }
+        uri = downloadUrls[0];
+      }
+
+      // 【关键修复】验证 URI 格式
+      if (!uri || uri.includes('undefined') || uri.includes('null')) {
+        console.error('[AudioService] ❌ URI 格式错误:', uri);
+        throw new Error('INVALID_URI_FORMAT');
       }
 
       if (!uri) throw new Error('NO_AVAILABLE_SOURCE');

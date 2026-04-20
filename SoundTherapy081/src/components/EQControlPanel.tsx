@@ -300,18 +300,18 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
 
   return (
     <Animated.View style={[styles.container, { backgroundColor: backgroundColorInterpolate }]}>
-      <Text style={styles.title}>{t('eq_title')}</Text>
+      <Text style={styles.title}>{t('eq_title') || 'EQ Laboratory'}</Text>
       
       {/* 控制按钮 */}
       <View style={styles.buttonRow}>
         <Button
-          title={isLoading ? t('eq_loading') : (isPlaying ? `${t('eq_stop')}` : `${t('eq_play')}`)}
+          title={isLoading ? (t('eq_loading') || 'Loading...') : (isPlaying ? (t('eq_stop') || 'Stop') : (t('eq_play') || 'Play'))}
           color={isPlaying ? '#FF3B30' : '#34C759'}
           onPress={handleTogglePlay}
           disabled={isLoading}
         />
         <Button
-          title={t('eq_reset')}
+          title={t('eq_reset') || 'Reset'}
           color="#5856D6"
           onPress={handleResetVolumes}
           disabled={isLoading}
@@ -321,13 +321,13 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
       {/* 状态显示 */}
       <View style={styles.statusRow}>
         <Text style={styles.statusText}>
-          {t('eq_current_source')}: {sceneName.replace(/_/g, ' ')}
+          {t('eq_current_source') || 'Current Source'}: {sceneName.replace(/_/g, ' ')}
         </Text>
         <Text style={[
           styles.playStatus,
           { color: isPlaying ? '#34C759' : '#8E8E93' }
         ]}>
-          {isPlaying ? `● ${t('eq_playing')}` : `○ ${t('eq_stopped')}`}
+          {isPlaying ? `● ${t('eq_playing') || 'Playing'}` : `○ ${t('eq_stopped') || 'Stopped'}`}
         </Text>
       </View>
       
