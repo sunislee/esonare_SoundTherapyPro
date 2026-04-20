@@ -466,5 +466,7 @@
   "eq_stopped": "Stopped",
   "eq_loading": "Loading...",
   "home_noise_lab": "Noise Lab",
-  "home_eq_lab": "EQ Lab"
+  "home_eq_lab": "EQ Lab",
+  "home_noise_desc": "Create an ultra-quiet space for deep focus.",
+  "home_eq_desc": "Professional-grade audio tuning laboratory."
 }

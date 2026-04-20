@@ -273,5 +273,7 @@
   "eq_stopped": "停止中",
   "eq_loading": "読み込み中...",
   "home_noise_lab": "ノイズラボ",
-  "home_eq_lab": "EQ ラボ"
+  "home_eq_lab": "EQ ラボ",
+  "home_noise_desc": "究極の静寂で、深い集中空間を。",
+  "home_eq_desc": "プロ仕様のオーディオチューニングラボ。"
 }

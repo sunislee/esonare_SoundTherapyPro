@@ -259,6 +259,7 @@ export const HomeScreen: React.FC = () => {
             <NoiseLabIcon size={40} />
           </TouchableOpacity>
           <Text style={styles.noiseCancelLabel}>{t('home_noise_lab')}</Text>
+          <Text style={styles.noiseCancelDesc}>{t('home_noise_desc')}</Text>
         </Animated.View>
       </View>
     </View>
@@ -316,4 +317,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
   },
   noiseCancelLabel: { marginTop: 8, fontSize: 11, color: '#fff', fontWeight: '600', textAlign: 'center' },
+  noiseCancelDesc: { marginTop: 4, fontSize: 10, color: 'rgba(255,255,255,0.6)', textAlign: 'center', paddingHorizontal: 8 },
 });
