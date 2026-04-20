@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar, useColorScheme, ActivityIndicator, View, Text } from 'react-native';
+import { StatusBar, useColorScheme, ActivityIndicator, View, Text, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,6 +7,13 @@ import { MainNavigator } from './src/navigation/MainNavigator';
 import { AudioProvider } from './src/context/AudioContext';
 import AudioService from './src/services/AudioService';
 import { initLanguage } from './src/i18n';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import TrackPlayer from 'react-native-track-player';
+import { NativeModules } from 'react-native';
+
+// 【v1.4.1 关键修复】获取当前应用版本号
+const APP_VERSION_CODE = NativeModules?.PackageInfo?.versionCode || 141;
+const STORAGE_KEY_LAST_VERSION = '@soundtherapy_last_version';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -20,15 +27,50 @@ function App() {
         console.log('[App] ====== 开始初始化应用 ======');
         
         // 第一步：初始化语言
-        console.log('[App] [1/2] 初始化语言...');
+        console.log('[App] [1/3] 初始化语言...');
         await initLanguage();
-        console.log('[App] [1/2] ✅ 语言初始化完成');
+        console.log('[App] [1/3] ✅ 语言初始化完成');
         
-        // 第二步：初始化 AudioService
-        console.log('[App] [2/2] 初始化 AudioService...');
+        // 【v1.4.1 关键修复】检查版本升级，强制重置 TrackPlayer
+        console.log('[App] [2/3] 检查版本升级...');
+        const lastVersion = await AsyncStorage.getItem(STORAGE_KEY_LAST_VERSION);
+        const currentVersion = APP_VERSION_CODE;
+        
+        if (!lastVersion || parseInt(lastVersion) < currentVersion) {
+          console.log(`[App] 🔄 检测到版本升级：${lastVersion || '首次安装'} -> ${currentVersion}`);
+          
+          // 【关键修复】强制重置 TrackPlayer，清理旧版本状态
+          try {
+            console.log('[App] 🧹 强制重置 TrackPlayer...');
+            await TrackPlayer.reset();
+            console.log('[App] ✅ TrackPlayer 已重置');
+          } catch (resetError: any) {
+            console.warn('[App] ⚠️ TrackPlayer 重置失败（可能未初始化）:', resetError?.message);
+          }
+          
+          // 保存当前版本号
+          await AsyncStorage.setItem(STORAGE_KEY_LAST_VERSION, currentVersion.toString());
+          console.log('[App] ✅ 已保存新版本号');
+        } else {
+          console.log('[App] ✅ 版本一致，跳过重置');
+        }
+        
+        // 第三步：初始化 AudioService
+        console.log('[App] [3/3] 初始化 AudioService...');
         const audioService = AudioService.getInstance();
-        await audioService.setupPlayer();
-        console.log('[App] [2/2] ✅ AudioService 初始化完成');
+        
+        // 【防御性检查】确保 TrackPlayer 已就绪
+        try {
+          await audioService.setupPlayer();
+          console.log('[App] [3/3] ✅ AudioService 初始化完成');
+        } catch (audioError: any) {
+          console.error('[App] ❌ AudioService 初始化失败:', audioError?.message);
+          // 尝试重新 setup
+          console.log('[App] 🔄 尝试重新初始化 AudioService...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await audioService.setupPlayer();
+          console.log('[App] ✅ AudioService 重试成功');
+        }
         
         const initTime = Date.now() - startTime;
         console.log(`[App] ⏱️ 应用初始化总耗时：${initTime}ms`);

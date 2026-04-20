@@ -50,8 +50,16 @@ class DownloaderService {
       if (!exists) {
         await RNFS.mkdir(CACHE_DIR);
       }
-    } catch (error) {
-      console.error('[Downloader] 初始化缓存目录失败:', error);
+    } catch (error: any) {
+      console.error('[Downloader] 初始化缓存目录失败:', error?.message);
+      // 【防御性处理】如果目录创建失败，使用备用目录
+      try {
+        const fallbackDir = `${RNFS.CachesDirectoryPath}/noise_reduction_cache`;
+        await RNFS.mkdir(fallbackDir);
+        console.log('[Downloader] 使用备用缓存目录:', fallbackDir);
+      } catch (fallbackError) {
+        console.error('[Downloader] 备用目录也失败:', fallbackError);
+      }
     }
   }
 
@@ -153,17 +161,35 @@ class DownloaderService {
   private async downloadResource(resource: AudioResource) {
     const localPath = this.getLocalPath(resource.id);
 
-    // 检查是否已存在
-    const exists = await RNFS.exists(localPath);
-    if (exists) {
-      console.log(`[Downloader] ✅ ${resource.filename} 已存在，跳过`);
+    // 【防御性检查】验证路径有效性
+    if (!localPath || typeof localPath !== 'string') {
+      console.error('[Downloader] ❌ 本地路径无效:', localPath);
       this.notify({
         resourceId: resource.id,
         filename: resource.filename,
-        progress: 100,
-        status: 'completed',
+        progress: 0,
+        status: 'failed',
+        error: 'Invalid local path',
       });
       return;
+    }
+
+    // 检查是否已存在
+    try {
+      const exists = await RNFS.exists(localPath);
+      if (exists) {
+        console.log(`[Downloader] ✅ ${resource.filename} 已存在，跳过`);
+        this.notify({
+          resourceId: resource.id,
+          filename: resource.filename,
+          progress: 100,
+          status: 'completed',
+        });
+        return;
+      }
+    } catch (existsError: any) {
+      console.warn(`[Downloader] 检查 ${resource.filename} 存在性失败:`, existsError?.message);
+      // 继续执行，假设文件不存在
     }
 
     // 开始下载
@@ -178,6 +204,11 @@ class DownloaderService {
         progress: 0,
         status: 'downloading',
       });
+
+      // 【关键修复】验证远程 URL
+      if (!resource.remoteUrl || typeof resource.remoteUrl !== 'string') {
+        throw new Error('Invalid remote URL');
+      }
 
       // 创建下载任务
       this.currentDownload = RNFS.downloadFile({
@@ -203,7 +234,7 @@ class DownloaderService {
         throw new Error(`HTTP ${result.statusCode}`);
       }
     } catch (error: any) {
-      console.error(`[Downloader] ❌ ${resource.filename} 下载失败:`, error.message);
+      console.error(`[Downloader] ❌ ${resource.filename} 下载失败:`, error?.message);
       
       // 重试逻辑
       if (retryCount < this.maxRetries) {
@@ -216,7 +247,7 @@ class DownloaderService {
           filename: resource.filename,
           progress: 0,
           status: 'failed',
-          error: error.message,
+          error: error?.message || 'Unknown error',
         });
       }
     } finally {

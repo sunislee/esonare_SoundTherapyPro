@@ -480,6 +480,13 @@ class AudioService {
       }
 
       const localPath = getLocalPath(scene.category, scene.filename);
+      
+      // 【v1.4.1 关键修复】验证本地路径有效性
+      if (!localPath || typeof localPath !== 'string') {
+        console.error('[AudioService] ❌ 本地路径无效:', scene.id, localPath);
+        throw new Error('INVALID_LOCAL_PATH');
+      }
+      
       const isLocal = await RNFS.exists(localPath.replace('file://', ''));
       const isOffline = await OfflineService.isOfflineMode();
       

@@ -1,5 +1,8 @@
 import { Platform, ImageSourcePropType, Image } from 'react-native';
-import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL } from './audioAssets';
+import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSION, GITEE_URL, GITHUB_URL } from './audioAssets';
+
+// 背景图 URL 根据渠道自动选择
+const BG_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITHUB_URL : GITEE_URL;
 
 export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life' | 'WesternChurch';
 
@@ -131,6 +134,35 @@ export const SMALL_SCENE_IDS = [
   'interactive_white_noise',
 ];
 
+// 西方教会场景背景图远程 URL 映射
+const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
+  western_church_gregorian: 'western_church_candlelight.webp',    // 西班牙圣咏 → 烛光
+  western_church_morning_bell: 'western_church_sunlight_monastery.webp', // 晨祷钟声 → 阳光修道院
+  western_church_holy_waves: 'western_church_light_rays.webp',    // 神圣光流 → 光线
+  western_church_forest_echo: 'western_church_corridor.webp',     // 石廊回响 → 走廊
+  western_church_urban_chant: 'western_church_candlelight.webp',  // 烛光禅定 → 烛光
+};
+
+/**
+ * 获取场景的背景资源
+ * 西方教会场景使用远程 URL，其他场景使用本地 require
+ */
+const getSceneBackground = (sceneId: string, category: SceneCategory) => {
+  // 西方教会场景：使用远程 URL
+  if (sceneId.startsWith('western_church_')) {
+    const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
+    if (bgFilename) {
+      return {
+        uri: `${BG_BASE_URL}${bgFilename}`,
+      };
+    }
+  }
+  
+  // 其他场景：使用本地 require
+  const bg = backgrounds[category];
+  return bg?.source || null;
+};
+
 export const SCENES: Scene[] = AUDIO_MANIFEST
   .map((item) => {
     const category = getCategory(item.category);
@@ -163,13 +195,6 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       isBase = !item.filename.startsWith('fx/') && item.category !== 'interactive';
     }
 
-    const debugSource = bg?.source;
-    console.log('DEBUG_BG: ID=' + item.id + ', Category=' + category + ', Source=' + debugSource);
-    if (!debugSource) {
-      console.log('DEBUG_BG_MISSING: ID=' + item.id + ', Category=' + category);
-      console.log('DEBUG_BG_MAP_KEYS=' + Object.keys(backgrounds).join(','));
-      console.log('DEBUG_BG_MAP_ENTRY=' + JSON.stringify(backgrounds[category]));
-    }
     const scene = new Scene({
       id: item.id,
       title: item.title,
@@ -180,11 +205,10 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       audioFile: null,
       filename: item.filename,
       baseVolume: 1.0,
-      backgroundSource: bg.source,
+      backgroundSource: getSceneBackground(item.id, category),
       category: category,
       isBaseScene: isBase,
     });
-    console.log('DEBUG_BG_AFTER: ID=' + scene.id + ', Category=' + scene.category + ', Source=' + scene.backgroundSource);
     return scene;
   });
 

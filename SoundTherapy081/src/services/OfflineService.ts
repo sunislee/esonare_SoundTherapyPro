@@ -17,13 +17,8 @@ const READY_KEY = 'RESOURCE_READY';
 const BUNDLED_ASSETS_COPIED_KEY = 'BUNDLED_ASSETS_COPIED_V1';
 
 // 内置音频文件列表（从 res/raw 复制）
-const BUNDLED_AUDIO_FILES = [
-  'western_church_gregorian_chant.mp3',
-  'western_church_morning_bell.m4a',
-  'western_church_holy_waves.m4a',
-  'western_church_forest_echo.m4a',
-  'western_church_urban_chant.m4a',
-];
+// 【注意】西方教会音频已改为远程下载，此列表保留为空
+const BUNDLED_AUDIO_FILES: string[] = [];
 
 export interface ResourceIntegrityResult {
   isComplete: boolean;
@@ -58,9 +53,23 @@ export const OfflineService = {
 
       console.log('[OfflineService] 📦 开始复制内置音频文件...');
       
+      // 【防御性检查】确保目录路径有效
+      if (!LOCAL_RESOURCE_PATH || typeof LOCAL_RESOURCE_PATH !== 'string') {
+        console.error('[OfflineService] ❌ 本地资源路径无效:', LOCAL_RESOURCE_PATH);
+        return;
+      }
+      
       // 确保目标目录存在
-      if (!(await RNFS.exists(LOCAL_RESOURCE_PATH))) {
-        await RNFS.mkdir(LOCAL_RESOURCE_PATH);
+      try {
+        if (!(await RNFS.exists(LOCAL_RESOURCE_PATH))) {
+          await RNFS.mkdir(LOCAL_RESOURCE_PATH);
+        }
+      } catch (dirError: any) {
+        console.error('[OfflineService] ❌ 创建目录失败:', dirError?.message);
+        // 尝试使用备用目录
+        const fallbackPath = `${RNFS.CachesDirectoryPath}/audio_resources`;
+        console.log('[OfflineService] 使用备用目录:', fallbackPath);
+        await RNFS.mkdir(fallbackPath);
       }
 
       let copiedCount = 0;
@@ -68,10 +77,15 @@ export const OfflineService = {
         const destPath = `${LOCAL_RESOURCE_PATH}/${filename}`;
         
         // 检查目标文件是否已存在
-        if (await RNFS.exists(destPath)) {
-          console.log(`[OfflineService] ⏭️ 文件已存在，跳过：${filename}`);
-          copiedCount++;
-          continue;
+        try {
+          if (await RNFS.exists(destPath)) {
+            console.log(`[OfflineService] ⏭️ 文件已存在，跳过：${filename}`);
+            copiedCount++;
+            continue;
+          }
+        } catch (existsError: any) {
+          console.warn(`[OfflineService] 检查 ${filename} 存在性失败:`, existsError?.message);
+          // 继续执行，假设文件不存在
         }
 
         try {
@@ -90,16 +104,18 @@ export const OfflineService = {
               copiedCount++;
             }
           }
-        } catch (error) {
-          console.warn(`[OfflineService] ⚠️ 复制失败：${filename}`, error);
+        } catch (error: any) {
+          console.warn(`[OfflineService] ⚠️ 复制失败：${filename}`, error?.message);
+          // 继续处理下一个文件
         }
       }
 
       // 标记已复制
       await AsyncStorage.setItem(BUNDLED_ASSETS_COPIED_KEY, 'true');
       console.log(`[OfflineService] 📦 内置音频复制完成：${copiedCount}/${BUNDLED_AUDIO_FILES.length}`);
-    } catch (error) {
-      console.error('[OfflineService] ❌ 复制内置音频失败:', error);
+    } catch (error: any) {
+      console.error('[OfflineService] ❌ 复制内置音频失败:', error?.message);
+      // 【防御性处理】即使失败也不阻塞应用启动
     }
   },
 
