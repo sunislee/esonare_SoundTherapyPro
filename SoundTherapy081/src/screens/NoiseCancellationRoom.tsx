@@ -335,10 +335,10 @@ const NoiseCancellationRoom: React.FC = () => {
         {/* 提示文案 */}
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            背景条显示环境噪音分布，滑动调节对冲音量
+            {t('noise_room_desc')}
           </Text>
           <Text style={styles.infoSubText}>
-            AI 仅提供视觉参考，控制权在您手中
+            {t('noise_room_ai_hint')}
           </Text>
         </View>
 

@@ -466,5 +466,7 @@
   "home_noise_lab": "降噪实验室",
   "home_eq_lab": "均衡器实验室",
   "home_noise_desc": "打造极致静谧的专注空间",
-  "home_eq_desc": "发烧级音频精细调节实验室"
+  "home_eq_desc": "发烧级音频精细调节实验室",
+  "noise_room_desc": "背景条显示环境噪音分布，滑动调节对冲音量",
+  "noise_room_ai_hint": "AI 仅提供视觉参考，控制权在您手中"
 }

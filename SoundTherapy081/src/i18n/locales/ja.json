@@ -275,5 +275,7 @@
   "home_noise_lab": "ノイズラボ",
   "home_eq_lab": "EQ ラボ",
   "home_noise_desc": "究極の静寂で、深い集中空間を。",
-  "home_eq_desc": "プロ仕様のオーディオチューニングラボ。"
+  "home_eq_desc": "プロ仕様のオーディオチューニングラボ。",
+  "noise_room_desc": "背景バーが環境ノイズの分布を表示。スライドしてカウンター音量を調整。",
+  "noise_room_ai_hint": "AI は視覚的な参考のみを提供します。控制权はあなたにあります。"
 }
