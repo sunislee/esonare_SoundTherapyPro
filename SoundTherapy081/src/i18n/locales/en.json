@@ -464,5 +464,7 @@
   "eq_stop": "Stop",
   "eq_playing": "Playing",
   "eq_stopped": "Stopped",
-  "eq_loading": "Loading..."
+  "eq_loading": "Loading...",
+  "home_noise_lab": "Noise Lab",
+  "home_eq_lab": "EQ Lab"
 }

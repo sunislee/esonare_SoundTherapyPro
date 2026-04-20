@@ -271,5 +271,7 @@
   "eq_stop": "停止",
   "eq_playing": "再生中",
   "eq_stopped": "停止中",
-  "eq_loading": "読み込み中..."
+  "eq_loading": "読み込み中...",
+  "home_noise_lab": "ノイズラボ",
+  "home_eq_lab": "EQ ラボ"
 }

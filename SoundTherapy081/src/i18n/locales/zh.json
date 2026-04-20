@@ -462,5 +462,7 @@
   "eq_stop": "停止",
   "eq_playing": "播放中",
   "eq_stopped": "已停止",
-  "eq_loading": "加载中..."
+  "eq_loading": "加载中...",
+  "home_noise_lab": "降噪实验室",
+  "home_eq_lab": "均衡器实验室"
 }
