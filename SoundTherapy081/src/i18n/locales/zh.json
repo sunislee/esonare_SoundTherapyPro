@@ -457,5 +457,10 @@
   "eq_reset": "恢复默认",
   "eq_save": "保存预设",
   "eq_saved_success": "预设已保存",
-  "eq_custom_name": "自定义预设"
+  "eq_custom_name": "自定义预设",
+  "eq_play": "播放",
+  "eq_stop": "停止",
+  "eq_playing": "播放中",
+  "eq_stopped": "已停止",
+  "eq_loading": "加载中..."
 }

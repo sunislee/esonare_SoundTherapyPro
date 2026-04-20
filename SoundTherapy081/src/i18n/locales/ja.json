@@ -266,5 +266,10 @@
   "eq_reset": "リセット",
   "eq_save": "プリセット保存",
   "eq_saved_success": "保存しました",
-  "eq_custom_name": "カスタムプリセット"
+  "eq_custom_name": "カスタムプリセット",
+  "eq_play": "再生",
+  "eq_stop": "停止",
+  "eq_playing": "再生中",
+  "eq_stopped": "停止中",
+  "eq_loading": "読み込み中..."
 }

@@ -459,5 +459,10 @@
   "eq_reset": "Reset",
   "eq_save": "Save Preset",
   "eq_saved_success": "Preset Saved",
-  "eq_custom_name": "Custom Preset"
+  "eq_custom_name": "Custom Preset",
+  "eq_play": "Play",
+  "eq_stop": "Stop",
+  "eq_playing": "Playing",
+  "eq_stopped": "Stopped",
+  "eq_loading": "Loading..."
 }

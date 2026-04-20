@@ -305,7 +305,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
       {/* 控制按钮 */}
       <View style={styles.buttonRow}>
         <Button
-          title={isLoading ? '⏳ 加载中...' : (isPlaying ? '⏹ 停止' : '▶ 播放')}
+          title={isLoading ? t('eq_loading') : (isPlaying ? `${t('eq_stop')}` : `${t('eq_play')}`)}
           color={isPlaying ? '#FF3B30' : '#34C759'}
           onPress={handleTogglePlay}
           disabled={isLoading}
@@ -327,7 +327,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
           styles.playStatus,
           { color: isPlaying ? '#34C759' : '#8E8E93' }
         ]}>
-          {isPlaying ? '● 播放中' : '○ 已停止'}
+          {isPlaying ? `● ${t('eq_playing')}` : `○ ${t('eq_stopped')}`}
         </Text>
       </View>
       
