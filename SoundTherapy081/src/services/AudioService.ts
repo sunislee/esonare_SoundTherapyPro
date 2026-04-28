@@ -655,10 +655,30 @@ class AudioService {
           console.log('[AudioService] ✅ 预设状态：currentBaseScene =', scene.id, ', isActuallyPlaying = true');
           
           try {
-            // 【针对本地文件特殊处理】强制触发底层解码器刷新
-            console.log('[AudioService] [1/5] 强制解码器刷新：setRate(1.0)');
-            await TrackPlayer.setRate(1.0);
-            console.log('[AudioService] ✅ setRate(1.0) 完成');
+            // 【深海呼吸优化】降低播放速率至 0.8x，拉长呼吸周期
+            const isDeepSea = scene.id === 'nature_deep_sea' || scene.id.includes('deep_sea');
+            if (isDeepSea) {
+              console.log('[AudioService] 🌊 深海呼吸场景：设置播放速率 0.8x');
+              await TrackPlayer.setRate(0.8);
+            } else {
+              console.log('[AudioService] [1/5] 强制解码器刷新：setRate(1.0)');
+              await TrackPlayer.setRate(1.0);
+              
+              // 【状态恢复】切换出深海场景时，重置 EQ 为平坦
+              try {
+                const { NativeEQ } = require('../modules/NativeEQ');
+                if (NativeEQ && typeof NativeEQ.setBandGain === 'function') {
+                  const flatGains = [0, 0, 0, 0, 0, 0, 0, 0];
+                  flatGains.forEach((gain, index) => {
+                    NativeEQ.setBandGain(index, gain);
+                  });
+                  console.log('[AudioService] 🔄 非深海场景：EQ 已重置为平坦');
+                }
+              } catch (e) {
+                console.warn('[AudioService] ⚠️ EQ 重置失败:', e);
+              }
+            }
+            console.log('[AudioService] ✅ setRate 完成');
             
             // 【2】强制首位偏移：保持seekTo(0.15)
             console.log('[AudioService] [2/5] 强制首位偏移：seekTo(0.15)');
@@ -673,12 +693,13 @@ class AudioService {
             // 【关键】播放成功后初始化均衡器
             await this.initEqualizerIfNeeded();
             
-            // 【4】延时开闸：400ms 硬性音量锁定
-            console.log('[AudioService] [4/5] 延时开闸：400ms 硬性音量锁定');
+            // 【深海呼吸优化】延长淡入时间至 2000ms，确保呼吸过程极其柔和
+            const fadeInDelay = isDeepSea ? 2000 : 400;
+            console.log(`[AudioService] [4/5] 延时开闸：${fadeInDelay}ms 硬性音量锁定`);
             
-            // 400ms期间，无论发生什么，音量必须硬锁定在0
-            await new Promise(resolve => setTimeout(resolve, 400));
-            console.log('[AudioService] ✅ 400ms延时开闸完成');
+            // 延迟期间，音量硬锁定在 0
+            await new Promise(resolve => setTimeout(resolve, fadeInDelay));
+            console.log('[AudioService] ✅ 延时开闸完成');
             
             // 【5】异步状态锁：10ms步进模仿物理推子
             console.log('[AudioService] [5/5] 异步状态锁：10ms步进模仿物理推子');
@@ -701,6 +722,24 @@ class AudioService {
             };
             
             await physicalFadeIn();
+            
+            // 【深海呼吸优化】应用低通滤波 EQ（模拟 BiquadFilterNode 2000Hz 效果）
+            if (isDeepSea) {
+              try {
+                const { NativeEQ } = require('../modules/NativeEQ');
+                if (NativeEQ && typeof NativeEQ.setBandGain === 'function') {
+                  // 8 段 EQ: 63Hz, 125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz, 8kHz
+                  // 低通滤波模拟：保留低频，大幅压低高频
+                  const lowPassGains = [4, 3, 2, 1, 0, -2, -4, -6];
+                  lowPassGains.forEach((gain, index) => {
+                    NativeEQ.setBandGain(index, gain);
+                  });
+                  console.log('[AudioService] 🌊 深海呼吸低通滤波 EQ 已应用');
+                }
+              } catch (e) {
+                console.warn('[AudioService] ⚠️ 深海呼吸低通滤波 EQ 应用失败:', e);
+              }
+            }
             
             // 【延迟刷新元数据】避免阻塞 UI 线程
             setTimeout(() => {

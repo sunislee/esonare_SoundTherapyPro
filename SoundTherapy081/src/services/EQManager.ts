@@ -48,6 +48,12 @@ export const SCENE_EQ_PRESETS: Record<string, EQPreset> = {
     gains: [4, 4, 2, 0, 0, 2, 2, -1], // 63Hz/125Hz +4dB, 2kHz/4kHz +2dB (增强水泡细节)
   },
   
+  // 深海呼吸（低通滤波模拟）：大幅压低高频，消除尖锐摩擦感
+  deepSeaLowPass: {
+    name: '深海呼吸（柔和）',
+    gains: [4, 3, 2, 1, 0, -2, -4, -6], // 63Hz/125Hz 保留低频，8kHz -6dB 模拟低通滤波
+  },
+  
   // 迷雾森林：增强高频，提升空气感与通透度（已优化：削弱 4kHz 避免火烧声）
   forest: {
     name: '迷雾森林',
@@ -137,7 +143,7 @@ export const SCENE_EQ_PRESETS: Record<string, EQPreset> = {
  */
 export const getSceneEQPreset = (sceneId: string): EQPreset => {
   // 场景 ID 映射
-  if (sceneId.includes('deep_sea')) return SCENE_EQ_PRESETS.deepSea;
+  if (sceneId.includes('deep_sea')) return SCENE_EQ_PRESETS.deepSeaLowPass;
   if (sceneId.includes('forest') || sceneId.includes('misty')) return SCENE_EQ_PRESETS.forest;
   if (sceneId.includes('rain') || sceneId.includes('boat')) return SCENE_EQ_PRESETS.rain;
   if (sceneId.includes('bookstore')) return SCENE_EQ_PRESETS.bookstore;

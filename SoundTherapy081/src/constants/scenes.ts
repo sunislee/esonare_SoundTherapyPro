@@ -195,12 +195,19 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       isBase = !item.filename.startsWith('fx/') && item.category !== 'interactive';
     }
 
+    // Bellcoda 新场景自定义主题色
+    const customColors: Record<string, string> = {
+      nature_moonlight: '#0A0F1E',   // 月光-深蓝
+      nature_star_glass: '#120B1A',  // 星璃-暗紫
+      nature_offroad: '#0E1A14',     // 旷野-墨绿
+    };
+
     const scene = new Scene({
       id: item.id,
       title: item.title,
       audioUrl: `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${item.filename}`,
       backgroundUrl: '',
-      primaryColor: bg.color,
+      primaryColor: customColors[item.id] || bg.color,
       audioSource: item.id,
       audioFile: null,
       filename: item.filename,

@@ -20,6 +20,7 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
               add(AudioLevelPackage())
               add(MultiTrackMixerPackage())
+              add(WakeLockPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

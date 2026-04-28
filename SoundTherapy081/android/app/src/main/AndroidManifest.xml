@@ -15,6 +15,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     
+    <!-- WakeLock 权限：防止 CPU 休眠导致音频中断 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
     <uses-permission android:name="android.permission.VIBRATE" />
     
     <!-- 麦克风权限：用于智能场景识别（环境噪音分析） -->
