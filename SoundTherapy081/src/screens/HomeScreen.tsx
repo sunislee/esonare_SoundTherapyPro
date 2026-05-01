@@ -158,7 +158,7 @@ export const HomeScreen: React.FC = () => {
     }, [])
   );
 
-  const categories = ['Nature', 'Life', 'Healing', 'Brainwave', 'WesternChurch'];
+  const categories = ['Nature', 'Life', 'Healing', 'Brainwave', 'WesternChurch', 'Oriental'];
   const groupedScenes = useMemo(() => {
     return categories.map(cat => ({
       title: cat,

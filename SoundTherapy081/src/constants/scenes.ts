@@ -4,7 +4,7 @@ import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSIO
 // 背景图 URL 根据渠道自动选择
 const BG_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITHUB_URL : GITEE_URL;
 
-export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life' | 'WesternChurch';
+export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life' | 'WesternChurch' | 'Oriental';
 
 export class Scene {
   id: string;
@@ -95,6 +95,10 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
     source: require('../assets/images/categories/category_western_church.webp'),
     color: '#4a3728',
   },
+  'Oriental': {
+    source: require('../assets/images/categories/category_nature.webp'),
+    color: '#8b5e3c',
+  },
 };
 
 const getCategory = (cat: string): SceneCategory => {
@@ -109,6 +113,8 @@ const getCategory = (cat: string): SceneCategory => {
       return 'Life';
     case 'western_church':
       return 'WesternChurch';
+    case 'oriental':
+      return 'Oriental';
     default:
       return 'Nature';
   }
@@ -143,9 +149,30 @@ const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
   western_church_urban_chant: 'western_church_candlelight.webp',  // 烛光禅定 → 烛光
 };
 
+// 东方禅意场景背景图远程 URL 映射
+const ORIENTAL_BG_MAP: Record<string, string> = {
+  oriental_zen_monastery: 'zen/bg_temple_lantern_gate.webp',
+  oriental_tibetan_bowl: 'zen/bg_temple_zen_lantern.webp',
+  oriental_morning_buddha: 'zen/bg_temple_roof.webp',
+};
+
+// 新增自然场景背景图远程 URL 映射
+const NEW_NATURE_BG_MAP: Record<string, string> = {
+  nature_moonlight: 'base/moonlight.webp',
+  nature_offroad_avenue: 'base/offroad_avenue.webp',
+  nature_star_glass: 'base/star_glass.webp',
+};
+
+// 新增自然场景本地 fallback 背景图
+const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
+  nature_moonlight: require('../assets/images/categories/category_nature.webp'),
+  nature_offroad_avenue: require('../assets/images/categories/category_nature.webp'),
+  nature_star_glass: require('../assets/images/categories/category_nature.webp'),
+};
+
 /**
  * 获取场景的背景资源
- * 西方教会场景使用远程 URL，其他场景使用本地 require
+ * 西方教会和东方禅意场景使用远程 URL，其他场景使用本地 require
  */
 const getSceneBackground = (sceneId: string, category: SceneCategory) => {
   // 西方教会场景：使用远程 URL
@@ -156,6 +183,21 @@ const getSceneBackground = (sceneId: string, category: SceneCategory) => {
         uri: `${BG_BASE_URL}${bgFilename}`,
       };
     }
+  }
+  
+  // 东方禅意场景：使用远程 URL
+  if (sceneId.startsWith('oriental_')) {
+    const bgFilename = ORIENTAL_BG_MAP[sceneId];
+    if (bgFilename) {
+      return {
+        uri: `${BG_BASE_URL}${bgFilename}`,
+      };
+    }
+  }
+  
+  // 新增自然场景：使用本地 fallback（远程 .webp 待上传）
+  if (NEW_NATURE_BG_FALLBACK[sceneId]) {
+    return NEW_NATURE_BG_FALLBACK[sceneId];
   }
   
   // 其他场景：使用本地 require

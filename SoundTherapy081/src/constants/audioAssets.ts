@@ -10,7 +10,7 @@ export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googleP
 
 const TENCENT_CLOUD_URL = 'https://43.138.58.71/';
 export const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/main/';
-export const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
+export const GITHUB_URL = 'https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 const GHPROXY_URL = 'https://ghproxy.net/';
 
 // Google Play 专用配置：GitHub 官方源（主源）+ ghproxy 镜像加速
@@ -46,9 +46,13 @@ export const AUDIO_MANIFEST = [
   { id: 'nature_misty_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 1732906 },
   { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 7201196 }, 
   { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 7201196 },
+  { id: 'nature_moonlight', filename: 'base/moonlight.m4a', category: 'nature', title: 'scenes.nature_moonlight.title', description: 'scenes.nature_moonlight.desc', size: 1048576 },
+  { id: 'nature_offroad_avenue', filename: 'base/offroad_avenue.m4a', category: 'nature', title: 'scenes.nature_offroad_avenue.title', description: 'scenes.nature_offroad_avenue.desc', size: 1048576 },
+  { id: 'nature_star_glass', filename: 'base/star_glass.m4a', category: 'nature', title: 'scenes.nature_star_glass.title', description: 'scenes.nature_star_glass.desc', size: 1048576 },
 
   { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 7201196 }, 
-  { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 }, 
+  { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 },
+ 
 
   { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 391549 }, 
   { id: 'healing_clean_space', filename: 'base/liquid_peace.m4a', category: 'healing', title: 'scenes.healing_clean_space.title', description: 'scenes.healing_clean_space.desc', size: 4574599 }, 
@@ -68,6 +72,10 @@ export const AUDIO_MANIFEST = [
   { id: 'western_church_holy_waves', filename: 'western_church/western_church_holy_waves.m4a', category: 'western_church', title: 'scenes.western_church_holy_waves.title', description: 'scenes.western_church_holy_waves.desc', size: 617365 },
   { id: 'western_church_forest_echo', filename: 'western_church/western_church_forest_echo.m4a', category: 'western_church', title: 'scenes.western_church_forest_echo.title', description: 'scenes.western_church_forest_echo.desc', size: 732037 },
   { id: 'western_church_urban_chant', filename: 'western_church/western_church_urban_chant.m4a', category: 'western_church', title: 'scenes.western_church_urban_chant.title', description: 'scenes.western_church_urban_chant.desc', size: 414572 },
+
+  { id: 'oriental_zen_monastery', filename: 'zen/zen_bell.mp3', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 1048576 },
+  { id: 'oriental_tibetan_bowl', filename: 'zen/zen_bowl.mp3', category: 'oriental', title: 'scenes.oriental_tibetan_bowl.title', description: 'scenes.oriental_tibetan_bowl.desc', size: 1048576 },
+  { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.mp3', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 1048576 },
 ]; 
 
 // 【核心】初始化 AUDIO_MAP，将 filename 映射到本地路径

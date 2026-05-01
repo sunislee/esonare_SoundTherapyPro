@@ -13,7 +13,7 @@ export interface AudioResource {
 }
 
 // GitHub 仓库基础 URL
-const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main';
+const GITHUB_BASE_URL = 'https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main';
 const NOISE_REDUCTION_PATH = 'noise_reduction'; // 蛇形命名规范化
 
 // 32 个降噪音频资源配置

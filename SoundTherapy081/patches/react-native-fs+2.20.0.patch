@@ -1,14 +1,13 @@
 diff --git a/node_modules/react-native-fs/android/src/main/java/com/rnfs/RNFSManager.java b/node_modules/react-native-fs/android/src/main/java/com/rnfs/RNFSManager.java
-index 1234567..abcdefg 100644
+index 351ac06..af5f167 100755
 --- a/node_modules/react-native-fs/android/src/main/java/com/rnfs/RNFSManager.java
 +++ b/node_modules/react-native-fs/android/src/main/java/com/rnfs/RNFSManager.java
-@@ -975,7 +975,9 @@ public class RNFSManager extends ReactContextBaseJavaModule {
+@@ -975,7 +975,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
        return;
      }
  
 -    promise.reject(null, ex.getMessage());
-+    // 【v1.4.1 关键修复】RN 0.81 新架构要求 code 不能为 null
-+    // 修复：java.lang.NullPointerException: Parameter specified as non-null is null: method com.facebook.react.bridge.PromiseImpl.reject, parameter code
 +    promise.reject("E_UNEXPECTED", ex.getMessage() != null ? ex.getMessage() : "Unexpected error");
    }
  
+   private void rejectFileNotFound(Promise promise, String filepath) {

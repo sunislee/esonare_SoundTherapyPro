@@ -11,7 +11,8 @@
     "brainwave": "脑波专注",
     "life": "生活角落",
     "interactive": "氛围点缀",
-    "westernchurch": "西方教会"
+    "westernchurch": "西方教会",
+    "oriental": "东方禅意"
   },
   "actions": {
     "play": "播放",
@@ -423,6 +424,9 @@
     "nature_misty_forest": { "title": "林间迷雾", "desc": "漫步晨间森林，吸入纯净氧气" },
     "nature_river": { "title": "晨间河畔", "desc": "清泉石上流" },
     "nature_night": { "title": "静谧部落", "desc": "远古的呼唤" },
+    "nature_moonlight": { "title": "月下静谧", "desc": "月光如水洒满大地" },
+    "nature_offroad_avenue": { "title": "旷野大道", "desc": "自驾穿越无垠旷野" },
+    "nature_star_glass": { "title": "星空之下", "desc": "仰望璀璨星河" },
     "life_rain_boat": { "title": "舟上雨", "desc": "微雨落孤舟" },
     "life_bookstore": { "title": "午后书店", "desc": "纸张与宁静" },
     "healing_zen_bowl": { "title": "颂钵冥想", "desc": "瞬间定静" },
@@ -442,7 +446,10 @@
     "western_church_morning_bell": { "title": "晨祷钟声", "desc": "修道院的清晨钟声" },
     "western_church_holy_waves": { "title": "神圣光流", "desc": "光与声的灵性交汇" },
     "western_church_forest_echo": { "title": "石廊回响", "desc": "古老修道院的回音" },
-    "western_church_urban_chant": { "title": "烛光禅定", "desc": "烛光中的宁静圣歌" }
+    "western_church_urban_chant": { "title": "烛光禅定", "desc": "烛光中的宁静圣歌" },
+    "oriental_zen_monastery": { "title": "禅意寺院", "desc": "古刹钟声，心如止水" },
+    "oriental_tibetan_bowl": { "title": "西藏颂钵", "desc": "高频共振，净化心灵" },
+    "oriental_morning_buddha": { "title": "晨钟佛音", "desc": "晨钟暮鼓，禅意深远" }
   },
   "disclaimer": {
     "title": "健康声明",
