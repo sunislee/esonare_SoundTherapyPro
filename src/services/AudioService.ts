@@ -525,7 +525,20 @@ class AudioService {
       if (isLocal) {
         // Android ExoPlayer 不支持 file:/// 协议，直接使用原始路径
         finalUri = uri.replace('file://', '').replace('file:///', '');
-        console.log(`[AudioService] Android 本地路径已移除 file:// 前缀: ${finalUri}`);
+        console.log(`[AudioService] ===== 本地路径处理 =====`);
+        console.log(`[AudioService] 原始 uri: ${uri}`);
+        console.log(`[AudioService] 移除 file:// 前缀后: ${finalUri}`);
+        console.log(`[AudioService] Platform.OS: ${Platform.OS}`);
+        
+        // 【新增】验证文件是否真实存在
+        const cleanPath = finalUri.replace('file://', '').replace('file:///', '');
+        const fileExists = await RNFS.exists(cleanPath);
+        console.log(`[AudioService] 文件存在性检查: ${cleanPath}`);
+        console.log(`[AudioService] 文件是否存在: ${fileExists}`);
+        
+        if (!fileExists) {
+          console.error(`[AudioService] ❌ 警告：文件不存在！路径: ${cleanPath}`);
+        }
       } else {
         finalUri = getValidUrl(uri);
       }
