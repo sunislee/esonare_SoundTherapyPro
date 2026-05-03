@@ -68,15 +68,33 @@ export const playNoiseAudio = async (modeId: string) => {
     const localPath = getLocalCachePath(audioConfig.url);
     const isCached = await RNFS.exists(localPath);
     
+    console.log('[NoiseAudio] ===== 路径处理调试 =====');
+    console.log('[NoiseAudio] 原始 URL:', audioConfig.url);
+    console.log('[NoiseAudio] 本地缓存路径:', localPath);
+    console.log('[NoiseAudio] 缓存是否存在:', isCached);
+    console.log('[NoiseAudio] Platform.OS:', Platform.OS);
+    
     let finalUri = audioConfig.url;
     if (isCached) {
       console.log('[NoiseAudio] 💾 使用本地缓存:', localPath);
+      // Android 需要移除 file:// 前缀
       finalUri = Platform.OS === 'ios' ? `file://${localPath}` : localPath;
+      console.log('[NoiseAudio] 最终 URI:', finalUri);
+      
+      // 验证文件是否真实存在
+      const fileExists = await RNFS.exists(localPath);
+      console.log('[NoiseAudio] 文件存在性验证:', fileExists);
+      if (!fileExists) {
+        console.error('[NoiseAudio] ❌ 警告：缓存文件不存在！回退到远程 URL');
+        finalUri = audioConfig.url;
+      }
     } else {
       console.log('[NoiseAudio] 📡 使用远程 URL，后台下载');
       // 后台静默下载（不阻塞播放）
       downloadInBackground(audioConfig.url, localPath);
     }
+    
+    console.log('[NoiseAudio] 最终传入 TrackPlayer 的 URL:', finalUri);
     
     // 添加到播放队列
     const track: Track = {
