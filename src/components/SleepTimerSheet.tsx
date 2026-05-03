@@ -41,11 +41,12 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
   useEffect(() => {
     if (visible) {
       setIsAnimationFinished(false);
+      const audioService = AudioService.getInstance();
       // Subscribe to timer updates
-      const unsubscribe = AudioService.addSleepTimerListener((remaining) => {
+      const unsubscribe = audioService.addSleepTimerListener((remaining) => {
         setRemainingTime(remaining);
         if (remaining !== null) {
-          const initial = AudioService.getInitialSleepSeconds() || 1;
+          const initial = audioService.getInitialSleepSeconds() || 1;
           const progress = remaining / initial;
           // SVG props do NOT support native driver
           Animated.timing(progressAnim, {
@@ -99,13 +100,15 @@ export const SleepTimerSheet: React.FC<SleepTimerSheetProps> = ({ visible, onClo
 
   const handleSetTimer = (minutes: number) => {
     triggerHaptic();
-    AudioService.setSleepTimer(minutes);
+    const audioService = AudioService.getInstance();
+    audioService.setSleepTimer(minutes);
     onClose();
   };
 
   const handleCancelTimer = () => {
     triggerHaptic();
-    AudioService.clearSleepTimer();
+    const audioService = AudioService.getInstance();
+    audioService.clearSleepTimer();
     onClose();
   };
 

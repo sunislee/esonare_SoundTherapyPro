@@ -1,0 +1,19 @@
+- [ ] I18nManager 和 Platform 已导入
+- [ ] getSystemLocale() 函数已创建
+- [ ] locale 解析逻辑正确（zh/en/ja/other）
+- [ ] getSafeTranslation 函数已重写
+- [ ] i18next 依赖已移除
+- [ ] isChinese 检测逻辑正确
+- [ ] 硬编码字符串映射表完整
+- [ ] channelName 使用原生语言检测
+- [ ] channelDescription 使用原生语言检测
+- [ ] title 使用原生语言检测
+- [ ] artist 使用原生语言检测
+- [ ] playingStatus 使用原生语言检测
+- [ ] MediaMetadata 永不为 null
+- [ ] 详细日志已添加
+- [ ] ./gradlew clean 已执行
+- [ ] Metro 缓存已清理
+- [ ] 中文系统灵动岛显示中文
+- [ ] 英文系统灵动岛显示英文
+- [ ] 切换语言后自动刷新正常

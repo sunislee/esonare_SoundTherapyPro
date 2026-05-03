@@ -1,52 +1,66 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <uses-permission android:name="android.permission.INTERNET"/>
-  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-  <!-- Android 13+ Notification Permissions for Media Playback -->
-  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
-  <!-- Haptic Feedback -->
-  <uses-permission android:name="android.permission.VIBRATE"/>
-
-  <queries>
-    <!-- Support checking for http(s) links via the Linking API -->
-    <intent>
-      <action android:name="android.intent.action.VIEW" />
-      <category android:name="android.intent.category.BROWSABLE" />
-      <data android:scheme="https" />
-    </intent>
+    <uses-permission android:name="android.permission.INTERNET" />
     
-    <!-- Support checking for mailto links via the Linking API -->
-    <intent>
-      <action android:name="android.intent.action.VIEW" />
-      <data android:scheme="mailto" />
-    </intent>
-  </queries>
-
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:theme="@style/AppTheme" android:supportsRtl="true" android:usesCleartextTraffic="true" android:allowNativeHeapPointerTagging="false">
-    <!-- Android 15 16KB 页面大小支持声明 -->
-    <meta-data android:name="android.supports_16kb_page_size" android:value="true" />
-    <!-- 禁用新架构以避免 libreact_featureflagsjni.so 加载失败 -->
-    <meta-data android:name="com.facebook.react.newarchenabled" android:value="false" />
-    <meta-data android:name="com.facebook.react.new_architecture" android:value="false" />
-    <meta-data android:name="com.facebook.react.new_architecture_enabled" android:value="false" />
-    <meta-data android:name="com.facebook.react.bridgeless" android:value="false" />
-    <meta-data android:name="com.facebook.react.bridgeless_enabled" android:value="false" />
-    <meta-data android:name="com.facebook.react.bridgelessArchitectureEnabled" android:value="false" />
-    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.LAUNCHER"/>
-      </intent-filter>
-    </activity>
+    <!-- 麦克风权限（音频分析必需） -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     
-    <!-- TrackPlayer Service for Media Playback -->
-    <service android:name="com.doublesymmetry.trackplayer.service.MusicService" android:foregroundServiceType="mediaPlayback" android:exported="true">
-      <intent-filter>
-        <action android:name="androidx.media3.session.MediaSessionService"/>
-        <action android:name="android.media.browse.MediaBrowserService"/>
-      </intent-filter>
-    </service>
-  </application>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    
+    <uses-permission android:name="android.permission.VIBRATE" />
+    
+    <!-- 麦克风权限：用于智能场景识别（环境噪音分析） -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="true"
+      android:supportsRtl="true"
+      android:extractNativeLibs="true">
+      
+      <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustResize"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+      </activity>
+
+      <service
+          android:name="com.doublesymmetry.trackplayer.service.MusicService"
+          android:foregroundServiceType="mediaPlayback"
+          android:exported="true">
+          <intent-filter>
+              <action android:name="android.intent.action.MEDIA_BUTTON" />
+              <action android:name="android.media.browse.MediaBrowserService" />
+          </intent-filter>
+      </service>
+
+      <receiver
+          android:name="com.doublesymmetry.trackplayer.receiver.MediaButtonReceiver"
+          android:exported="true">
+          <intent-filter>
+              <action android:name="android.intent.action.MEDIA_BUTTON" />
+          </intent-filter>
+      </receiver>
+
+    </application>
 </manifest>

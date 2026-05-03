@@ -10,14 +10,16 @@
     "healing": "深いヒーリング",
     "brainwave": "脳波集中",
     "life": "生活の片隅",
-    "interactive": "環境音"
+    "interactive": "環境音",
+    "westernchurch": "西洋教会"
   },
   "actions": {
     "play": "再生",
     "pause": "一時停止",
     "stop": "停止",
     "next": "次へ",
-    "previous": "前へ"
+    "previous": "前へ",
+    "download": "ダウンロード"
   },
   "slogans": {
     "journey": "癒しの旅に出かけよう",
@@ -46,7 +48,54 @@
     "loading": "読み込み中...",
     "back": "戻る",
     "delete": "削除",
+    "settings": "設定",
     "comma": "、",
+    "noiseCancellation": {
+      "title": "ノイズキャンセレーション",
+      "status": "NC ステータス",
+      "statusDesc": "環境ノイズを智能的に識別し、没入型の聴覚体験を提供します",
+      "toggle": "NC をオンにする",
+      "modes": "NC モード",
+      "smart": "スマートシーン認識",
+      "smartDesc": "周囲のノイズタイプを自動検出し、最適なノイズキャンセレーションモードに智能的に切り替えます",
+      "smartEnable": "スマート認識を有効にする",
+      "stopAll": "すべての NC を停止",
+      "settings": "設定"
+    },
+    "noise": {
+      "wind": {
+        "title": "そよ風",
+        "subtitle": "エアコンの低周波や生活音の除去に。"
+      },
+      "traffic": {
+        "title": "豪雨マスキング",
+        "subtitle": "エンジン音や車の走行音を相殺。"
+      },
+      "crowd": {
+        "title": "炉辺隔離",
+        "subtitle": "話し声や社交騒音をぼかす。"
+      },
+      "balanced": {
+        "title": "深宇宙集中",
+        "subtitle": "オフィスの会話やキーボード音を遮断。"
+      },
+      "deep": {
+        "title": "究極の静寂",
+        "subtitle": "周囲の雑音を消し去り、深い静寂を。"
+      },
+      "office": {
+        "title": "集中モード",
+        "subtitle": "周囲の会話を遮断し、作業効率を最大化。"
+      },
+      "sleep": {
+        "title": "快眠サポート",
+        "subtitle": "柔らかなピンクノイズが心地よい眠りへ。"
+      },
+      "travel": {
+        "title": "トラベルクワイエット",
+        "subtitle": "エンジン音を軽減し、快適な旅を。"
+      }
+    },
     "period": "。",
     "enter_scheme_name": "スキーム名を入力してください",
     "friend": "友達",
@@ -72,7 +121,8 @@
     "tip": "初めて使用する場合は、ネットワーク接続を維持してください。高品質なオーディオを同期しています",
     "optimizing": "オーディオアセットを最適化中...",
     "incompleteTitle": "ダウンロード不完全",
-    "incompleteMessage": "{{count}} ファイルがまだダウンロード中です。完了までお待ちください。"
+    "incompleteMessage": "{{count}} ファイルがまだダウンロード中です。完了までお待ちください。",
+    "message": "「{{sceneTitle}}」のオーディオファイルはまだダウンロードされていません。今すぐダウンロードしますか？"
   },
   "settings": {
     "header": "設定",
@@ -182,6 +232,12 @@
     "nature_misty_forest": { "title": "森の霧", "desc": "朝の森を歩き、澄んだ空気を吸い込む" },
     "nature_river": { "title": "朝の川辺", "desc": "石の上を流れる清流" },
     "nature_night": { "title": "静かな部族", "desc": "太古の呼び声" },
+    "nature_moonlight": { "title": "月光", "desc": "月光が大地を照らす" },
+    "nature_offroad_avenue": { "title": "オフロードアベニュー", "desc": "果てしない荒野をドライブ" },
+    "nature_star_glass": { "title": "星空の下", "desc": "輝く銀河を見上げる" },
+    "manual_morning_forest": { "title": "朝の森", "desc": "朝日が霧に包まれた森を貫く" },
+    "manual_serene_lakeside": { "title": "静かな湖畔", "desc": "湖に映る遠くの山々" },
+    "manual_starlit_wilderness": { "title": "星空の荒野", "desc": "果てしない荒野に散りばめられた星々" },
     "life_rain_boat": { "title": "舟の上の雨", "desc": "小舟に落ちる微かな雨" },
     "life_bookstore": { "title": "午後の書店", "desc": "紙と静寂" },
     "healing_zen_bowl": { "title": "シンギングボウル", "desc": "一瞬の静寂" },
@@ -193,6 +249,40 @@
     "interactive_wind_chime": { "title": "風鈴", "desc": "空霊の響き" },
     "interactive_breath": { "title": "呼吸", "desc": "マインドフルネスガイド" },
     "interactive_apple": { "title": "リンゴをかじる", "desc": "ストレス解消音" },
-    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" }
-  }
+    "interactive_match": { "title": "マッチを擦る", "desc": "トリガー音" },
+    "western_church_gregorian": { "title": "スペインのグレゴリオ聖歌", "desc": "古い教会のグレゴリオ聖歌" },
+    "western_church_morning_bell": { "title": "朝の祈りの鐘", "desc": "修道院の朝の鐘" },
+    "western_church_holy_waves": { "title": "神聖な光の流れ", "desc": "光と音の霊的な交わり" },
+    "western_church_forest_echo": { "title": "石の回廊の残響", "desc": "古い修道院の反響" },
+    "western_church_urban_chant": { "title": "揺れるキャンドルの瞑想", "desc": "キャンドルの中の静かな聖歌" }
+  },
+  "disclaimer": {
+    "title": "健康に関する免責事項",
+    "content": "本アプリで提供される音声コンテンツは、リラックスおよび瞑想を目的としており、専門的な医療アドバイス、診断、治療に代わるものではありません。健康上の問題がある場合は、専門の医療従事者に相談してください。"
+  },
+  "noise_breeze_title": "そよ風の愛撫",
+  "noise_breeze_desc": "シルクのようなホワイトノイズが心を癒し、安らぎを。",
+  "noise_downpour_title": "土砂降りの包囲",
+  "noise_downpour_desc": "激しい雨音が外界の騒音を遮断し、深い集中へ。",
+  "noise_fireplace_title": "暖炉の隔離",
+  "noise_fireplace_desc": "暖炉の心地よい薪の音が、自分だけの安心感と集中力を。",
+  "noise_deepspace_title": "深宇宙の集中",
+  "noise_deepspace_desc": "深く純粋な低周波パルスが、作業のパフォーマンスを最大化。",
+  "eq_title": "イコライザーラボ",
+  "eq_reset": "リセット",
+  "eq_save": "プリセット保存",
+  "eq_saved_success": "保存しました",
+  "eq_custom_name": "カスタムプリセット",
+  "eq_play": "再生",
+  "eq_stop": "停止",
+  "eq_playing": "再生中",
+  "eq_stopped": "停止中",
+  "eq_loading": "読み込み中...",
+  "home_noise_lab": "ノイズラボ",
+  "home_eq_lab": "EQ ラボ",
+  "home_noise_desc": "究極の静寂で、深い集中空間を。",
+  "home_eq_desc": "プロ仕様のオーディオチューニングラボ。",
+  "noise_room_desc": "背景バーが環境ノイズの分布を表示。スライドしてカウンター音量を調整。",
+  "noise_room_ai_hint": "AI は視覚的な参考のみを提供します。控制权はあなたにあります。",
+  "eq_current_source": "現在の音源"
 }

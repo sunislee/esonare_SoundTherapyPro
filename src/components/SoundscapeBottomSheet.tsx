@@ -26,7 +26,7 @@ type Props = {
 
 const HANDLE_HEIGHT = 24;
 const SNAP_THRESHOLD = 50;
-const CATEGORIES: SceneCategory[] = ['Nature', 'Healing', 'Brainwave', 'Life'];
+const CATEGORIES: SceneCategory[] = ['Nature', 'Healing', 'Brainwave', 'Life', 'WesternChurch'];
 
 export const SoundscapeBottomSheet: React.FC<Props> = ({
   visible,

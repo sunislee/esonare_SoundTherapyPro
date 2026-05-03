@@ -1,0 +1,100 @@
+04-17 18:31:31.737  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:31.737  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:31.793  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:31.793  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11821.0,R:3048.0,G:3053.0,B:871.0, lux: 8.3, clone:1697
+04-17 18:31:31.887  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:31:31.993  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:31.993  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11817.0,R:3066.0,G:3059.0,B:881.0, lux: 8.4, clone:1697
+04-17 18:31:32.023  3285  5803 W ActivityManagerServiceImpl: Sending non-protected broadcast com.modemenhance.ACTION_MODEMWIFI_RSSI_POLL from system 5080:com.android.phone/1001 pkg com.android.phone. Callers=
+04-17 18:31:32.028  5080  5080 D SlaveWifiManager: getWifiSlaveConnectionInfo
+04-17 18:31:32.191  2780  2780 I adbd    : in ShellService: dumpsys meminfo com.anonymous.soundtherapyapp
+04-17 18:31:32.194  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:32.194  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11815.0,R:3043.0,G:3059.0,B:877.0, lux: 8.3, clone:1697
+04-17 18:31:32.221 27335 27335 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 18:31:32.393  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:32.393  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11801.0,R:3042.0,G:3061.0,B:888.0, lux: 8.3, clone:1697
+04-17 18:31:32.423  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:31:32.423  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:31:32.423  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 18:31:32.423  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:31:32.426 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 1
+04-17 18:31:32.426 22066 22362 D BluetoothRemoteDevices: Skip name update for XX:XX:XX:XX:C6:45
+04-17 18:31:32.426 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 4
+04-17 18:31:32.426 22066 22362 D BluetoothRemoteDevices: Skip class update, device=XX:XX:XX:XX:C6:45, cod=0x1f00
+04-17 18:31:32.426 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 5
+04-17 18:31:32.426 22066 22362 D BluetoothRemoteDevices:  BT_PROPERTY_TYPE_OF_DEVICE addr:9C:76:0E:4A:C6:45 deviceType:3
+04-17 18:31:32.426 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 1
+04-17 18:31:32.426 22066 22362 D HyperRemoteDevicesAdapter: Remote device name is: 李 type = 2 9C:76:0E:4A:C6:45
+04-17 18:31:32.426 22066 22362 D HyperRemoteDevicesAdapter: update name for XX:XX:XX:XX:C6:45 type = 2 name = 李 1
+04-17 18:31:32.426 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 4
+04-17 18:31:32.426 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 5
+04-17 18:31:32.426 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C6:45, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-52, periodicAdvInt=0x0, originalAddress=9C:76:0E:4A:C6:45
+04-17 18:31:32.426 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.427 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.427 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.427 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.427 22066 22362 V ScanController: onScanResult() - eventType=0x10, addressType=1, address=XX:XX:XX:XX:DC:13, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-52, periodicAdvInt=0x0, originalAddress=49:1C:F0:09:DC:13
+04-17 18:31:32.427 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.427 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.428 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.428 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:32.458  2780  2780 I adbd    : in ShellService: pidof com.anonymous.soundtherapyapp
+04-17 18:31:32.465  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:32.465  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:32.514  2780  2780 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+04-17 18:31:32.592  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:32.592  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11815.0,R:3050.0,G:3055.0,B:883.0, lux: 8.3, clone:1697
+04-17 18:31:32.615  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:31:32.655  1728 20481 I sensors-hal: handle_sns_client_event:76, healthy_use_of_mobile_event: ts=85246171415764, -1.000000, -1.000000, -1.000000, -1.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000
+04-17 18:31:32.655  1728  4019 I sensors-hal: handle_sns_std_sensor_event:67, light_event: ts=85246172158264, lux: 8.6, powermode=1 
+04-17 18:31:32.655  1778  1803 D SRE     : sensorCallback mDisplayId = 0 dataCallback value=<   8.5725,   0.0000,   0.0000>, time=85246172158264, sensortype=5
+04-17 18:31:32.656  1778  1803 D IGCDither: sensorCallback mDisplayId = 0 dataCallback value=<   8.5725,   0.0000,   0.0000>, time=85246172158264, sensor=5
+04-17 18:31:32.657  7129  7253 D MST_VisualSensorManager: onSensorChanged:-1.0, -1.0, -1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 at 85246171415764
+04-17 18:31:32.658  7129  7213 D MST_StareDetector: StareDetector start detect
+04-17 18:31:32.658  7129  7213 D MST_StareDetector: frequency: 15000
+04-17 18:31:32.658  7129  7213 D MST_InterceptDetector: InterceptDetector start detect
+04-17 18:31:32.658  7129  7213 D MST_InterceptDetector: event time:85246171,detectTime:85273175
+04-17 18:31:32.658  7129  7213 D MST_InterceptDetector: not stare,return
+04-17 18:31:32.658  7129  7213 D MST_InterceptDetector: event time less than detect time,intercept
+04-17 18:31:32.658  7129  7213 D MST_UnhealthyHabitsHandler: proceed output:Output(behaviorUsage=BehaviorUsage(stareTime=0, darkLightTime=0, lyingDownTime=0, proximityTime=0, offScreenTime=932996), detectTime=85273175, locker=-1)
+04-17 18:31:32.666  3285  4157 I MiuiNetworkPolicy: bandwidth: 7 KB/s, Max bandwidth: 1750 KB/s
+04-17 18:31:32.692  1728  4019 I sensors-hal: handle_sns_std_sensor_event:67, light_event: ts=85246172789514, lux: 8.6, powermode=1 
+04-17 18:31:32.692  1778  1803 D TRUETONE: sensorCallback Cct value=<6253.0000>  mLastCCT 5700.000000 mTargetCCT 5700.000000
+04-17 18:31:32.692  1778  1803 D SRE     : sensorCallback mDisplayId = 0 dataCallback value=<   8.5725,   0.0000,   0.0000>, time=85246172789514, sensortype=5
+04-17 18:31:32.692  1778  1803 D IGCDither: sensorCallback mDisplayId = 0 dataCallback value=<   8.5725,   0.0000,   0.0000>, time=85246172789514, sensor=5
+04-17 18:31:32.792  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:32.792  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11826.0,R:3055.0,G:3058.0,B:877.0, lux: 8.4, clone:1697
+04-17 18:31:32.902  3285  3414 D AurogonBandwidthController: skinTemperature:29.112
+04-17 18:31:32.993  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:32.993  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11815.0,R:3056.0,G:3052.0,B:874.0, lux: 8.3, clone:1697
+04-17 18:31:33.013  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:31:33.013  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:31:33.013  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 18:31:33.013  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:31:33.016 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:7D:E7, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-47, periodicAdvInt=0x0, originalAddress=46:0C:14:DB:7D:E7
+04-17 18:31:33.016 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.016 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.016 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.017 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.017  6260 22594 D DeviceNickName_Plugin: data type: SUPPORT_REDMI_KERBOARD_FAST, []
+04-17 18:31:33.017  6260 22594 E MiuiFastConnectService_Plugin: check adv data not fast connect
+04-17 18:31:33.023 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:21:30, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-55, periodicAdvInt=0x0, originalAddress=79:FA:12:F6:21:30
+04-17 18:31:33.023 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.023 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.024 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.024 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.063  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:33.063  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:33.067  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:31:33.067  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:31:33.067  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:31:33.068 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:BD:A1, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-54, periodicAdvInt=0x0, originalAddress=4D:9A:82:C6:BD:A1
+04-17 18:31:33.068 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.068 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.068 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.068 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:33.107  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:33.107  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:33.193  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:33.193  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11824.0,R:3044.0,G:3054.0,B:876.0, lux: 8.3, clone:1697
+04-17 18:31:33.257  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 

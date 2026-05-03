@@ -1,0 +1,10 @@
+- [x] SDK 版本已降级到 34 (compileSdkVersion = 35, targetSdkVersion = 34)
+- [x] 16KB linker flags 已从 CMake 配置中移除
+- [x] packagingOptions.jniLibs.useLegacyPackaging = true 保持配置
+- [x] AndroidManifest.xml android:extractNativeLibs="true" 保持配置
+- [x] versionCode = 134, versionName = "1.3.4" (保持不变)
+- [x] package.json version = "1.3.4" (保持不变)
+- [x] AAB 文件生成在 Releases/GooglePlay/HeartSound_v1.3.4_vc134_20260313.aab
+- [x] AAB 文件大小正常（33 MB）
+- [x] 验证报告已记录（包含 targetSdkVersion 说明）- RELEASE_134_TARGET34_REPORT.md
+- [x] 社区 16KB 补丁调研完成并记录 - 16KB_COMMUNITY_PATCH_RESEARCH.md

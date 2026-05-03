@@ -1,0 +1,100 @@
+04-17 16:13:31.828 30659 30659 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 16:13:31.843  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:32869.4,R:11750.8,G:11830.8,B:2347.9,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 16:13:31.843  2737  4148 D libsensor-boledalgo: brightness:655,R:1.0,G:16781.4,B:17003.4,EVENT C:99916.0,R:27617.0,G:24548.0,B:7816.0, lux: 84.6, clone:16664
+04-17 16:13:31.846  8693  8988 D JavaheapMonitor: Java heap used=6M max=512M, proc: com.android.providers.media.module
+04-17 16:13:31.846  8693  8988 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 16:13:31.930  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 16:13:31.930  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 16:13:31.930  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 16:13:31.930  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 16:13:31.930  3285  6560 I NetworkAccelerateSwitchService: EVENT_RSSI_POLL. mRssiPoll=true
+04-17 16:13:31.931  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed rssi:32
+04-17 16:13:31.931  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed mWifiFastFade:false mWifiFastFadeAdjustThreshold:false
+04-17 16:13:31.931  3285  6560 I NetworkAccelerateSwitchService: getAverageWifiRssi:32
+04-17 16:13:31.931  3285  6560 D NetworkAccelerateSwitchService: checkIntervalModeChange mMovementState:false mIntervalMode:0 mIsBadLinkLayerQoE:false mBadLinkLayerQoETimes = 0
+04-17 16:13:31.933 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 1
+04-17 16:13:31.933 22066 22362 D BluetoothRemoteDevices: Skip name update for XX:XX:XX:XX:C6:45
+04-17 16:13:31.933 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 4
+04-17 16:13:31.933 22066 22362 D BluetoothRemoteDevices: Skip class update, device=XX:XX:XX:XX:C6:45, cod=0x1f00
+04-17 16:13:31.933 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 5
+04-17 16:13:31.933 22066 22362 D BluetoothRemoteDevices:  BT_PROPERTY_TYPE_OF_DEVICE addr:9C:76:0E:4A:C6:45 deviceType:3
+04-17 16:13:31.933 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 1
+04-17 16:13:31.933 22066 22362 D HyperRemoteDevicesAdapter: Remote device name is: 李 type = 2 9C:76:0E:4A:C6:45
+04-17 16:13:31.933 22066 22362 D HyperRemoteDevicesAdapter: update name for XX:XX:XX:XX:C6:45 type = 2 name = 李 1
+04-17 16:13:31.933 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 4
+04-17 16:13:31.933 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 5
+04-17 16:13:31.934 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C6:45, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-49, periodicAdvInt=0x0, originalAddress=9C:76:0E:4A:C6:45
+04-17 16:13:31.934 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.935 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.935 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.935 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.937  2780  2780 I adbd    : in ShellService: pidof com.anonymous.soundtherapyapp
+04-17 16:13:31.949 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:C7:DE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-47, periodicAdvInt=0x0, originalAddress=42:5E:1C:39:C7:DE
+04-17 16:13:31.949 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.949 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.949 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.949 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.951  6260 22594 D DeviceNickName_Plugin: data type: SUPPORT_REDMI_KERBOARD_FAST, []
+04-17 16:13:31.951  6260 22594 E MiuiFastConnectService_Plugin: check adv data not fast connect
+04-17 16:13:31.968 22066 22362 V ScanController: onScanResult() - eventType=0x10, addressType=1, address=XX:XX:XX:XX:CD:25, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-49, periodicAdvInt=0x0, originalAddress=77:4F:11:76:CD:25
+04-17 16:13:31.968 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.968 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.968 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.969 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:31.996  2780  2780 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+04-17 16:13:32.008  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 16:13:32.008  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 16:13:32.011  3285  5800 W ActivityManagerServiceImpl: Sending non-protected broadcast com.modemenhance.ACTION_MODEMWIFI_RSSI_POLL from system 5080:com.android.phone/1001 pkg com.android.phone. Callers=
+04-17 16:13:32.014  5080  5080 D SlaveWifiManager: getWifiSlaveConnectionInfo
+04-17 16:13:32.043  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:32869.4,R:11750.8,G:11830.8,B:2347.9,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 16:13:32.043  2737  4148 D libsensor-boledalgo: brightness:655,R:1.0,G:16781.4,B:17003.4,EVENT C:100034.0,R:27640.0,G:24542.0,B:7836.0, lux: 84.3, clone:16664
+04-17 16:13:32.072  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 16:13:32.072  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 16:13:32.073  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 16:13:32.074 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:2D:5D, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-49, periodicAdvInt=0x0, originalAddress=78:CD:AB:D1:2D:5D
+04-17 16:13:32.074 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.074 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.074 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.074 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.084 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:C7:DE, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-47, periodicAdvInt=0x0, originalAddress=42:5E:1C:39:C7:DE
+04-17 16:13:32.084 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.084 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.085 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.085  6260 22594 D DeviceNickName_Plugin: data type: SUPPORT_REDMI_KERBOARD_FAST, []
+04-17 16:13:32.085  6260 22594 E MiuiFastConnectService_Plugin: check adv data not fast connect
+04-17 16:13:32.085 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.090 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:25:D6, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-47, periodicAdvInt=0x0, originalAddress=57:5C:FB:0D:25:D6
+04-17 16:13:32.090 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.090 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.090 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.090 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.090  6260 22594 D DeviceNickName_Plugin: data type: SUPPORT_REDMI_KERBOARD_FAST, []
+04-17 16:13:32.090  6260 22594 E MiuiFastConnectService_Plugin: check adv data not fast connect
+04-17 16:13:32.113 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 1
+04-17 16:13:32.113 22066 22362 D BluetoothRemoteDevices: Skip name update for XX:XX:XX:XX:C6:45
+04-17 16:13:32.113 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 4
+04-17 16:13:32.113 22066 22362 D BluetoothRemoteDevices: Skip class update, device=XX:XX:XX:XX:C6:45, cod=0x1f00
+04-17 16:13:32.113 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 5
+04-17 16:13:32.113 22066 22362 D BluetoothRemoteDevices:  BT_PROPERTY_TYPE_OF_DEVICE addr:9C:76:0E:4A:C6:45 deviceType:3
+04-17 16:13:32.113 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 1
+04-17 16:13:32.113 22066 22362 D HyperRemoteDevicesAdapter: Remote device name is: 李 type = 2 9C:76:0E:4A:C6:45
+04-17 16:13:32.113 22066 22362 D HyperRemoteDevicesAdapter: update name for XX:XX:XX:XX:C6:45 type = 2 name = 李 1
+04-17 16:13:32.113 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 4
+04-17 16:13:32.113 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 5
+04-17 16:13:32.113 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C6:45, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-49, periodicAdvInt=0x0, originalAddress=9C:76:0E:4A:C6:45
+04-17 16:13:32.113 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.114 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.114 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.114 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 16:13:32.153  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 16:13:32.153  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 16:13:32.243  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:32869.4,R:11750.8,G:11830.8,B:2347.9,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 16:13:32.243  2737  4148 D libsensor-boledalgo: brightness:655,R:1.0,G:16781.4,B:17003.4,EVENT C:100194.0,R:27679.0,G:24600.0,B:7836.0, lux: 85.0, clone:16664
+04-17 16:13:32.303  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 16:13:32.313  3285  3414 D AurogonBandwidthController: skinTemperature:28.028
+04-17 16:13:32.379 14433 30376 I AICall_MemoryTrim$a: Timer-103 trimMemory on background
+04-17 16:13:32.381 14433 14433 W WindowManager: SF-TrimMemory: run trimMemory, level: 80
+04-17 16:13:32.381 14433 14433 I AICall_x0: main invoke : null|80
+04-17 16:13:32.442  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:32869.4,R:11750.8,G:11830.8,B:2347.9,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 16:13:32.442  2737  4148 D libsensor-boledalgo: brightness:655,R:1.0,G:16781.4,B:17003.4,EVENT C:100308.0,R:27687.0,G:24632.0,B:7841.0, lux: 85.1, clone:16664
+04-17 16:13:32.446  3285  4283 D AurogonImmobulusMode:  update wallpaper pacakge name status mLockWallPaperPackageName =  mLockWallPaperUid = -1 mDeskWallPaperPackageName = com.miui.miwallpaper mDeskWallPaperUid = 10190

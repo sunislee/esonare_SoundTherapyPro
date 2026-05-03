@@ -9,13 +9,13 @@ const nativeChannel =
 export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googlePlay' : true;
 
 const TENCENT_CLOUD_URL = 'https://43.138.58.71/';
-const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/master/';
-const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
+export const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/main/';
+export const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 const GHPROXY_URL = 'https://ghproxy.net/';
 
 // Google Play 专用配置：GitHub 官方源（主源）+ ghproxy 镜像加速
 // 专注海外市场，使用 GitHub 作为主源，通过镜像加速提升下载速度
-export const PRIMARY_REMOTE_RESOURCE_BASE_URL = GITHUB_URL;
+export const PRIMARY_REMOTE_RESOURCE_BASE_URL = `${GHPROXY_URL}${GITHUB_URL}`;
 export const SECONDARY_REMOTE_RESOURCE_BASE_URL = `${GHPROXY_URL}${GITHUB_URL}`;
 export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 
@@ -27,7 +27,6 @@ export const getLocalPath = (category: string, filename: string) => {
 }; 
 
 export const DEFAULT_FALLBACK_SOURCE = null;
-export const AUDIO_MAP: Record<string, any> = {};
 
 export const AMBIENT_RESOURCES = {
   WHITE_NOISE: 'interactive/white_noise.m4a',
@@ -42,14 +41,19 @@ export const AMBIENT_RESOURCES = {
 
 export const AUDIO_MANIFEST = [ 
   { id: 'nature_ocean', filename: 'base/deep_ocean_abyss.m4a', category: 'nature', title: 'scenes.nature_ocean.title', description: 'scenes.nature_ocean.desc', size: 1429191 }, 
-  { id: 'nature_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 1732906 }, 
+  { id: 'nature_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 680336 }, 
   { id: 'nature_deep_sea', filename: 'base/deep_sea_breathing_rhythm.m4a', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 456030 },
-  { id: 'nature_misty_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 680336 },
+  { id: 'nature_misty_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 1732906 },
   { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 7201196 }, 
   { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 7201196 },
 
+  { id: 'manual_morning_forest', filename: 'base/offroad_avenue.m4a', category: 'nature', title: 'scenes.manual_morning_forest.title', description: 'scenes.manual_morning_forest.desc', size: 7201196 },
+  { id: 'manual_serene_lakeside', filename: 'base/moonlight.m4a', category: 'nature', title: 'scenes.manual_serene_lakeside.title', description: 'scenes.manual_serene_lakeside.desc', size: 7201196 },
+  { id: 'manual_starlit_wilderness', filename: 'base/star_glass.m4a', category: 'nature', title: 'scenes.manual_starlit_wilderness.title', description: 'scenes.manual_starlit_wilderness.desc', size: 7201196 },
+
   { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 7201196 }, 
-  { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 }, 
+  { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 },
+ 
 
   { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 391549 }, 
   { id: 'healing_clean_space', filename: 'base/liquid_peace.m4a', category: 'healing', title: 'scenes.healing_clean_space.title', description: 'scenes.healing_clean_space.desc', size: 4574599 }, 
@@ -63,14 +67,38 @@ export const AUDIO_MANIFEST = [
   { id: 'interactive_breath', filename: AMBIENT_RESOURCES.BREATH, category: 'interactive', title: 'scenes.interactive_breath.title', description: 'scenes.interactive_breath.desc', size: 1048576 }, 
   { id: 'interactive_apple', filename: AMBIENT_RESOURCES.APPLE_CRUNCH, category: 'interactive', title: 'scenes.interactive_apple.title', description: 'scenes.interactive_apple.desc', size: 32853 }, 
   { id: 'interactive_match', filename: AMBIENT_RESOURCES.MATCH_STRIKE, category: 'interactive', title: 'scenes.interactive_match.title', description: 'scenes.interactive_match.desc', size: 846284 },
+
+  { id: 'western_church_gregorian', filename: 'western_church/western_church_gregorian_chant.mp3', category: 'western_church', title: 'scenes.western_church_gregorian.title', description: 'scenes.western_church_gregorian.desc', size: 427392 },
+  { id: 'western_church_morning_bell', filename: 'western_church/western_church_morning_bell.m4a', category: 'western_church', title: 'scenes.western_church_morning_bell.title', description: 'scenes.western_church_morning_bell.desc', size: 194690 },
+  { id: 'western_church_holy_waves', filename: 'western_church/western_church_holy_waves.m4a', category: 'western_church', title: 'scenes.western_church_holy_waves.title', description: 'scenes.western_church_holy_waves.desc', size: 617365 },
+  { id: 'western_church_forest_echo', filename: 'western_church/western_church_forest_echo.m4a', category: 'western_church', title: 'scenes.western_church_forest_echo.title', description: 'scenes.western_church_forest_echo.desc', size: 732037 },
+  { id: 'western_church_urban_chant', filename: 'western_church/western_church_urban_chant.m4a', category: 'western_church', title: 'scenes.western_church_urban_chant.title', description: 'scenes.western_church_urban_chant.desc', size: 414572 },
+
+  { id: 'oriental_zen_monastery', filename: 'zen/zen_bell.mp3', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 1048576 },
+  { id: 'oriental_tibetan_bowl', filename: 'zen/zen_bowl.mp3', category: 'oriental', title: 'scenes.oriental_tibetan_bowl.title', description: 'scenes.oriental_tibetan_bowl.desc', size: 1048576 },
+  { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.mp3', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 1048576 },
 ]; 
+
+// 【核心】初始化 AUDIO_MAP，将 filename 映射到本地路径
+export const AUDIO_MAP: Record<string, string> = {};
+
+// 【RN 0.81 兼容性】添加 Array.isArray 非空保护
+if (Array.isArray(AUDIO_MANIFEST)) {
+  AUDIO_MANIFEST.forEach(item => {
+    if (item && item.filename && item.category) {
+      AUDIO_MAP[item.filename] = getLocalPath(item.category, item.filename);
+    }
+  });
+} else {
+  console.error('[audioAssets] ❌ AUDIO_MANIFEST is not an array!');
+}
 
 // 【核心】定义 ASSET_LIST，手动写好每个文件的 expectedSize（根据实际下载大小更新）
 export const ASSET_LIST = [
   { id: 'nature_ocean', expectedSize: 1429191 },        // 实际：1.43MB
-  { id: 'nature_forest', expectedSize: 1732906 },       // 实际：1.73MB
+  { id: 'nature_forest', expectedSize: 680336 },        // 已替换为纯净森林素材：680KB
   { id: 'nature_deep_sea', expectedSize: 456030 },      // 实际：456KB
-  { id: 'nature_misty_forest', expectedSize: 680336 },  // 实际：680KB
+  { id: 'nature_misty_forest', expectedSize: 1732906 }, // 实际：1.73MB
   { id: 'nature_river', expectedSize: 7201196 },        // 实际：7.2MB
   { id: 'nature_night', expectedSize: 7201196 },        // 实际：7.2MB
   { id: 'life_rain_boat', expectedSize: 7201196 },      // 实际：7.2MB
@@ -85,6 +113,14 @@ export const ASSET_LIST = [
   { id: 'interactive_breath', expectedSize: 1048576 },     // 保持原值
   { id: 'interactive_apple', expectedSize: 32853 },        // 实际：33KB
   { id: 'interactive_match', expectedSize: 846284 },       // 实际：846KB
+  { id: 'western_church_gregorian', expectedSize: 427392 },    // 实际：427KB
+  { id: 'western_church_morning_bell', expectedSize: 194690 }, // 实际：195KB
+  { id: 'western_church_holy_waves', expectedSize: 617365 },   // 实际：617KB
+  { id: 'western_church_forest_echo', expectedSize: 732037 },  // 实际：732KB
+  { id: 'western_church_urban_chant', expectedSize: 414572 },  // 实际：415KB
+  { id: 'manual_morning_forest', expectedSize: 784448 },      // offroad_avenue.m4a
+  { id: 'manual_serene_lakeside', expectedSize: 594199 },    // moonlight.m4a
+  { id: 'manual_starlit_wilderness', expectedSize: 466422 }, // star_glass.m4a
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）

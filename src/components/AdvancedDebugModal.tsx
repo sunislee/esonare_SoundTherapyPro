@@ -55,7 +55,8 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
 
       // Update stats immediately and then periodically
       const updateStats = async () => {
-    const scene = AudioService.getCurrentScene();
+    const audioService = AudioService.getInstance();
+    const scene = audioService.getCurrentScene();
     setCurrentSceneId(scene?.id || 'none');
     
     const mod = getNativeAudioModule();
@@ -66,8 +67,8 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
       } else {
         // Fallback estimate
         let count = 0;
-        if (AudioService.getCurrentState() === State.Playing) count++;
-        if ((AudioService as any).ambientSound) count++;
+        if (audioService.getCurrentState() === State.Playing) count++;
+        if ((audioService as any).ambientSound) count++;
         setAllPlayersCount(count);
       }
     } catch (e) {
@@ -138,7 +139,8 @@ export const AdvancedDebugModal: React.FC<AdvancedDebugModalProps> = ({
 
       await new Promise<void>(resolve => setTimeout(resolve, 1200));
 
-      await AudioService.setupPlayer();
+      // AudioService 已经在 App.tsx 中统一初始化，这里不需要重复调用
+      // await AudioService.setupPlayer();
       
       ToastUtil.success(t('player.debug.restartSuccess'));
       onClose(); 

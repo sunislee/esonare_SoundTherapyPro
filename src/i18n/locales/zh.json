@@ -10,7 +10,9 @@
     "healing": "深度放松",
     "brainwave": "脑波专注",
     "life": "生活角落",
-    "interactive": "氛围点缀"
+    "interactive": "氛围点缀",
+    "westernchurch": "西方教会",
+    "oriental": "东方禅意"
   },
   "actions": {
     "play": "播放",
@@ -20,7 +22,8 @@
     "previous": "上一首",
     "deleted": "已删除",
     "deleteFailed": "删除失败",
-    "restored": "已恢复播放"
+    "restored": "已恢复播放",
+    "download": "去下载"
   },
   "slogans": {
     "journey": "开启一段放松之旅",
@@ -46,7 +49,54 @@
     "loading": "加载中...",
     "back": "返回",
     "delete": "删除",
+    "settings": "设置",
     "comma": "，",
+    "noiseCancellation": {
+      "title": "降噪模块",
+      "status": "降噪状态",
+      "statusDesc": "智能识别环境噪音，为您提供沉浸式的听觉体验",
+      "toggle": "开启降噪",
+      "modes": "降噪模式",
+      "smart": "智能场景识别",
+      "smartDesc": "自动检测周围环境噪音类型，智能切换最佳降噪模式",
+      "smartEnable": "启用智能识别",
+      "stopAll": "停止所有降噪",
+      "settings": "设置"
+    },
+    "noise": {
+      "wind": {
+        "title": "微风轻拂",
+        "subtitle": "适合消除空调底噪、居家杂音。"
+      },
+      "traffic": {
+        "title": "倾盆掩盖",
+        "subtitle": "抵消引擎轰鸣、窗外车流。"
+      },
+      "crowd": {
+        "title": "围炉隔离",
+        "subtitle": "模糊人声嘈杂、社交噪音。"
+      },
+      "balanced": {
+        "title": "深空专注",
+        "subtitle": "屏蔽办公室交谈、键盘敲击。"
+      },
+      "deep": {
+        "title": "深度降噪",
+        "subtitle": "消除环境杂音，营造极致静谧空间。"
+      },
+      "office": {
+        "title": "专注办公",
+        "subtitle": "屏蔽人声干扰，提升工作学习效率。"
+      },
+      "sleep": {
+        "title": "助眠舒压",
+        "subtitle": "柔和粉红噪音，伴你安稳入睡。"
+      },
+      "travel": {
+        "title": "旅途静谧",
+        "subtitle": "抵消引擎轰鸣，享受舒适旅程。"
+      }
+    },
     "period": "。",
     "enter_scheme_name": "输入方案名称",
     "friend": "好友",
@@ -243,7 +293,8 @@
       "Nature": "自然",
       "Healing": "疗愈",
       "Brainwave": "脑波",
-      "Life": "生活"
+      "Life": "生活",
+      "WesternChurch": "西方教会"
     }
   },
   "miniPlayer": {
@@ -295,7 +346,8 @@
     "tip": "初次使用请保持网络畅通，正在为您同步高品质音频",
     "optimizing": "正在优化音频资源...",
     "incompleteTitle": "资源下载未完成",
-    "incompleteMessage": "还有 {{count}} 个文件未下载完成，请等待下载完成后再继续。"
+    "incompleteMessage": "还有 {{count}} 个文件未下载完成，请等待下载完成后再继续。",
+    "message": "场景\"{{sceneTitle}}\"的音频文件尚未下载，是否立即前往下载？"
   },
   "nameEntry": {
     "title": "如何称呼您？",
@@ -369,6 +421,12 @@
     "nature_misty_forest": { "title": "林间迷雾", "desc": "漫步晨间森林，吸入纯净氧气" },
     "nature_river": { "title": "晨间河畔", "desc": "清泉石上流" },
     "nature_night": { "title": "静谧部落", "desc": "远古的呼唤" },
+    "nature_moonlight": { "title": "月下静谧", "desc": "月光如水洒满大地" },
+    "nature_offroad_avenue": { "title": "旷野大道", "desc": "自驾穿越无垠旷野" },
+    "nature_star_glass": { "title": "星空之下", "desc": "仰望璀璨星河" },
+    "manual_morning_forest": { "title": "晨曦森林", "desc": "晨光穿透薄雾笼罩的森林" },
+    "manual_serene_lakeside": { "title": "宁静湖畔", "desc": "湖水如镜倒映远山" },
+    "manual_starlit_wilderness": { "title": "星空旷野", "desc": "繁星点缀无垠旷野" },
     "life_rain_boat": { "title": "舟上雨", "desc": "微雨落孤舟" },
     "life_bookstore": { "title": "午后书店", "desc": "纸张与宁静" },
     "healing_zen_bowl": { "title": "颂钵冥想", "desc": "瞬间定静" },
@@ -383,10 +441,43 @@
     "interactive_match": { "title": "划火柴", "desc": "触发音" },
     "interactive_wind_chime": { "title": "风铃", "desc": "清脆悦耳" },
     "interactive_breath": { "title": "呼吸", "desc": "深度放松" },
-    "interactive_white_noise": { "title": "白噪音", "desc": "专注屏蔽" }
+    "interactive_white_noise": { "title": "白噪音", "desc": "专注屏蔽" },
+    "western_church_gregorian": { "title": "西班牙圣咏", "desc": "古老教堂的格里高利圣咏" },
+    "western_church_morning_bell": { "title": "晨祷钟声", "desc": "修道院的清晨钟声" },
+    "western_church_holy_waves": { "title": "神圣光流", "desc": "光与声的灵性交汇" },
+    "western_church_forest_echo": { "title": "石廊回响", "desc": "古老修道院的回音" },
+    "western_church_urban_chant": { "title": "烛光禅定", "desc": "烛光中的宁静圣歌" },
+    "oriental_zen_monastery": { "title": "禅意寺院", "desc": "古刹钟声，心如止水" },
+    "oriental_tibetan_bowl": { "title": "西藏颂钵", "desc": "高频共振，净化心灵" },
+    "oriental_morning_buddha": { "title": "晨钟佛音", "desc": "晨钟暮鼓，禅意深远" }
   },
   "disclaimer": {
     "title": "健康声明",
     "content": "本应用提供的声音内容仅用于放松和冥想目的，不能替代专业的医疗建议、诊断或治疗。如有健康问题，请咨询专业医疗人员。"
-  }
+  },
+  "noise_breeze_title": "微风轻抚",
+  "noise_breeze_desc": "如丝般轻柔的白噪音，抚平心绪，静享安宁",
+  "noise_downpour_title": "倾盆覆盖",
+  "noise_downpour_desc": "模拟大雨倾盆的白噪音，隔绝外界嘈杂，深度入定",
+  "noise_fireplace_title": "围炉隔离",
+  "noise_fireplace_desc": "温暖舒适的壁炉噼啪声，营造专属的安全感与专注力",
+  "noise_deepspace_title": "深空专注",
+  "noise_deepspace_desc": "深沉而纯净的低频脉冲，辅助高效办公，提升认知表现",
+  "eq_title": "均衡器实验室",
+  "eq_reset": "恢复默认",
+  "eq_save": "保存预设",
+  "eq_saved_success": "预设已保存",
+  "eq_custom_name": "自定义预设",
+  "eq_play": "播放",
+  "eq_stop": "停止",
+  "eq_playing": "播放中",
+  "eq_stopped": "已停止",
+  "eq_loading": "加载中...",
+  "home_noise_lab": "降噪实验室",
+  "home_eq_lab": "均衡器实验室",
+  "home_noise_desc": "打造极致静谧的专注空间",
+  "home_eq_desc": "发烧级音频精细调节实验室",
+  "noise_room_desc": "背景条显示环境噪音分布，滑动调节对冲音量",
+  "noise_room_ai_hint": "AI 仅提供视觉参考，控制权在您手中",
+  "eq_current_source": "当前音源"
 }

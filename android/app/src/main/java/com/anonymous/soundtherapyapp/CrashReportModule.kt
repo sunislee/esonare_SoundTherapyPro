@@ -12,26 +12,14 @@ class CrashReportModule(reactContext: ReactApplicationContext) : ReactContextBas
 
     @ReactMethod
     fun logException(message: String) {
-        val channel = BuildConfig.DISTRIBUTION_CHANNEL
         android.util.Log.d("CrashReport", "Logging exception: $message")
-        if (channel == "googlePlay") {
-            try {
-                val clazz = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics")
-                val method = clazz.getMethod("getInstance")
-                val instance = method.invoke(null)
-                val recordMethod = clazz.getMethod("recordException", Throwable::class.java)
-                recordMethod.invoke(instance, Exception(message))
-            } catch (e: Exception) {
-                android.util.Log.e("CrashReport", "Firebase recordException failed", e)
-            }
-        } else if (channel == "domestic") {
-            try {
-                val clazz = Class.forName("com.tencent.bugly.crashreport.CrashReport")
-                val method = clazz.getMethod("postCatchedException", Throwable::class.java)
-                method.invoke(null, Exception(message))
-            } catch (e: Exception) {
-                android.util.Log.e("CrashReport", "Bugly postCatchedException failed", e)
-            }
+        // 默认使用 Bugly（国内渠道）
+        try {
+            val clazz = Class.forName("com.tencent.bugly.crashreport.CrashReport")
+            val method = clazz.getMethod("postCatchedException", Throwable::class.java)
+            method.invoke(null, Exception(message))
+        } catch (e: Exception) {
+            android.util.Log.e("CrashReport", "Crash report failed", e)
         }
     }
 
@@ -44,30 +32,18 @@ class CrashReportModule(reactContext: ReactApplicationContext) : ReactContextBas
 
     @ReactMethod
     fun setUserId(userId: String) {
-        val channel = BuildConfig.DISTRIBUTION_CHANNEL
-        if (channel == "googlePlay") {
-            try {
-                val clazz = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics")
-                val method = clazz.getMethod("getInstance")
-                val instance = method.invoke(null)
-                val setUserIdMethod = clazz.getMethod("setUserId", String::class.java)
-                setUserIdMethod.invoke(instance, userId)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        } else if (channel == "domestic") {
-            try {
-                val clazz = Class.forName("com.tencent.bugly.crashreport.CrashReport")
-                val method = clazz.getMethod("setUserId", String::class.java)
-                method.invoke(null, userId)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        // 默认使用 Bugly（国内渠道）
+        try {
+            val clazz = Class.forName("com.tencent.bugly.crashreport.CrashReport")
+            val method = clazz.getMethod("setUserId", String::class.java)
+            method.invoke(null, userId)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     @ReactMethod(isBlockingSynchronousMethod = true)
     fun getChannel(): String {
-        return BuildConfig.DISTRIBUTION_CHANNEL
+        return "domestic"
     }
 }

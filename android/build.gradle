@@ -1,76 +1,38 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
     ext {
         buildToolsVersion = "36.0.0"
         minSdkVersion = 24
         compileSdkVersion = 36
-        targetSdkVersion = 36   // Android 16 (API 36) 目标
-        ndkVersion = "27.1.12297006"  // 支持 16KB 页面对齐
-        kotlinVersion = "2.0.21"  // RN 0.77 推荐版本
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "1.9.24"
+        codegenDir = "../node_modules/.pnpm/@react-native+codegen@0.81.5_@babel+core@7.29.0/node_modules/@react-native/codegen"
     }
-  repositories {
-    maven { url 'https://maven.aliyun.com/repository/google' }
-    maven { url 'https://maven.aliyun.com/repository/public' }
-    maven { url 'https://maven.aliyun.com/repository/jcenter' }
-    google()
-    mavenCentral()
-    maven {
-      url("../node_modules/@react-native/gradle-plugin")
+    repositories {
+        google()
+        mavenCentral()
     }
-    maven {
-      url("../node_modules")
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        
+        // 【Firebase Crashlytics】添加 Google Services 和 Crashlytics 插件
+        classpath 'com.google.gms:google-services:4.4.2'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
     }
-  }
-  dependencies {
-        classpath('com.android.tools.build:gradle:8.5.0')  // AGP 8.5 支持 RN 0.77
-        classpath('com.facebook.react:react-native-gradle-plugin:0.77.0')  // RN 0.77 专用插件
-        classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21')  // Kotlin 2.0.21
-        classpath('com.google.gms:google-services:4.4.2')
-        classpath('com.google.firebase:firebase-crashlytics-gradle:3.0.0')
-    }
-}
-
-// 强制所有任务禁用警告转错误，包括 buildscript 阶段
-allprojects {
-    configurations.all {
-        resolutionStrategy {
-            force "com.swmansion.rnscreens:react-native-screens:3.31.1"
-        }
-    }
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            allWarningsAsErrors = false
-        }
-    }
-    
-    // 全局注入 16KB 页面对齐编译参数，确保所有 native 模块 (CMake/ndk-build) 强制 16KB 对齐
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android.defaultConfig {
-                externalNativeBuild {
-                    cmake {
-                        arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON", "-DANDROID_LINKER_FLAGS=-Wl,-z,common-page-size=16384 -Wl,-z,max-page-size=16384", "-DANDROID_EXTRACT_NATIVE_LIBS=false", "-DANDROID_ALIGNED_AS_16KB=true"
-                        cppFlags "-fpermissive -w"
-                    }
-                    ndkBuild {
-                        arguments "APP_LDFLAGS+=-Wl,-z,common-page-size=16384", "APP_LDFLAGS+=-Wl,-z,max-page-size=16384"
-                    }
-                }
-            }
-        }
-    }
-}
-
-allprojects {
-  repositories {
-    maven { url 'https://maven.aliyun.com/repository/google' }
-    maven { url 'https://maven.aliyun.com/repository/public' }
-    maven { url 'https://maven.aliyun.com/repository/jcenter' }
-    google()
-    mavenCentral()
-    maven { url 'https://www.jitpack.io' }
-  }
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+configurations.all {
+    resolutionStrategy {
+        // 强制统一 React Android 版本为 0.73.6
+        force 'com.facebook.react:react-android:0.73.6'
+        
+        // 替换所有 react-native 依赖为 react-android:0.73.6
+        dependencySubstitution {
+            substitute module('com.facebook.react:react-native') using module('com.facebook.react:react-android:0.73.6')
+        }
+    }
+}

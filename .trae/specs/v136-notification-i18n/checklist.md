@@ -1,0 +1,18 @@
+- [x] Android 英文 strings.xml 文件已创建
+- [x] app_name 英文翻译已设置（esonare）
+- [x] zh.json 添加 notification.playingStatus 翻译
+- [x] en.json 添加 notification.playingStatus 翻译
+- [x] ja.json 添加 notification.playingStatus 翻译
+- [x] zh.json 添加 notification.channelDescription 翻译
+- [x] en.json 添加 notification.channelDescription 翻译
+- [x] ja.json 添加 notification.channelDescription 翻译
+- [x] NotificationService.ts 导入 i18next
+- [x] NotificationService.ts 使用 t() 方法获取 channelName
+- [x] NotificationService.ts 使用 t() 方法获取 channelDescription
+- [x] NotificationService.ts 使用 t() 方法获取 title
+- [x] NotificationService.ts 使用 t() 方法获取 artist
+- [x] NotificationService.ts 使用 t() 方法获取 playingStatus
+- [x] 安装验证通过（无需 clean）
+- [ ] 英文系统下通知栏显示英文（待用户验证）
+- [ ] 中文系统下通知栏显示中文（待用户验证）
+- [ ] 日文系统下通知栏显示日文（待用户验证）

@@ -33,7 +33,16 @@ const MiniPlayer = () => {
   const isPlayerScreen = useNavigationState((state) => {
     if (!state) return false;
     const currentRoute = state.routes[state.index];
-    return currentRoute.name === 'ImmersivePlayer' || currentRoute.name === 'BreathDetail';
+    return currentRoute.name === 'ImmersivePlayer' || 
+           currentRoute.name === 'BreathDetail' ||
+           currentRoute.name === 'NoiseCancellationRoom';
+  });
+
+  // 【新增】检查是否在首页（有降噪按钮的页面）
+  const isHomeScreen = useNavigationState((state) => {
+    if (!state) return false;
+    const currentRoute = state.routes[state.index];
+    return currentRoute.name === 'MainTabs';
   });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -48,18 +57,19 @@ const MiniPlayer = () => {
   };
 
   useEffect(() => {
-    const sub = AudioService.addAudioStateListener(({ state }) => {
+    const audioService = AudioService.getInstance();
+    const sub = audioService.addAudioStateListener(({ state }) => {
       const playing = state === State.Playing || state === State.Buffering;
       setIsPlaying(playing);
       
-      const scene = AudioService.getCurrentScene();
+      const scene = audioService.getCurrentScene();
       setCurrentScene(scene);
     });
 
-    const scene = AudioService.getCurrentScene();
+    const scene = audioService.getCurrentScene();
     if (scene) {
       setCurrentScene(scene);
-      setIsPlaying(AudioService.getCurrentState() === State.Playing);
+      setIsPlaying(audioService.getCurrentState() === State.Playing);
     }
 
     return () => {
@@ -68,26 +78,30 @@ const MiniPlayer = () => {
   }, []);
 
   useEffect(() => {
-    const shouldShow = !!currentScene && !isPlayerScreen;
+    // 【优化】只在首页隐藏 MiniPlayer（避免遮挡降噪按钮），其他页面正常显示
+    const shouldShow = !!currentScene && !isPlayerScreen && !isHomeScreen;
 
     Animated.timing(fadeAnim, {
       toValue: shouldShow ? 1 : 0,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, [currentScene, isPlayerScreen, fadeAnim]);
+    
+    console.log(`[MiniPlayer] currentScene=${!!currentScene}, isPlayerScreen=${isPlayerScreen}, isHomeScreen=${isHomeScreen}, shouldShow=${shouldShow}`);
+  }, [currentScene, isPlayerScreen, isHomeScreen, fadeAnim]);
 
   const handlePlayPause = (e: any) => {
     e.stopPropagation();
     triggerHaptic();
     const targetState = isPlaying ? 'pause' : 'play';
+    const audioService = AudioService.getInstance();
     
     setImmediate(async () => {
       try {
         if (targetState === 'pause') {
-          await AudioService.pause();
+          await audioService.pause();
         } else {
-          await AudioService.play();
+          await audioService.play();
         }
       } catch (error) {
         console.error('MiniPlayer toggle failed:', error);
@@ -131,7 +145,7 @@ const MiniPlayer = () => {
     setIsInteracting(false);
   };
 
-  if (!currentScene || isPlayerScreen) return null;
+  if (!currentScene || isPlayerScreen || isHomeScreen) return null;
 
   // Calculate dynamic styles
   const containerWidth = widthAnim.interpolate({
@@ -203,8 +217,10 @@ const MiniPlayer = () => {
         <Animated.View style={[styles.expandedView, { opacity: contentOpacity }]}>
           {currentScene.backgroundSource ? (
             <Image 
+              key={currentScene.id}
               source={currentScene.backgroundSource} 
-              style={styles.thumbnail} 
+              style={styles.thumbnail}
+              fadeDuration={0}
             />
           ) : (
             <View style={[styles.thumbnail, { backgroundColor: currentScene.primaryColor }]} />
