@@ -10,6 +10,7 @@ import { initLanguage } from './src/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer from 'react-native-track-player';
 import { NativeModules } from 'react-native';
+import { DownloadService } from './src/services/DownloadService';
 
 // 【v1.4.1 关键修复】获取当前应用版本号
 const APP_VERSION_CODE = NativeModules?.PackageInfo?.versionCode || 141;
@@ -78,6 +79,21 @@ function App() {
         
         // 设置 isAudioReady 为 true，显示主界面
         setIsAudioReady(true);
+        
+        // 【关键新增】启动后台资源下载任务（包括8轨音频）
+        console.log('[App] [4/4] 启动后台资源下载任务...');
+        setImmediate(() => {
+          DownloadService.checkAndDownload((progress) => {
+            const percent = (progress.progress * 100).toFixed(1);
+            const receivedMB = (progress.receivedBytes / 1024 / 1024).toFixed(1);
+            const totalMB = (progress.totalBytes / 1024 / 1024).toFixed(1);
+            console.log(`[App-Download] 📥 下载进度: ${percent}% (${receivedMB}MB / ${totalMB}MB)`);
+          }).then(() => {
+            console.log('[App-Download] ✅ 所有资源下载完成');
+          }).catch((error) => {
+            console.error('[App-Download] ❌ 下载失败:', error);
+          });
+        });
       } catch (error: any) {
         console.error('[App] ❌ 初始化失败:', error);
         console.error('[App] ❌ 错误信息:', error?.message);

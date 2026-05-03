@@ -30,6 +30,12 @@ import {
   getCurrentMode,
   warmupAudio,
 } from '../services/NoiseAudioService';
+import {
+  init8TrackAudio,
+  play8TrackAudio,
+  stop8TrackAudio,
+  cleanup8TrackAudio,
+} from '../services/8TrackAudioService';
 import AudioService from '../services/AudioService';
 
 const { width, height } = Dimensions.get('window');
@@ -137,8 +143,8 @@ const NoiseCancellationRoom: React.FC = () => {
       console.log('[NoiseCancellationRoom] 🔥 开始预热音频底层...');
       warmupAudio();
       
-      // 初始化降噪音频服务
-      initNoiseAudio();
+      // 初始化 8 轨音频服务（替代单轨降噪音频）
+      init8TrackAudio();
       
       // 启动音频分析器
       AudioAnalyzer.start((distribution) => {
@@ -176,14 +182,15 @@ const NoiseCancellationRoom: React.FC = () => {
       if (lastMode) {
         setSelectedMode(lastMode);
         setIsPlaying(true);
-        playNoiseAudio(lastMode);
+        const audioGroupId = lastMode.replace('noise_', '') + '_noise';
+        play8TrackAudio(audioGroupId);
       }
       
       // 页面失焦时停止分析器
       return () => {
         console.log('[NoiseCancellationRoom] 页面失焦，停止音频分析器');
         AudioAnalyzer.stop();
-        stopNoiseAudio();
+        stop8TrackAudio();
       };
     }, [])
   );
@@ -221,7 +228,7 @@ const NoiseCancellationRoom: React.FC = () => {
     if (currentSceneId === modeId && isPlaying) {
       console.log('[NoiseCancellationRoom] 停止当前模式');
       setIsLoading(true);
-      await stopNoiseAudio();
+      await stop8TrackAudio();
       setIsPlaying(false);
       setCurrentSceneId(null);
       setSelectedMode(null);
@@ -233,6 +240,10 @@ const NoiseCancellationRoom: React.FC = () => {
     // 【关键修复】否则播放新模式（自动停止旧场景）
     console.log('[NoiseCancellationRoom] 切换到新模式:', modeId);
     setIsLoading(true);
+    
+    // 【关键修复】转换 ID 格式：noise_balanced -> balanced_noise
+    const audioGroupId = modeId.replace('noise_', '') + '_noise';
+    console.log('[NoiseCancellationRoom] 转换音频组 ID:', modeId, '->', audioGroupId);
     
     // 【核心】背景淡入淡出动画（1.5 秒平滑过渡）
     Animated.timing(backgroundOpacity, {
@@ -257,8 +268,8 @@ const NoiseCancellationRoom: React.FC = () => {
     setCurrentSceneId(modeId);
     setSelectedMode(modeId);
     
-    // 播放新场景（8TrackAudioService 会自动停止旧场景）
-    await playNoiseAudio(modeId);
+    // 播放新场景（使用 8 轨音频）
+    await play8TrackAudio(audioGroupId);
     
     setIsPlaying(true);
     setIsLoading(false);
@@ -269,7 +280,7 @@ const NoiseCancellationRoom: React.FC = () => {
   const handleStopAll = async () => {
     console.log('[NoiseCancellationRoom] 停止所有降噪');
     setIsLoading(true);
-    await stopNoiseAudio();
+    await stop8TrackAudio();
     setCurrentSceneId(null);
     setSelectedMode(null);
     setIsPlaying(false);
@@ -541,7 +552,8 @@ const NoiseCancellationRoom: React.FC = () => {
             } else {
               if (selectedMode) {
                 setIsLoading(true);
-                await playNoiseAudio(selectedMode);
+                const audioGroupId = selectedMode.replace('noise_', '') + '_noise';
+                await play8TrackAudio(audioGroupId);
                 setIsPlaying(true);
                 setIsLoading(false);
               }

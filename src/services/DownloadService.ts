@@ -130,17 +130,19 @@ export const DownloadService = {
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       
       const downloadSingleFile = async (asset: any): Promise<boolean> => {
-        // 使用 GitHub raw URL（全球通用）
-        const GITHUB_URL = `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/${asset.filename}`;
-        console.error(`[DownloadService] ===== 开始下载 ${asset.id} =====`);
-        console.error(`[DownloadService] GitHub URL:`, GITHUB_URL);
-        
-        const urls = [GITHUB_URL];
+        // 【多源下载】按优先级尝试多个镜像源
+        const urls = [
+          `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/${asset.filename}`,
+          `https://mirror.ghproxy.com/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/${asset.filename}`,
+          `https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/${asset.filename}`,
+        ];
+        console.log(`[DownloadService] ===== 开始下载 ${asset.id} =====`);
+        console.log(`[DownloadService] 镜像源数量:`, urls.length);
         const localPath = getLocalPathHelper(asset.category, asset.filename);
         const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
         
-        console.error(`[DownloadService] 本地路径:`, localPath);
-        console.error(`[DownloadService] 目录路径:`, dirPath);
+        console.log(`[DownloadService] 本地路径:`, localPath);
+        console.log(`[DownloadService] 目录路径:`, dirPath);
         
         // 【步骤3】确保目录物理存在
         try {
@@ -182,13 +184,13 @@ export const DownloadService = {
             const downloadOptions: RNFS.DownloadFileOptions = {
               fromUrl: url,
               toFile: tempPath,
-              connectionTimeout: 60000,
-              readTimeout: 60000,
-              background: true,
-              discretionary: true,
-              progressDivider: 10,
+              connectionTimeout: 30000, // 【优化】缩短到30秒，快速失败切换源
+              readTimeout: 30000,
+              background: false, // 【优化】关闭后台模式，避免 Android 系统限制
+              discretionary: false,
+              progressDivider: 5, // 【优化】更频繁的进度更新
               begin: (res) => {
-                // 静默
+                console.log(`[DownloadService] 📡 连接成功: ${asset.id} | 源 ${i + 1}/${urls.length}`);
               },
               progress: (res) => {
                 const delta = res.bytesWritten - lastFileReceived;
@@ -249,9 +251,9 @@ export const DownloadService = {
                 console.log(`[DownloadService] 文件大小校验通过：${asset.id}`);
               }
               
-              // 【暴力修复 4】增加 1 秒写入缓冲：给 Android 系统一点写盘时间
-              console.log(`[DownloadService] 等待 1 秒写入缓冲...`);
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              // 【优化】缩短写入缓冲到 200ms（现代 Android 写盘速度快）
+              console.log(`[DownloadService] 等待 200ms 写入缓冲...`);
+              await new Promise(resolve => setTimeout(resolve, 200));
               
               await RNFS.moveFile(tempPath, localPath);
               console.log(`[DownloadService-DIAGNOSE] File moved to: ${localPath}`);
@@ -359,6 +361,16 @@ export const DownloadService = {
       
       clearInterval(progressInterval);
       
+      // 【优化】校验阶段继续更新进度条，避免卡在 95%
+      const validationProgressInterval = setInterval(() => {
+        const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
+        onProgress({
+          progress: Math.min(0.999, rawProgress),
+          receivedBytes: Math.min(currentReceivedBytes, totalBytes),
+          totalBytes: totalBytes
+        });
+      }, 100);
+      
       // 3. Step 3: 检查下载结果
       const successCount = filesToDownload.length - failedAssets.length;
       const successRate = filesToDownload.length > 0 ? successCount / filesToDownload.length : 0;
@@ -366,14 +378,26 @@ export const DownloadService = {
       console.log(`[DownloadService] 下载完成：成功 ${successCount}/${filesToDownload.length}, 成功率 ${(successRate * 100).toFixed(1)}%`);
       console.log(`[DownloadService] 连续失败次数：${continuousFailCount}`);
       
-      // 【暴力修复 2】拦截 1.0 信号：除非物理检查所有文件通过，否则不允许达到 1.0
-      console.log('[DownloadService] 开始物理校验所有文件...');
+      // 【优化】快速校验：只检查失败的文件，不检查所有文件
+      console.log('[DownloadService] 开始快速校验失败文件...');
       let allFilesValid = true;
       const invalidFiles: string[] = [];
       
-      for (const asset of filesToDownload) {
+      // 只校验失败的文件，跳过成功的文件
+      const filesToValidate = failedAssets.length > 0 ? filesToDownload.filter(a => failedAssets.includes(a.id)) : filesToDownload;
+      
+      for (let i = 0; i < filesToValidate.length; i++) {
+        const asset = filesToValidate[i];
         const localPath = getLocalPathHelper(asset.category, asset.filename);
         const fileExists = await RNFS.exists(localPath);
+        
+        // 更新校验进度
+        const validationProgress = 0.95 + (i / filesToValidate.length) * 0.04;
+        onProgress({
+          progress: validationProgress,
+          receivedBytes: currentReceivedBytes,
+          totalBytes: totalBytes
+        });
         
         if (!fileExists) {
           allFilesValid = false;
@@ -398,6 +422,8 @@ export const DownloadService = {
           invalidFiles.push(`${asset.id}: 无法读取文件信息 - ${e}`);
         }
       }
+      
+      clearInterval(validationProgressInterval);
       
       console.log(`[DownloadService] 物理校验结果：${allFilesValid ? '通过' : '失败'}`);
       if (!allFilesValid) {

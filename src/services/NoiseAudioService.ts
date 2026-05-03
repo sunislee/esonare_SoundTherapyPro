@@ -23,6 +23,23 @@ const getLocalCachePath = (url: string) => {
   return `${RNFS.DocumentDirectoryPath}/${filename}`;
 };
 
+// 清理旧的 .m4a 缓存文件（1.4.2 修复：URL 从 .m4a 改为 .mp3）
+const cleanOldM4aCache = async () => {
+  try {
+    const oldFiles = ['wind_noise.m4a', 'crowd_noise.m4a', 'traffic_noise.m4a', 'balanced_noise.m4a'];
+    for (const file of oldFiles) {
+      const oldPath = `${RNFS.DocumentDirectoryPath}/${file}`;
+      const exists = await RNFS.exists(oldPath);
+      if (exists) {
+        await RNFS.unlink(oldPath);
+        console.log('[NoiseAudio] 🗑️ 清理旧缓存:', file);
+      }
+    }
+  } catch (error) {
+    console.error('[NoiseAudio] 清理旧缓存失败:', error);
+  }
+};
+
 // 初始化音频（预加载）
 export const initNoiseAudio = async () => {
   try {
@@ -43,16 +60,16 @@ export const playNoiseAudio = async (modeId: string) => {
   try {
     console.log('[NoiseAudio] 播放模式:', modeId);
     
-    // 如果已经是当前模式，跳过
-    if (currentModeId === modeId) {
-      console.log('[NoiseAudio] 已是当前模式，跳过播放');
-      return;
-    }
+    // 清理旧的 .m4a 缓存文件
+    await cleanOldM4aCache();
     
     // 先停止当前音频
     if (currentModeId) {
       console.log('[NoiseAudio] 切换到新模式，停止当前播放');
       await TrackPlayer.stop();
+      await TrackPlayer.reset();
+      // 等待重置完成
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
     // 获取音频配置
@@ -98,7 +115,7 @@ export const playNoiseAudio = async (modeId: string) => {
     
     // 添加到播放队列
     const track: Track = {
-      id: modeId,
+      id: modeId + '_' + Date.now(), // 添加时间戳确保 ID 唯一，防止 TrackPlayer 缓存
       url: finalUri,
       title: audioConfig.title,
       artist: '心声冥想',

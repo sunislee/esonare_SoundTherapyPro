@@ -11,7 +11,7 @@ export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googleP
 const TENCENT_CLOUD_URL = 'https://43.138.58.71/';
 export const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/main/';
 export const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
-const GHPROXY_URL = 'https://ghproxy.net/';
+export const GHPROXY_URL = 'https://ghproxy.net/';
 
 // Google Play 专用配置：GitHub 官方源（主源）+ ghproxy 镜像加速
 // 专注海外市场，使用 GitHub 作为主源，通过镜像加速提升下载速度
@@ -77,6 +77,43 @@ export const AUDIO_MANIFEST = [
   { id: 'oriental_zen_monastery', filename: 'zen/zen_bell.mp3', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 1048576 },
   { id: 'oriental_tibetan_bowl', filename: 'zen/zen_bowl.mp3', category: 'oriental', title: 'scenes.oriental_tibetan_bowl.title', description: 'scenes.oriental_tibetan_bowl.desc', size: 1048576 },
   { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.mp3', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 1048576 },
+
+  // 8 轨音频资源（降噪实验室 EQ 调节用）
+  { id: '8track_balanced_1', filename: 'noise reduction/balanced_noise_track_1.mp3', category: 'noise_reduction', title: '均衡降噪 Track 1', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_2', filename: 'noise reduction/balanced_noise_track_2.mp3', category: 'noise_reduction', title: '均衡降噪 Track 2', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_3', filename: 'noise reduction/balanced_noise_track_3.mp3', category: 'noise_reduction', title: '均衡降噪 Track 3', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_4', filename: 'noise reduction/balanced_noise_track_4.mp3', category: 'noise_reduction', title: '均衡降噪 Track 4', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_5', filename: 'noise reduction/balanced_noise_track_5.mp3', category: 'noise_reduction', title: '均衡降噪 Track 5', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_6', filename: 'noise reduction/balanced_noise_track_6.mp3', category: 'noise_reduction', title: '均衡降噪 Track 6', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_7', filename: 'noise reduction/balanced_noise_track_7.mp3', category: 'noise_reduction', title: '均衡降噪 Track 7', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_8', filename: 'noise reduction/balanced_noise_track_8.mp3', category: 'noise_reduction', title: '均衡降噪 Track 8', description: '8 轨均衡降噪音频', size: 4438143 },
+
+  { id: '8track_wind_1', filename: 'noise reduction/wind_noise_track_1.mp3', category: 'noise_reduction', title: '风声降噪 Track 1', description: '8 轨风声降噪音频', size: 531061 },
+  { id: '8track_wind_2', filename: 'noise reduction/wind_noise_track_2.mp3', category: 'noise_reduction', title: '风声降噪 Track 2', description: '8 轨风声降噪音频', size: 531061 },
+  { id: '8track_wind_3', filename: 'noise reduction/wind_noise_track_3.mp3', category: 'noise_reduction', title: '风声降噪 Track 3', description: '8 轨风声降噪音频', size: 531061 },
+  { id: '8track_wind_4', filename: 'noise reduction/wind_noise_track_4.mp3', category: 'noise_reduction', title: '风声降噪 Track 4', description: '8 轨风声降噪音频', size: 531061 },
+  { id: '8track_wind_5', filename: 'noise reduction/wind_noise_track_5.mp3', category: 'noise_reduction', title: '风声降噪 Track 5', description: '8 轨风声降噪音频', size: 531061 },
+  { id: '8track_wind_6', filename: 'noise reduction/wind_noise_track_6.mp3', category: 'noise_reduction', title: '风声降噪 Track 6', description: '8 轨风声降噪音频', size: 531061 },
+  { id: '8track_wind_7', filename: 'noise reduction/wind_noise_track_7.mp3', category: 'noise_reduction', title: '风声降噪 Track 7', description: '8 轨风声降噪音频', size: 531061 },
+  { id: '8track_wind_8', filename: 'noise reduction/wind_noise_track_8.mp3', category: 'noise_reduction', title: '风声降噪 Track 8', description: '8 轨风声降噪音频', size: 531061 },
+
+  { id: '8track_crowd_1', filename: 'noise reduction/crowd_noise_track_1.mp3', category: 'noise_reduction', title: '人声降噪 Track 1', description: '8 轨人声降噪音频', size: 4324040 },
+  { id: '8track_crowd_2', filename: 'noise reduction/crowd_noise_track_2.mp3', category: 'noise_reduction', title: '人声降噪 Track 2', description: '8 轨人声降噪音频', size: 4324040 },
+  { id: '8track_crowd_3', filename: 'noise reduction/crowd_noise_track_3.mp3', category: 'noise_reduction', title: '人声降噪 Track 3', description: '8 轨人声降噪音频', size: 4324040 },
+  { id: '8track_crowd_4', filename: 'noise reduction/crowd_noise_track_4.mp3', category: 'noise_reduction', title: '人声降噪 Track 4', description: '8 轨人声降噪音频', size: 4324040 },
+  { id: '8track_crowd_5', filename: 'noise reduction/crowd_noise_track_5.mp3', category: 'noise_reduction', title: '人声降噪 Track 5', description: '8 轨人声降噪音频', size: 4324040 },
+  { id: '8track_crowd_6', filename: 'noise reduction/crowd_noise_track_6.mp3', category: 'noise_reduction', title: '人声降噪 Track 6', description: '8 轨人声降噪音频', size: 4324040 },
+  { id: '8track_crowd_7', filename: 'noise reduction/crowd_noise_track_7.mp3', category: 'noise_reduction', title: '人声降噪 Track 7', description: '8 轨人声降噪音频', size: 4324040 },
+  { id: '8track_crowd_8', filename: 'noise reduction/crowd_noise_track_8.mp3', category: 'noise_reduction', title: '人声降噪 Track 8', description: '8 轨人声降噪音频', size: 4324040 },
+
+  { id: '8track_traffic_1', filename: 'noise reduction/traffic_noise_track_1.mp3', category: 'noise_reduction', title: '交通降噪 Track 1', description: '8 轨交通降噪音频', size: 4322786 },
+  { id: '8track_traffic_2', filename: 'noise reduction/traffic_noise_track_2.mp3', category: 'noise_reduction', title: '交通降噪 Track 2', description: '8 轨交通降噪音频', size: 4322786 },
+  { id: '8track_traffic_3', filename: 'noise reduction/traffic_noise_track_3.mp3', category: 'noise_reduction', title: '交通降噪 Track 3', description: '8 轨交通降噪音频', size: 4322786 },
+  { id: '8track_traffic_4', filename: 'noise reduction/traffic_noise_track_4.mp3', category: 'noise_reduction', title: '交通降噪 Track 4', description: '8 轨交通降噪音频', size: 4322786 },
+  { id: '8track_traffic_5', filename: 'noise reduction/traffic_noise_track_5.mp3', category: 'noise_reduction', title: '交通降噪 Track 5', description: '8 轨交通降噪音频', size: 4322786 },
+  { id: '8track_traffic_6', filename: 'noise reduction/traffic_noise_track_6.mp3', category: 'noise_reduction', title: '交通降噪 Track 6', description: '8 轨交通降噪音频', size: 4322786 },
+  { id: '8track_traffic_7', filename: 'noise reduction/traffic_noise_track_7.mp3', category: 'noise_reduction', title: '交通降噪 Track 7', description: '8 轨交通降噪音频', size: 4322786 },
+  { id: '8track_traffic_8', filename: 'noise reduction/traffic_noise_track_8.mp3', category: 'noise_reduction', title: '交通降噪 Track 8', description: '8 轨交通降噪音频', size: 4322786 },
 ]; 
 
 // 【核心】初始化 AUDIO_MAP，将 filename 映射到本地路径
@@ -121,6 +158,43 @@ export const ASSET_LIST = [
   { id: 'manual_morning_forest', expectedSize: 784448 },      // offroad_avenue.m4a
   { id: 'manual_serene_lakeside', expectedSize: 594199 },    // moonlight.m4a
   { id: 'manual_starlit_wilderness', expectedSize: 466422 }, // star_glass.m4a
+
+  // 8 轨音频资源（降噪实验室 EQ 调节用）
+  { id: '8track_balanced_1', expectedSize: 4438143 },
+  { id: '8track_balanced_2', expectedSize: 4438143 },
+  { id: '8track_balanced_3', expectedSize: 4438143 },
+  { id: '8track_balanced_4', expectedSize: 4438143 },
+  { id: '8track_balanced_5', expectedSize: 4438143 },
+  { id: '8track_balanced_6', expectedSize: 4438143 },
+  { id: '8track_balanced_7', expectedSize: 4438143 },
+  { id: '8track_balanced_8', expectedSize: 4438143 },
+
+  { id: '8track_wind_1', expectedSize: 531061 },
+  { id: '8track_wind_2', expectedSize: 531061 },
+  { id: '8track_wind_3', expectedSize: 531061 },
+  { id: '8track_wind_4', expectedSize: 531061 },
+  { id: '8track_wind_5', expectedSize: 531061 },
+  { id: '8track_wind_6', expectedSize: 531061 },
+  { id: '8track_wind_7', expectedSize: 531061 },
+  { id: '8track_wind_8', expectedSize: 531061 },
+
+  { id: '8track_crowd_1', expectedSize: 4324040 },
+  { id: '8track_crowd_2', expectedSize: 4324040 },
+  { id: '8track_crowd_3', expectedSize: 4324040 },
+  { id: '8track_crowd_4', expectedSize: 4324040 },
+  { id: '8track_crowd_5', expectedSize: 4324040 },
+  { id: '8track_crowd_6', expectedSize: 4324040 },
+  { id: '8track_crowd_7', expectedSize: 4324040 },
+  { id: '8track_crowd_8', expectedSize: 4324040 },
+
+  { id: '8track_traffic_1', expectedSize: 4322786 },
+  { id: '8track_traffic_2', expectedSize: 4322786 },
+  { id: '8track_traffic_3', expectedSize: 4322786 },
+  { id: '8track_traffic_4', expectedSize: 4322786 },
+  { id: '8track_traffic_5', expectedSize: 4322786 },
+  { id: '8track_traffic_6', expectedSize: 4322786 },
+  { id: '8track_traffic_7', expectedSize: 4322786 },
+  { id: '8track_traffic_8', expectedSize: 4322786 },
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）
