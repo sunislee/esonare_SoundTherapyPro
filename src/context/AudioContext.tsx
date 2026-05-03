@@ -96,6 +96,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [initialRemaining, setInitialRemaining] = useState<number | null>(null);
   const [ambientVolume, setAmbientVolume] = useState<number>(1.0);
   const [eqGains, setEqGains] = useState<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 8 段均衡器，初始值均为 1.0
+  const eqGainsRef = useRef<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 【关键修复】用 ref 存储最新值，避免闭包问题
 
   // 检查 AudioService 是否已准备好
   useEffect(() => {
@@ -234,10 +235,14 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const eqDebounceTimers = useRef<{ [key: number]: NodeJS.Timeout }>({});
 
   const updateEqGain = useCallback((index: number, gain: number) => {
+    console.log(`[AudioContext] 🎛️ updateEqGain 被调用: index=${index}, gain=${gain}`);
     if (index < 0 || index >= 8) {
       console.warn('[AudioContext] ⚠️ EQ 频段索引超出范围:', index);
       return;
     }
+    
+    // 【关键修复】同步更新 ref
+    eqGainsRef.current[index] = gain;
     
     // 【防抖】清除之前的计时器
     if (eqDebounceTimers.current[index]) {
@@ -247,16 +252,19 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setEqGains(prev => {
       const newGains = [...prev];
       newGains[index] = gain;
+      console.log(`[AudioContext] 📊 更新 eqGains 状态:`, newGains);
       return newGains;
     });
     
     // 【防抖优化】延迟 50ms 调用原生 API，避免频繁更新导致音频引擎过载
     eqDebounceTimers.current[index] = setTimeout(() => {
-      // 【虚拟 8 段 EQ】使用多轨混音映射，发送全部 8 段增益值
-      NativeEQ.set8BandEQ(eqGains);
+      // 【关键修复】使用 ref 中的最新值，而不是闭包捕获的旧 state
+      const currentGains = [...eqGainsRef.current];
+      console.log(`[AudioContext] ⏰ 防抖计时器触发，发送 EQ 到原生层:`, currentGains);
+      NativeEQ.set8BandEQ(currentGains);
       console.log(`[AudioContext] ✅ EQ 更新：频段${index}, gain=${gain}, dB=${(gain * 12).toFixed(1)}dB`);
     }, 50);
-  }, [eqGains]);
+  }, []);
 
   const setAmbient = useCallback(async (id: string | null) => {
     if (!isServiceReady) {

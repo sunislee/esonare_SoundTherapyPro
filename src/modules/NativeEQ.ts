@@ -69,14 +69,17 @@ export const NativeEQ = {
   },
   
   /**
-   * 【虚拟 8 段 EQ】多轨混音模式
+   * 【虚拟 8 段 EQ】使用原生 Equalizer API（影响全局音频，包括 TrackPlayer）
    */
   set8BandEQ: (gains: number[]) => {
-    // 导入多轨音频服务
-    import('../services/MultiTrackAudioService').then(({ set8BandEQ }) => {
-      set8BandEQ(gains);
-    }).catch(err => {
-      console.error('[NativeEQ] 虚拟 8 段 EQ 失败:', err);
-    });
+    if (AudioLevelModule) {
+      // 直接使用原生 Equalizer API，trackIndex=0 表示全局音轨
+      gains.forEach((gain, index) => {
+        AudioLevelModule.setTrackBandGain(0, index, gain);
+      });
+      console.log('[NativeEQ] 🎚️ 原生 8 段 EQ 已更新（全局音频）');
+    } else {
+      console.warn('[NativeEQ] AudioLevelModule 不可用');
+    }
   },
 };

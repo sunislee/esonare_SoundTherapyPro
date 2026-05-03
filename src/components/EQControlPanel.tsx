@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as _8TrackAudioService from '../services/8TrackAudioService';
+import { useAudio } from '../context/AudioContext';
 
 const { width } = Dimensions.get('window');
 const CONTAINER_PADDING = 32; // 左右各 16px
@@ -61,10 +62,11 @@ interface EQSliderProps {
   trackNum: number;
   volume: number; // 0-100
   onUpdateVolume: (trackNum: number, volume: number) => void;
+  onEqChange: (index: number, gain: number) => void;
 }
 
 // 【性能优化】使用 React.memo 包裹，防止不必要的重绘
-const EQSlider: React.FC<EQSliderProps> = memo(({ index, label, description, trackNum, volume, onUpdateVolume }) => {
+const EQSlider: React.FC<EQSliderProps> = memo(({ index, label, description, trackNum, volume, onUpdateVolume, onEqChange }) => {
   // 使用 Animated.Value 记录位置（唯一视觉状态，完全独立）
   const thumbAnim = useRef(new Animated.Value(0)).current;
   const lastVolume = useRef(volume);
@@ -85,7 +87,12 @@ const EQSlider: React.FC<EQSliderProps> = memo(({ index, label, description, tra
     return Math.round(100 - (clampedY / MAX_POS) * 100);
   }, []);
 
-  // 【关键】仅在外部 volume 变化且未拖动时更新位置（避免干扰用户操作）
+  // 映射函数：Volume (0-100) -> Gain (0-2)
+  const getGainFromVolume = useCallback((v: number) => {
+    return v / 50; // 50% = 1.0 (0dB), 0% = 0.0 (-∞dB), 100% = 2.0 (+12dB)
+  }, []);
+
+  // 【关键修复】仅在外部 volume 变化且未拖动时更新位置（避免干扰用户操作）
   useEffect(() => {
     if (!isDragging.current) {
       const initialPos = getPosFromVolume(volume);
@@ -119,6 +126,7 @@ const EQSlider: React.FC<EQSliderProps> = memo(({ index, label, description, tra
         });
       },
       onPanResponderMove: (_, gestureState) => {
+        console.log(`[EQSlider] 🖐️ 手势移动: index=${index}, dy=${gestureState.dy}`);
         // 【关键】直接更新动画（无 setState，视觉零延迟）
         thumbAnim.setValue(gestureState.dy);
         
@@ -129,8 +137,11 @@ const EQSlider: React.FC<EQSliderProps> = memo(({ index, label, description, tra
         // 【节流阀】限制发送给底层的频率
         const now = Date.now();
         if (Math.abs(currentVolume - lastVolume.current) > 1 && (now - lastUpdateRef.current) > THROTTLE_MS) {
-          // 直接调用底层（不触发 UI 更新）
-          _8TrackAudioService.setTrackVolumePercent(trackNum, currentVolume);
+          // 【关键修复】调用 EQ 更新而不是轨道音量
+          const gain = getGainFromVolume(currentVolume);
+          console.log(`[EQSlider] 🎚️ 滑块拖动: index=${index}, volume=${currentVolume}%, gain=${gain.toFixed(2)}`);
+          onEqChange(index, gain);
+          
           lastVolume.current = currentVolume;
           lastUpdateRef.current = now;
           
@@ -207,6 +218,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
   isLoading = false,
 }) => {
   const { t } = useTranslation();
+  const { updateEqGain, eqGains } = useAudio();
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
   const [volumes, setVolumes] = useState<number[]>(Array(8).fill(100));
   
@@ -274,11 +286,14 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
     }
   }
 
-  // 重置所有音量
+  // 重置所有 EQ
   const handleResetVolumes = () => {
-    const defaultVolumes = Array(8).fill(100);
-    _8TrackAudioService.setAllTrackVolumes(defaultVolumes);
-    setVolumes(defaultVolumes);
+    const defaultGains = Array(8).fill(1.0);
+    // 重置每个频段
+    defaultGains.forEach((gain, index) => {
+      updateEqGain(index, gain);
+    });
+    setVolumes(Array(8).fill(100));
   };
 
   // 更新单个滑块音量状态
@@ -288,6 +303,13 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
       newVols[trackNum - 1] = newVolume;
       return newVols;
     });
+  }, []);
+
+  // EQ 变化处理 - 直接控制 8 轨音量
+  const handleEqChange = useCallback((index: number, gain: number) => {
+    const volumePercent = gain * 50; // gain 0-2 -> volume 0-100%
+    console.log(`[EQPanel] 📡 控制 8 轨音量: track=${index + 1}, volume=${volumePercent.toFixed(0)}%`);
+    _8TrackAudioService.setTrackVolumePercent(index + 1, volumePercent);
   }, []);
 
   // 计算当前背景颜色（根据场景名称）
@@ -341,6 +363,7 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
             trackNum={freq.trackNum}
             volume={volumes[index]}
             onUpdateVolume={handleVolumeChange}
+            onEqChange={handleEqChange}
           />
         ))}
       </View>

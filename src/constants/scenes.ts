@@ -199,6 +199,10 @@ const getSceneBackground = (sceneId: string, category: SceneCategory) => {
 };
 
 export const SCENES: Scene[] = AUDIO_MANIFEST
+  .filter((item) => {
+    // 【关键过滤】排除 8 轨音频文件，它们只用于降噪实验室的 EQ 控制
+    return !item.id.startsWith('8track_');
+  })
   .map((item) => {
     const category = getCategory(item.category);
     const bg = backgrounds[category];

@@ -11,6 +11,8 @@
 
 import Sound from 'react-native-sound';
 import { lfoService, type LFOParams } from './LFOService';
+import { getLocalPath } from '../constants/audioAssets';
+import * as RNFS from 'react-native-fs';
 
 // 初始化音频类别
 Sound.setCategory('Playback');
@@ -234,10 +236,18 @@ export const warmupAudio = async () => {
   console.log('[8Track] 🔥 开始静默预热音频底层...');
   
   try {
-    // 加载第一个轨道（任意轨道都可以）
-    // 【关键修复】Android 使用 '' (空字符串) 加载 raw 资源
+    const filename = 'balanced_noise_track_1.mp3';
+    const localPath = getLocalPath('noise_reduction', filename);
+    const fileExists = await RNFS.exists(localPath);
+    
+    if (!fileExists) {
+      console.log('[8Track] ⚠️ 预热文件未下载，跳过预热');
+      isAudioWarmup = true;
+      return;
+    }
+    
     const warmupSound = await new Promise<Sound>((resolve, reject) => {
-      const s = new Sound('balanced_noise_track_1', '', (error) => {
+      const s = new Sound(localPath, '', (error) => {
         if (error) {
           console.error('[8Track] ⚠️ 预热加载失败:', error);
           reject(error);
@@ -248,14 +258,12 @@ export const warmupAudio = async () => {
       });
     });
     
-    // 立刻释放
     warmupSound.release();
     isAudioWarmup = true;
     
     console.log('[8Track] ✅ 音频底层预热完成 - react-native-sound 已激活');
   } catch (error) {
     console.error('[8Track] ❌ 预热失败:', error);
-    // 即使失败也标记为已预热，防止重复尝试
     isAudioWarmup = true;
   }
 };
@@ -385,13 +393,16 @@ export const play8TrackAudio = async (audioGroupId: string) => {
       // 并行加载所有轨道
       const loadPromises = [];
       for (let trackNum = 1; trackNum <= 8; trackNum++) {
-        // 【关键修复】路径格式硬化：强制全小写
-        const resourceName = `${audioConfig.folder}_track_${trackNum}`.toLowerCase();
+        // 从 AUDIO_MANIFEST 获取本地路径
+        const assetId = `8track_${audioConfig.folder.split('_')[0]}_${trackNum}`;
+        const filename = `${audioConfig.folder}_track_${trackNum}.mp3`;
+        // 【关键修复】GitHub 目录名是 "noise reduction"（带空格）
+        const localPath = getLocalPath('noise_reduction', `noise reduction/${filename}`);
         
-        // 【关键修复】强制路径合法性检查
-        console.log(`[8Track] 🚀 准备加载的确切路径：[${trackNum}/8] ${resourceName}`);
+        console.log(`[8Track] 🚀 准备加载轨道 [${trackNum}/8]: ${filename}`);
+        console.log(`[8Track] 📂 本地路径: ${localPath}`);
         
-        const loadPromise = new Promise<Sound | null>((resolve) => {
+        const loadPromise = new Promise<Sound | null>(async (resolve) => {
           let isResolved = false;
           
           // 单个轨道超时（2 秒）
@@ -399,23 +410,32 @@ export const play8TrackAudio = async (audioGroupId: string) => {
             if (!isResolved) {
               console.error(`[8Track] ❌ [${trackNum}/8] Track ${trackNum} 加载超时 (${LOAD_TIMEOUT_MS}ms)`);
               isResolved = true;
-              resolve(null); // 超时返回 null
+              resolve(null);
             }
           }, LOAD_TIMEOUT_MS);
           
-          // 【关键修复】Android 使用 '' (空字符串) 加载 raw 资源，iOS 使用 Sound.MAIN_BUNDLE
-          console.log(`[8Track] ⏳ [${trackNum}/8] 正在加载 Track ${trackNum}: ${resourceName}`);
+          // 检查文件是否存在
+          const fileExists = await RNFS.exists(localPath);
+          if (!fileExists) {
+            clearTimeout(trackTimeout);
+            isResolved = true;
+            console.error(`[8Track] ❌ [${trackNum}/8] 文件不存在: ${localPath}`);
+            resolve(null);
+            return;
+          }
           
-          const s = new Sound(resourceName, '', (error) => {
+          console.log(`[8Track] ⏳ [${trackNum}/8] 正在加载 Track ${trackNum}`);
+          
+          // 使用本地文件路径加载
+          const s = new Sound(localPath, '', (error) => {
             clearTimeout(trackTimeout);
             isResolved = true;
             
             if (error) {
               console.error(`[8Track] ❌ [${trackNum}/8] Track ${trackNum} 加载失败:`, error);
-              console.error(`[8Track] ❌ 路径检查：${resourceName} 不存在或格式错误`);
-              resolve(null); // 失败返回 null
+              resolve(null);
             } else {
-              console.log(`[8Track] ✅ [${trackNum}/8] Track ${trackNum} 加载成功 (duration=${s.getDuration().toFixed(2)}s, isLoaded=${s.isLoaded()})`);
+              console.log(`[8Track] ✅ [${trackNum}/8] Track ${trackNum} 加载成功 (duration=${s.getDuration().toFixed(2)}s)`);
               resolve(s);
             }
           });
