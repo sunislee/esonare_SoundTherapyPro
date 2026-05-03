@@ -1,0 +1,104 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# APK files
+*.apk
+
+# Android build folder
+android/app/build/
+
+# Backup folder
+backup/
+
+# Large files and directories
+exported_assets/
+exported_assets_root/
+audio_engine/
+mobile_app/
+native_modules/
+
+# Log files
+full_log.txt
+full_log_clean.txt
+
+# Image files
+screen.png
+
+# Build outputs
+**/build/
+**/dist/
+**/out/
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files
+**/test/
+**/tests/
+
+# Coverage files
+**/coverage/
+
+# Node.js files
+**/package-lock.json
+**/yarn.lock
+
+# SoundTherapyApp specific
+SoundTherapyApp/android/
+SoundTherapyApp/ios/
+SoundTherapyApp/harmony/
+SoundTherapyApp/build_error.log
+SoundTherapyApp/build_log.txt
+SoundTherapyApp/crash*.log
+SoundTherapyApp/index.bundle
+SoundTherapyApp/service.js
+SoundTherapyApp/view.xml
+SoundTherapyApp/worklets_build.log
+SoundTherapyApp/src/assets/images/
+SoundTherapyApp/src/assets/audio/
+SoundTherapyApp/patches/
+SoundTherapyApp/link-assets-manifest.json

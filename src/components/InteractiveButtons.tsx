@@ -4,18 +4,18 @@ import { Scene } from '../constants/scenes';
 import AnimatedFloatingButton from './AnimatedFloatingButton';
 import AudioService from '../services/AudioService';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useAudio } from '../context/AudioContext';
 
 interface InteractiveButtonsProps {
   globalAmbientScenes: Scene[];
   activeSmallSceneIds: string[];
-  setActiveSmallSceneIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
   globalAmbientScenes,
   activeSmallSceneIds,
-  setActiveSmallSceneIds,
 }) => {
+  const { toggleAmbience } = useAudio();
   const triggerHaptic = useCallback(() => {
     const options = {
       enableVibrateFallback: true,
@@ -35,24 +35,17 @@ const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
         isActive={isActive}
         column={column}
         row={row}
-        onPress={() => {
+        onPress={async () => {
           triggerHaptic();
-          // UI 立即响应：先更新本地状态
-          setActiveSmallSceneIds(prev => {
-            const newActive = prev.includes(ambient.id)
-              ? prev.filter(id => id !== ambient.id)
-              : [...prev, ambient.id];
-            console.log('[InteractiveButtons] Toggle ambience:', ambient.id, 'isActive:', !prev.includes(ambient.id), 'newActive:', newActive);
-            return newActive;
-          });
-          // 异步执行音频操作，不阻塞 UI
-          setImmediate(() => {
-            AudioService.toggleAmbience(ambient);
-          });
+          // 计算目标状态
+          const targetState = !activeSmallSceneIds.includes(ambient.id);
+          console.log('[InteractiveButtons] Toggle ambience:', ambient.id, 'isActive:', targetState);
+          // 通过 AudioContext 切换交互音
+          await toggleAmbience(ambient, targetState);
         }}
       />
     );
-  }, [globalAmbientScenes, triggerHaptic, setActiveSmallSceneIds, activeSmallSceneIds]);
+  }, [globalAmbientScenes, triggerHaptic, activeSmallSceneIds, toggleAmbience]);
 
   return (
     <View style={styles.floatingIconsContainer} pointerEvents="box-none">

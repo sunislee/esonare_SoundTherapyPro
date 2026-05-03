@@ -1,0 +1,100 @@
+04-17 18:29:55.279  5080  5994 D Modem_MEModuleSignal: onStateChanged: type = 52, value = 1
+04-17 18:29:55.279  5080  5994 D Modem_MEModuleSignalGesture: onStateChanged: type = 52, value = 1
+04-17 18:29:55.279  5080  5994 D Modem_MEModuleSignalGesture: received T1 weak signal change
+04-17 18:29:55.280  5080  5994 D Modem_ModemEnhanceMain: repeat behavior, removeMessages and return!
+04-17 18:29:55.280  5080  5994 D Modem_MEGestureModeConfig: coexistPolicyMatch matched index = 3   mode=1
+04-17 18:29:55.280  5080  5994 D Modem_MEModuleSignalGesture: coexistMode new=0  old=1mode=1
+04-17 18:29:55.280  5080  5994 D Modem_MEModuleSignalGesture: coexistMode changed mode=1  gpio_0=0  gpio_1=0  gpio_2=255  gpio_3=255  gpio_4=255  gpio_5=255  gpio_6=255  gpio_7=255  gpio_8=255  gpio_9=255  gpio_10=255  gpio_11=255
+04-17 18:29:55.280  5080  5994 D Modem_MEModuleSignalGesture: Send non DSDA mode to bp.
+04-17 18:29:55.280  5080  5994 D MiRilHook-QCOM(com.android.phone): onPkHookCommonMsg, msg_id = 100, bytes = [B@bc61a98
+04-17 18:29:55.280  5080  5994 D MiRilHook-QCOM(com.android.phone): bytes.length = 16
+04-17 18:29:55.280  5080  5994 D MiRilHook-QCOM(com.android.phone): onGetHookMsgBytes, HOOK_HEAD_SIZE = 16, msg_len = 20
+04-17 18:29:55.280  5080  5994 D MiRilHookAidlQcom(com.android.phone): onHookSendSync, phoneId = 0
+04-17 18:29:55.280  5080  5994 D MiRilHookAidlQcom(com.android.phone): sendQcRilHookMsgSync, requestId = 524970, phoneId = 0, request = [B@903d2f1
+04-17 18:29:55.280  5080  5994 D MiRilHookAidlQcom(com.android.phone): sendRilOemHookMsg: Outgoing Data is 514f454d484f4f4baa02080024000000640000000c00000004000000070000000100000000000000000000000000000000000000
+04-17 18:29:55.280  5080  5994 D MiRilHookAidlQcom(com.android.phone): sendRilOemHookMsg, mService: com.qualcomm.qcrilmsgtunnel.IQcrilMsgTunnel$Stub$Proxy@50c738b
+04-17 18:29:55.280  4854  4854 D QcrilMsgTunnelIfaceManager: handleMessage what = 1
+04-17 18:29:55.280  4854  4854 I QcrilOemhookMsgTunnel: [0]invokeOemRilRequestRaw: serial=2012 length=52
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:4131] xiaomi_qcril_hook_common_evt: ===================the type of hook msg is 100===================
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:2880] xiaomi_qcril_hook_modem_enhance_common: function entry ------------->
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:2894] xiaomi_qcril_hook_modem_enhance_common: l: 12
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_me.cpp:301] me_req_preprocess: function entry ------------->
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_me.cpp:304] me_req_preprocess: me_req_preprocess: main id = 4,  submodule id = 7
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_me.cpp:492] me_req_preprocess: function exit <-------------
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_cmn.c:1827] xiaomi_common_qmi_req: function entry ------------->
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_api.cpp:480] xiaomi_extend_qmi_send_sync: XIAOMI_EXTEND_QMI_CLIENT_CRIT_SECT_LOCK_WAIT...
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_api.cpp:480] xiaomi_extend_qmi_send_sync: XIAOMI_EXTEND_QMI_CLIENT_CRIT_SECT_LOCK_DONE
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_api.cpp:167] xiaomi_extend_qmi_init_do: done, do nothing
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_utils_timer.cpp:364] xiaomi_timer_is_active: timer_id = 1, is_active = 0
+04-17 18:29:55.282  2293  2293 D qcrilNrd: SUB[0][xiaomi_utils_timer.cpp:562] xiaomi_timer_start: ret = 0, timeout_s = 3, timer_id = 1
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_utils_timer.cpp:594] xiaomi_timer_stop: ret = 0, timeout_s = 3, timer_id = 1
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_api.cpp:564] xiaomi_extend_qmi_send_sync: resp_len:508
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_api.cpp:566] xiaomi_extend_qmi_send_sync: result: 0, id: 4
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_api.cpp:567] xiaomi_extend_qmi_send_sync: XIAOMI_EXTEND_QMI_CLIENT_CRIT_SECT_UNLOCK_DONE
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_cmn.c:1865] xiaomi_common_qmi_req: function exit <-------------
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_extend_nvefs.c:76] xiaomi_qmi_result_map: xiaomi_qmi_result_map, old_result 0, new_result 0
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:2916] xiaomi_qcril_hook_modem_enhance_common: result = 0, rsp.result = 0
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:2927] xiaomi_qcril_hook_modem_enhance_common: l_rsp 12
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:2953] xiaomi_qcril_hook_modem_enhance_common: function exit <-------------
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:121] xiaomi_qcril_default_request_resp_params: instance_id 0, t 1895562672, request_id -474538584, ril_err_no 0
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:4946] xiaomi_qcril_hook_common_evt: resp_pkt 0xe371b000, resp_len 20
+04-17 18:29:55.283  2293  2293 D qcrilNrd: SUB[0][xiaomi_qcril_hook.cpp:160] xiaomi_qcril_send_request_response: instance_id 0, t 1895562672, request_id -474538584, ril_err_no 0
+04-17 18:29:55.284  4854  6010 I QtiOemHookAidl: oemHookRawResponse: serial no: 2012 error: 0length=20
+04-17 18:29:55.284  4854  4854 D QcrilMsgTunnelIfaceManager: handleMessage what = 2
+04-17 18:29:55.284  5080  5994 D MiRilHookAidlQcom(com.android.phone): sendOemRilRequestRaw returns value = 20
+04-17 18:29:55.284  5080  5994 D MiRilHookAidlQcom(com.android.phone): sendQcRilHookMsgSync, requestId = 524970, phoneId = 0, ar = org.codeaurora.telephony.utils.AsyncResult@84c6ed6
+04-17 18:29:55.284  5080  5994 D Modem_MEHalSignal:  send T1 mode message
+04-17 18:29:55.284  5080  5994 D Modem_MEModuleRfm: State changed: type=52, value=1
+04-17 18:29:55.284  5080  5994 E Modem_MEModuleRfm: Scenario module is null
+04-17 18:29:55.291 26242 26252 I kloadclassifier: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+04-17 18:29:55.292 26242 26794 D JavaheapMonitor: Java heap used=1M max=256M, proc: com.qualcomm.qti.workloadclassifier
+04-17 18:29:55.292 26242 26794 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:29:55.376  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:29:55.376  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:29:55.376  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 18:29:55.376  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:29:55.380 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 1
+04-17 18:29:55.380 22066 22362 D BluetoothRemoteDevices: Skip name update for XX:XX:XX:XX:C6:45
+04-17 18:29:55.380 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 4
+04-17 18:29:55.380 22066 22362 D BluetoothRemoteDevices: Skip class update, device=XX:XX:XX:XX:C6:45, cod=0x1f00
+04-17 18:29:55.380 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 5
+04-17 18:29:55.380 22066 22362 D BluetoothRemoteDevices:  BT_PROPERTY_TYPE_OF_DEVICE addr:9C:76:0E:4A:C6:45 deviceType:3
+04-17 18:29:55.380 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 1
+04-17 18:29:55.380 22066 22362 D HyperRemoteDevicesAdapter: Remote device name is: 李 type = 2 9C:76:0E:4A:C6:45
+04-17 18:29:55.380 22066 22362 D HyperRemoteDevicesAdapter: update name for XX:XX:XX:XX:C6:45 type = 2 name = 李 1
+04-17 18:29:55.380 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 4
+04-17 18:29:55.380 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 5
+04-17 18:29:55.380 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C6:45, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-53, periodicAdvInt=0x0, originalAddress=9C:76:0E:4A:C6:45
+04-17 18:29:55.380 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.381 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.381 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.381 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.382 22066 22362 V ScanController: onScanResult() - eventType=0x10, addressType=1, address=XX:XX:XX:XX:DC:13, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-52, periodicAdvInt=0x0, originalAddress=49:1C:F0:09:DC:13
+04-17 18:29:55.382 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.382 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.382 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.382 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:55.418  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:29:55.418  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:29:55.568  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:29:55.643  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:55.643  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12555.0,R:3217.0,G:3180.0,B:950.0, lux: 9.0, clone:1697
+04-17 18:29:55.709  2780  2780 I adbd    : in ShellService: pidof com.anonymous.soundtherapyapp
+04-17 18:29:55.761  2780  2780 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+04-17 18:29:55.765 10301 19894 D JavaheapMonitor: Java heap used=4M max=256M, proc: com.xiaomi.xmsf:services
+04-17 18:29:55.766 10301 19894 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:29:55.843  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:55.843  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12539.0,R:3213.0,G:3190.0,B:940.0, lux: 9.1, clone:1697
+04-17 18:29:55.974 10498 10940 D JavaheapMonitor: Java heap used=10M max=256M, proc: com.miui.powerkeeper
+04-17 18:29:55.975 10498 10940 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:29:56.042  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:56.042  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12537.0,R:3216.0,G:3190.0,B:940.0, lux: 9.1, clone:1697
+04-17 18:29:56.052 16241 19969 D JavaheapMonitor: Java heap used=7M max=512M, proc: com.miui.core
+04-17 18:29:56.052 16241 19969 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:29:56.165  7129 16726 D JavaheapMonitor: Java heap used=8M max=256M, proc: com.xiaomi.misettings:remote
+04-17 18:29:56.165  7129 16726 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:29:56.194  3285  4157 I MiuiNetworkPolicy: updateUidState uid = 10168, uidState = 19
+04-17 18:29:56.202  1732  1732 E WifiHAL : handleResponse: Number of MLO links 2
+04-17 18:29:56.242  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:56.242  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12549.0,R:3214.0,G:3196.0,B:948.0, lux: 9.2, clone:1697
+04-17 18:29:56.361  3285  6510 D SLM-SRV-SLAService: checktemp temperature = 28990 temperature_average = 28940 isPerformanceMode = false thermal_enable_slm = true

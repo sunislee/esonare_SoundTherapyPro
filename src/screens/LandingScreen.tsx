@@ -48,6 +48,9 @@ export const LandingScreen = ({ navigation }: any) => {
         // 初始化完成后触发一次强制刷新
         setTick(t => t + 1);
 
+        // 1.5 复制内置音频资源（首次安装时）
+        await OfflineService.copyBundledAssets();
+
         // 2. 使用 OfflineService 进行统一的资源就绪检查
         const integrity = await OfflineService.checkResourceIntegrity();
         const resourceReady = await OfflineService.isResourceReady();
@@ -61,25 +64,35 @@ export const LandingScreen = ({ navigation }: any) => {
         const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
         
         // 打印详细日志
-        console.log(`[LandingScreen] 启动检查: Name: ${userName ? '存在' : '不存在'}, Skipped: ${hasSkipped === 'true'}`);
-        console.log(`[LandingScreen] AsyncStorage: USER_NAME=${userName}, HAS_SET_NAME=${hasSkipped}`);
+        console.log(`[LandingScreen] 启动检查:`);
+        console.log(`  - USER_NAME: ${userName ? '存在 (' + userName + ')' : '不存在'}`);
+        console.log(`  - HAS_SET_NAME: ${hasSkipped === 'true' ? 'true' : (hasSkipped || 'null')}`);
+        console.log(`  - 资源就绪状态：${resourceReady}`);
         
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
 
         setTimeout(async () => {
-          // 【关键修复】优先检查用户信息，放宽资源检查条件
-          const hasUserInfo = userName || hasSkipped === 'true';
+          // 【关键修复】严格检查用户信息，只要有任一标记就进入主应用
+          const hasUserInfo = !!(userName && userName.trim().length > 0) || (hasSkipped === 'true');
           
-          if (hasUserInfo) {
-            // 用户已经设置过信息，直接进入主应用，即使资源未完全就绪
-            console.log('[LandingScreen] 用户已设置信息，直接进入主应用');
-            navigation.replace('MainTabs');
-          } else if (!resourceReady) {
-            console.log('[LandingScreen] 资源未就绪且未设置用户信息，跳转到下载页');
+          console.log('[LandingScreen] 判断结果:', {
+            hasUserInfo,
+            userName: userName ? userName.length : 0,
+            hasSkipped: hasSkipped === 'true'
+          });
+          
+          if (!resourceReady) {
+            // 资源未就绪，强制跳转到下载页面
+            console.log('[LandingScreen] ❌ 资源未就绪，跳转到下载页面');
             navigation.replace('Download');
+          } else if (hasUserInfo) {
+            // 用户已经设置过信息，直接进入主应用
+            console.log('[LandingScreen] ✅ 用户已设置信息，进入主应用');
+            navigation.replace('MainTabs');
           } else {
-            console.log('[LandingScreen] 资源就绪但未设置名字，跳转到起名页');
+            // 未设置用户信息，跳转到起名页
+            console.log('[LandingScreen] ❌ 未设置用户信息，跳转到起名页');
             navigation.replace('NameEntry');
           }
         }, remainingTime);

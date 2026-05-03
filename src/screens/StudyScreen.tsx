@@ -53,7 +53,8 @@ const StudyScreen: React.FC = () => {
   
 
   useEffect(() => {
-    AudioService.updateAmbientVolume(volume);
+    const audioService = AudioService.getInstance();
+    audioService.updateAmbientVolume(volume);
   }, [volume]);
   
 
@@ -166,16 +167,30 @@ const StudyScreen: React.FC = () => {
   useEffect(() => {
     const initAudio = async () => {
       setIsLoading(true);
+      const audioService = AudioService.getInstance();
       try {
-        await AudioService.setupPlayer();
-        const targetScene = AudioService.getCurrentScene() || SCENES.find((s) => s.isBaseScene) || SCENES[0];
+        console.log('[AudioService-DIAGNOSE] [StudyScreen] 开始检查音频服务');
+        
+        // 【状态守卫】AudioService 已经在 App.tsx 中统一初始化，这里不再重复调用 setupPlayer
+        if (!audioService.isReady()) {
+          console.warn('[AudioService-DIAGNOSE] [StudyScreen] ⚠️ AudioService 未准备好，跳过加载');
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('[AudioService-DIAGNOSE] [StudyScreen] ✅ AudioService 已准备好');
+        
+        const targetScene = audioService.getCurrentScene() || SCENES.find((s) => s.isBaseScene) || SCENES[0];
         if (targetScene) {
-          await AudioService.loadAudio(targetScene);
+          console.log('[AudioService-DIAGNOSE] [StudyScreen] 加载场景：', targetScene.id);
+          await audioService.loadAudio(targetScene);
         }
 
-        await AudioService.play();
+        console.log('[AudioService-DIAGNOSE] [StudyScreen] 开始播放');
+        await audioService.play();
+        console.log('[AudioService-DIAGNOSE] [StudyScreen] ✅ 播放开始');
       } catch (error) {
-        // StudyScreen: Setup failed
+        console.error('[AudioService-DIAGNOSE] [StudyScreen] ❌ 音频初始化失败:', error);
       } finally {
         setIsLoading(false);
       }
@@ -184,8 +199,7 @@ const StudyScreen: React.FC = () => {
     initAudio();
 
     return () => {
-
-
+      console.log('[AudioService-DIAGNOSE] [StudyScreen] 组件卸载');
     };
   }, []);
 
@@ -227,10 +241,11 @@ const StudyScreen: React.FC = () => {
   const togglePlayback = async () => {
     try {
       triggerHaptic();
+      const audioService = AudioService.getInstance();
       if (isPlaying) {
-        await AudioService.pause();
+        await audioService.pause();
       } else {
-        await AudioService.play();
+        await audioService.play();
       }
     } catch (error) {
       console.error('Playback toggle failed:', error);

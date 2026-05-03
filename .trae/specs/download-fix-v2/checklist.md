@@ -1,0 +1,8 @@
+- [x] 物理清空标记：MainNavigator.tsx 中添加了 `await AsyncStorage.removeItem('RESOURCES_READY_KEY')`
+- [x] 异步等待空窗期：MainNavigator.tsx 中添加了 500ms 延迟
+- [x] 核心校验降级：OfflineService.ts 中 Core 资源检查时打印文件大小日志
+- [x] 日志验证：控制台能看到文件大小日志（如：`正在校验文件：nature_deep_sea, 大小：456030 bytes (445.34 KB)`）
+- [x] 下载界面能留住：不再"嗖一下就过去"
+- [x] 真实下载资源：资源文件被真实下载
+- [x] 构建成功：APK 构建无错误
+- [x] 安装测试：成功安装到设备并验证

@@ -1,0 +1,100 @@
+04-17 18:31:15.251 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:15.252 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:15.252 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:15.270  8425  8570 I dist:vtcamera:PhoneTemperatureReader: onEvent: null
+04-17 18:31:15.270  3285  3373 D ThermalBrightnessController: updateSkinTemperature: actual temperature: 29.093, applied temperature: 29.093, displayId:0
+04-17 18:31:15.271  8425  8898 I dist:vtcamera:PhoneTemperatureReader: read-temp:29093
+04-17 18:31:15.271  8425  8898 D dist:vtcamera:PhoneTemperatureNotifier: tempV=29093, highTemperature state=false
+04-17 18:31:15.271  3285  3414 D AurogonBandwidthController: skinTemperature:29.093
+04-17 18:31:15.271  3285  3373 E ThermalBrightnessController: Current temperature 29.093 and ambient lux 9.570258 do not match in config: 0
+04-17 18:31:15.271  3285  3414 D AurogonBandwidthController: skinTemperature:29.093
+04-17 18:31:15.277  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:31:15.278  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:31:15.288  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:15.288  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:15.360  2780  2780 I adbd    : in ShellService: dumpsys meminfo com.anonymous.soundtherapyapp
+04-17 18:31:15.390 27263 27263 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 18:31:15.392  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:15.392  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11937.0,R:3067.0,G:3075.0,B:887.0, lux: 8.4, clone:1697
+04-17 18:31:15.438  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:31:15.565  3285  6560 I NetworkAccelerateSwitchService: EVENT_RSSI_POLL. mRssiPoll=true
+04-17 18:31:15.565  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed rssi:29
+04-17 18:31:15.565  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed mWifiFastFade:false mWifiFastFadeAdjustThreshold:false
+04-17 18:31:15.565  3285  6560 I NetworkAccelerateSwitchService: getAverageWifiRssi:28
+04-17 18:31:15.566  3285  6560 D NetworkAccelerateSwitchService: checkIntervalModeChange mMovementState:false mIntervalMode:0 mIsBadLinkLayerQoE:false mBadLinkLayerQoETimes = 0
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[0] sensor:screen_down  Wakeup msg_id=1025, ts=1636499381148
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[1] sensor:screen_down  Wakeup msg_id=1025, ts=1636500208486
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[2] sensor:screen_down  Wakeup msg_id=1025, ts=1636501035823
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[3] sensor:screen_down  Wakeup msg_id=1025, ts=1636501863160
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[4] sensor:screen_down  Wakeup msg_id=1025, ts=1636502690498
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[5] sensor:screen_down  Wakeup msg_id=1025, ts=1636503517835
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[6] sensor:screen_down  Wakeup msg_id=1025, ts=1636504345172
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[7] sensor:screen_down  Wakeup msg_id=1025, ts=1636505172510
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[8] sensor:screen_down  Wakeup msg_id=1025, ts=1636505999847
+04-17 18:31:15.614  1728 20368 I sensors-hal: qsh_conn_event_cb:789, wakeup event[9] sensor:screen_down  Wakeup msg_id=1025, ts=1636506827184
+04-17 18:31:15.793  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:15.793  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11921.0,R:3071.0,G:3072.0,B:894.0, lux: 8.4, clone:1697
+04-17 18:31:15.993  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:15.993  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11922.0,R:3068.0,G:3074.0,B:881.0, lux: 8.4, clone:1697
+04-17 18:31:16.058  1732  1732 E WifiHAL : handleResponse: Number of MLO links 2
+04-17 18:31:16.063  3285  4177 D MiuiWifiCommonBase: band: 0, compensate: 0
+04-17 18:31:16.063  3285  4177 D MiuiWifiCommonBase: band: 1, compensate: 0
+04-17 18:31:16.067  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 0, mlo link state: 2
+04-17 18:31:16.067  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 1, mlo link state: 3
+04-17 18:31:16.067  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 0, mlo link state: 2
+04-17 18:31:16.067  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 1, mlo link state: 3
+04-17 18:31:16.069  5080  5157 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+04-17 18:31:16.071  3285  4185 E AmlWifiScoreReportInjector: current network is in roaming environment
+04-17 18:31:16.073  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:31:16.073  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:31:16.073  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:31:16.088  1749  2537 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+04-17 18:31:16.088  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:31:16.088  1893  3151 E HwcComposer: getLuts failed Status(-129, EX_TRANSACTION_FAILED): 'UNKNOWN_TRANSACTION: '
+04-17 18:31:16.089  1749  3131 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:31:16.159  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:31:16.159  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:31:16.193  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:16.193  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11937.0,R:3067.0,G:3075.0,B:887.0, lux: 8.4, clone:1697
+04-17 18:31:16.234  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:31:16.234  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:31:16.234  2780  2780 I adbd    : in ShellService: pidof com.anonymous.soundtherapyapp
+04-17 18:31:16.263  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de7320) status 0 for display-0.
+04-17 18:31:16.263  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:31:16.290  3285  4523 I NetworkBoostStatusManager: handle: 107
+04-17 18:31:16.292  5080  5157 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+04-17 18:31:16.294  3285  4523 D SLM-SRV-SLAService: isModemSingnalStrengthStatus = 0
+04-17 18:31:16.300  3285  4283 D AurogonImmobulusMode:  update wallpaper pacakge name status mLockWallPaperPackageName =  mLockWallPaperUid = -1 mDeskWallPaperPackageName = com.miui.miwallpaper mDeskWallPaperUid = 10190
+04-17 18:31:16.301  2780  2780 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+04-17 18:31:16.307  3285  4283 D GreezeManager: FZ uid = 10145 reason =PACKET success !
+04-17 18:31:16.308  3285  4283 D ActionExecute: frozen uid = 10145 reason=PACKET
+04-17 18:31:16.308  3285  4283 D ActionExecute: setPkgData uid = 10145 time=0
+04-17 18:31:16.308  3285  4283 D ExternalInterface: setUidState, uid = 10145 allow = false
+04-17 18:31:16.308  3285  4283 D ActionExecute: setPkgData uid = 10145 time=3000
+04-17 18:31:16.310  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:31:16.310  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:31:16.393  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:16.393  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11885.0,R:3057.0,G:3055.0,B:888.0, lux: 8.2, clone:1697
+04-17 18:31:16.435  3285  6510 D SLM-SRV-SLAService: checktemp temperature = 29093 temperature_average = 29006 isPerformanceMode = false thermal_enable_slm = true
+04-17 18:31:16.492  1063 27179 I keystore2: system/security/keystore2/watchdog/src/lib.rs:399 - Watchdog thread idle -> terminating. Have a great day.
+04-17 18:31:16.511  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:31:16.511  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:31:16.511  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 18:31:16.511  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:31:16.514 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:7D:E7, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-50, periodicAdvInt=0x0, originalAddress=46:0C:14:DB:7D:E7
+04-17 18:31:16.514 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:16.514 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:16.515 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:16.515 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:16.515  6260 22594 D DeviceNickName_Plugin: data type: SUPPORT_REDMI_KERBOARD_FAST, []
+04-17 18:31:16.515  6260 22594 E MiuiFastConnectService_Plugin: check adv data not fast connect
+04-17 18:31:16.554  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:16.554  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:16.704  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:31:16.741  3285  5803 W ActivityManagerServiceImpl: Sending non-protected broadcast com.modemenhance.ACTION_MODEMWIFI_RSSI_POLL from system 5080:com.android.phone/1001 pkg com.android.phone. Callers=
+04-17 18:31:16.746  5080  5080 D SlaveWifiManager: getWifiSlaveConnectionInfo
+04-17 18:31:16.793  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:16.793  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11890.0,R:3054.0,G:3062.0,B:885.0, lux: 8.2, clone:1697
+04-17 18:31:16.888  3285  3414 D AurogonBandwidthController: skinTemperature:29.093
+04-17 18:31:16.994  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.2,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:16.994  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11877.0,R:3053.0,G:3061.0,B:886.0, lux: 8.2, clone:1697

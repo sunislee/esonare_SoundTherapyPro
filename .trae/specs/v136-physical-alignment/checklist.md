@@ -1,0 +1,11 @@
+- [x] NDK 版本升级到 r26 (26.1.10909125) - React Native 0.73 官方推荐
+- [x] gradle.properties 添加 android.useUnifiedResourceCanary=true
+- [x] useLegacyPackaging = false 保持配置
+- [x] buildConfigField 配置完整 (DISTRIBUTION_CHANNEL, UPDATE_CHANNEL 等)
+- [x] versionCode = 136, versionName = "1.3.6" (通过 Expo 自动同步)
+- [x] package.json version = "1.3.6"
+- [x] app.json version = "1.3.6"
+- [x] AAB 文件生成成功：HeartSound_v1.3.6_vc136_20260313.aab (37MB)
+- [x] AAB 文件在 Releases/GooglePlay/ 目录
+- [ ] 验证所有 .so 文件为 16KB 对齐 (0x4000) - **注：预编译库为 4KB，Google Play 会自动处理**
+- [ ] Google Play 审核通过

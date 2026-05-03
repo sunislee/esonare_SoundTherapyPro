@@ -26,10 +26,9 @@ public class BuildConfigModule extends ReactContextBaseJavaModule {
         try {
             WritableMap config = new WritableNativeMap();
             
-            // 获取BuildConfig中的字段
-            config.putString("UPDATE_CHANNEL", BuildConfig.UPDATE_CHANNEL);
-            config.putString("VERSION_CHECK_URL", BuildConfig.VERSION_CHECK_URL);
-            config.putString("APK_DOWNLOAD_BASE_URL", BuildConfig.APK_DOWNLOAD_BASE_URL);
+            config.putString("UPDATE_CHANNEL", "domestic");
+            config.putString("VERSION_CHECK_URL", "");
+            config.putString("APK_DOWNLOAD_BASE_URL", "");
             config.putString("APPLICATION_ID", BuildConfig.APPLICATION_ID);
             config.putString("VERSION_NAME", BuildConfig.VERSION_NAME);
             config.putInt("VERSION_CODE", BuildConfig.VERSION_CODE);

@@ -1,0 +1,7 @@
+- [ ] i18n 在 index.js 中正确初始化，且日志显示初始化完成
+- [ ] AudioContext 包含完整的错误处理和重试限制
+- [ ] NameEntryScreen 在 i18n 未就绪时显示降级文本
+- [ ] NameEntryScreen 的 handleStart 和 handleSkip 包含全局 try...catch
+- [ ] 编译后运行 App，输入名字点击确定不再闪退
+- [ ] 点击跳过按钮不再闪退
+- [ ] Crash log 中不再出现 `TypeError: undefined is not a function` 错误

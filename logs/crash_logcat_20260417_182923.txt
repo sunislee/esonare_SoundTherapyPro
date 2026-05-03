@@ -1,0 +1,100 @@
+04-17 18:29:22.858  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:29:22.914  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:29:22.915  2737  4004 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:29:22.950  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:29:22.950  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:29:22.950  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 18:29:22.950  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:29:22.953 22066 22362 V ScanController: onScanResult() - eventType=0x10, addressType=1, address=XX:XX:XX:XX:DC:13, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-49, periodicAdvInt=0x0, originalAddress=49:1C:F0:09:DC:13
+04-17 18:29:22.953 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:22.953 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:22.954 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:22.954 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:22.971 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:21:30, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-49, periodicAdvInt=0x0, originalAddress=79:FA:12:F6:21:30
+04-17 18:29:22.971 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:22.971 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:22.972 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:22.972 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.010  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:29:23.010  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:29:23.043  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:23.043  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12923.0,R:3289.0,G:3261.0,B:974.0, lux: 9.5, clone:1697
+04-17 18:29:23.160  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:29:23.379 11766 12639 W lyra-mdns-core: _deal_timeout query _lyra-mdns._udp.local[0C] timeout!
+04-17 18:29:23.443  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:23.443  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12906.0,R:3290.0,G:3259.0,B:984.0, lux: 9.5, clone:1697
+04-17 18:29:23.460  2780  2780 I adbd    : in ShellService: dumpsys meminfo com.anonymous.soundtherapyapp
+04-17 18:29:23.485 26644 26644 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 18:29:23.543  3285  4157 I MiuiNetworkPolicy: bandwidth: 0 KB/s, Max bandwidth: 1750 KB/s
+04-17 18:29:23.643  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:23.643  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12911.0,R:3300.0,G:3261.0,B:979.0, lux: 9.6, clone:1697
+04-17 18:29:23.692  3285  6007 W ActivityManagerServiceImpl: Sending non-protected broadcast com.modemenhance.ACTION_MODEMWIFI_RSSI_POLL from system 5080:com.android.phone/1001 pkg com.android.phone. Callers=
+04-17 18:29:23.695  5080  5080 D SlaveWifiManager: getWifiSlaveConnectionInfo
+04-17 18:29:23.700  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:29:23.700  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:29:23.700  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 18:29:23.700  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:29:23.702 22066 22362 V ScanController: onScanResult() - eventType=0x10, addressType=1, address=XX:XX:XX:XX:DC:13, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-48, periodicAdvInt=0x0, originalAddress=49:1C:F0:09:DC:13
+04-17 18:29:23.702 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.702 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.703 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.703 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.724 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:21:30, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-48, periodicAdvInt=0x0, originalAddress=79:FA:12:F6:21:30
+04-17 18:29:23.724 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.724 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.725 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.725 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:29:23.763  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:29:23.763  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:29:23.786  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:29:23.787  1893  3151 E HwcComposer: getLuts failed Status(-129, EX_TRANSACTION_FAILED): 'UNKNOWN_TRANSACTION: '
+04-17 18:29:23.787  1749  3131 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:29:23.800  1749  3124 I SDM     : DemuraTnCaptureIntfImpl::ProcessCapturePanelData: Screen capture status = 0
+04-17 18:29:23.842  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:23.842  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12923.0,R:3289.0,G:3261.0,B:974.0, lux: 9.5, clone:1697
+04-17 18:29:23.857  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 69999 us
+04-17 18:29:23.857  2737  4004 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:29:23.888  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de17b0) status 0 for display-0.
+04-17 18:29:23.888  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:29:23.913  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:29:23.938  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:29:23.938  2737  4004 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:29:24.037  2780  2780 I adbd    : in ShellService: pidof com.anonymous.soundtherapyapp
+04-17 18:29:24.044  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:24.045  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12897.0,R:3292.0,G:3261.0,B:980.0, lux: 9.5, clone:1697
+04-17 18:29:24.090  2780  2780 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+04-17 18:29:24.146  3285  4326 E HyperSentinel: ->pid:3285,processName:"system_server",Rss Memory Size Change 645848kb -> 775416kb
+04-17 18:29:24.233  1772  1805 E SLM-HAL-SladSocketClient: connect failed:-1, socket:6, error:No such file or directory
+04-17 18:29:24.233  1772  1805 W vendor.qti.sla.service@2.0-service: PerfMonitor async binderTransact :  time=10003ms interface=vendor.qti.sla.service.ISlaAIDLService code=8
+04-17 18:29:24.239  3285  4549 W FileUtils: Failed to chmod(AtomicFile[/data/system_de/0/system/game-manager-service.xml]): android.system.ErrnoException: chmod failed: ENOENT (No such file or directory)
+04-17 18:29:24.346  1732  1732 E WifiHAL : handleResponse: Number of MLO links 2
+04-17 18:29:24.348  3285  4177 D MiuiWifiCommonBase: band: 0, compensate: 0
+04-17 18:29:24.348  3285  4177 D MiuiWifiCommonBase: band: 1, compensate: 0
+04-17 18:29:24.351  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 0, mlo link state: 2
+04-17 18:29:24.351  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 1, mlo link state: 3
+04-17 18:29:24.351  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 0, mlo link state: 2
+04-17 18:29:24.351  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 1, mlo link state: 3
+04-17 18:29:24.353  5080  5157 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+04-17 18:29:24.355  3285  4185 E AmlWifiScoreReportInjector: current network is in roaming environment
+04-17 18:29:24.361  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:29:24.362  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:29:24.362  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:29:24.376  1749  2537 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+04-17 18:29:24.376  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:29:24.376  1749  3131 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:29:24.377  1893  3151 E HwcComposer: getLuts failed Status(-129, EX_TRANSACTION_FAILED): 'UNKNOWN_TRANSACTION: '
+04-17 18:29:24.419  3285  6560 I NetworkAccelerateSwitchService: EVENT_RSSI_POLL. mRssiPoll=true
+04-17 18:29:24.419  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed rssi:28
+04-17 18:29:24.419  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed mWifiFastFade:false mWifiFastFadeAdjustThreshold:false
+04-17 18:29:24.419  3285  6560 I NetworkAccelerateSwitchService: getAverageWifiRssi:28
+04-17 18:29:24.419  3285  6560 D NetworkAccelerateSwitchService: checkIntervalModeChange mMovementState:false mIntervalMode:0 mIsBadLinkLayerQoE:false mBadLinkLayerQoETimes = 0
+04-17 18:29:24.446  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:29:24.446  2737  4004 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:29:24.521  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:29:24.521  2737  4004 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:29:24.543  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de28e0) status 0 for display-0.
+04-17 18:29:24.544  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:29:24.596  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:29:24.596  2737  4004 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:29:24.643  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4102.2,R:1404.6,G:1626.2,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:29:24.643  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12923.0,R:3296.0,G:3261.0,B:983.0, lux: 9.5, clone:1697

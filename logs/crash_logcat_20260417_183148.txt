@@ -1,0 +1,100 @@
+04-17 18:31:48.619 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:195 ScanFilterParamSetup: in shim layer, clientIf=3
+04-17 18:31:48.619  9095  9454 D IdProviderImpl: getOAID from com.miui.analytics
+04-17 18:31:48.620 22066 22362 D ScanController: onScanFilterParamsConfigured() - clientIf=3, status=0, action=0, availableSpace=0
+04-17 18:31:48.620 22066 22362 D ScanManager: callback done for scannerId - 3 status - 0
+04-17 18:31:48.620 22066 22530 D ScanManager: startScan()  [ScanClient scanModeApp 0 scanModeUsed 0 scannerId 4 [appScanStats android.uid.bluetooth:1002]]
+04-17 18:31:48.620 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:228 ScanFilterAdd: in shim layer
+04-17 18:31:48.620  3285  3409 W BatteryStatsImpl: noteBluetoothScanStartedLocked deltaScanCount: 774 uid:1002
+04-17 18:31:48.620 22066 22362 D ScanController: onScanFilterConfig() - clientIf=3, action = 0 status = 0, filterType=0, availableSpace=0
+04-17 18:31:48.620 22066 22362 D ScanManager: callback done for scannerId - 3 status - 0
+04-17 18:31:48.620 22066 22387 D ScanManager: getLowRssiThreshold: client settings is null
+04-17 18:31:48.620 22066 22387 D ScanManager: rssiThresholdLow: -60rssiThresholdHigh: -60
+04-17 18:31:48.620 22066 22387 D ScanManager: configureFilterParameter 500 10000 1 0 -60
+04-17 18:31:48.620 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:195 ScanFilterParamSetup: in shim layer, clientIf=3
+04-17 18:31:48.620 22066 22362 D ScanController: onScanFilterParamsConfigured() - clientIf=3, status=0, action=0, availableSpace=0
+04-17 18:31:48.620 22066 22362 D ScanManager: callback done for scannerId - 3 status - 0
+04-17 18:31:48.621 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:228 ScanFilterAdd: in shim layer
+04-17 18:31:48.621 22066 22362 D ScanController: onScanFilterConfig() - clientIf=3, action = 0 status = 0, filterType=0, availableSpace=0
+04-17 18:31:48.621 22066 22362 D ScanManager: callback done for scannerId - 3 status - 0
+04-17 18:31:48.621 22066 22387 D ScanManager: getLowRssiThreshold: client settings is null
+04-17 18:31:48.621 22066 22387 D ScanManager: rssiThresholdLow: -60rssiThresholdHigh: -60
+04-17 18:31:48.621 22066 22387 D ScanManager: configureFilterParameter 500 10000 1 0 -60
+04-17 18:31:48.621 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:195 ScanFilterParamSetup: in shim layer, clientIf=3
+04-17 18:31:48.621 22066 22362 D ScanController: onScanFilterParamsConfigured() - clientIf=3, status=0, action=0, availableSpace=0
+04-17 18:31:48.621 22066 22362 D ScanManager: callback done for scannerId - 3 status - 0
+04-17 18:31:48.621 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:228 ScanFilterAdd: in shim layer
+04-17 18:31:48.621 22066 22362 D ScanController: onScanFilterConfig() - clientIf=3, action = 0 status = 0, filterType=0, availableSpace=0
+04-17 18:31:48.621 22066 22362 D ScanManager: callback done for scannerId - 3 status - 0
+04-17 18:31:48.621 22066 22387 D ScanManager: getLowRssiThreshold: client settings is null
+04-17 18:31:48.621 22066 22387 D ScanManager: rssiThresholdLow: -60rssiThresholdHigh: -60
+04-17 18:31:48.621 22066 22387 D ScanManager: configureFilterParameter 500 10000 1 0 -60
+04-17 18:31:48.621 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:195 ScanFilterParamSetup: in shim layer, clientIf=3
+04-17 18:31:48.621 22066 22362 D ScanController: onScanFilterParamsConfigured() - clientIf=3, status=0, action=0, availableSpace=0
+04-17 18:31:48.621 22066 22362 D ScanManager: callback done for scannerId - 3 status - 0
+04-17 18:31:48.621 22066 22387 D ScanManager: configureRegularScanParams() - queue=4
+04-17 18:31:48.621 22066 22387 D ScanManager: configureRegularScanParams() - queue empty, scan stopped
+04-17 18:31:48.621 22066 22387 D ScanManager: apply scan timeout (300000)to scannerId 3
+04-17 18:31:48.621 22066 22387 I ScanManager: msg.what = MSG_RECORD_CALLER, msg.arg1 = None
+04-17 18:31:48.621 22066 22387 I ScanManager: msg.what = MSG_START_BLE_SCAN, msg.arg1 = None
+04-17 18:31:48.621 22066 22387 D ScanManager: handling starting scan
+04-17 18:31:48.621 22066 22387 W CloudControlUtil:  isAllowGattScanInDeepDoze: false
+04-17 18:31:48.621 22066 22387 D ScanManager: isAptXLowLatencyModeEnabled: false
+04-17 18:31:48.621 22066 22387 D ScanManager: Scan mode update during screen on from SCAN_MODE_LOW_POWER to SCAN_MODE_LOW_POWER
+04-17 18:31:48.621 22066 22387 D ScanManager: processBeforeScanModeChange: Not started yet
+04-17 18:31:48.621 22066 22387 D ScanManager: track LE scan event: callerPackage = [com.xiaomi.bluetooth], scanMode = [0], reportDelayMillis = [0], behavior = [1], scannerId = [4], duration = [0]
+04-17 18:31:48.621 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:251 ScanFilterEnable: in shim layer
+04-17 18:31:48.622 22066 22287 D BT_OneTrack_I/F: region:CN
+04-17 18:31:48.622 22066 22362 D ScanController: onScanFilterEnableDisabled() - clientIf=4, status=0, action=1
+04-17 18:31:48.622 22066 22362 D ScanManager: callback done for scannerId - 4 status - 0
+04-17 18:31:48.622 22066 22387 D ScanManager: configureScanFilters rssiThreshold: -128, 0
+04-17 18:31:48.622  1720  1888 D vendor.qti.qhci@1.0-xpan_qhci_tx: IsQhciTxPkt LINE_NUM: 782 HCI_LE_APCF_VENDOR_CMD
+04-17 18:31:48.622 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:228 ScanFilterAdd: in shim layer
+04-17 18:31:48.622 22066 22362 D ScanController: onScanFilterConfig() - clientIf=4, action = 0 status = 0, filterType=0, availableSpace=0
+04-17 18:31:48.622 22066 22362 D ScanManager: callback done for scannerId - 4 status - 0
+04-17 18:31:48.622 22066 22387 D ScanManager: getLowRssiThreshold: client settings is null
+04-17 18:31:48.622 22066 22387 D ScanManager: rssiThresholdLow: -128rssiThresholdHigh: -128
+04-17 18:31:48.622 22066 22387 D ScanManager: configureFilterParameter 500 10000 1 0 -128
+04-17 18:31:48.622 22066 22387 I bt_shim_scanner: system/main/shim/le_scanning_manager.cc:195 ScanFilterParamSetup: in shim layer, clientIf=4
+04-17 18:31:48.622 22066 22362 D ScanController: onScanFilterParamsConfigured() - clientIf=4, status=0, action=0, availableSpace=0
+04-17 18:31:48.622 22066 22362 D ScanManager: callback done for scannerId - 4 status - 0
+04-17 18:31:48.622 22066 22387 D ScanManager: configureRegularScanParams() - queue=5
+04-17 18:31:48.622 22066 22387 D ScanManager: configureRegularScanParams() - queue empty, scan stopped
+04-17 18:31:48.622 22066 22387 D ScanManager: apply scan timeout (300000)to scannerId 4
+04-17 18:31:48.623  9095  9454 D IdProviderImpl: getOAID from com.miui.analytics
+04-17 18:31:48.623  1720  1888 D vendor.qti.qhci@1.0-xpan_qhci_tx: IsQhciTxPkt LINE_NUM: 782 HCI_LE_APCF_VENDOR_CMD
+04-17 18:31:48.624  1720  1888 D vendor.qti.qhci@1.0-xpan_qhci_tx: IsQhciTxPkt LINE_NUM: 782 HCI_LE_APCF_VENDOR_CMD
+04-17 18:31:48.627  1720  1888 D vendor.qti.qhci@1.0-xpan_qhci_tx: IsQhciTxPkt LINE_NUM: 782 HCI_LE_APCF_VENDOR_CMD
+04-17 18:31:48.628  1720  1888 D vendor.qti.qhci@1.0-xpan_qhci_tx: IsQhciTxPkt LINE_NUM: 782 HCI_LE_APCF_VENDOR_CMD
+04-17 18:31:48.669  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:48.793  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.1,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:48.793  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11775.0,R:3023.0,G:3041.0,B:878.0, lux: 8.1, clone:1697
+04-17 18:31:48.824  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:31:48.825  1893  3151 E HwcComposer: getLuts failed Status(-129, EX_TRANSACTION_FAILED): 'UNKNOWN_TRANSACTION: '
+04-17 18:31:48.825  1749  3133 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:31:48.840  2780  2780 I adbd    : in ShellService: dumpsys meminfo com.anonymous.soundtherapyapp
+04-17 18:31:48.840  1749  3124 I SDM     : DemuraTnCaptureIntfImpl::ProcessCapturePanelData: Screen capture status = 0
+04-17 18:31:48.842  9803 11366 D JavaheapMonitor: Java heap used=20M max=256M, proc: com.miui.securitycenter.remote
+04-17 18:31:48.842  9803 11366 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:31:48.857 27404 27404 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: meminfo
+04-17 18:31:48.879  1720 22339 I vendor.qti.bluetooth@1.0-ibs_handler: DeviceSleep: TX Awake, Sending SLEEP_IND
+04-17 18:31:48.879  1720 22339 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:48.895  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:31:48.895  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:31:48.915  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de61f0) status 0 for display-0.
+04-17 18:31:48.916  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:31:48.925  3285  3414 D AurogonBandwidthController: skinTemperature:29.071
+04-17 18:31:48.958  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:31:48.958  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:31:48.958  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:31:48.959 22066 22362 V ScanController: onScanResult() - eventType=0x10, addressType=1, address=XX:XX:XX:XX:DC:13, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-50, periodicAdvInt=0x0, originalAddress=49:1C:F0:09:DC:13
+04-17 18:31:48.959 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:48.959 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:48.960 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:48.960 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:31:48.969  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:31:48.969  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:31:48.992  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.8,R:1404.1,G:1625.8,B:245.2,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:31:48.992  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:11788.0,R:3026.0,G:3045.0,B:878.0, lux: 8.1, clone:1697
+04-17 18:31:48.999  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:31:48.999  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:31:49.149  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 

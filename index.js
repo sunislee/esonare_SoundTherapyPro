@@ -1,118 +1,37 @@
-import { AppRegistry, Text, View, ActivityIndicator, StatusBar, useColorScheme } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { MainNavigator } from './src/navigation/MainNavigator';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { name as appName } from './app.json';
-import { AudioProvider } from './src/context/AudioContext';
-import TrackPlayer from 'react-native-track-player';
-import PlaybackService from './src/services/PlaybackService';
-import { initLanguage } from './src/i18n';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigationState } from '@react-navigation/native';
+/**
+ * @format
+ */
 
-// 显式导入 i18n 模块，确保被打包
-import './src/i18n';
+// 1. 【核心：最高优先级 Mock】必须在所有业务组件导入前执行
+import { AppRegistry, NativeModules, Platform } from 'react-native';
 
-// 关键检查
-AsyncStorage.getItem('USER_NAME').then(v => console.log('CRITICAL_CHECK:', v));
-
-// 自定义主题，强制背景色为黑色，防止白屏闪烁
-const MyTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: '#000000',
-  },
-};
-
-// 【关键修复】加载组件
-const LoadingScreen = () => (
-  <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' }}>
-    <SafeAreaProvider>
-      <ActivityIndicator size="large" color="#6C5DD3" />
-    </SafeAreaProvider>
-  </GestureHandlerRootView>
-);
-
-// 状态栏适配组件
-const StatusBarAdapter = () => {
-  const isPlayerScreen = useNavigationState((state) => {
-    if (!state) return false;
-    const currentRoute = state.routes[state.index];
-    return currentRoute.name === 'ImmersivePlayer' || currentRoute.name === 'BreathDetail';
+if (Platform.OS === 'android') {
+  const modulesToMock = ['ExponentAV', 'ExpoKeepAwake', 'ExpoAudio'];
+  modulesToMock.forEach(moduleName => {
+    // 使用 defineProperty 确保 Mock 对象在原生模块加载前就位且不可轻易篡改
+    if (!NativeModules[moduleName]) {
+      Object.defineProperty(NativeModules, moduleName, {
+        value: {},
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
+    }
   });
-
-  // 所有页面强制白色状态栏
-  const barStyle = 'light-content';
-  
-  console.log('[StatusBarAdapter] barStyle:', barStyle);
-
-  return (
-    <StatusBar
-      barStyle={barStyle}
-      backgroundColor="transparent"
-      translucent={true}
-    />
-  );
-};
-
-// App 组件 - 强制同步初始化
-function App() {
-  const [isAppReady, setIsAppReady] = useState(false);
-
-  useEffect(() => {
-    const init = async () => {
-      try {
-        console.log('[App] 开始初始化...');
-        // 【关键】使用 Promise.all 同步等待所有初始化完成
-        await Promise.all([
-          initLanguage(),
-          AsyncStorage.getItem('USER_NAME'),
-        ]);
-        console.log('[App] ✅ 初始化完成');
-        setIsAppReady(true);
-      } catch (error) {
-        console.error('[App] 初始化失败:', error);
-        // 即使失败也允许继续
-        setIsAppReady(true);
-      }
-    };
-    init();
-  }, []);
-
-  // 【关键】加载完成前不渲染任何内容
-  if (!isAppReady) {
-    if (__DEV__) console.log('Current Route Decision: Waiting for initialization...');
-    console.log('[App] 等待初始化...');
-    return <LoadingScreen />;
-  }
-
-  try {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <AudioProvider>
-            <NavigationContainer theme={MyTheme}>
-              <StatusBarAdapter />
-              <MainNavigator />
-            </NavigationContainer>
-          </AudioProvider>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    );
-  } catch (error) {
-    console.error('[App] Component render error:', error);
-    return (
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' }}>
-        <SafeAreaProvider>
-          <Text style={{ color: '#FFFFFF', fontSize: 16 }}>Application Error</Text>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    );
-  }
 }
 
-AppRegistry.registerComponent(appName, () => App);
+// 2. 【关键修复】i18n 初始化 - 必须在所有业务组件之前
+import './src/i18n'; // 确保 i18next 在应用启动时初始化
+
+// 3. 导入业务组件与插件
+import App from './App';
+import { name as appName } from './app.json';
+import TrackPlayer from 'react-native-track-player';
+import PlaybackService from './src/services/PlaybackService';
+
+// 3. 【后台服务注册】必须在 AppRegistry 之前
+// RN 0.81 环境下，注册服务是原生层与 JS 层握手的关键
 TrackPlayer.registerPlaybackService(() => PlaybackService);
+
+// 4. 注册主组件
+AppRegistry.registerComponent(appName, () => App);

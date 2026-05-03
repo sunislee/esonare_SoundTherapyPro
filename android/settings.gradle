@@ -1,24 +1,6 @@
-rootProject.name = 'EsonareSound'
-
-apply from: new File(["node", "--print", "require.resolve('expo/package.json')"].execute(null, rootDir).text.trim(), "../scripts/autolinking.gradle");
-useExpoModules([
-    searchPaths: [file("../node_modules").absolutePath]
-])
-
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+pluginManagement { includeBuild("../node_modules/.pnpm/@react-native+gradle-plugin@0.81.5/node_modules/@react-native/gradle-plugin") }
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+rootProject.name = 'SoundTherapy081'
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
-
-// RN 0.77 Autolinking: Generate autolinking.json for React Native libraries
-def autolinkingJson = file("build/generated/autolinking/autolinking.json")
-if (!autolinkingJson.exists()) {
-    autolinkingJson.parentFile.mkdirs()
-    def cliConfig = ["node", "--print", "require.resolve('@react-native-community/cli/package.json')"].execute(null, rootDir).text.trim()
-    def cliPath = new File(cliConfig.trim()).parentFile
-    def output = new ByteArrayOutputStream()
-    exec {
-        commandLine "node", "${cliPath}/build/bin.js", "config"
-        standardOutput = output
-    }
-    autolinkingJson.write(output.toString())
-}
+includeBuild('../node_modules/.pnpm/@react-native+gradle-plugin@0.81.5/node_modules/@react-native/gradle-plugin')

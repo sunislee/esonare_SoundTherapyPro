@@ -1,0 +1,100 @@
+04-17 18:30:26.906  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:30:26.906  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:30:26.906  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:30:26.921  1749  2537 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+04-17 18:30:26.923  1893  3151 E HwcComposer: getLuts failed Status(-129, EX_TRANSACTION_FAILED): 'UNKNOWN_TRANSACTION: '
+04-17 18:30:26.923  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:30:26.924  1749  3133 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:30:26.993  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:30:26.993  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:30:27.000  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+04-17 18:30:27.000  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK ON
+04-17 18:30:27.000  1720 22336 D vendor.qti.bluetooth@1.0-wake_lock: Acquire wakelock is acquired 
+04-17 18:30:27.000  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+04-17 18:30:27.005 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 1
+04-17 18:30:27.005 22066 22362 D BluetoothRemoteDevices: Skip name update for XX:XX:XX:XX:C6:45
+04-17 18:30:27.005 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 4
+04-17 18:30:27.005 22066 22362 D BluetoothRemoteDevices: Skip class update, device=XX:XX:XX:XX:C6:45, cod=0x1f00
+04-17 18:30:27.005 22066 22362 D BluetoothRemoteDevices: Update property, device=XX:XX:XX:XX:C6:45, type: 5
+04-17 18:30:27.005 22066 22362 D BluetoothRemoteDevices:  BT_PROPERTY_TYPE_OF_DEVICE addr:9C:76:0E:4A:C6:45 deviceType:3
+04-17 18:30:27.005 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 1
+04-17 18:30:27.005 22066 22362 D HyperRemoteDevicesAdapter: Remote device name is: 李 type = 2 9C:76:0E:4A:C6:45
+04-17 18:30:27.005 22066 22362 D HyperRemoteDevicesAdapter: update name for XX:XX:XX:XX:C6:45 type = 2 name = 李 1
+04-17 18:30:27.005 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 4
+04-17 18:30:27.005 22066 22362 D HyperRemoteDevicesAdapter: Update property, device=9C:76:0E:4A:C6:45, type: 5
+04-17 18:30:27.006 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=0, address=XX:XX:XX:XX:C6:45, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-50, periodicAdvInt=0x0, originalAddress=9C:76:0E:4A:C6:45
+04-17 18:30:27.006 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.007 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.007 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.007 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.007 22066 22362 V ScanController: onScanResult() - eventType=0x1b, addressType=1, address=XX:XX:XX:XX:21:30, primaryPhy=1, secondaryPhy=0, advertisingSid=0xff, txPower=127, rssi=-50, periodicAdvInt=0x0, originalAddress=79:FA:12:F6:21:30
+04-17 18:30:27.007 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.007 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.008 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.008 22066 22362 V ScanController: Skipping client: permission=true matches=false
+04-17 18:30:27.043  1720 22336 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+04-17 18:30:27.043  1720 22336 D vendor.qti.bluetooth@1.0-ibs_handler: SerialClockVote: vote for UART CLK OFF
+04-17 18:30:27.045  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.9,R:1404.2,G:1625.9,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:30:27.045  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12290.0,R:3157.0,G:3136.0,B:924.0, lux: 8.7, clone:1697
+04-17 18:30:27.067  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:30:27.068  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:30:27.096  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de6c40) status 0 for display-0.
+04-17 18:30:27.096  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:30:27.139  5035 19668 D JavaheapMonitor: Java heap used=21M max=256M, proc: vendor.qti.frameworks.utils
+04-17 18:30:27.140  5035 19668 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:30:27.144  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:30:27.145  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:30:27.193  1720 22327 D vendor.qti.bluetooth@1.0-wake_lock: Release wakelock is released 
+04-17 18:30:27.243  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.9,R:1404.2,G:1625.9,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:30:27.243  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12296.0,R:3158.0,G:3140.0,B:922.0, lux: 8.8, clone:1697
+04-17 18:30:27.421  2780  2780 I adbd    : in ShellService: pidof com.anonymous.soundtherapyapp
+04-17 18:30:27.486  2780  2780 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+04-17 18:30:27.501  3285  6560 I NetworkAccelerateSwitchService: EVENT_RSSI_POLL. mRssiPoll=true
+04-17 18:30:27.502  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed rssi:28
+04-17 18:30:27.502  3285  6560 I NetworkAccelerateSwitchService: checkWifiRssiAndLinkSpeed mWifiFastFade:false mWifiFastFadeAdjustThreshold:false
+04-17 18:30:27.502  3285  6560 I NetworkAccelerateSwitchService: getAverageWifiRssi:28
+04-17 18:30:27.502  3285  6560 D NetworkAccelerateSwitchService: checkIntervalModeChange mMovementState:false mIntervalMode:0 mIsBadLinkLayerQoE:false mBadLinkLayerQoETimes = 0
+04-17 18:30:27.618  4927 19669 D JavaheapMonitor: Java heap used=2M max=256M, proc: com.st.android.nfc_extensions_16
+04-17 18:30:27.618  4927 19669 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:30:27.643  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.9,R:1404.2,G:1625.9,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:30:27.643  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12323.0,R:3159.0,G:3156.0,B:919.0, lux: 8.9, clone:1697
+04-17 18:30:27.792  1732  1732 E WifiHAL : handleResponse: Number of MLO links 2
+04-17 18:30:27.794  3285  4177 D MiuiWifiCommonBase: band: 0, compensate: 0
+04-17 18:30:27.794  3285  4177 D MiuiWifiCommonBase: band: 1, compensate: 0
+04-17 18:30:27.796  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 0, mlo link state: 2
+04-17 18:30:27.796  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 1, mlo link state: 3
+04-17 18:30:27.796  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 0, mlo link state: 2
+04-17 18:30:27.796  3285  4177 D SupplicantStaIfaceAospAidlImpl: mlo link id: 1, mlo link state: 3
+04-17 18:30:27.798  5080  5157 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+04-17 18:30:27.798  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:30:27.799  3285  4185 E AmlWifiScoreReportInjector: current network is in roaming environment
+04-17 18:30:27.799  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:30:27.799  5144  5144 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+04-17 18:30:27.813  1749  2537 I SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+04-17 18:30:27.813  1749  3126 I vendor.qti.hardware.display.composer-service: Sensor: notify citsensorservice to trigger cwb, misForced = 0
+04-17 18:30:27.813  1893  3151 E HwcComposer: getLuts failed Status(-129, EX_TRANSACTION_FAILED): 'UNKNOWN_TRANSACTION: '
+04-17 18:30:27.813  1749  3133 I SDM     : CWB config passed by cwb_client : tappoint 1  CWB_ROI : (736.000000 70.000000 977.000000 311.000000) for display-0
+04-17 18:30:27.843  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.9,R:1404.2,G:1625.9,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:30:27.843  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12296.0,R:3158.0,G:3140.0,B:922.0, lux: 8.8, clone:1697
+04-17 18:30:27.856  3285  6018 W ActivityManagerServiceImpl: Sending non-protected broadcast com.modemenhance.ACTION_MODEMWIFI_RSSI_POLL from system 5080:com.android.phone/1001 pkg com.android.phone. Callers=
+04-17 18:30:27.859  5080  5080 D SlaveWifiManager: getWifiSlaveConnectionInfo
+04-17 18:30:27.883  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:30:27.884  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:30:27.960  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 69999 us
+04-17 18:30:27.960  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:30:27.980  1749  4184 I SDM     : NotifyCWBStatus: Notify the client about buffer (0xd3de3540) status 0 for display-0.
+04-17 18:30:27.981  1749  4184 I SDM     : SDMConcurrentWriteBack::ProcessCWBStatus: CWB queue is empty. Display: 0
+04-17 18:30:28.034  1749  2537 I SDM     : DisplayBase::CommitThread: Received Idle Timeout, panel: cmd, timeout: 70000 us
+04-17 18:30:28.034  2737  2737 D libsensor-parseRGB: CWB NotifyIdleStatus 1
+04-17 18:30:28.042  2737  4148 I libsensor-boledalgo: Write:the value of channelCali C:4101.9,R:1404.2,G:1625.9,B:245.3,scales [0.768425,0.771258,0.754871,0.816696]
+04-17 18:30:28.042  2737  4148 D libsensor-boledalgo: brightness:252,R:1.0,G:4486.5,B:4949.7,EVENT C:12296.0,R:3160.0,G:3147.0,B:923.0, lux: 8.9, clone:1697
+04-17 18:30:28.051 23103 23408 D JavaheapMonitor: Java heap used=3M max=256M, proc: com.milink.service:audio
+04-17 18:30:28.052 23103 23408 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:30:28.110  9803 11366 D JavaheapMonitor: Java heap used=20M max=256M, proc: com.miui.securitycenter.remote
+04-17 18:30:28.110  9803 11366 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:30:28.201  3285  3373 D JavaheapMonitor: Java heap used=197M max=512M, proc: system_server
+04-17 18:30:28.201  3285  3373 V JavaheapMonitor: Check java heap usage finished! Next check delay: 180000
+04-17 18:30:28.293  4854 19723 D JavaheapMonitor: Java heap used=12M max=256M, proc: com.qti.phone
+04-17 18:30:28.293  4854 19723 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+04-17 18:30:28.317 11899 19888 D JavaheapMonitor: Java heap used=4M max=256M, proc: com.miui.voicetrigger
+04-17 18:30:28.318 11899 19888 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000

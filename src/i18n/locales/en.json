@@ -10,7 +10,9 @@
     "healing": "Deep Relaxation",
     "brainwave": "Focus Brainwaves",
     "life": "Life Corners",
-    "interactive": "Ambient Decor"
+    "interactive": "Ambient Decor",
+    "westernchurch": "Western Church",
+    "oriental": "Oriental Zen"
   },
   "actions": {
     "play": "Play",
@@ -20,7 +22,8 @@
     "previous": "Previous",
     "deleted": "Deleted",
     "deleteFailed": "Delete failed",
-    "restored": "Playback restored"
+    "restored": "Playback restored",
+    "download": "Download"
   },
   "slogans": {
     "journey": "Begin a relaxation journey",
@@ -46,7 +49,54 @@
     "loading": "Loading...",
     "back": "Back",
     "delete": "Delete",
+    "settings": "Settings",
     "comma": ", ",
+    "noiseCancellation": {
+      "title": "Noise Cancellation",
+      "status": "NC Status",
+      "statusDesc": "Intelligently identify environmental noise and provide you with an immersive listening experience",
+      "toggle": "Enable NC",
+      "modes": "NC Modes",
+      "smart": "Smart Scene Recognition",
+      "smartDesc": "Automatically detect surrounding noise types and intelligently switch to the best noise cancellation mode",
+      "smartEnable": "Enable Smart Recognition",
+      "stopAll": "Stop All NC",
+      "settings": "Settings"
+    },
+    "noise": {
+      "wind": {
+        "title": "Gentle Breeze",
+        "subtitle": "Perfect for eliminating AC hum and household noise."
+      },
+      "traffic": {
+        "title": "Pouring Cover",
+        "subtitle": "Counteracts engine roar and traffic flow."
+      },
+      "crowd": {
+        "title": "Fireside Isolation",
+        "subtitle": "Blurs voices and social noise."
+      },
+      "balanced": {
+        "title": "Deep Space Focus",
+        "subtitle": "Blocks office conversations and keyboard typing."
+      },
+      "deep": {
+        "title": "Deep Silence",
+        "subtitle": "Erase ambient noise for ultimate tranquility."
+      },
+      "office": {
+        "title": "Deep Focus",
+        "subtitle": "Block out chatter and boost productivity."
+      },
+      "sleep": {
+        "title": "Sleep Well",
+        "subtitle": "Gentle pink noise for a restful night's sleep."
+      },
+      "travel": {
+        "title": "Travel Calm",
+        "subtitle": "Cancel out engine roar for a peaceful journey."
+      }
+    },
     "period": ". ",
     "enter_scheme_name": "Enter scheme name",
     "friend": "Friend",
@@ -248,7 +298,8 @@
       "Nature": "Nature",
       "Healing": "Healing",
       "Brainwave": "Brainwave",
-      "Life": "Life"
+      "Life": "Life",
+      "WesternChurch": "Western Church"
     }
   },
   "miniPlayer": {
@@ -300,7 +351,8 @@
     "tip": "Please stay connected for the first time, syncing high-quality audio",
     "optimizing": "Optimizing audio assets...",
     "incompleteTitle": "Download Incomplete",
-    "incompleteMessage": "{{count}} files are still downloading. Please wait for the download to complete."
+    "incompleteMessage": "{{count}} files are still downloading. Please wait for the download to complete.",
+    "message": "The audio file for \"{{sceneTitle}}\" has not been downloaded yet. Would you like to download it now?"
   },
   "nameEntry": {
     "title": "What's your name?",
@@ -374,6 +426,12 @@
     "nature_misty_forest": { "title": "Forest Mist", "desc": "Morning forest walk with fresh oxygen" },
     "nature_river": { "title": "Morning River", "desc": "Clear stream over stones" },
     "nature_night": { "title": "Quiet Tribe", "desc": "Ancient callings" },
+    "nature_moonlight": { "title": "Moonlight", "desc": "Moonlight flooding the earth" },
+    "nature_offroad_avenue": { "title": "Offroad Avenue", "desc": "Driving through boundless wilderness" },
+    "nature_star_glass": { "title": "Star Glass", "desc": "Looking up at the brilliant starry sky" },
+    "manual_morning_forest": { "title": "Morning Forest", "desc": "Morning light piercing through misty forest" },
+    "manual_serene_lakeside": { "title": "Serene Lakeside", "desc": "Lake reflecting distant mountains" },
+    "manual_starlit_wilderness": { "title": "Starlit Wilderness", "desc": "Stars dotting the boundless wilderness" },
     "life_rain_boat": { "title": "Rain on Boat", "desc": "Light rain on a lonely boat" },
     "life_bookstore": { "title": "Afternoon Bookstore", "desc": "Paper and silence" },
     "healing_zen_bowl": { "title": "Zen Bowl", "desc": "Instant stillness" },
@@ -385,10 +443,43 @@
     "interactive_wind_chime": { "title": "Wind Chimes", "desc": "Ethereal sounds" },
     "interactive_breath": { "title": "Breathing", "desc": "Mindfulness guidance" },
     "interactive_apple": { "title": "Apple Crunch", "desc": "Relaxing sound" },
-    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" }
+    "interactive_match": { "title": "Match Strike", "desc": "Trigger sound" },
+    "western_church_gregorian": { "title": "Gregorian Chant", "desc": "Ancient Gregorian chants in a cathedral" },
+    "western_church_morning_bell": { "title": "Morning Bell", "desc": "Morning bells from the monastery" },
+    "western_church_holy_waves": { "title": "Holy Light", "desc": "Spiritual convergence of light and sound" },
+    "western_church_forest_echo": { "title": "Stone Corridor Echo", "desc": "Echoes from an ancient monastery" },
+    "western_church_urban_chant": { "title": "Candlelight Meditation", "desc": "Peaceful chants in candlelight" },
+    "oriental_zen_monastery": { "title": "Zen Monastery", "desc": "Ancient temple bells, calm mind" },
+    "oriental_tibetan_bowl": { "title": "Tibetan Bowl", "desc": "High-frequency resonance, purify the soul" },
+    "oriental_morning_buddha": { "title": "Morning Buddha", "desc": "Morning bells and evening drums, deep zen" }
   },
   "disclaimer": {
     "title": "Health Disclaimer",
-    "content": "The sound content provided by this app is for relaxation and meditation purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Please consult a qualified healthcare provider for any health concerns."
-  }
+    "content": "The audio content provided by this app is for relaxation and meditation purposes only and cannot replace professional medical advice, diagnosis, or treatment. Please consult a healthcare professional for any health concerns."
+  },
+  "noise_breeze_title": "Gentle Breeze",
+  "noise_breeze_desc": "Silky smooth white noise to calm your mind and find peace.",
+  "noise_downpour_title": "Heavy Downpour",
+  "noise_downpour_desc": "Enveloping rain noise to shield you from external distractions.",
+  "noise_fireplace_title": "Cozy Fireplace",
+  "noise_fireplace_desc": "The warm crackle of a fireplace, creating a safe space for focus.",
+  "noise_deepspace_title": "Deep Space",
+  "noise_deepspace_desc": "Deep, pure low-frequency pulses for peak productivity.",
+  "eq_title": "EQ Laboratory",
+  "eq_reset": "Reset",
+  "eq_save": "Save Preset",
+  "eq_saved_success": "Preset Saved",
+  "eq_custom_name": "Custom Preset",
+  "eq_play": "Play",
+  "eq_stop": "Stop",
+  "eq_playing": "Playing",
+  "eq_stopped": "Stopped",
+  "eq_loading": "Loading...",
+  "home_noise_lab": "Noise Lab",
+  "home_eq_lab": "EQ Lab",
+  "home_noise_desc": "Create an ultra-quiet space for deep focus.",
+  "home_eq_desc": "Professional-grade audio tuning laboratory.",
+  "noise_room_desc": "Background bars show ambient noise distribution. Slide to adjust counter-volume.",
+  "noise_room_ai_hint": "AI provides visual reference only. You're in full control.",
+  "eq_current_source": "Current Source"
 }

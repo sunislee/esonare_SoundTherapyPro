@@ -1,117 +1,35 @@
-source 'https://cdn.cocoapods.org/'
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
 
-require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
-require File.join(File.dirname(`node --print "require.resolve('react-native/package.json')"`), "scripts/react_native_pods")
-
-require 'json'
-podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
-
-# 物理级修复：定义全局方法
-def get_folly_config
-  {
-    :version => '2023.08.07.00',
-    :git => 'https://github.com/facebook/folly.git',
-    :compiler_flags => '-DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -Wno-comma -Wno-shorten-64-to-32',
-    :config_file => [
-        "#pragma once",
-        "",
-        "#define FOLLY_MOBILE 1",
-        "#define FOLLY_USE_LIBCPP 1",
-        "#define FOLLY_HAVE_PTHREAD 1",
-        "#define FOLLY_CFG_NO_COROUTINES 1",
-        "#define FOLLY_HAVE_CLOCK_GETTIME 1",
-    ]
-  }
-end
-
-# 针对 Pod 模块定义单例方法，这在 Ruby 中是最强的定义方式
-  def Pod.get_folly_config
-    {
-      :version => '2023.08.07.00',
-      :git => 'https://github.com/facebook/folly.git',
-      :compiler_flags => '-DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -Wno-comma -Wno-shorten-64-to-32',
-      :config_file => [
-          "#pragma once",
-          "",
-          "#define FOLLY_MOBILE 1",
-          "#define FOLLY_USE_LIBCPP 1",
-          "#define FOLLY_HAVE_PTHREAD 1",
-          "#define FOLLY_CFG_NO_COROUTINES 1",
-          "#define FOLLY_HAVE_CLOCK_GETTIME 1",
-      ]
-    }
-  end
-
-def get_glog_config()
-  return { :git => 'https://github.com/google/glog.git' }
-end
-
-def get_fast_float_config()
-  return { :git => 'https://github.com/fastfloat/fast_float.git' }
-end
-
-def get_fmt_config()
-  return { :git => 'https://github.com/fmtlib/fmt.git' }
-end
-
-def ccache_enabled?(podfile_properties)
-  # Environment variable takes precedence
-  return ENV['USE_CCACHE'] == '1' if ENV['USE_CCACHE']
-  
-  # Fall back to Podfile properties
-  podfile_properties['apple.ccacheEnabled'] == 'true'
-end
-
-ENV['RCT_NEW_ARCH_ENABLED'] = '1'
-ENV['EX_DEV_CLIENT_NETWORK_INSPECTOR'] ||= podfile_properties['EX_DEV_CLIENT_NETWORK_INSPECTOR']
-platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
-
+platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-target 'SoundTherapyPro' do
-  use_expo_modules!
+linkage = ENV['USE_FRAMEWORKS']
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
 
-  if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
-    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
-  else
-    config_command = [
-      'node',
-      '--no-warnings',
-      '--eval',
-      'require(\'expo/bin/autolinking\')',
-      'expo-modules-autolinking',
-      'react-native-config',
-      '--json',
-      '--platform',
-      'ios'
-    ]
-  end
-
+target 'SoundTherapy081' do
   config = use_native_modules!
-
-  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
-  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
   post_install do |installer|
-    config_settings = config
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config_item|
-        config_item.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-        config_item.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_CFG_NO_COROUTINES=1'
-      end
-    end
-
+    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
-      config_settings[:reactNativePath],
-      :mac_catalyst_enabled => false
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
     )
   end
 end

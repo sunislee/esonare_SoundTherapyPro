@@ -1,0 +1,5 @@
+- [ ] 编译中间产物（intermediates 和 generated）被物理删除
+- [ ] build.gradle 中的 exclude 规则被移除
+- [ ] APK 中包含 libreact_featureflagsjni.so 文件
+- [ ] file 命令显示 so 文件的对齐属性
+- [ ] App 启动后不再报 SoLoaderDSONotFoundError

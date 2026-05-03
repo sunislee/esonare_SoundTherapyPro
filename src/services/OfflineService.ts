@@ -4,14 +4,21 @@ import {
   AUDIO_MANIFEST, 
   ASSET_LIST, 
   getLocalPath as getLocalPathHelper,
-  IS_GOOGLE_PLAY_VERSION
+  IS_GOOGLE_PLAY_VERSION,
+  LOCAL_RESOURCE_PATH
 } from '../constants/audioAssets';
+import { Platform, NativeModules } from 'react-native';
 
 // 资源版本标记（用于强制重新下载时使用）
 const RESOURCE_VERSION = '1.0.7';
 const SOURCE_ID = IS_GOOGLE_PLAY_VERSION ? 'GITHUB' : 'GITEE';
 // 简化 key，不再包含版本号，避免版本更新后要求重新下载
 const READY_KEY = 'RESOURCE_READY';
+const BUNDLED_ASSETS_COPIED_KEY = 'BUNDLED_ASSETS_COPIED_V1';
+
+// 内置音频文件列表（从 res/raw 复制）
+// 【注意】西方教会音频已改为远程下载，此列表保留为空
+const BUNDLED_AUDIO_FILES: string[] = [];
 
 export interface ResourceIntegrityResult {
   isComplete: boolean;
@@ -33,6 +40,86 @@ export interface DownloadProgressState {
 
 export const OfflineService = {
   /**
+   * 复制内置音频文件从 res/raw 到 DocumentDirectory
+   * 仅在首次安装或资源未复制时执行
+   */
+  async copyBundledAssets(): Promise<void> {
+    try {
+      const alreadyCopied = await AsyncStorage.getItem(BUNDLED_ASSETS_COPIED_KEY);
+      if (alreadyCopied === 'true') {
+        console.log('[OfflineService] ✅ 内置音频已复制，跳过');
+        return;
+      }
+
+      console.log('[OfflineService] 📦 开始复制内置音频文件...');
+      
+      // 【防御性检查】确保目录路径有效
+      if (!LOCAL_RESOURCE_PATH || typeof LOCAL_RESOURCE_PATH !== 'string') {
+        console.error('[OfflineService] ❌ 本地资源路径无效:', LOCAL_RESOURCE_PATH);
+        return;
+      }
+      
+      // 确保目标目录存在
+      try {
+        if (!(await RNFS.exists(LOCAL_RESOURCE_PATH))) {
+          await RNFS.mkdir(LOCAL_RESOURCE_PATH);
+        }
+      } catch (dirError: any) {
+        console.error('[OfflineService] ❌ 创建目录失败:', dirError?.message);
+        // 尝试使用备用目录
+        const fallbackPath = `${RNFS.CachesDirectoryPath}/audio_resources`;
+        console.log('[OfflineService] 使用备用目录:', fallbackPath);
+        await RNFS.mkdir(fallbackPath);
+      }
+
+      let copiedCount = 0;
+      for (const filename of BUNDLED_AUDIO_FILES) {
+        const destPath = `${LOCAL_RESOURCE_PATH}/${filename}`;
+        
+        // 检查目标文件是否已存在
+        try {
+          if (await RNFS.exists(destPath)) {
+            console.log(`[OfflineService] ⏭️ 文件已存在，跳过：${filename}`);
+            copiedCount++;
+            continue;
+          }
+        } catch (existsError: any) {
+          console.warn(`[OfflineService] 检查 ${filename} 存在性失败:`, existsError?.message);
+          // 继续执行，假设文件不存在
+        }
+
+        try {
+          // Android: 从 assets 目录复制
+          if (Platform.OS === 'android') {
+            const assetPath = `audio/${filename}`;
+            await RNFS.copyFileAssets(assetPath, destPath);
+            console.log(`[OfflineService] ✅ 复制成功：${filename}`);
+            copiedCount++;
+          } else {
+            // iOS: 从 Bundle 复制
+            const bundlePath = RNFS.MainBundlePath + `/${filename}`;
+            if (await RNFS.exists(bundlePath)) {
+              await RNFS.copyFile(bundlePath, destPath);
+              console.log(`[OfflineService] ✅ 复制成功：${filename}`);
+              copiedCount++;
+            }
+          }
+        } catch (error: any) {
+          console.warn(`[OfflineService] ⚠️ 复制失败：${filename}`, error?.message);
+          // 继续处理下一个文件
+        }
+      }
+
+      // 标记已复制
+      await AsyncStorage.setItem(BUNDLED_ASSETS_COPIED_KEY, 'true');
+      console.log(`[OfflineService] 📦 内置音频复制完成：${copiedCount}/${BUNDLED_AUDIO_FILES.length}`);
+    } catch (error: any) {
+      console.error('[OfflineService] ❌ 复制内置音频失败:', error?.message);
+      // 【防御性处理】即使失败也不阻塞应用启动
+    }
+  },
+
+  /**
    * 检测当前是否处于离线模式
    * 优化：资源已下载完成，直接返回在线状态
    */
@@ -44,6 +131,7 @@ export const OfflineService = {
   /**
    * 物理校验所有资源文件的完整性
    * 检查文件是否存在且大小匹配预期
+   * 【关键修复】改为按文件名去重校验，支持多场景复用同一音频文件
    */
   async checkResourceIntegrity(): Promise<ResourceIntegrityResult> {
     const missingAssets: string[] = [];
@@ -52,6 +140,9 @@ export const OfflineService = {
     let expectedSize = 0;
     let existingFileCount = 0;
 
+    // 【资源复用】按文件名去重，避免同一文件被多次校验
+    const checkedFiles: Set<string> = new Set();
+
     for (const asset of ASSET_LIST) {
       const audioAsset = AUDIO_MANIFEST.find(a => a.id === asset.id);
       if (!audioAsset) continue;
@@ -59,6 +150,14 @@ export const OfflineService = {
       expectedSize += asset.expectedSize;
 
       const localPath = getLocalPathHelper(audioAsset.category, audioAsset.filename);
+      
+      // 【资源复用】如果该文件已经检查过，跳过
+      if (checkedFiles.has(localPath)) {
+        existingFileCount++;
+        continue;
+      }
+      checkedFiles.add(localPath);
+
       const fileExists = await RNFS.exists(localPath);
 
       if (!fileExists) {
@@ -236,8 +335,19 @@ export const OfflineService = {
       console.log('[OfflineService] 开始完整资源检查...');
       console.log(`[OfflineService] AUDIO_MANIFEST 长度: ${AUDIO_MANIFEST.length}`);
       
+      // 【资源复用】按文件名去重，避免同一文件被多次校验
+      const checkedFiles: Set<string> = new Set();
+      
       for (const asset of AUDIO_MANIFEST) {
         const localPath = getLocalPathHelper(asset.category, asset.filename);
+        
+        // 【资源复用】如果该文件已经检查过，复用结果
+        if (checkedFiles.has(localPath)) {
+          details.push(`${asset.id}: 复用已检查文件 (${localPath})`);
+          continue;
+        }
+        checkedFiles.add(localPath);
+        
         const exists = await RNFS.exists(localPath);
         
         console.log(`[OfflineService] 检查文件: ${asset.id}, path: ${localPath}, exists: ${exists}`);
