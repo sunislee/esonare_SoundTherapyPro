@@ -8,15 +8,17 @@ const nativeChannel =
 
 export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googlePlay' : true;
 
-const TENCENT_CLOUD_URL = 'https://43.138.58.71/';
 export const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/main/';
 export const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 export const GHPROXY_URL = 'https://ghproxy.net/';
 
-// Google Play 专用配置：GitHub 官方源（主源）+ ghproxy 镜像加速
-// 专注海外市场，使用 GitHub 作为主源，通过镜像加速提升下载速度
-export const PRIMARY_REMOTE_RESOURCE_BASE_URL = `${GHPROXY_URL}${GITHUB_URL}`;
-export const SECONDARY_REMOTE_RESOURCE_BASE_URL = `${GHPROXY_URL}${GITHUB_URL}`;
+// 【顶级 CDN 加速源】全球加速，比小镜像快 100 倍
+export const JSDDELIVR_URL = 'https://fastly.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/';
+export const STATICALLY_URL = 'https://cdn.statically.io/gh/sunislee/sound-therapy-assets/main/';
+
+// Google Play 专用配置：jsDelivr 主源 + Statically 备源 + GitHub 官方
+export const PRIMARY_REMOTE_RESOURCE_BASE_URL = JSDDELIVR_URL;
+export const SECONDARY_REMOTE_RESOURCE_BASE_URL = STATICALLY_URL;
 export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 
 export const LOCAL_RESOURCE_PATH = `${RNFS.DocumentDirectoryPath}/audio_resources`; 
@@ -44,12 +46,12 @@ export const AUDIO_MANIFEST = [
   { id: 'nature_forest', filename: 'base/misty_woods_dripping.m4a', category: 'nature', title: 'scenes.nature_forest.title', description: 'scenes.nature_forest.desc', size: 680336 }, 
   { id: 'nature_deep_sea', filename: 'base/deep_sea_breathing_rhythm.m4a', category: 'nature', title: 'scenes.nature_deep_sea.title', description: 'scenes.nature_deep_sea.desc', size: 456030 },
   { id: 'nature_misty_forest', filename: 'base/foggy_forest_ritual.m4a', category: 'nature', title: 'scenes.nature_misty_forest.title', description: 'scenes.nature_misty_forest.desc', size: 1732906 },
-  { id: 'nature_river', filename: 'base/morning_river.mp3', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 7201196 }, 
+  { id: 'nature_river', filename: 'base/liquid_peace.m4a', category: 'nature', title: 'scenes.nature_river.title', description: 'scenes.nature_river.desc', size: 4574599 }, 
   { id: 'nature_night', filename: 'base/night_tribe.mp3', category: 'nature', title: 'scenes.nature_night.title', description: 'scenes.nature_night.desc', size: 7201196 },
 
-  { id: 'manual_morning_forest', filename: 'base/offroad_avenue.m4a', category: 'nature', title: 'scenes.manual_morning_forest.title', description: 'scenes.manual_morning_forest.desc', size: 7201196 },
-  { id: 'manual_serene_lakeside', filename: 'base/moonlight.m4a', category: 'nature', title: 'scenes.manual_serene_lakeside.title', description: 'scenes.manual_serene_lakeside.desc', size: 7201196 },
-  { id: 'manual_starlit_wilderness', filename: 'base/star_glass.m4a', category: 'nature', title: 'scenes.manual_starlit_wilderness.title', description: 'scenes.manual_starlit_wilderness.desc', size: 7201196 },
+  { id: 'manual_morning_forest', filename: 'base/offroad_avenue.m4a', category: 'nature', title: 'scenes.manual_morning_forest.title', description: 'scenes.manual_morning_forest.desc', size: 784448 },
+  { id: 'manual_serene_lakeside', filename: 'base/moonlight.m4a', category: 'nature', title: 'scenes.manual_serene_lakeside.title', description: 'scenes.manual_serene_lakeside.desc', size: 594199 },
+  { id: 'manual_starlit_wilderness', filename: 'base/star_glass.m4a', category: 'nature', title: 'scenes.manual_starlit_wilderness.title', description: 'scenes.manual_starlit_wilderness.desc', size: 466422 },
 
   { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 7201196 }, 
   { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 },
@@ -74,9 +76,9 @@ export const AUDIO_MANIFEST = [
   { id: 'western_church_forest_echo', filename: 'western_church/western_church_forest_echo.m4a', category: 'western_church', title: 'scenes.western_church_forest_echo.title', description: 'scenes.western_church_forest_echo.desc', size: 732037 },
   { id: 'western_church_urban_chant', filename: 'western_church/western_church_urban_chant.m4a', category: 'western_church', title: 'scenes.western_church_urban_chant.title', description: 'scenes.western_church_urban_chant.desc', size: 414572 },
 
-  { id: 'oriental_zen_monastery', filename: 'zen/zen_bell.mp3', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 1048576 },
-  { id: 'oriental_tibetan_bowl', filename: 'zen/zen_bowl.mp3', category: 'oriental', title: 'scenes.oriental_tibetan_bowl.title', description: 'scenes.oriental_tibetan_bowl.desc', size: 1048576 },
-  { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.mp3', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 1048576 },
+  { id: 'oriental_zen_monastery', filename: 'zen/zen_bell.mp3', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 482184 },
+  { id: 'oriental_tibetan_bowl', filename: 'zen/zen_bowl.mp3', category: 'oriental', title: 'scenes.oriental_tibetan_bowl.title', description: 'scenes.oriental_tibetan_bowl.desc', size: 595869 },
+  { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.mp3', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 1181012 },
 
   // 8 轨音频资源（降噪实验室 EQ 调节用）
   { id: '8track_balanced_1', filename: 'noise reduction/balanced_noise_track_1.mp3', category: 'noise_reduction', title: '均衡降噪 Track 1', description: '8 轨均衡降噪音频', size: 4438143 },
@@ -114,6 +116,21 @@ export const AUDIO_MANIFEST = [
   { id: '8track_traffic_6', filename: 'noise reduction/traffic_noise_track_6.mp3', category: 'noise_reduction', title: '交通降噪 Track 6', description: '8 轨交通降噪音频', size: 4322786 },
   { id: '8track_traffic_7', filename: 'noise reduction/traffic_noise_track_7.mp3', category: 'noise_reduction', title: '交通降噪 Track 7', description: '8 轨交通降噪音频', size: 4322786 },
   { id: '8track_traffic_8', filename: 'noise reduction/traffic_noise_track_8.mp3', category: 'noise_reduction', title: '交通降噪 Track 8', description: '8 轨交通降噪音频', size: 4322786 },
+
+  // 东方禅意场景背景图（7张，zen/ 子目录）
+  { id: 'bg_zen_temple_lantern_gate', filename: 'zen/bg_temple_lantern_gate.webp', category: 'scene_backgrounds', title: '东方禅意灯笼门', description: '场景背景图', size: 81976 },
+  { id: 'bg_zen_temple_zen_lantern', filename: 'zen/bg_temple_zen_lantern.webp', category: 'scene_backgrounds', title: '东方禅意灯笼', description: '场景背景图', size: 76586 },
+  { id: 'bg_zen_temple_roof', filename: 'zen/bg_temple_roof.webp', category: 'scene_backgrounds', title: '东方禅意屋顶', description: '场景背景图', size: 105480 },
+  { id: 'bg_zen_bamboo_mist', filename: 'zen/bg_bamboo_mist.webp', category: 'scene_backgrounds', title: '东方禅意竹林', description: '场景背景图', size: 72590 },
+  { id: 'bg_zen_bamboo_sunrise', filename: 'zen/bg_bamboo_sunrise.webp', category: 'scene_backgrounds', title: '东方禅意日出', description: '场景背景图', size: 70574 },
+  { id: 'bg_zen_fountain_ritual', filename: 'zen/bg_fountain_ritual.webp', category: 'scene_backgrounds', title: '东方禅意喷泉', description: '场景背景图', size: 146774 },
+  { id: 'bg_zen_guzheng_zen', filename: 'zen/bg_guzheng_zen.webp', category: 'scene_backgrounds', title: '东方禅意古筝', description: '场景背景图', size: 55704 },
+
+  // 西方教会场景背景图（4张，根目录，第5张复用candlelight）
+  { id: 'bg_western_church_candlelight', filename: 'western_church_candlelight.webp', category: 'scene_backgrounds', title: '西方教会烛光', description: '场景背景图', size: 150974 },
+  { id: 'bg_western_church_corridor', filename: 'western_church_corridor.webp', category: 'scene_backgrounds', title: '西方教会走廊', description: '场景背景图', size: 205402 },
+  { id: 'bg_western_church_light_rays', filename: 'western_church_light_rays.webp', category: 'scene_backgrounds', title: '西方教会光束', description: '场景背景图', size: 135480 },
+  { id: 'bg_western_church_sunlight_monastery', filename: 'western_church_sunlight_monastery.webp', category: 'scene_backgrounds', title: '西方教会阳光修道院', description: '场景背景图', size: 223932 },
 ]; 
 
 // 【核心】初始化 AUDIO_MAP，将 filename 映射到本地路径
@@ -150,6 +167,12 @@ export const ASSET_LIST = [
   { id: 'interactive_breath', expectedSize: 1048576 },     // 保持原值
   { id: 'interactive_apple', expectedSize: 32853 },        // 实际：33KB
   { id: 'interactive_match', expectedSize: 846284 },       // 实际：846KB
+  
+  // 东方禅意音频（3个，oriental/ 子目录）
+  { id: 'oriental_zen_monastery', expectedSize: 482184 },    // zen/zen_bell.mp3
+  { id: 'oriental_tibetan_bowl', expectedSize: 595869 },     // zen/zen_bowl.mp3
+  { id: 'oriental_morning_buddha', expectedSize: 1181012 },  // zen/zen_hum.mp3
+  
   { id: 'western_church_gregorian', expectedSize: 427392 },    // 实际：427KB
   { id: 'western_church_morning_bell', expectedSize: 194690 }, // 实际：195KB
   { id: 'western_church_holy_waves', expectedSize: 617365 },   // 实际：617KB
@@ -195,6 +218,21 @@ export const ASSET_LIST = [
   { id: '8track_traffic_6', expectedSize: 4322786 },
   { id: '8track_traffic_7', expectedSize: 4322786 },
   { id: '8track_traffic_8', expectedSize: 4322786 },
+
+  // 东方禅意场景背景图（7张，zen/ 子目录）
+  { id: 'bg_zen_temple_lantern_gate', expectedSize: 81976 },
+  { id: 'bg_zen_temple_zen_lantern', expectedSize: 76586 },
+  { id: 'bg_zen_temple_roof', expectedSize: 105480 },
+  { id: 'bg_zen_bamboo_mist', expectedSize: 72590 },
+  { id: 'bg_zen_bamboo_sunrise', expectedSize: 70574 },
+  { id: 'bg_zen_fountain_ritual', expectedSize: 146774 },
+  { id: 'bg_zen_guzheng_zen', expectedSize: 55704 },
+
+  // 西方教会场景背景图（4张，根目录，第5张复用candlelight）
+  { id: 'bg_western_church_candlelight', expectedSize: 150974 },
+  { id: 'bg_western_church_corridor', expectedSize: 205402 },
+  { id: 'bg_western_church_light_rays', expectedSize: 135480 },
+  { id: 'bg_western_church_sunlight_monastery', expectedSize: 223932 },
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）
@@ -202,24 +240,17 @@ export const GLOBAL_TOTAL_SIZE = ASSET_LIST.reduce((sum, asset) => sum + asset.e
 export const GLOBAL_TOTAL_SIZE_MB = GLOBAL_TOTAL_SIZE / 1024 / 1024;
 
 export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {
-  // 国内渠道：腾讯云主源 + Gitee备源
-  // 海外渠道：ghproxy.net 加速镜像 → mirror.ghproxy.com → GitHub官方 → 腾讯云备源
+  // 海外渠道：jsDelivr 主源 → Statically 备源 → GitHub 官方
   if (isGooglePlay) {
-    // Google渠道：ghproxy.net 加速镜像（主源）→ mirror.ghproxy.com → GitHub官方 → 腾讯云备源
-    const MIRROR_URL = 'https://ghproxy.net/';
-    const MIRROR_URL_2 = 'https://mirror.ghproxy.com/';
-    console.log(`[DownloadService] Google渠道配置双加速源: A= \`${MIRROR_URL}\`, B= \`${MIRROR_URL_2}\``);
     return [
-      `${MIRROR_URL}${GITHUB_URL}${filename}`,    // ghproxy.net 加速镜像（主源）
-      `${MIRROR_URL_2}${GITHUB_URL}${filename}`,  // mirror.ghproxy.com（备源）
-      `${GITHUB_URL}${filename}`,                  // GitHub官方
-      `${TENCENT_CLOUD_URL}${filename}`            // 腾讯云备源
+      `${JSDDELIVR_URL}${filename}`,              // jsDelivr 全球 CDN（主源）
+      `${STATICALLY_URL}${filename}`,             // Statically 全球 CDN（备源）
+      `${GITHUB_URL}${filename}`,                 // GitHub 官方直连
     ];
   }
-  // 国内渠道：Gitee 主源 + 腾讯云备源（如果 Gitee 不可用）
+  // 国内渠道：Gitee 主源
   return [
     `${GITEE_URL}${filename}`,
-    `${TENCENT_CLOUD_URL}${filename}`
   ];
 };
 

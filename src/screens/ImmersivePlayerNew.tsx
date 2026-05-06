@@ -28,6 +28,7 @@ import { usePlayerState } from '../hooks/usePlayerState';
 import { Event, useTrackPlayerEvents, State } from 'react-native-track-player';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useBackHandler } from '../hooks/useBackHandler';
+import { sceneRoamManager } from '../services/SceneRoamManager';
 
 const { width, height } = Dimensions.get('window');
 
@@ -93,10 +94,13 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+  const [isRoaming, setIsRoaming] = useState(false);
+  const [bgLoadTimeout, setBgLoadTimeout] = useState(false);
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
   const bgScaleAnim = useRef(new Animated.Value(1.0)).current;
   const pendingSceneIdRef = useRef<string | null>(null);
+  const bgTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     currentBaseSceneId,
@@ -269,6 +273,13 @@ const ImmersivePlayerNew: React.FC = () => {
     };
   }, []);
 
+
+  // 【已禁用】背景图加载超时机制 - 因 backgroundSource 每次渲染都创建新引用，导致 3 秒后误隐藏
+  // 改用 Image 的 onError 处理加载失败
+  useEffect(() => {
+    setBgLoadTimeout(false);
+  }, [targetScene.id]);
+
   // DO NOT TOUCH: Stable logic for scene switching - 页面初始化
   useEffect(() => {
     const audioService = AudioService.getInstance();
@@ -320,14 +331,38 @@ const ImmersivePlayerNew: React.FC = () => {
     
     // 防御性检查：确保 AudioService 已准备好
     if (!audioService.isReady()) {
-      console.warn('[ImmersivePlayer] ⚠️ AudioService 未准备好，跳过播放控制');
-      return;
+      console.log('[ImmersivePlayer] ⏳ AudioService 未准备好，触发初始化...');
+      setIsLoading(true);
+      try {
+        await audioService.setupPlayer();
+        let waitCount = 0;
+        while (!audioService.isReady() && waitCount < 20) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waitCount++;
+        }
+        if (!audioService.isReady()) {
+          console.warn('[ImmersivePlayer] ⚠️ 初始化超时');
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error('[ImmersivePlayer] ❌ 初始化失败:', e);
+        setIsLoading(false);
+        return;
+      }
     }
     
     if (isPlaying) {
       await audioService.pause();
     } else {
-      await audioService.play();
+      setIsLoading(true);
+      try {
+        await audioService.play();
+      } catch (e) {
+        console.error('[ImmersivePlayer] ❌ 播放失败:', e);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -340,6 +375,21 @@ const ImmersivePlayerNew: React.FC = () => {
     setIsSoundscapeVisible(false);
   };
 
+  const toggleRoaming = useCallback(() => {
+    triggerHaptic();
+    if (isRoaming) {
+      sceneRoamManager.stopRoaming();
+      setIsRoaming(false);
+      console.log('[ImmersivePlayer] 漫游模式已关闭');
+    } else {
+      const category = targetScene.category;
+      sceneRoamManager.startRoaming(category);
+      sceneRoamManager.recordPlayedScene(targetScene.id);
+      setIsRoaming(true);
+      console.log(`[ImmersivePlayer] 漫游模式已开启: ${category}`);
+    }
+  }, [isRoaming, targetScene]);
+
   // DO NOT TOUCH: Stable logic for scene switching - 场景选择处理
   const handleSelectSoundscape = async (scene: Scene) => {
     if (scene.id === currentBaseSceneId) {
@@ -349,6 +399,14 @@ const ImmersivePlayerNew: React.FC = () => {
     setIsSoundscapeVisible(false);
     console.log(`Target ID: ${scene.id}, Current UI ID: ${currentBaseSceneId ?? 'null'}`);
     pendingSceneIdRef.current = scene.id;
+    
+    // 如果处于漫游模式，更新漫游分类和记录
+    if (isRoaming) {
+      sceneRoamManager.stopRoaming();
+      sceneRoamManager.startRoaming(scene.category);
+      sceneRoamManager.recordPlayedScene(scene.id);
+    }
+    
     const audioService = AudioService.getInstance();
     try {
       await audioService.switchSoundscape(scene);
@@ -370,16 +428,21 @@ const ImmersivePlayerNew: React.FC = () => {
 
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
-        {/* 背景图：使用 fade 过渡避免翻转 */}
-        {scene.backgroundSource ? (
-          <Animated.Image 
-            key={scene.id}
-            source={scene.backgroundSource} 
+        {/* 背景图：使用 fade 过渡避免翻转，3秒超时显示占位图 */}
+        {scene.backgroundSource && !bgLoadTimeout ? (
+          <Animated.Image
+            source={scene.backgroundSource}
             style={[
               styles.backgroundImage,
               { transform: [{ scale: bgScaleAnim }] }
             ]}
-            fadeDuration={300}
+            fadeDuration={0}
+            onLoad={() => {
+              if (bgTimeoutRef.current) {
+                clearTimeout(bgTimeoutRef.current);
+                bgTimeoutRef.current = null;
+              }
+            }}
           />
         ) : (
           <View style={[styles.backgroundFallback, { backgroundColor: placeholderColor }]} />
@@ -407,6 +470,23 @@ const ImmersivePlayerNew: React.FC = () => {
 
           {/* 底部控制：场景切换按钮提升 zIndex */}
           <View style={styles.bottomSection}>
+            {/* 紫色胶囊漫游开关 */}
+            <TouchableOpacity
+              style={[styles.roamCapsule, isRoaming && styles.roamCapsuleActive]}
+              onPress={toggleRoaming}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon 
+                name={isRoaming ? "shuffle" : "shuffle-outline"} 
+                size={18} 
+                color={isRoaming ? "#FFF" : "rgba(255,255,255,0.6)"} 
+              />
+              <Text style={[styles.roamText, isRoaming && styles.roamTextActive]}>
+                {isRoaming ? t('player.roaming') : t('player.roam')}
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.scenePickerButton}
               onPress={openSoundscapeSheet}
@@ -514,6 +594,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   bottomSection: {
+    paddingTop: 12,
     paddingBottom: 60,
     paddingHorizontal: 24,
     flexDirection: 'column',
@@ -521,6 +602,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     width: '100%',
     zIndex: 3, // 确保按钮在最上层
+    gap: 12, // 按钮间距统一控制
   },
   sceneTitle: {
     color: '#fff',
@@ -530,10 +612,33 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   scenePickerButton: {
-    marginBottom: 16,
     padding: 12,
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 30,
+  },
+  roamCapsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(108, 93, 211, 0.3)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(108, 93, 211, 0.5)',
+  },
+  roamCapsuleActive: {
+    backgroundColor: '#6C5DD3',
+    borderColor: '#6C5DD3',
+  },
+  roamText: {
+    marginLeft: 6,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '500',
+  },
+  roamTextActive: {
+    color: '#FFF',
+    fontWeight: '600',
   },
   playButton: {
     width: 80,

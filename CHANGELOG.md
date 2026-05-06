@@ -1,8 +1,32 @@
 # 心声冥想 Release 记录
 
-> 统一版本号：1.4.1（versionCode 141）  
+> 统一版本号：1.4.2（versionCode 142）  
 > 包名：com.anonymous.soundtherapyapp（无渠道后缀）  
 > RN 版本：0.81.5  
+
+---
+## [2026-05-06] 版本 1.4.2：资源下载系统完整修复
+
+### 核心工作
+- [资源] 修复西方教会场景背景图缺失问题（添加 4 张真实背景图 + 1 张复用）
+- [资源] 修复东方禅意音频文件缺失问题（3 个 oriental 音频加入 ASSET_LIST）
+- [资源] 移除不存在的 `bg_church_forest_echo.webp`（GitHub/Gitee 404 导致超时卡住）
+- [路径] 修复西方教会背景图路径错误：移除多余的 `western/` 前缀
+- [UI] 修复背景图加载后 3 秒消失的 Bug（禁用有问题的超时机制）
+- [下载] 修复下载进度卡在 98%/100% 不进入首页的问题
+- [同步] 确保 AUDIO_MANIFEST 和 ASSET_LIST 文件数一致（72 个文件）
+
+### 资源统计
+- 总文件数：72 个
+- 总大小：~155 MB
+- 西方教会背景图：western_church_candlelight/corridor/light_rays/sunlight_monastery.webp
+- 东方禅意音频：zen_bell/zen_bowl/zen_hum.mp3
+
+### Bug 修复详情
+- **下载卡住**：ASSET_LIST 缺少 3 个 oriental 音频 → 补齐后 AUDIO_MANIFEST/ASSET_LIST 同步为 72
+- **404 超时**：bg_church_forest_echo.webp 不存在导致反复重试 → 移除并用 candlelight 复用
+- **路径错误**：scenes.ts 硬编码 `western/${bgFilename}` → 改为直接使用 bgFilename
+- **背景消失**：useEffect 每次 backgroundSource 变化重启 3s 计时器 → 禁用该机制
 
 ---
 ## [2026-04-20] 版本 1.4.1：三语本地化完成 & Google Play 发布准备
