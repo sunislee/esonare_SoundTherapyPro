@@ -30,13 +30,19 @@ import { useTranslation } from 'react-i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useBackHandler } from '../hooks/useBackHandler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResourceDownloader } from '../hooks/useResourceDownloader';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
 const BUTTON_SIZE = 80;
 
 // 抽离 SceneItem 组件
-const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused, scrollOffset, scrollViewRef, isResourceReady }: any) => {
+const SceneItem = React.memo(({ 
+  item, isPlaying, currentBaseSceneId, togglePlayback, navigation, 
+  isFocused, scrollOffset, scrollViewRef, isResourceReady,
+  globalProgress,  // { progress, status, isPriority }
+  onBoostPriority  // (sceneId) => void
+}: any) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
@@ -45,44 +51,55 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   const viewRef = useRef<View>(null);
   const { t } = useTranslation();
 
+  // 【重构】使用全局进度状态（从 HomeScreen 传入）
+  const downloadProgress = globalProgress?.progress || 0;
+  const downloadStatus = globalProgress?.status || (isResourceReady ? 'ready' : 'waiting');
+  const isPriority = globalProgress?.isPriority || false;
+  const [showBoostButton, setShowBoostButton] = useState(false);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
 
-  const triggerHaptic = () => {
-    ReactNativeHapticFeedback.trigger('impactLight', { enableVibrateFallback: true });
+  const triggerHaptic = (type: 'light' | 'heavy' | 'success' = 'light') => {
+    ReactNativeHapticFeedback.trigger(type === 'success' ? 'success' : type === 'heavy' ? 'impactHeavy' : 'impactLight', { enableVibrateFallback: true });
   };
 
+  // 【核心】处理点击事件
   const handlePress = () => {
     triggerHaptic();
-    if (!isResourceReady) {
-      console.warn(`[HomeScreen] ⚠️ 场景 ${item.id} 资源未下载`);
-      
-      // 【按需加载】友好提示 + 优先下载选项
-      Alert.alert(
-        '📥 资源准备中',
-        `「${t(`scenes.${item.id}.title`, { defaultValue: item.title })}」正在后台下载中~\n\n💡 核心场景会优先加载完成`,
-        [
-          { 
-            text: '稍后再试', 
-            style: 'cancel' 
-          },
-          {
-            text: '⚡ 优先下载此场景',
-            onPress: async () => {
-              console.log(`[HomeScreen] 🎯 用户请求优先下载: ${item.id}`);
-              // 可以在这里添加优先下载逻辑
-              triggerHaptic();
-            }
-          }
-        ]
-      );
-      
-      return;
-    }
-    setTimeout(() => {
+    
+    if (isResourceReady) {
+      // 资源就绪 → 直接播放
       if (item.id.includes('breath')) navigation.navigate('BreathDetail', { sceneId: item.id });
       else navigation.navigate('ImmersivePlayer', { sceneId: item.id });
-    }, 50);
+    } else if (showBoostButton && !isPriority) {
+      // 点击"优先下载"按钮 → 触发插队
+      handleBoostDownload();
+    } else {
+      // 资源未就绪 → 显示"优先下载"选项
+      setShowBoostButton(true);
+      triggerHaptic('heavy');
+    }
   };
+
+  // 【核心】触发优先下载（插队）- 调用全局回调
+  const handleBoostDownload = () => {
+    console.log(`[HomeScreen] ⚡ 用户触发优先下载: ${item.id}`);
+    
+    setShowBoostButton(false);
+    triggerHaptic('heavy');
+    
+    // 调用父组件的回调（全局状态管理）
+    if (onBoostPriority) {
+      onBoostPriority(item.id);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (isFocused && !hasAnimated && itemY !== null) {
@@ -139,25 +156,96 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
             }}
           >
             <View style={styles.cardInner}>
-              <View style={[styles.cardBg, { backgroundColor: item.primaryColor, opacity: isResourceReady ? 1 : 0.5 }]} />
+              <View style={[styles.cardBg, { backgroundColor: item.primaryColor, opacity: isResourceReady || downloadStatus === 'ready' ? 1 : 0.4 }]} />
+              
+              {/* 【PRIORITY 标签】 */}
+              {isPriority && (
+                <View style={styles.priorityBadge}>
+                  <Text style={styles.priorityBadgeText}>PRIORITY</Text>
+                </View>
+              )}
+              
               <View style={styles.cardContent}>
                 <View style={styles.cardText}>
-                  <Text style={[styles.cardTitle, !isResourceReady && styles.cardTitleDownloading]} numberOfLines={1}>{t(`scenes.${item.id}.title`, { defaultValue: item.title })}</Text>
-                  <Text style={styles.cardSubtitle} numberOfLines={1}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
-                </View>
-                {!isResourceReady ? (
-                  <View style={styles.cardDownloadingBadge}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  </View>
-                ) : (
-                  <TouchableOpacity 
-                    style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]} 
-                    onPress={() => { triggerHaptic(); togglePlayback(item); }}
+                  <Text 
+                    style={[
+                      styles.cardTitle, 
+                      !isResourceReady && downloadStatus !== 'ready' && styles.cardTitleDownloading,
+                      downloadStatus === 'ready' && styles.cardTitleReady
+                    ]} 
+                    numberOfLines={1}
                   >
-                    <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>{isThisPlaying ? '||' : '▶'}</Text>
-                  </TouchableOpacity>
-                )}
+                    {t(`scenes.${item.id}.title`, { defaultValue: item.title })}
+                  </Text>
+                  
+                  {/* 【状态文字】 */}
+                  {!isResourceReady && downloadStatus !== 'ready' && (
+                    <Text style={styles.cardStatusText} numberOfLines={1}>
+                      {isPriority 
+                        ? `${Math.round(downloadProgress)}% - Downloading`
+                        : showBoostButton
+                          ? 'Waiting in Queue'
+                          : `${downloadProgress}% - Queued`
+                      }
+                    </Text>
+                  )}
+                  
+                  {/* 【完成状态】 */}
+                  {downloadStatus === 'ready' && (
+                    <Text style={styles.cardReadyText} numberOfLines={1}>
+                      Ready to Play ✨
+                    </Text>
+                  )}
+                  
+                  {isResourceReady && downloadStatus !== 'ready' && (
+                    <Text style={styles.cardSubtitle} numberOfLines={1}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
+                  )}
+                </View>
+                
+                {/* 【右侧操作区】 */}
+                <View>
+                  {(isResourceReady || downloadStatus === 'ready') ? (
+                    <TouchableOpacity 
+                      style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]} 
+                      onPress={() => { triggerHaptic(); togglePlayback(item); }}
+                    >
+                      <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>{isThisPlaying ? '||' : '▶'}</Text>
+                    </TouchableOpacity>
+                  ) : showBoostButton && !isPriority ? (
+                    /* 【优先下载按钮】 */
+                    <TouchableOpacity 
+                      style={styles.boostButton}
+                      onPress={handleBoostDownload}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.boostButtonText}>⚡</Text>
+                      <Text style={styles.boostButtonLabel}>优先下载</Text>
+                    </TouchableOpacity>
+                  ) : isPriority ? (
+                    /* 【下载中图标】 */
+                    <View style={styles.downloadingIconContainer}>
+                      <ActivityIndicator size="small" color="#6C5DD3" />
+                      <Text style={styles.downloadingPercent}>{Math.round(downloadProgress)}%</Text>
+                    </View>
+                  ) : (
+                    /* 【等待中图标】 */
+                    <View style={styles.queuedIconContainer}>
+                      <Text style={styles.queuedIcon}>⬇</Text>
+                    </View>
+                  )}
+                </View>
               </View>
+              
+              {/* 【进度条（仅插队时显示）】 */}
+              {isPriority && (
+                <View style={styles.cardProgressBar}>
+                  <View style={styles.progressBarBg}>
+                    <Animated.View 
+                      style={[styles.progressBarFill, { width: `${Math.min(downloadProgress, 100)}%` }]} 
+                    />
+                  </View>
+                </View>
+              )}
             </View>
           </TouchableOpacity>
         </View>
@@ -179,6 +267,9 @@ export const HomeScreen: React.FC = () => {
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [downloadedSceneIds, setDownloadedSceneIds] = useState<Set<string>>(new Set());
+  
+  // 【核心】使用后台下载 Hook（替代手动实现）
+  const { downloadProgress: globalDownloadProgress, prioritizeScene } = useResourceDownloader();
 
   // 【流式就绪缓存】缓存 Key
   const CACHE_KEY = 'downloaded_scene_ids_cache';
@@ -198,7 +289,6 @@ export const HomeScreen: React.FC = () => {
         const exists = await RNFS.exists(cleanPath);
         
         // 【关键修复】只检查文件是否存在，不检查大小
-        // CDN 下载的文件可能与预期大小略有差异，但只要存在就可播放
         if (exists) {
           readyIds.add(asset.id);
         }
@@ -207,7 +297,6 @@ export const HomeScreen: React.FC = () => {
       if (isMounted) {
         setDownloadedSceneIds(readyIds);
         
-        // 【关键】保存到缓存，下次启动秒亮
         try {
           await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...readyIds]));
           console.log(`[HomeScreen] ✅ 缓存已更新: ${readyIds.size} 个场景`);
@@ -235,34 +324,8 @@ export const HomeScreen: React.FC = () => {
 
       // 【后台校验】2. 异步检查实际文件，更新状态
       checkDownloadedScenes();
-      
-      // 【按需静默下载】3. 启动后台静默下载（不阻塞 UI）
-      startBackgroundSilentDownload();
     };
     
-    // 启动后台静默下载
-    const startBackgroundSilentDownload = async () => {
-      try {
-        const { DownloadService } = await import('../services/DownloadService');
-        
-        // 延迟 2 秒启动，让 UI 先渲染完成
-        setTimeout(async () => {
-          if (!isMounted) return;
-          
-          console.log('[HomeScreen] 🚀 启动后台静默下载...');
-          const result = await DownloadService.silentBackgroundDownload();
-          console.log(`[HomeScreen] ✅ 后台下载完成: 成功 ${result.success} 个, 失败 ${result.failed} 个`);
-          
-          // 下载完成后刷新状态
-          if (isMounted) {
-            checkDownloadedScenes();
-          }
-        }, 2000);
-      } catch (e) {
-        console.error('[HomeScreen] ❌ 后台静默下载启动失败:', e);
-      }
-    };
-
     loadCacheFirst();
     
     // 定期刷新（降低频率到 10 秒，减少 IO）
@@ -370,6 +433,11 @@ export const HomeScreen: React.FC = () => {
                   navigation={navigation} isFocused={focusedSceneId === scene.id}
                   scrollOffset={scrollOffset} scrollViewRef={scrollViewRef}
                   isResourceReady={downloadedSceneIds.has(scene.id)}
+                  globalProgress={globalDownloadProgress.get(scene.id)}
+                  onBoostPriority={(sceneId: string) => {
+                    // 【全局】触发优先下载（使用 Hook）
+                    prioritizeScene(sceneId);
+                  }}
                 />
               ))}
             </View>
@@ -453,4 +521,115 @@ const styles = StyleSheet.create({
   },
   noiseCancelLabel: { marginTop: 8, fontSize: 11, color: '#fff', fontWeight: '600', textAlign: 'center' },
   noiseCancelDesc: { marginTop: 4, fontSize: 10, color: 'rgba(255,255,255,0.6)', textAlign: 'center', paddingHorizontal: 8 },
+
+  // 【重构】卡片内嵌式下载状态样式
+  priorityBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    zIndex: 10,
+    shadowColor: '#FFD700',
+    shadowRadius: 4,
+    shadowOpacity: 0.5,
+    elevation: 5,
+  },
+  priorityBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#000',
+    letterSpacing: 1,
+  },
+  cardStatusText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  cardTitleReady: {
+    color: '#4CAF50',
+  },
+  cardReadyText: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  
+  // 【优先下载按钮】
+  boostButton: {
+    backgroundColor: '#6C5DD3',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    shadowColor: '#6C5DD3',
+    shadowRadius: 6,
+    shadowOpacity: 0.4,
+    elevation: 6,
+  },
+  boostButtonText: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  boostButtonLabel: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  
+  // 【下载中图标】
+  downloadingIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(108,93,211,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+  downloadingPercent: {
+    fontSize: 11,
+    color: '#6C5DD3',
+    marginLeft: 6,
+    fontWeight: '700',
+  },
+  
+  // 【等待图标】
+  queuedIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  queuedIcon: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.3)',
+  },
+  
+  // 【卡片底部进度条】
+  cardProgressBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 20,
+    right: 20,
+    height: 4,
+  },
+  progressBarBg: {
+    flex: 1,
+    height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#FFD700',
+    borderRadius: 2,
+  },
 });

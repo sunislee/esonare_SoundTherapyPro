@@ -1,42 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, NavigationProp } from '@react-navigation/native';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNFS from 'react-native-fs';
 
-// 导入所有必要的页面
+// 导入页面
 import LandingScreen from '../screens/LandingScreen';
-import { ResourceDownloadScreen } from '../screens/ResourceDownloadScreen';
 import NameEntryScreen from '../screens/NameEntryScreen';
 import { MainTabNavigator } from './MainTabNavigator';
 import ImmersivePlayerNew from '../screens/ImmersivePlayerNew';
 import BreathDetailScreen from '../screens/BreathDetailScreen';
 import MiniPlayer from '../components/MiniPlayer';
-// import RemixSchemeManagerScreen from '../screens/RemixSchemeManagerScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import PolicyWebView from '../screens/PolicyWebView';
 import NoiseCancellationRoom from '../screens/NoiseCancellationRoom';
-import { DownloadService } from '../services/DownloadService';
-import { OfflineService } from '../services/OfflineService';
-import { GLOBAL_TOTAL_SIZE, ASSET_LIST, AUDIO_MANIFEST, getLocalPath as getLocalPathHelper } from '../constants/audioAssets';
 
 // 导入类型
 export type RootStackParamList = {
   Landing: undefined;
-  Download: undefined;
   NameEntry: undefined;
   MainTabs: undefined;
   ImmersivePlayer: { sceneId?: string } | undefined;
   BreathDetail: { sceneId?: string } | undefined;
-  RemixSchemeManager: undefined;
   History: undefined;
   Settings: undefined;
   About: undefined;
   PolicyWebView: { url: string; title: string };
-  Mixer: { presetId?: string } | undefined;
   NoiseRoom: undefined;
 };
 
@@ -44,31 +35,35 @@ type NavigationType = NavigationProp<RootStackParamList>;
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// 启动检查组件
-const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
+// 启动路由：仅负责检查用户状态，直接分流到目标页面
+const AppBootstrap = ({ navigation }: { navigation: NavigationType }) => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const checkAndNavigate = async () => {
+    const bootstrap = async () => {
       try {
-        console.log('[CheckAndNavigate] 开始启动检查...');
+        const userName = await AsyncStorage.getItem('USER_NAME');
+        const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
+        const hasUserInfo = !!(userName && userName.trim().length > 0) || (hasSkipped === 'true');
         
-        // 总是先进入 LandingScreen 显示 loading 动画
-        // LandingScreen 会负责检查用户信息和资源状态，并进行相应跳转
-        console.log('[CheckAndNavigate] 进入 LandingScreen 显示 loading 动画');
-        navigation.replace('Landing');
+        console.log('[AppBootstrap] 启动检查:', { hasUserInfo });
+        
+        if (hasUserInfo) {
+          navigation.replace('MainTabs');
+        } else {
+          navigation.replace('Landing');
+        }
       } catch (e) {
-        console.error('[CheckAndNavigate] 检查失败:', e);
+        console.error('[AppBootstrap] 异常:', e);
         navigation.replace('Landing');
       } finally {
         setIsChecking(false);
       }
     };
     
-    checkAndNavigate();
+    bootstrap();
   }, [navigation]);
 
-  // 检查过程中显示加载界面
   if (isChecking) {
     return (
       <View style={styles.loadingContainer}>
@@ -77,7 +72,6 @@ const CheckAndNavigate = ({ navigation }: { navigation: NavigationType }) => {
     );
   }
 
-  // 检查完成后会自动导航，这里不需要返回任何内容
   return null;
 };
 
@@ -85,33 +79,37 @@ export function MainNavigator() {
   return (
     <>
       <Stack.Navigator
-        initialRouteName="CheckAndNavigate"
+        initialRouteName="AppBootstrap"
         screenOptions={{
           headerShown: false,
           gestureEnabled: true,
         }}
       >
-        {/* 启动检查路由 */}
+        {/* 【核心】启动路由：直接分流，无中间页面 */}
         <Stack.Screen 
-          name="CheckAndNavigate" 
-          component={CheckAndNavigate} 
+          name="AppBootstrap" 
+          component={AppBootstrap} 
         />
+        
+        {/* 品牌展示页（1.2s Logo 动画） */}
         <Stack.Screen 
           name="Landing" 
           component={LandingScreen} 
         />
-        <Stack.Screen 
-          name="Download" 
-          component={ResourceDownloadScreen} 
-        />
+        
+        {/* 新用户起名页 */}
         <Stack.Screen 
           name="NameEntry" 
           component={NameEntryScreen} 
         />
+        
+        {/* 【主入口】首页 Tab 导航 */}
         <Stack.Screen 
           name="MainTabs" 
           component={MainTabNavigator} 
         />
+        
+        {/* 播放器页面 */}
         <Stack.Screen 
           name="ImmersivePlayer" 
           component={ImmersivePlayerNew} 
@@ -121,6 +119,8 @@ export function MainNavigator() {
             headerShown: false,
           }}
         />
+        
+        {/* 呼吸详情页 */}
         <Stack.Screen 
           name="BreathDetail" 
           component={BreathDetailScreen} 
@@ -130,30 +130,15 @@ export function MainNavigator() {
             headerShown: false,
           }}
         />
-        {/* 
-        <Stack.Screen 
-          name="RemixSchemeManager" 
-          component={RemixSchemeManagerScreen} 
-        />
-        */}
-        <Stack.Screen 
-          name="History" 
-          component={HistoryScreen} 
-        />
-        <Stack.Screen 
-          name="Settings" 
-          component={SettingsScreen} 
-        />
-        <Stack.Screen 
-          name="About" 
-          component={AboutScreen} 
-        />
+        
+        {/* 其他功能页面 */}
+        <Stack.Screen name="History" component={HistoryScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen 
           name="PolicyWebView" 
           component={PolicyWebView} 
-          options={{
-            headerShown: false,
-          }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="NoiseRoom" 
@@ -164,18 +149,9 @@ export function MainNavigator() {
             headerShown: false,
           }}
         />
-        {/* 
-        <Stack.Screen 
-          name="Mixer" 
-          component={MixerScreen} 
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-            tabBarStyle: { display: 'none' }, // 物理隔离 TabBar，防止穿透
-          }}
-        />
-        */}
       </Stack.Navigator>
+      
+      {/* 全局 MiniPlayer */}
       <MiniPlayer />
     </>
   );
@@ -184,7 +160,7 @@ export function MainNavigator() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#080912',
     justifyContent: 'center',
     alignItems: 'center',
   },

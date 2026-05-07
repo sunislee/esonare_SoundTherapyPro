@@ -1,142 +1,93 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, Animated, ActivityIndicator, Easing } from 'react-native';
+import { View, StyleSheet, Text, Animated, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { OfflineService } from '../services/OfflineService';
-import AudioService from '../services/AudioService';
-import EngineControl from '../constants/EngineControl';
 import { initLanguage } from '../i18n';
 import { useTranslation } from 'react-i18next';
 
 export const LandingScreen = ({ navigation }: any) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const breathAnim = useRef(new Animated.Value(0)).current;
 
-  // 强制重新渲染，确保 i18n 初始化后能正确获取文本
-  const [, setTick] = React.useState(0);
-
   useEffect(() => {
+    // 入场动画
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
 
+    // 呼吸动画
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(breathAnim, {
-          toValue: 1,
-          duration: 2500,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(breathAnim, {
-          toValue: 0,
-          duration: 2500,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
+        Animated.timing(breathAnim, { toValue: 1, duration: 2500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(breathAnim, { toValue: 0, duration: 2500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       ])
     );
     loop.start();
 
-    const checkAndBoot = async () => {
-      const startTime = Date.now();
-      // 调整为 1.5 秒的视觉停留时间
-      const MIN_DISPLAY_TIME = 1500;
-
+    const enterApp = async () => {
       try {
-        // 1. 优先初始化多语言设置
         await initLanguage();
         
-        // 初始化完成后触发一次强制刷新
-        setTick(t => t + 1);
-
-        // 1.5 复制内置音频资源（首次安装时）
-        await OfflineService.copyBundledAssets();
-
-        // 2. 使用 OfflineService 进行统一的资源就绪检查
-        const integrity = await OfflineService.checkResourceIntegrity();
-        const resourceReady = await OfflineService.isResourceReady();
+        // 【关键】保存用户已进入过起名流程的标记
+        await AsyncStorage.setItem('HAS_SEEN_LANDING', 'true');
         
-        console.log(`[LandingScreen] 资源完整性检查: ${integrity.existingFileCount}/${integrity.totalFileCount} 文件`);
-        console.log(`[LandingScreen] 总大小: ${integrity.totalSize} bytes / ${integrity.expectedSize} bytes`);
-        console.log(`[LandingScreen] 缺失: ${integrity.missingAssets.length}, 损坏: ${integrity.corruptedAssets.length}`);
-        console.log(`[LandingScreen] 资源就绪状态: ${resourceReady}`);
+        console.log('[LandingScreen] ✅ 品牌展示完成，进入主应用');
         
-        const userName = await AsyncStorage.getItem('USER_NAME');
-        const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
-        
-        // 打印详细日志
-        console.log(`[LandingScreen] 启动检查:`);
-        console.log(`  - USER_NAME: ${userName ? '存在 (' + userName + ')' : '不存在'}`);
-        console.log(`  - HAS_SET_NAME: ${hasSkipped === 'true' ? 'true' : (hasSkipped || 'null')}`);
-        console.log(`  - 资源就绪状态：${resourceReady}`);
-        
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
-
-        setTimeout(async () => {
-          // 【关键修复】严格检查用户信息，只要有任一标记就进入主应用
-          const hasUserInfo = !!(userName && userName.trim().length > 0) || (hasSkipped === 'true');
-          
-          console.log('[LandingScreen] 判断结果:', {
-            hasUserInfo,
-            userName: userName ? userName.length : 0,
-            hasSkipped: hasSkipped === 'true'
-          });
-          
-          // 【优化】移除强制下载等待，直接进入主应用
-          // 资源下载改为后台静默模式，在 HomeScreen 中按需加载
-          if (hasUserInfo) {
-            console.log('[LandingScreen] ✅ 用户已设置信息，进入主应用（后台静默下载）');
-            navigation.replace('MainTabs');
-          } else {
-            console.log('[LandingScreen] ❌ 未设置用户信息，跳转到起名页');
-            navigation.replace('NameEntry');
-          }
-        }, remainingTime);
-
       } catch (e) {
-        console.error('Landing Error:', e);
-        navigation.replace('Download');
+        console.error('[LandingScreen] 异常:', e);
       }
+      
+      // 固定 1.2 秒后直接进入主界面
+      setTimeout(() => {
+        navigation.replace('MainTabs');
+      }, 1200);
     };
-    checkAndBoot();
+    
+    enterApp();
 
-    return () => {
-      loop.stop();
-    };
-  }, [navigation, fadeAnim]);
-
-  const iconScale = breathAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.15],
-  });
-
-  const iconOpacity = breathAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.5, 1],
-  });
+    return () => loop.stop();
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Animated.View style={{ 
-          transform: [{ scale: iconScale }],
-          opacity: iconOpacity,
+          transform: [{ scale: breathAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] }) }],
+          opacity: breathAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }),
           marginBottom: 20
         }}>
-          <Text style={{ fontSize: 100 }}>🧘‍♂️</Text>
+          <Text style={styles.icon}>🧘‍♂️</Text>
         </Animated.View>
         <Text style={styles.brandName}>ESONARE</Text>
-        <Text style={styles.loadingText}>{t('player.landing.loading')}</Text>
+        <Text style={styles.tagline}>{t('player.landing.loading')}</Text>
       </Animated.View>
     </View>
   );
 };
 
-export default LandingScreen;
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#080912', justifyContent: 'center', alignItems: 'center' },
-  content: { alignItems: 'center' },
-  brandName: { color: '#FFFFFF', fontSize: 32, fontWeight: 'bold', letterSpacing: 8 },
-  loadingText: { color: '#94A3B8', fontSize: 16, marginTop: 20, letterSpacing: 2 },
+  container: {
+    flex: 1,
+    backgroundColor: '#080912',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    alignItems: 'center',
+  },
+  icon: {
+    fontSize: 100,
+  },
+  brandName: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 8,
+    marginBottom: 12,
+  },
+  tagline: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 8,
+  },
 });
+
+export default LandingScreen;
