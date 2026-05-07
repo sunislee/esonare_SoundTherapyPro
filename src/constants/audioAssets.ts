@@ -12,6 +12,11 @@ export const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/ma
 export const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 export const GHPROXY_URL = 'https://ghproxy.net/';
 
+// 【国内最稳 GitHub Proxy 加速源】2025年最新可用
+export const GHPROXY_NET_URL = 'https://ghproxy.net/https://raw.githubusercontent.com/';
+export const MIRROR_GHPROXY_URL = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/';
+export const KK_GITHUB_URL = 'https://raw.kkgithub.com/';
+
 // 【顶级 CDN 加速源】全球加速，比小镜像快 100 倍
 export const JSDDELIVR_URL = 'https://fastly.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/';
 export const STATICALLY_URL = 'https://cdn.statically.io/gh/sunislee/sound-therapy-assets/main/';

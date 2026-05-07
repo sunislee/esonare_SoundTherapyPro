@@ -206,6 +206,8 @@
       "loading": "加载中...",
       "ready": "准备中..."
     },
+    "roam": "漫游",
+    "roaming": "漫游中",
     "ambient": {
       "pickerTitle": "氛围点缀",
       "controlTitle": "氛围点缀控制",
@@ -340,14 +342,13 @@
     }
   },
   "download": {
-    "title": "资源下载中",
-    "subtitle": "正在为您准备沉浸式音频资源...",
-    "calculating": "正在计算资源大小...",
-    "tip": "初次使用请保持网络畅通，正在为您同步高品质音频",
-    "optimizing": "正在优化音频资源...",
-    "incompleteTitle": "资源下载未完成",
-    "incompleteMessage": "还有 {{count}} 个文件未下载完成，请等待下载完成后再继续。",
-    "message": "场景\"{{sceneTitle}}\"的音频文件尚未下载，是否立即前往下载？"
+    "title": "资源准备中",
+    "optimizing": "正在优化音质...",
+    "downloading": "正在准备宁静时刻...",
+    "checking": "正在验证资源完整性...",
+    "complete": "资源准备完成",
+    "retry": "重新下载",
+    "retryDesc": "清空本地缓存并重新下载所有资源"
   },
   "nameEntry": {
     "title": "如何称呼您？",
@@ -407,6 +408,7 @@
       "clearHistoryMsg": "确定要删除所有播放历史吗？此操作无法撤销。",
       "clearPresetsTitle": "清除所有混音方案",
       "clearPresetsMsg": "确定要删除所有已保存的混音方案吗？此操作无法撤销。",
+      "downloading": "下载中...",
       "resetDataTitle": "重置应用数据",
       "resetDataMsg": "确定要重置应用吗？这将删除所有本地数据（包括用户名、播放历史、混音预设等），但不会删除已下载的音频资源。",
       "confirm": "清除",

@@ -414,6 +414,18 @@ const SettingsScreen: React.FC = () => {
         isDestructive
       />
 
+      <ConfirmationModal
+        visible={clearResourcesVisible}
+        title={t('settings.modals.clearResourcesTitle')}
+        message={t('settings.modals.clearResourcesMsg')}
+        confirmText={isRedownloading ? t('settings.modals.downloading') : t('settings.modals.confirm')}
+        cancelText={t('settings.modals.cancel')}
+        onConfirm={handleClearResourcesConfirm}
+        onCancel={() => setClearResourcesVisible(false)}
+        isDestructive
+        disabled={isRedownloading}
+      />
+
       <AdvancedDebugModal
         visible={advancedDebugVisible}
         onClose={() => setAdvancedDebugVisible(false)}

@@ -1,10 +1,11 @@
 import React, { useCallback, memo } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import { Scene } from '../constants/scenes';
 import AnimatedFloatingButton from './AnimatedFloatingButton';
 import AudioService from '../services/AudioService';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useAudio } from '../context/AudioContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface InteractiveButtonsProps {
   globalAmbientScenes: Scene[];
@@ -16,6 +17,7 @@ const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
   activeSmallSceneIds,
 }) => {
   const { toggleAmbience } = useAudio();
+  const insets = useSafeAreaInsets();
   const triggerHaptic = useCallback(() => {
     const options = {
       enableVibrateFallback: true,
@@ -48,11 +50,31 @@ const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
   }, [globalAmbientScenes, triggerHaptic, activeSmallSceneIds, toggleAmbience]);
 
   return (
-    <View style={styles.floatingIconsContainer} pointerEvents="box-none">
+    <View style={[styles.floatingIconsContainer, { height: getDynamicHeight(insets) }]} pointerEvents="box-none">
       {globalAmbientScenes.map(renderButton)}
     </View>
   );
 };
+
+/**
+ * 根据屏幕尺寸动态计算 InteractiveButtons 高度
+ * 小屏压缩至 200-250px，确保底部控制区不被遮挡
+ */
+function getDynamicHeight(insets: { top: number; bottom: number }): number {
+  const { height } = Dimensions.get('window');
+  const totalHeight = height - insets.top - insets.bottom;
+  
+  if (totalHeight <= 680) {
+    return 200; // 小屏 (如 iPhone SE)
+  }
+  if (totalHeight <= 750) {
+    return 230; // 中小屏
+  }
+  if (totalHeight <= 850) {
+    return 260; // 标准屏
+  }
+  return 300; // 大屏/平板
+}
 
 const { width } = Dimensions.get('window');
 const CONTAINER_WIDTH = width - 40;
@@ -61,7 +83,6 @@ const styles = StyleSheet.create({
   floatingIconsContainer: {
     position: 'relative',
     width: CONTAINER_WIDTH,
-    height: 300,
   },
 });
 

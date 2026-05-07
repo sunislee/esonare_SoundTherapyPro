@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <resources>
-  <color name="splashscreen_background">#0F172A</color>
-  <color name="splash_background">#0F172A</color>
-  <color name="ic_launcher_background">#0F172A</color>
+  <color name="splashscreen_background">#080912</color>
+  <color name="splash_background">#080912</color>
+  <color name="ic_launcher_background">#080912</color>
 </resources>

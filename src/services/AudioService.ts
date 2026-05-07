@@ -115,6 +115,9 @@ class AudioService {
   private smallScenesListeners: Set<(ids: string[]) => void> = new Set();
   private volumeListeners: Set<(vol: number) => void> = new Set();
   private timerListeners: Set<(remaining: number | null) => void> = new Set();
+  
+  // 【静默模式兜底】资源加载状态监听器
+  private resourceLoadingListeners: Set<(state: { sceneId: string; loading: boolean; message: string }) => void> = new Set();
   private preloadedScenes: Set<string> = new Set(); // 【优化】预加载的场景集合
   
   private ambientVolume = 1.0;
@@ -128,6 +131,7 @@ class AudioService {
   private pendingSetup = false;
   private isActuallyPlaying = false;
   private _isReady = false;
+  private _setupPromise: Promise<void> | null = null;
   
   // 【防双响锁】
   private isAmbientPlaying = false;
@@ -256,6 +260,26 @@ class AudioService {
     TrackPlayer.addEventListener(Event.PlaybackError, (error) => {
       console.error('[AudioService] 🚨 播放器底层错误:', error);
     });
+
+    TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async (event) => {
+      console.log('[AudioService] 🎵 播放队列结束');
+      this.isActuallyPlaying = false;
+      this.notifyListeners();
+      
+      // 触发漫游切换
+      try {
+        const { sceneRoamManager } = await import('./SceneRoamManager');
+        if (sceneRoamManager.getIsRoaming() && this.currentBaseScene) {
+          console.log('[AudioService] 🎲 漫游模式激活，自动切换下一场景');
+          const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+          if (nextScene) {
+            await this.switchSoundscape(nextScene);
+          }
+        }
+      } catch (e) {
+        console.error('[AudioService] 漫游切换失败:', e);
+      }
+    });
   }
 
   private handleAppStateChange = (nextAppState: AppStateStatus) => {
@@ -323,13 +347,25 @@ class AudioService {
   }
 
   async setupPlayer() {
+    // 【幂等性保护】如果已经初始化完成，直接返回
+    if (this._isReady) {
+      console.log('[AudioService] ✅ 已经初始化完成，跳过 setupPlayer');
+      return;
+    }
+    
+    // 【关键修复】如果正在初始化中，等待当前初始化完成
+    if (this._setupPromise) {
+      console.log('[AudioService] ⏳ 正在初始化中，等待完成...');
+      return this._setupPromise;
+    }
+    
+    // 【关键修复】创建初始化 Promise 并缓存
+    this._setupPromise = this.performSetupInternal();
+    return this._setupPromise;
+  }
+  
+  private async performSetupInternal() {
     try {
-      // 【幂等性保护】如果已经初始化完成，直接返回
-      if (this._isReady) {
-        console.log('[AudioService] ✅ 已经初始化完成，跳过 setupPlayer');
-        return;
-      }
-      
       console.log('[AudioService-DIAGNOSE] ====== 开始初始化 AudioService ======');
       console.log('[AudioService-DIAGNOSE] [1/5] 检查 TrackPlayer 模块...');
       
@@ -355,6 +391,8 @@ class AudioService {
     } catch (e) {
       console.error('[AudioService-DIAGNOSE] ❌ setupPlayer Failed:', e);
       console.error('[AudioService-DIAGNOSE] ❌ Error stack:', e?.stack);
+      // 【关键修复】初始化失败时清空 promise，允许重试
+      this._setupPromise = null;
       throw e;
     }
   }
@@ -494,6 +532,17 @@ class AudioService {
       
       const isLocal = await RNFS.exists(localPath.replace('file://', ''));
       console.log(`[AudioService]  本地文件存在: ${isLocal}`);
+      
+      // 【静默模式兜底】文件不存在时，提示用户资源正在加载
+      if (!isLocal) {
+        console.warn(`[AudioService] ⚠️ 文件不存在: ${scene.filename}，资源可能还在下载中...`);
+        
+        // 触发"资源加载中"状态通知
+        this.notifyResourceLoading(scene.id);
+        
+        // 不立即返回，尝试使用远程 URL（如果有网络）
+        // 这样即使本地没有，也能从网络播放（降级方案）
+      }
       
       const isOffline = await OfflineService.isOfflineMode();
       
@@ -852,9 +901,26 @@ class AudioService {
   }
 
   async play() {
+    // 【关键修复】如果未初始化，自动等待初始化完成
     if (!this._isReady) {
-      console.warn('[AudioService] ⚠️ 初始化未完成，跳过 play');
-      return;
+      console.log('[AudioService] ⏳ 初始化未完成，等待初始化...');
+      try {
+        await this.setupPlayer();
+        // 等待初始化完全完成
+        let waitCount = 0;
+        while (!this._isReady && waitCount < 20) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waitCount++;
+        }
+        if (!this._isReady) {
+          console.warn('[AudioService] ⚠️ 初始化超时，跳过 play');
+          return;
+        }
+        console.log('[AudioService] ✅ 初始化完成，继续播放');
+      } catch (e) {
+        console.error('[AudioService] ❌ 初始化失败，无法播放:', e);
+        return;
+      }
     }
     
     // 【关键修复】在 TrackPlayer.play() 之前先更新状态
@@ -935,6 +1001,12 @@ class AudioService {
     return () => { this.timerListeners.delete(l); };
   }
 
+  // 【静默模式兜底】资源加载状态监听器注册
+  addResourceLoadingListener(l: (state: { sceneId: string; loading: boolean; message: string }) => void) {
+    this.resourceLoadingListeners.add(l);
+    return () => { this.resourceLoadingListeners.delete(l); };
+  }
+
   private notifyListeners() {
     // 【严格100ms响应】记录开始时间
     const notifyStartTime = Date.now();
@@ -970,6 +1042,17 @@ class AudioService {
 
   private notifyLoading(loading: boolean, id: string | null) {
     this.loadingListeners.forEach(l => l({ id, loading }));
+  }
+
+  // 【静默模式兜底】资源加载中状态通知
+  private notifyResourceLoading(sceneId: string) {
+    console.log(`[AudioService] 📢 通知UI：资源正在加载 - ${sceneId}`);
+    this.resourceLoadingListeners?.forEach(l => l({ sceneId, loading: true, message: '冥想资源加载中...' }));
+  }
+
+  // 【静默模式兜底】资源加载完成通知
+  private notifyResourceReady(sceneId: string) {
+    this.resourceLoadingListeners?.forEach(l => l({ sceneId, loading: false, message: '' }));
   }
 
   private notifySmallScenes() {

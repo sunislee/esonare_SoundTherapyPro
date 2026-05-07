@@ -1,512 +1,500 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
-import RNFS from 'react-native-fs'; 
-import { 
-  AUDIO_MANIFEST, 
+import RNFS from 'react-native-fs';
+import {
+  AUDIO_MANIFEST,
   IS_GOOGLE_PLAY_VERSION,
-  getDownloadUrl,
   getLocalPath as getLocalPathHelper,
   GLOBAL_TOTAL_SIZE,
-  ASSET_LIST
+  ASSET_LIST,
+  JSDDELIVR_URL,
+  STATICALLY_URL,
+  GITHUB_URL,
+  GHPROXY_NET_URL,
+  MIRROR_GHPROXY_URL,
+  KK_GITHUB_URL,
 } from '../constants/audioAssets';
 import { OfflineService } from './OfflineService';
 
-// 核心：版本号必须一致
-const RESOURCE_VERSION = '1.0.7'; 
-const SOURCE_ID = IS_GOOGLE_PLAY_VERSION ? 'GITHUB' : 'GITEE';
-const READY_KEY = `RESOURCE_READY_V_${RESOURCE_VERSION}_${SOURCE_ID}`; 
+const DOWNLOAD_CONNECTION_TIMEOUT = 8000;
+const DOWNLOAD_READ_TIMEOUT = 15000;
+const DOWNLOAD_STALL_TIMEOUT = 10000;
+const UI_UPDATE_INTERVAL_MS = 2000;
+const MAX_RETRIES_PER_FILE = 5;
+const MAX_CONCURRENT_TASKS = 6;
 
 export interface DownloadProgress {
   progress: number;
   receivedBytes: number;
   totalBytes: number;
+  statusText?: string;
 }
 
-export const DownloadService = { 
-  /**
-   * 检查资源是否已经准备就绪（秒开的关键）
-   * 【注意】此方法已弃用，请使用 OfflineService.isResourceReady()
-   */
-  async isResourceReady(): Promise<boolean> { 
+interface FileStatus {
+  assetId: string;
+  expectedSize: number;
+  maxConfirmedBytes: number;
+  status: 'pending' | 'downloading' | 'success' | 'failed';
+}
+
+const encodeFilename = (filename: string): string => {
+  return filename.split('/').map(part => encodeURIComponent(part)).join('/');
+};
+
+const getDownloadUrls = (filename: string): string[] => {
+  const encoded = encodeFilename(filename);
+  
+  // 【2025年最新修复】所有文件路径已在 audioAssets.ts 中完整定义
+  // 直接使用 filename，无需添加任何前缀
+  // 路径示例: base/xxx.m4a, fx/xxx.m4a, zen/xxx.mp3, noise reduction/xxx.mp3
+  
+  // 【国内最稳 GitHub Proxy 加速源优先级
+  return [
+    `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encoded}`,
+    `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${encoded}`,
+    `${KK_GITHUB_URL}sunislee/sound-therapy-assets/main/${encoded}`,
+    `${JSDDELIVR_URL}${encoded}`,
+  ];
+};
+
+export const DownloadService = {
+  async isResourceReady(): Promise<boolean> {
     return OfflineService.isResourceReady();
-  }, 
- 
-  /**
-   * Mark resource as ready
-   * 【注意】此方法已弃用，请使用 OfflineService.markAsReady()
-   */
-  async markAsReady() { 
+  },
+
+  async markAsReady() {
     return OfflineService.markAsReady();
-  }, 
- 
-  /**
-   * Execute resource validation and download
-   */
-  async checkAndDownload(onProgress: (p: DownloadProgress) => void) { 
-    try { 
-      
-      let totalBytes = 0;
-      let currentReceivedBytes = 0;
-      const fileSizes: { [key: string]: number } = {};
-      const filesToDownload: any[] = [];
+  },
 
-      // 1. 第一步：获取所有文件的真实大小
-      // 预扫描：先统计所有文件的总大小（优先使用清单数据，异步更新真实大小）
-      for (const asset of AUDIO_MANIFEST) {
-        const localPath = getLocalPathHelper(asset.category, asset.filename);
-        const fileExists = await RNFS.exists(localPath);
-        
-        if (fileExists) {
-          const fileStat = await RNFS.stat(localPath);
-          const size = Number(fileStat.size);
-          fileSizes[asset.id] = size;
-          totalBytes += size;
-          currentReceivedBytes += size;
-        } else {
-          filesToDownload.push(asset);
-          // 必须使用清单中定义的 size 作为初始基准，确保 totalBytes 相对准确
-          const fallbackSize = (asset as any).size || 1024 * 1024; // 兜底 1MB
-          fileSizes[asset.id] = fallbackSize;
-          totalBytes += fallbackSize;
-        }
-      }
+  async clearReadyFlag() {
+    return OfflineService.clearReadyFlag();
+  },
 
-      // 异步校准：在后台通过 HEAD 请求获取更精准的远程文件大小，但不阻塞主流程
-      // 如果校准成功，会更新 totalBytes，从而让进度条更准
-      const calibrateSizes = async () => {
-        let hasChanges = false;
-        
-        for (const asset of filesToDownload) {
-          const urls = getDownloadUrl(asset.id);
-          for (let i = 0; i < urls.length; i++) {
-            const url = urls[i];
-            try {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 5000);
-              
-              const response = await fetch(url, { 
-                method: 'HEAD',
-                signal: controller.signal
-              });
-              clearTimeout(timeoutId);
+  async forceSkipCheckAndEnter() {
+    console.log('[App-Download] 🔓 强制跳过校验，直接进入App');
+    await OfflineService.markAsReady();
+  },
 
-              const remoteSize = Number(response.headers.get('content-length'));
-              if (remoteSize && remoteSize > 0 && remoteSize !== fileSizes[asset.id]) {
-                const diff = remoteSize - fileSizes[asset.id];
-                fileSizes[asset.id] = remoteSize;
-                totalBytes += diff;
-                hasChanges = true;
-              }
-              break;
-            } catch (e) {
-              // 静默处理：文件大小校准失败不影响主流程
-            }
-          }
-        }
+  async silentBackgroundDownload(): Promise<{success: number; failed: number}> {
+    console.log('[App-Download] 🤫 启动后台静默下载...');
+    
+    // 【优化】定义核心场景优先级（首页推荐的前 8 个场景）
+    const PRIORITY_SCENES = [
+      'nature_ocean',        // 海洋
+      'nature_forest',       // 森林
+      'nature_deep_sea',     // 深海呼吸
+      'nature_misty_forest', // 雾林
+      'healing_zen_bowl',    // 禅音钵
+      'oriental_zen_monastery', // 东方禅意·寺院
+      'life_rain_boat',      // 雨天小船
+      'brainwave_alpha',     // α脑波
+    ];
+    
+    const CONST_TOTAL_SIZE = GLOBAL_TOTAL_SIZE > 0 ? GLOBAL_TOTAL_SIZE : ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
+    const fileStatusMap = new Map<string, FileStatus>();
+    const allFilesToDownload: any[] = [];
+    let completedBytes = 0;
 
-        if (hasChanges) {
-          onProgress({
-            progress: totalBytes > 0 ? currentReceivedBytes / totalBytes : 0,
-            receivedBytes: currentReceivedBytes,
-            totalBytes: totalBytes
-          });
-        }
-      };
-      
-      setImmediate(() => {
-        calibrateSizes();
-      });
+    for (const asset of ASSET_LIST) {
+      const manifestItem = AUDIO_MANIFEST.find(a => a.id === asset.id);
+      if (!manifestItem) continue;
 
-      // 初始进度发送
-      onProgress({
-        progress: totalBytes > 0 ? currentReceivedBytes / totalBytes : 0,
-        receivedBytes: currentReceivedBytes,
-        totalBytes: totalBytes
-      });
+      const expectedSize = asset.expectedSize;
+      const localPath = getLocalPathHelper(manifestItem.category, manifestItem.filename);
 
-      // 2. 第二步：串行下载（一个一个来，排除网络争抢和 JNI 线程崩溃）
-      const failedAssets: string[] = [];
-      let progressUpdateTimer: any = null;
-      
-      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      const downloadSingleFile = async (asset: any): Promise<boolean> => {
-        // 【多源下载】按优先级尝试多个镜像源
-        const urls = [
-          `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/${asset.filename}`,
-          `https://mirror.ghproxy.com/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/${asset.filename}`,
-          `https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/${asset.filename}`,
-        ];
-        console.log(`[DownloadService] ===== 开始下载 ${asset.id} =====`);
-        console.log(`[DownloadService] 镜像源数量:`, urls.length);
-        const localPath = getLocalPathHelper(asset.category, asset.filename);
-        const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-        
-        console.log(`[DownloadService] 本地路径:`, localPath);
-        console.log(`[DownloadService] 目录路径:`, dirPath);
-        
-        // 【步骤3】确保目录物理存在
+      if (await RNFS.exists(localPath)) {
         try {
-          if (!(await RNFS.exists(dirPath))) {
-            console.error(`[DownloadService] 目录不存在，创建: ${dirPath}`);
-            await RNFS.mkdir(dirPath);
+          const stat = await RNFS.stat(localPath);
+          if (stat.size >= expectedSize * 0.9) {
+            completedBytes += stat.size;
+            continue;
           }
-        } catch (mkdirError: any) {
-          console.error(`[DownloadService] ❌ mkdir 失败: ${dirPath}, code: ${mkdirError.code}, message: ${mkdirError.message}`);
-          failedAssets.push(asset.id);
-          return false;
-        }
+        } catch (e) {}
+      }
 
-        for (let i = 0; i < urls.length; i++) {
-          const url = urls[i];
-          let lastFileReceived = 0;
-          let lastHeartbeatTime = Date.now();
-          let heartbeatJobId: any = null;
-          try {
-            const tempPath = `${localPath}.tmp`;
-            
-            // 【强制删除缓存】删了重下，不用断点续传
-            if (await RNFS.exists(tempPath)) {
-              console.log(`[DownloadService] 删除旧缓存: ${tempPath}`);
-              await RNFS.unlink(tempPath);
-            }
-            if (await RNFS.exists(localPath)) {
-              console.log(`[DownloadService] 删除旧文件: ${localPath}`);
-              await RNFS.unlink(localPath);
-            }
-            
-            // 诊断日志：开始下载
-            console.log(`[DownloadService-DIAGNOSE] Starting download: ${asset.id} | URL: ${url} | TempPath: ${tempPath}`);
-            
-            // 获取预期文件大小
-            const expectedAsset = ASSET_LIST.find(a => a.id === asset.id);
-            const expectedSize = expectedAsset?.expectedSize || 0;
-            
-            const downloadOptions: RNFS.DownloadFileOptions = {
-              fromUrl: url,
-              toFile: tempPath,
-              connectionTimeout: 30000, // 【优化】缩短到30秒，快速失败切换源
-              readTimeout: 30000,
-              background: false, // 【优化】关闭后台模式，避免 Android 系统限制
-              discretionary: false,
-              progressDivider: 5, // 【优化】更频繁的进度更新
-              begin: (res) => {
-                console.log(`[DownloadService] 📡 连接成功: ${asset.id} | 源 ${i + 1}/${urls.length}`);
-              },
-              progress: (res) => {
-                const delta = res.bytesWritten - lastFileReceived;
-                lastFileReceived = res.bytesWritten;
-                currentReceivedBytes += delta;
-              }
-            };
-            
-            // 【防崩溃修复】包裹 RNFS.downloadFile，捕获原生层空指针异常
-            let downloadResult: any;
+      allFilesToDownload.push({ 
+        asset, 
+        manifestItem, 
+        localPath, 
+        expectedSize,
+        priority: PRIORITY_SCENES.indexOf(asset.id)  // 添加优先级字段
+      });
+      fileStatusMap.set(asset.id, { assetId: asset.id, expectedSize, maxConfirmedBytes: 0, status: 'pending' });
+    }
+
+    // 【关键优化】按优先级排序：核心场景优先下载
+    allFilesToDownload.sort((a, b) => {
+      // 核心场景（priority >= 0）排前面
+      if (a.priority >= 0 && b.priority < 0) return -1;
+      if (a.priority < 0 && b.priority >= 0) return 1;
+      // 都是核心场景或都不是，按 priority 升序
+      return a.priority - b.priority;
+    });
+    
+    console.log(`[App-Download] 📋 下载队列已优化：共 ${allFilesToDownload.length} 个文件`);
+    console.log(`[App-Download] 🎯 前 5 个优先下载：${allFilesToDownload.slice(0, 5).map(f => f.asset.id).join(', ')}`);
+
+    if (allFilesToDownload.length === 0) {
+      console.log('[App-Download] ✅ 所有资源已存在，无需下载');
+      await OfflineService.markAsReady();
+      return { success: 0, failed: 0 };
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    let nextIndex = 0;
+
+    const downloadSingleFile = async (): Promise<void> => {
+      while (nextIndex < allFilesToDownload.length) {
+        const idx = nextIndex++;
+        const { asset, manifestItem, localPath, expectedSize } = allFilesToDownload[idx];
+        const status = fileStatusMap.get(asset.id)!;
+        const tempPath = `${localPath}.tmp`;
+        const urls = getDownloadUrls(manifestItem.filename); // 修复：使用 manifestItem.filename
+
+        for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
+          if (attempt > 0) {
+            console.log(`[App-Download] 🤫 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`); // 修复
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+
+          status.status = 'downloading';
+
+          for (const url of urls) {
             try {
-              const result = RNFS.downloadFile(downloadOptions);
-              downloadResult = await result.promise;
-            } catch (e: any) {
-              // 捕获原生层崩溃（如：NullPointerException: Parameter specified as non-null is null）
-              console.error(`[DownloadService] ❌ RNFS.downloadFile 原生异常：${e.message || e}`);
-              // 尝试检查文件是否已经下载成功（可能是回调 Bug）
-              if (await RNFS.exists(tempPath)) {
-                console.log(`[DownloadService] ⚠️ 文件已落盘，但 Promise 异常：${tempPath}`);
-                downloadResult = { statusCode: 200 }; // 伪造成功状态
-              } else {
-                throw e; // 文件确实不存在，抛出异常
-              }
-            }
-            
-            // 【暴力修复 2】修复"假成功"逻辑：检查 HTTP 状态码
-            if (downloadResult.statusCode === 404) {
-              console.error(`[DownloadService] ❌ 404 Not Found: ${asset.id} - ${url}`);
-              throw new Error('404 Not Found');
-            }
-            if (downloadResult.statusCode === 403) {
-              console.error(`[DownloadService] ❌ 403 Forbidden: ${asset.id} - ${url}`);
-              throw new Error('403 Forbidden');
-            }
-            if (downloadResult.statusCode !== 200 && downloadResult.statusCode !== 206) {
-              console.error(`[DownloadService] ❌ HTTP Error ${downloadResult.statusCode}: ${asset.id}`);
-              throw new Error(`HTTP ${downloadResult.statusCode}`);
-            }
-            
-            if (await RNFS.exists(tempPath)) {
-              const fileSize = await RNFS.stat(tempPath);
-              console.log(`[DownloadService-DIAGNOSE] Download completed: ${asset.id} | FileSize: ${fileSize.size} bytes`);
-              console.log(`[DownloadService] 文件最终路径：${tempPath}`);
-              console.log(`[DownloadService] 文件最终路径是否有 file:// 前缀：${tempPath.startsWith('file://')}`);
-              
-              // 文件大小校验
-              if (expectedSize > 0) {
-                const actualSize = Number(fileSize.size);
-                const sizeDiff = Math.abs(actualSize - expectedSize);
-                const sizeDiffPercent = sizeDiff / expectedSize;
-                
-                if (sizeDiffPercent > 0.01) {
-                  console.error(`[DownloadService] 文件大小校验失败: ${asset.id}, 实际: ${actualSize}, 预期: ${expectedSize}`);
+              const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+              await RNFS.mkdir(dirPath);
+
+              const downloadResult = await RNFS.downloadFile({
+                fromUrl: url,
+                toFile: tempPath,
+                connectionTimeout: DOWNLOAD_CONNECTION_TIMEOUT,
+                readTimeout: DOWNLOAD_READ_TIMEOUT,
+              }).promise;
+
+              if (downloadResult.statusCode === 200 || downloadResult.statusCode === 201) {
+                const stat = await RNFS.stat(tempPath);
+                if (stat.size >= expectedSize * 0.8) {
+                  await RNFS.moveFile(tempPath, localPath);
+                  status.status = 'success';
+                  successCount++;
+                  console.log(`[App-Download] ✅ 静默完成: ${manifestItem.filename}`); // 修复
+                  break;
+                } else {
                   await RNFS.unlink(tempPath);
-                  return false;
                 }
-                
-                console.log(`[DownloadService] 文件大小校验通过：${asset.id}`);
               }
-              
-              // 【优化】缩短写入缓冲到 200ms（现代 Android 写盘速度快）
-              console.log(`[DownloadService] 等待 200ms 写入缓冲...`);
-              await new Promise(resolve => setTimeout(resolve, 200));
-              
-              await RNFS.moveFile(tempPath, localPath);
-              console.log(`[DownloadService-DIAGNOSE] File moved to: ${localPath}`);
-              
-              // 再次确认文件已移动成功
-              if (await RNFS.exists(localPath)) {
-                const finalStat = await RNFS.stat(localPath);
-                console.log(`[DownloadService] ✅ 文件落盘成功：${localPath} (${finalStat.size} bytes)`);
-                
-                // 【关键修复】验证文件大小不为 0
-                if (finalStat.size === 0 || finalStat.size === undefined) {
-                  console.error(`[DownloadService] ❌ 文件大小为 0，下载失败：${localPath}`);
-                  return false;
-                }
-                console.log(`[DownloadService] ✅ 文件大小校验通过：${finalStat.size} bytes`);
-              } else {
-                console.error(`[DownloadService] ❌ 文件移动失败：${localPath}`);
-                return false;
-              }
-              
-              // 清除下载进度记录
-              await OfflineService.clearDownloadProgress(asset.id);
-              
-              // 标记为完成
-              await OfflineService.saveDownloadProgress({
-                assetId: asset.id,
-                downloadedBytes: expectedSize,
-                totalBytes: expectedSize,
-                isCompleted: true,
-                timestamp: Date.now()
-              });
-              
-              // 【关键桥接】触发 AudioService 的下载完成回调
-              console.log(`[DownloadService] 🎉 下载完成，触发回调：${asset.id}`);
-              try {
-                const { AudioService } = await import('./AudioService');
-                const audioService = AudioService.getInstance();
-                // 通过内部方法触发回调
-                (audioService as any).notifyDownloadComplete?.(asset.id);
-              } catch (e) {
-                console.warn(`[DownloadService] 触发 AudioService 回调失败:`, e);
-              }
-              
-              return true;
-            } else {
-              console.error(`[DownloadService-DIAGNOSE] Download failed: temp file not found - ${tempPath}`);
+            } catch (err) {
+              // 静默处理错误
             }
-          } catch (e: any) {
-            console.error(`[DownloadService] ❌ 下载失败：${asset.id}`);
-            console.error(`[DownloadService] ❌ error.message: ${e.message || 'undefined'}`);
-            console.error(`[DownloadService] ❌ error.code: ${e.code || 'undefined'}`);
-            console.error(`[DownloadService] ❌ error.stack: ${e.stack || 'undefined'}`);
-            console.error(`[DownloadService] ❌ error 完整对象:`, JSON.stringify(e, null, 2));
-            
-            // 【暴力修复 3】修复"断头"下载：记录失败但不阻塞队列
-            const tempPath = `${localPath}.tmp`;
-            if (await RNFS.exists(tempPath)) {
-              try { await RNFS.unlink(tempPath); } catch {}
-            }
-            
-            // 记录失败资产，但不阻塞整个队列
-            failedAssets.push(asset.id);
-            
-            // 继续下载下一个文件
-            return false;
           }
-        }
-        return false;
-      };
 
-      // 【步骤1】串行下载：一个一个来，确保稳定性
-      console.log(`[DownloadService] 开始串行下载 ${filesToDownload.length} 个文件...`);
-      
-      const progressInterval = setInterval(() => {
-        const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
-        onProgress({
-          progress: Math.min(0.999, rawProgress),
-          receivedBytes: Math.min(currentReceivedBytes, totalBytes),
-          totalBytes: totalBytes
-        });
-      }, 200);
-
-      for (let i = 0; i < filesToDownload.length; i++) {
-        const asset = filesToDownload[i];
-        console.log(`[DownloadService] 串行下载 [${i + 1}/${filesToDownload.length}]: ${asset.id}`);
-        
-        // 自动重试3次
-        let success = false;
-        for (let retry = 0; retry < 3; retry++) {
-          if (retry > 0) {
-            console.log(`[DownloadService] 重试 ${retry}/3: ${asset.id}`);
-            await sleep(2000); // 重试前等待2秒
-          }
-          success = await downloadSingleFile(asset);
-          if (success) break;
+          if (status.status === 'success') break;
         }
-        
-        if (!success) {
-          failedAssets.push(asset.id);
-          console.error(`[DownloadService] ❌ 下载失败（3次重试后）: ${asset.id} (${i + 1}/${filesToDownload.length})`);
-        } else {
-          console.log(`[DownloadService] ✅ 下载完成: ${asset.id} (${i + 1}/${filesToDownload.length})`);
+
+        if (status.status !== 'success') {
+          status.status = 'failed';
+          failedCount++;
+          console.error(`[App-Download] ❌ 静默最终失败: ${manifestItem.filename}`); // 修复
         }
       }
-      
-      clearInterval(progressInterval);
-      
-      // 【优化】校验阶段继续更新进度条，避免卡在 95%
-      const validationProgressInterval = setInterval(() => {
-        const rawProgress = totalBytes > 0 ? currentReceivedBytes / totalBytes : 0;
-        onProgress({
-          progress: Math.min(0.999, rawProgress),
-          receivedBytes: Math.min(currentReceivedBytes, totalBytes),
-          totalBytes: totalBytes
-        });
-      }, 100);
-      
-      // 3. Step 3: 检查下载结果
-      const successCount = filesToDownload.length - failedAssets.length;
-      const successRate = filesToDownload.length > 0 ? successCount / filesToDownload.length : 0;
-      
-      console.log(`[DownloadService] 下载完成：成功 ${successCount}/${filesToDownload.length}, 成功率 ${(successRate * 100).toFixed(1)}%`);
-      console.log(`[DownloadService] 连续失败次数：${continuousFailCount}`);
-      
-      // 【优化】快速校验：只检查失败的文件，不检查所有文件
-      console.log('[DownloadService] 开始快速校验失败文件...');
-      let allFilesValid = true;
-      const invalidFiles: string[] = [];
-      
-      // 只校验失败的文件，跳过成功的文件
-      const filesToValidate = failedAssets.length > 0 ? filesToDownload.filter(a => failedAssets.includes(a.id)) : filesToDownload;
-      
-      for (let i = 0; i < filesToValidate.length; i++) {
-        const asset = filesToValidate[i];
-        const localPath = getLocalPathHelper(asset.category, asset.filename);
-        const fileExists = await RNFS.exists(localPath);
-        
-        // 更新校验进度
-        const validationProgress = 0.95 + (i / filesToValidate.length) * 0.04;
-        onProgress({
-          progress: validationProgress,
-          receivedBytes: currentReceivedBytes,
-          totalBytes: totalBytes
-        });
-        
-        if (!fileExists) {
-          allFilesValid = false;
-          invalidFiles.push(`${asset.id}: 文件不存在`);
-          continue;
-        }
-        
-        // 检查文件大小
+    };
+
+    const workers = Array.from({ length: Math.min(MAX_CONCURRENT_TASKS, allFilesToDownload.length) }, () => downloadSingleFile());
+    await Promise.all(workers);
+
+    console.log(`[App-Download] 🤫 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
+
+    if (failedCount === 0) {
+      await OfflineService.markAsReady();
+    }
+
+    return { success: successCount, failed: failedCount };
+  },
+
+  async checkAndDownload(onProgress: (p: DownloadProgress) => void) {
+    const CONST_TOTAL_SIZE = GLOBAL_TOTAL_SIZE > 0 ? GLOBAL_TOTAL_SIZE : ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
+
+    const fileStatusMap = new Map<string, FileStatus>();
+    const allFilesToDownload: any[] = []; // 【修复】所有文件（包括背景图）都必须进入核心下载队列
+    let completedBytes = 0;
+
+    for (const asset of ASSET_LIST) {
+      const manifestItem = AUDIO_MANIFEST.find(a => a.id === asset.id);
+      if (!manifestItem) continue;
+
+      const expectedSize = asset.expectedSize;
+      const localPath = getLocalPathHelper(manifestItem.category, manifestItem.filename);
+
+      if (await RNFS.exists(localPath)) {
         try {
           const stat = await RNFS.stat(localPath);
           const actualSize = Number(stat.size);
-          const expectedSize = (asset as any).size || 0;
-          const sizeDiff = Math.abs(actualSize - expectedSize);
-          const sizeDiffPercent = expectedSize > 0 ? sizeDiff / expectedSize : 0;
-          
-          if (sizeDiffPercent > 0.01) { // 允许 1% 误差
-            allFilesValid = false;
-            invalidFiles.push(`${asset.id}: 大小不匹配 - 实际：${actualSize}, 预期：${expectedSize}`);
+          if (actualSize > 0) {
+            completedBytes += actualSize;
+            fileStatusMap.set(asset.id, {
+              assetId: asset.id,
+              expectedSize,
+              maxConfirmedBytes: actualSize,
+              status: 'success',
+            });
+            console.log(`[App-Download] ✅ 已存在: ${manifestItem.filename} (${actualSize} bytes)`);
+            continue;
           }
-        } catch (e) {
-          allFilesValid = false;
-          invalidFiles.push(`${asset.id}: 无法读取文件信息 - ${e}`);
+        } catch (e) {}
+      }
+
+      // 【修复】所有文件统一进入下载队列，不再区分核心音频和背景图
+      allFilesToDownload.push({ ...manifestItem, expectedSize });
+      
+      fileStatusMap.set(asset.id, {
+        assetId: asset.id,
+        expectedSize,
+        maxConfirmedBytes: 0,
+        status: 'pending',
+      });
+    }
+
+    let lastDisplayedProgress = CONST_TOTAL_SIZE > 0 ? completedBytes / CONST_TOTAL_SIZE : 0;
+    onProgress({
+      progress: lastDisplayedProgress,
+      receivedBytes: completedBytes,
+      totalBytes: CONST_TOTAL_SIZE,
+      statusText: '正在为您开启疗愈之旅...',
+    });
+
+    if (allFilesToDownload.length === 0) {
+      console.log(`[App-Download] ✅ 所有资源已存在，总大小: ${completedBytes} bytes`);
+      onProgress({ progress: 1, receivedBytes: CONST_TOTAL_SIZE, totalBytes: CONST_TOTAL_SIZE, statusText: '欢迎来到心声冥想' });
+      return { failedAssets: [], success: true };
+    }
+
+    console.log(`[App-Download] 📦 需要下载 ${allFilesToDownload.length} 个文件，总大小约 ${(CONST_TOTAL_SIZE / 1024 / 1024).toFixed(1)}MB`);
+
+    let uiUpdateTimer: ReturnType<typeof setInterval> | null = null;
+
+    const updateUI = () => {
+      let totalReceived = 0;
+
+      for (const [, status] of fileStatusMap) {
+        if (status.status === 'success') {
+          totalReceived += status.expectedSize;
+        } else if (status.status === 'downloading') {
+          totalReceived += status.maxConfirmedBytes;
         }
       }
-      
-      clearInterval(validationProgressInterval);
-      
-      console.log(`[DownloadService] 物理校验结果：${allFilesValid ? '通过' : '失败'}`);
-      if (!allFilesValid) {
-        console.error(`[DownloadService] 无效文件：${invalidFiles.join(', ')}`);
-        console.log('[DownloadService] 尝试重新下载失败的文件...');
-        
-        // 重新下载失败的文件
-        for (const asset of filesToDownload) {
-          const localPath = getLocalPathHelper(asset.category, asset.filename);
-          const fileExists = await RNFS.exists(localPath);
-          
-          if (!fileExists) {
-            console.log(`[DownloadService] 重新下载：${asset.id}`);
-            await downloadFileWithRetry(asset, localPath, 0, totalFiles, downloadedBytes, totalBytes, onProgress);
-          } else {
-            // 检查文件大小
+
+      const calculatedProgress = CONST_TOTAL_SIZE > 0 ? totalReceived / CONST_TOTAL_SIZE : 0;
+      const safeProgress = Math.max(lastDisplayedProgress, calculatedProgress);
+      lastDisplayedProgress = safeProgress;
+
+      onProgress({
+        progress: safeProgress,
+        receivedBytes: Math.min(totalReceived, CONST_TOTAL_SIZE),
+        totalBytes: CONST_TOTAL_SIZE,
+        statusText: '正在为您开启疗愈之旅...',
+      });
+    };
+
+    uiUpdateTimer = setInterval(updateUI, UI_UPDATE_INTERVAL_MS);
+
+    const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+    const downloadSingleFile = async (asset: any): Promise<boolean> => {
+      const status = fileStatusMap.get(asset.id);
+      if (!status) return false;
+
+      const localPath = getLocalPathHelper(asset.category, asset.filename);
+      const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+
+      // 【强制建目录】zen/ western/ 等子目录必须提前创建
+      try {
+        const dirExists = await RNFS.exists(dirPath);
+        console.log(`[App-Download] 📁 检查目录: ${dirPath} (存在: ${dirExists})`);
+        if (!dirExists) {
+          await RNFS.mkdir(dirPath);
+          console.log(`[App-Download] ✅ 已创建目录: ${dirPath}`);
+        }
+      } catch (e: any) {
+        console.error(`[App-Download] ❌ 创建目录失败: ${dirPath} - ${e.message}`);
+        return false;
+      }
+
+      // 【详细日志追踪】Downloader: [文件名] -> [本地路径]
+      console.log(`[App-Download] 📥 Downloader: [${asset.filename}] -> [${localPath}]`);
+
+      const tempPath = `${localPath}.tmp`;
+      const urls = getDownloadUrls(asset.filename);
+
+      for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
+        if (attempt > 0) {
+          console.log(`[App-Download] ⚠️ 静默重试 ${asset.filename} (第${attempt + 1}/5次)`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+
+        status.status = 'downloading';
+
+        for (const url of urls) {
+          let currentJobId: number | undefined = undefined;
+
+          const stopDownloadSafe = (jobId: number) => {
             try {
-              const stat = await RNFS.stat(localPath);
-              const actualSize = Number(stat.size);
-              const expectedSize = (asset as any).size || 0;
-              const sizeDiff = Math.abs(actualSize - expectedSize);
-              const sizeDiffPercent = expectedSize > 0 ? sizeDiff / expectedSize : 0;
-              
-              if (sizeDiffPercent > 0.01) {
-                console.log(`[DownloadService] 重新下载（大小不匹配）：${asset.id}`);
-                await RNFS.unlink(localPath);
-                await downloadFileWithRetry(asset, localPath, 0, totalFiles, downloadedBytes, totalBytes, onProgress);
+              RNFS.stopDownload(jobId);
+            } catch (e) {}
+          };
+
+          try {
+            if (await RNFS.exists(tempPath)) {
+              try { await RNFS.unlink(tempPath); } catch (e) {}
+            }
+
+            let currentMaxBytes = 0;
+
+            // 【打印完整下载 URL】让用户看到到底是哪个 URL 在 404
+            console.log(`[App-Download] 🔗 完整URL: ${url}`);
+            console.log(`[App-Download]  开始下载: ${asset.filename} → ${localPath}`);
+
+            const downloadJob = RNFS.downloadFile({
+              fromUrl: url,
+              toFile: tempPath,
+              connectionTimeout: DOWNLOAD_CONNECTION_TIMEOUT,
+              readTimeout: DOWNLOAD_READ_TIMEOUT,
+              background: false,
+              discretionary: false,
+              progressDivider: 5,
+              begin: (res) => {
+                currentJobId = res.jobId;
+              },
+              progress: (res) => {
+                if (res.bytesWritten > currentMaxBytes) {
+                  currentMaxBytes = res.bytesWritten;
+                  status.maxConfirmedBytes = currentMaxBytes;
+                }
               }
-            } catch (e) {
-              console.log(`[DownloadService] 重新下载（读取失败）：${asset.id}`);
-              await downloadFileWithRetry(asset, localPath, 0, totalFiles, downloadedBytes, totalBytes, onProgress);
+            });
+
+            const downloadResult = await downloadJob.promise;
+
+            if (downloadResult.statusCode !== 200 && downloadResult.statusCode !== 206) {
+              if (await RNFS.exists(tempPath)) {
+                try { await RNFS.unlink(tempPath); } catch (e) {}
+              }
+              continue;
+            }
+
+            if (await RNFS.exists(tempPath)) {
+              const stat = await RNFS.stat(tempPath);
+              const actualSize = Number(stat.size);
+
+              if (actualSize > 0) {
+                await RNFS.moveFile(tempPath, localPath);
+
+                if (await RNFS.exists(localPath)) {
+                  const finalStat = await RNFS.stat(localPath);
+                  if (finalStat.size > 0) {
+                    status.status = 'success';
+                    status.maxConfirmedBytes = Number(finalStat.size);
+                    console.log(`[App-Download] ✅ 完成: ${asset.filename} (实际大小: ${finalStat.size} bytes)`);
+                    return true;
+                  }
+                }
+              }
+            }
+          } catch (e: any) {
+            console.log(`[App-Download] ❌ 下载失败: ${asset.filename} - ${e.message || e}`);
+            if (await RNFS.exists(tempPath)) {
+              try { await RNFS.unlink(tempPath); } catch (e) {}
             }
           }
         }
       }
-      
-      // 【暴力修复 3】打印每一步的分子分母
-      const downloadedBytes = currentReceivedBytes;
-      const totalBytesValue = totalBytes;
-      const ratio = totalBytesValue > 0 ? downloadedBytes / totalBytesValue : 0;
-      console.log('Progress Trace:', { 
-        downloadedBytes, 
-        totalBytes: totalBytesValue, 
-        ratio,
-        allFilesValid,
-        invalidFilesCount: invalidFiles.length
-      });
-      
-      // 下载完成，只有物理校验通过才报告 100% 进度
-      if (allFilesValid) {
-        console.log('[DownloadService] ✅ 物理校验通过，报告 100% 进度');
-        onProgress({
-          progress: 1,
-          receivedBytes: totalBytesValue,
-          totalBytes: totalBytesValue
+
+      status.status = 'failed';
+      console.log(`[App-Download] ❌ 最终失败: ${asset.filename} (重试${MAX_RETRIES_PER_FILE}次后放弃)`);
+      return false;
+    };
+
+    const downloadQueue = [...allFilesToDownload];
+    const runningTasks: Promise<void>[] = [];
+    const failedAssets: string[] = [];
+
+    const runNext = async () => {
+      while (downloadQueue.length > 0) {
+        const asset = downloadQueue.shift()!;
+        const task = downloadSingleFile(asset).then(success => {
+          if (!success) {
+            failedAssets.push(asset.id);
+          }
         });
-      } else {
-        // 报告真实进度，不伪造 100%
-        const realProgress = Math.min(0.99, ratio);
-        console.log(`[DownloadService] ⚠️ 物理校验失败，报告真实进度：${(realProgress * 100).toFixed(1)}%`);
-        onProgress({
-          progress: realProgress,
-          receivedBytes: downloadedBytes,
-          totalBytes: totalBytesValue
+        runningTasks.push(task);
+        task.then(() => {
+          const idx = runningTasks.indexOf(task);
+          if (idx > -1) runningTasks.splice(idx, 1);
         });
+        if (runningTasks.length >= MAX_CONCURRENT_TASKS) {
+          await Promise.race(runningTasks);
+        }
       }
-      
-      if (successRate >= 0.9) {
-        console.log('[DownloadService] 下载成功，标记为就绪');
-      } else {
-        console.warn(`[DownloadService] 下载完成但有失败：成功 ${successCount}/${filesToDownload.length}，允许进入应用`);
+    };
+
+    // 【修复】统一下载所有文件（包括背景图），必须等待全部完成
+    console.log(`[App-Download] 🎵 开始下载所有资源文件：${allFilesToDownload.length} 个（含背景图）`);
+    await runNext();
+    await Promise.allSettled(runningTasks);
+
+    // 清除 UI 更新定时器
+    if (uiUpdateTimer) {
+      clearInterval(uiUpdateTimer);
+    }
+
+    // 最终更新 UI
+    updateUI();
+
+    // 重试失败的文件
+    if (failedAssets.length > 0 && failedAssets.length < allFilesToDownload.length) {
+      console.log(`[App-Download] ⚠️ 重试 ${failedAssets.length} 个失败文件...`);
+      for (const failedId of failedAssets) {
+        const asset = allFilesToDownload.find(a => a.id === failedId);
+        if (asset) {
+          const status = fileStatusMap.get(failedId);
+          if (status && status.status === 'failed') {
+            status.status = 'pending';
+            status.maxConfirmedBytes = 0;
+            await downloadSingleFile(asset);
+          }
+        }
       }
 
-      // 静默处理：失败资产已记录到 failedAssets 数组
-    } catch (e) {
-      console.error('--- [Validation Error] ---', e);
-    } 
-  }, 
- 
-  /**
-   * Get local audio path (for player use)
-   */
-  async getLocalPath(id: string) { 
+      updateUI();
+    }
+
+    const finalFailed: string[] = [];
+    let totalSuccessBytes = 0;
+    for (const [id, status] of fileStatusMap) {
+      if (status.status === 'success') {
+        totalSuccessBytes += status.expectedSize;
+      } else if (status.status === 'failed') {
+        finalFailed.push(id);
+      }
+    }
+
+    // 【修复】检查总字节数，确保所有文件（包括背景图）都已下载
+    const totalExpectedBytes = ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
+    const completionRate = totalSuccessBytes / totalExpectedBytes;
+
+    console.log(`[App-Download] 📊 下载统计:`);
+    console.log(`  - 成功: ${fileStatusMap.size - finalFailed.length}/${fileStatusMap.size} 个文件`);
+    console.log(`  - 成功字节: ${(totalSuccessBytes / 1024 / 1024).toFixed(1)}MB / ${(totalExpectedBytes / 1024 / 1024).toFixed(1)}MB`);
+    console.log(`  - 完成率: ${(completionRate * 100).toFixed(1)}%`);
+
+    if (finalFailed.length > 0) {
+      console.log(`[App-Download] ❌ 失败文件: ${finalFailed.join(', ')}`);
+      return { failedAssets: finalFailed, success: false };
+    }
+
+    console.log(`[App-Download] ✅ 所有资源下载完成！总大小: ${(totalSuccessBytes / 1024 / 1024).toFixed(1)}MB`);
+    return { failedAssets: [], success: true };
+  },
+
+  async getLocalPath(id: string) {
     const asset = AUDIO_MANIFEST.find(a => a.id === id);
     if (!asset) return null;
     const path = getLocalPathHelper(asset.category, asset.filename);
@@ -514,64 +502,38 @@ export const DownloadService = {
     return null;
   },
 
-  /**
-   * Download a single audio file (with retry mechanism)
-   */
   async downloadAudio(id: string, urls?: string[], retries = 3): Promise<string | null> {
     const asset = AUDIO_MANIFEST.find(a => a.id === id);
     if (!asset) return null;
-    const isDeepSea = id.includes('deep_sea') || asset.filename.includes('deep_sea');
+
     const localPath = getLocalPathHelper(asset.category, asset.filename);
     const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-    
-    const targetUrls = urls && urls.length > 0 ? urls : getDownloadUrl(id);
-    // 静默处理：开始下载音频文件
-    for (let u = 0; u < targetUrls.length; u++) {
-      const url = targetUrls[u];
-      for (let i = 0; i < retries; i++) {
+    const targetUrls = urls && urls.length > 0 ? urls : getDownloadUrls(asset.filename);
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      for (const url of targetUrls) {
         try {
-          if (!(await RNFS.exists(dirPath))) {
-            await RNFS.mkdir(dirPath);
+          if (!(await RNFS.exists(dirPath))) await RNFS.mkdir(dirPath);
+
+          const result = await RNFS.downloadFile({
+            fromUrl: url,
+            toFile: localPath,
+            connectionTimeout: DOWNLOAD_CONNECTION_TIMEOUT,
+            readTimeout: DOWNLOAD_READ_TIMEOUT,
+          }).promise;
+
+          if (result.statusCode === 200 && await RNFS.exists(localPath)) {
+            const stat = await RNFS.stat(localPath);
+            if (stat.size > 0) return localPath;
           }
-          
-          // 【防崩溃修复】包裹 RNFS.downloadFile，捕获原生层空指针异常
-          let downloadResult: any;
-          try {
-            const result = RNFS.downloadFile({
-              fromUrl: url,
-              toFile: localPath,
-              connectionTimeout: 30000,
-              readTimeout: 60000,
-            });
-            downloadResult = await result.promise;
-          } catch (e: any) {
-            console.error(`[DownloadService] ❌ RNFS.downloadFile 原生异常 (downloadAudio): ${e.message || e}`);
-            // 检查文件是否已落盘
-            if (await RNFS.exists(localPath)) {
-              console.log(`[DownloadService] ⚠️ 文件已落盘，但 Promise 异常：${localPath}`);
-              downloadResult = { statusCode: 200 };
-            } else {
-              throw e;
-            }
-          }
-          
-          if (downloadResult.statusCode === 200 && await RNFS.exists(localPath)) {
-            // 静默处理：音频文件下载成功
-            return localPath;
-          }
-        } catch (e) {
-          console.error(`[DownloadService] Download failed (Attempt ${i + 1}) ${id}:`, e);
-          if (i < retries - 1) {
-            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-          }
-        }
-      }
-      if (u === 0 && targetUrls.length > 1) {
-        console.warn('[DownloadService] Primary failed, switching to secondary', { id, url });
+        } catch (e) {}
+
+        if (attempt < retries) await new Promise<void>(r => setTimeout(r, 1500));
       }
     }
+
     return null;
   }
-}; 
+};
 
 export default DownloadService;

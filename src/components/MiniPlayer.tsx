@@ -90,23 +90,35 @@ const MiniPlayer = () => {
     console.log(`[MiniPlayer] currentScene=${!!currentScene}, isPlayerScreen=${isPlayerScreen}, isHomeScreen=${isHomeScreen}, shouldShow=${shouldShow}`);
   }, [currentScene, isPlayerScreen, isHomeScreen, fadeAnim]);
 
-  const handlePlayPause = (e: any) => {
+  const handlePlayPause = async (e: any) => {
     e.stopPropagation();
     triggerHaptic();
     const targetState = isPlaying ? 'pause' : 'play';
     const audioService = AudioService.getInstance();
     
-    setImmediate(async () => {
-      try {
-        if (targetState === 'pause') {
-          await audioService.pause();
-        } else {
-          await audioService.play();
+    try {
+      if (targetState === 'pause') {
+        await audioService.pause();
+      } else {
+        // 【关键修复】如果未初始化，先触发初始化
+        if (!audioService.isReady()) {
+          console.log('[MiniPlayer] ⏳ AudioService 未准备好，触发初始化...');
+          await audioService.setupPlayer();
+          let waitCount = 0;
+          while (!audioService.isReady() && waitCount < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitCount++;
+          }
+          if (!audioService.isReady()) {
+            console.warn('[MiniPlayer] ⚠️ 初始化超时');
+            return;
+          }
         }
-      } catch (error) {
-        console.error('MiniPlayer toggle failed:', error);
+        await audioService.play();
       }
-    });
+    } catch (error) {
+      console.error('MiniPlayer toggle failed:', error);
+    }
   };
 
   const toggleCollapse = (e: any) => {

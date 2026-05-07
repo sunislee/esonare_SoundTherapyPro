@@ -94,21 +94,12 @@ export class NotificationService {
     if (!this.isInitialized) await this.setup();
 
     try {
-      // 【多语言支持】使用 i18n 翻译标题
       const title = i18n.t(`scenes.${scene.id}.title`) || scene.title || getSafeTranslation('appTitle', 'esonare');
       const artist = i18n.t('appTitle') || getSafeTranslation('artistDescription', '🎵');
 
-      // 检查队列
       const queue = await TrackPlayer.getQueue();
       if (queue.length === 0) {
-        // 如果没有音轨，添加一个占位符（使用空字符串，避免 ExoPlayer 报错）
-        await TrackPlayer.add({
-          id: 'placeholder',
-          url: '',
-          title: title,
-          artist: artist,
-          artwork: require('../assets/logo.png'),
-        });
+        return;
       }
 
       await TrackPlayer.updateMetadataForTrack(0, {
@@ -116,9 +107,8 @@ export class NotificationService {
         artist: artist,
         artwork: require('../assets/logo.png'),
       });
-
     } catch (e) {
-      console.error('[NotificationService] Metadata Update Error:', e);
+      // 静默忽略所有通知栏更新错误，不影响播放
     }
   }
 

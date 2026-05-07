@@ -211,6 +211,8 @@
       "loading": "Loading...",
       "ready": "Ready"
     },
+    "roam": "Roam",
+    "roaming": "Roaming",
     "ambient": {
       "pickerTitle": "Ambient Decor",
       "controlTitle": "Ambient Control",
@@ -345,14 +347,13 @@
     }
   },
   "download": {
-    "title": "Downloading Resources",
-    "subtitle": "Preparing immersive audio resources for you...",
-    "calculating": "Calculating resource size...",
-    "tip": "Please stay connected for the first time, syncing high-quality audio",
-    "optimizing": "Optimizing audio assets...",
-    "incompleteTitle": "Download Incomplete",
-    "incompleteMessage": "{{count}} files are still downloading. Please wait for the download to complete.",
-    "message": "The audio file for \"{{sceneTitle}}\" has not been downloaded yet. Would you like to download it now?"
+    "title": "Preparing Resources",
+    "optimizing": "Optimizing audio quality...",
+    "downloading": "Preparing your serene moment...",
+    "checking": "Verifying resource integrity...",
+    "complete": "Resources Ready",
+    "retry": "Re-download",
+    "retryDesc": "Clear cache and re-download all resources"
   },
   "nameEntry": {
     "title": "What's your name?",
@@ -412,6 +413,7 @@
       "clearHistoryMsg": "Are you sure you want to clear all history? This cannot be undone.",
       "clearPresetsTitle": "Clear Presets",
       "clearPresetsMsg": "Are you sure you want to clear all presets? This cannot be undone.",
+      "downloading": "Downloading...",
       "resetDataTitle": "Reset App Data",
       "resetDataMsg": "Are you sure you want to reset the app? This will delete all local data (including username, playback history, mix presets, etc.), but will not delete downloaded audio resources.",
       "confirm": "Clear",
