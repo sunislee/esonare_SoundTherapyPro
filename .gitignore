@@ -102,3 +102,6 @@ SoundTherapy081/src/constants/scenes.ts
 SoundTherapy081/src/screens/ImmersivePlayerNew.tsx
 SoundTherapy081/src/screens/ResourceDownloadScreen.tsx
 SoundTherapy081/src/services/DownloadService.ts
+
+# Expo 缓存文件（无需版本控制）
+.expo/

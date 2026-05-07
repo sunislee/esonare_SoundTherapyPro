@@ -21,6 +21,10 @@ const UI_UPDATE_INTERVAL_MS = 2000;
 const MAX_RETRIES_PER_FILE = 5;
 const MAX_CONCURRENT_TASKS = 6;
 
+let boostPrioritySceneId: string | null = null;
+let onProgressCallback: ((sceneId: string, progress: number) => void) | null = null;
+let onCompleteCallback: ((sceneId: string) => void) | null = null;
+
 export interface DownloadProgress {
   progress: number;
   receivedBytes: number;
@@ -120,17 +124,27 @@ export const DownloadService = {
       fileStatusMap.set(asset.id, { assetId: asset.id, expectedSize, maxConfirmedBytes: 0, status: 'pending' });
     }
 
-    // 【关键优化】按优先级排序：核心场景优先下载
-    allFilesToDownload.sort((a, b) => {
-      // 核心场景（priority >= 0）排前面
-      if (a.priority >= 0 && b.priority < 0) return -1;
-      if (a.priority < 0 && b.priority >= 0) return 1;
-      // 都是核心场景或都不是，按 priority 升序
-      return a.priority - b.priority;
-    });
+    // 【关键优化】按优先级排序：核心场景优先下载，支持动态插队
+    const sortWithBoost = () => {
+      allFilesToDownload.sort((a, b) => {
+        // 【动态插队】被用户点击的场景永远排第一
+        if (boostPrioritySceneId === a.asset.id) return -1;
+        if (boostPrioritySceneId === b.asset.id) return 1;
+        // 核心场景（priority >= 0）排前面
+        if (a.priority >= 0 && b.priority < 0) return -1;
+        if (a.priority < 0 && b.priority >= 0) return 1;
+        // 都是核心场景或都不是，按 priority 升序
+        return a.priority - b.priority;
+      });
+      
+      console.log(`[App-Download] 📋 下载队列已优化：共 ${allFilesToDownload.length} 个文件`);
+      console.log(`[App-Download] 🎯 前 5 个优先下载：${allFilesToDownload.slice(0, 5).map(f => f.asset.id).join(', ')}`);
+      if (boostPrioritySceneId) {
+        console.log(`[App-Download] ⚡ 当前插队场景: ${boostPrioritySceneId}`);
+      }
+    };
     
-    console.log(`[App-Download] 📋 下载队列已优化：共 ${allFilesToDownload.length} 个文件`);
-    console.log(`[App-Download] 🎯 前 5 个优先下载：${allFilesToDownload.slice(0, 5).map(f => f.asset.id).join(', ')}`);
+    sortWithBoost();
 
     if (allFilesToDownload.length === 0) {
       console.log('[App-Download] ✅ 所有资源已存在，无需下载');
@@ -144,15 +158,20 @@ export const DownloadService = {
 
     const downloadSingleFile = async (): Promise<void> => {
       while (nextIndex < allFilesToDownload.length) {
+        // 【动态插队】每次取任务前重新排序
+        if (boostPrioritySceneId && nextIndex < allFilesToDownload.length - 1) {
+          sortWithBoost();
+        }
+        
         const idx = nextIndex++;
         const { asset, manifestItem, localPath, expectedSize } = allFilesToDownload[idx];
         const status = fileStatusMap.get(asset.id)!;
         const tempPath = `${localPath}.tmp`;
-        const urls = getDownloadUrls(manifestItem.filename); // 修复：使用 manifestItem.filename
+        const urls = getDownloadUrls(manifestItem.filename);
 
         for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
           if (attempt > 0) {
-            console.log(`[App-Download] 🤫 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`); // 修复
+            console.log(`[App-Download] 🤫 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`);
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
 
@@ -176,7 +195,17 @@ export const DownloadService = {
                   await RNFS.moveFile(tempPath, localPath);
                   status.status = 'success';
                   successCount++;
-                  console.log(`[App-Download] ✅ 静默完成: ${manifestItem.filename}`); // 修复
+                  
+                  // 【进度回调】通知 UI 更新
+                  if (onProgressCallback) {
+                    onProgressCallback(asset.id, 100);
+                  }
+                  // 【完成回调】通知自动关闭弹窗
+                  if (onCompleteCallback) {
+                    onCompleteCallback(asset.id);
+                  }
+                  
+                  console.log(`[App-Download] ✅ 静默完成: ${manifestItem.filename}`);
                   break;
                 } else {
                   await RNFS.unlink(tempPath);
@@ -193,7 +222,7 @@ export const DownloadService = {
         if (status.status !== 'success') {
           status.status = 'failed';
           failedCount++;
-          console.error(`[App-Download] ❌ 静默最终失败: ${manifestItem.filename}`); // 修复
+          console.error(`[App-Download] ❌ 静默最终失败: ${manifestItem.filename}`);
         }
       }
     };
@@ -533,6 +562,23 @@ export const DownloadService = {
     }
 
     return null;
+  },
+
+  prioritizeScene(sceneId: string) {
+    console.log(`[DownloadService] ⚡ 场景 ${sceneId} 被提升为最高优先级！`);
+    boostPrioritySceneId = sceneId;
+  },
+
+  setProgressCallback(callback: (sceneId: string, progress: number) => void) {
+    onProgressCallback = callback;
+  },
+
+  setCompleteCallback(callback: (sceneId: string) => void) {
+    onCompleteCallback = callback;
+  },
+
+  clearBoost() {
+    boostPrioritySceneId = null;
   }
 };
 
