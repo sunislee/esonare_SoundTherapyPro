@@ -37,6 +37,59 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
 const BUTTON_SIZE = 80;
 
+// 【智能缩略图源选择器 - 优雅语义化版】
+// 返回值：
+//   - 有效图片源 (number 或 {uri}) → 显示真实图片
+//   - null → 使用语义化占位块（磨砂色块 + Icon）
+const getThumbnailSource = (item: Scene, isResourceReady: boolean): any => {
+  if (!item.backgroundSource) {
+    return null;
+  }
+  
+  const bgSource = item.backgroundSource;
+  
+  // require() 格式的静态资源（数字类型）→ 直接使用
+  if (typeof bgSource === 'number') {
+    return bgSource;
+  }
+  
+  // file:// 路径格式 → 仅当资源确认已下载时使用
+  if (isResourceReady && bgSource?.uri && bgSource.uri.startsWith('file://')) {
+    return bgSource;
+  }
+  
+  // 其他情况：返回 null，触发语义化占位块
+  return null;
+};
+
+// 【语义化 Icon 映射】
+const CATEGORY_ICONS: Record<string, string> = {
+  'Oriental': '🏯',
+  'WesternChurch': '⛪',
+  'Nature': '🌿',
+  'Healing': '💜',
+  'Brainwave': '🧠',
+  'Life': '🏠',
+};
+
+const getCategoryIcon = (category: string): string => {
+  return CATEGORY_ICONS[category] || '🎵';
+};
+
+// 【主题色映射】
+const CATEGORY_COLORS: Record<string, string> = {
+  'Oriental': 'rgba(200, 180, 140, 0.12)',
+  'WesternChurch': 'rgba(180, 190, 210, 0.12)',
+  'Nature': 'rgba(100, 160, 120, 0.12)',
+  'Healing': 'rgba(160, 130, 200, 0.12)',
+  'Brainwave': 'rgba(100, 150, 200, 0.12)',
+  'Life': 'rgba(200, 160, 130, 0.12)',
+};
+
+const getCategoryColor = (category: string): string => {
+  return CATEGORY_COLORS[category] || 'rgba(255, 255, 255, 0.08)';
+};
+
 // 抽离 SceneItem 组件
 const SceneItem = React.memo(({ 
   item, isPlaying, currentBaseSceneId, togglePlayback, navigation, 
@@ -159,15 +212,27 @@ const SceneItem = React.memo(({
             <View style={styles.cardInner}>
               <View style={[styles.cardBg, { backgroundColor: 'rgba(30, 30, 30, 0.6)' }]} />
               
-              {/* 【左侧缩略图】 */}
-              <ImageBackground
-                source={item.backgroundSource || { uri: undefined }}
-                style={styles.thumbnail}
-                resizeMode="cover"
-                imageStyle={styles.thumbnailRadius}
-              >
-                <View style={styles.thumbnailFallback} />
-              </ImageBackground>
+              {/* 【左侧缩略图 - 优雅语义化版】 */}
+              {(() => {
+                const thumbSource = getThumbnailSource(item, isResourceReady);
+                
+                if (thumbSource) {
+                  return (
+                    <ImageBackground
+                      source={thumbSource}
+                      style={styles.thumbnail}
+                      resizeMode="cover"
+                      imageStyle={styles.thumbnailRadius}
+                    />
+                  );
+                }
+                
+                return (
+                  <View style={[styles.thumbnailPlaceholder, { backgroundColor: getCategoryColor(item.category) }]}>
+                    <Text style={styles.placeholderIcon}>{getCategoryIcon(item.category)}</Text>
+                  </View>
+                );
+              })()}
               
               {/* 【中间信息区】 */}
               <View style={styles.cardText}>
@@ -486,7 +551,22 @@ const styles = StyleSheet.create({
   // 【左侧缩略图】
   thumbnail: { width: 64, height: 64, borderRadius: 12, marginRight: 14, overflow: 'hidden' },
   thumbnailRadius: { borderRadius: 12 },
-  thumbnailFallback: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(60, 60, 80, 0.6)' },
+  
+  // 【语义化占位块 - 磨砂质感 + Icon】
+  thumbnailPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    marginRight: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  placeholderIcon: {
+    fontSize: 26,
+    opacity: 0.5,
+  },
 
   // 【中间信息】
   cardText: { flex: 1, marginRight: 10 },
