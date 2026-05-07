@@ -12,6 +12,7 @@ import {
   Alert,
   findNodeHandle,
   ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -156,84 +157,81 @@ const SceneItem = React.memo(({
             }}
           >
             <View style={styles.cardInner}>
-              <View style={[styles.cardBg, { backgroundColor: item.primaryColor, opacity: isResourceReady || downloadStatus === 'ready' ? 1 : 0.4 }]} />
+              <View style={[styles.cardBg, { backgroundColor: 'rgba(30, 30, 30, 0.6)' }]} />
               
-              {/* 【PRIORITY 标签】 */}
-              {isPriority && (
-                <View style={styles.priorityBadge}>
-                  <Text style={styles.priorityBadgeText}>PRIORITY</Text>
-                </View>
-              )}
+              {/* 【左侧缩略图】 */}
+              <ImageBackground
+                source={item.backgroundSource || { uri: undefined }}
+                style={styles.thumbnail}
+                resizeMode="cover"
+                imageStyle={styles.thumbnailRadius}
+              >
+                <View style={styles.thumbnailFallback} />
+              </ImageBackground>
               
-              <View style={styles.cardContent}>
-                <View style={styles.cardText}>
-                  <Text 
-                    style={[
-                      styles.cardTitle, 
-                      !isResourceReady && downloadStatus !== 'ready' && styles.cardTitleDownloading,
-                      downloadStatus === 'ready' && styles.cardTitleReady
-                    ]} 
-                    numberOfLines={1}
-                  >
-                    {t(`scenes.${item.id}.title`, { defaultValue: item.title })}
-                  </Text>
-                  
-                  {/* 【状态文字】 */}
-                  {!isResourceReady && downloadStatus !== 'ready' && (
-                    <Text style={styles.cardStatusText} numberOfLines={1}>
-                      {isPriority 
-                        ? `${Math.round(downloadProgress)}% - Downloading`
-                        : showBoostButton
-                          ? 'Waiting in Queue'
-                          : `${downloadProgress}% - Queued`
-                      }
-                    </Text>
-                  )}
-                  
-                  {/* 【完成状态】 */}
-                  {downloadStatus === 'ready' && (
-                    <Text style={styles.cardReadyText} numberOfLines={1}>
-                      Ready to Play ✨
-                    </Text>
-                  )}
-                  
-                  {isResourceReady && downloadStatus !== 'ready' && (
-                    <Text style={styles.cardSubtitle} numberOfLines={1}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
-                  )}
-                </View>
+              {/* 【中间信息区】 */}
+              <View style={styles.cardText}>
+                <Text 
+                  style={[
+                    styles.cardTitle, 
+                    !isResourceReady && downloadStatus !== 'ready' && styles.cardTitleDownloading,
+                    downloadStatus === 'ready' && styles.cardTitleReady
+                  ]} 
+                  numberOfLines={1}
+                >
+                  {t(`scenes.${item.id}.title`, { defaultValue: item.title })}
+                </Text>
                 
-                {/* 【右侧操作区】 */}
-                <View>
-                  {(isResourceReady || downloadStatus === 'ready') ? (
-                    <TouchableOpacity 
-                      style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]} 
-                      onPress={() => { triggerHaptic(); togglePlayback(item); }}
-                    >
-                      <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>{isThisPlaying ? '||' : '▶'}</Text>
-                    </TouchableOpacity>
-                  ) : showBoostButton && !isPriority ? (
-                    /* 【优先下载按钮】 */
-                    <TouchableOpacity 
-                      style={styles.boostButton}
-                      onPress={handleBoostDownload}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.boostButtonText}>⚡</Text>
-                      <Text style={styles.boostButtonLabel}>优先下载</Text>
-                    </TouchableOpacity>
-                  ) : isPriority ? (
-                    /* 【下载中图标】 */
-                    <View style={styles.downloadingIconContainer}>
-                      <ActivityIndicator size="small" color="#6C5DD3" />
-                      <Text style={styles.downloadingPercent}>{Math.round(downloadProgress)}%</Text>
-                    </View>
-                  ) : (
-                    /* 【等待中图标】 */
-                    <View style={styles.queuedIconContainer}>
-                      <Text style={styles.queuedIcon}>⬇</Text>
-                    </View>
-                  )}
-                </View>
+                {!isResourceReady && downloadStatus !== 'ready' && (
+                  <Text style={styles.cardStatusText} numberOfLines={1}>
+                    {isPriority 
+                      ? `${Math.round(downloadProgress)}% - Downloading`
+                      : showBoostButton
+                        ? 'Waiting in Queue'
+                        : `${downloadProgress}% - Queued`
+                    }
+                  </Text>
+                )}
+                
+                {downloadStatus === 'ready' && (
+                  <Text style={styles.cardReadyText} numberOfLines={1}>
+                    Ready to Play ✨
+                  </Text>
+                )}
+                
+                {isResourceReady && downloadStatus !== 'ready' && (
+                  <Text style={styles.cardSubtitle} numberOfLines={1}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
+                )}
+              </View>
+              
+              {/* 【右侧操作区】 */}
+              <View style={styles.cardRightArea}>
+                {(isResourceReady || downloadStatus === 'ready') ? (
+                  <TouchableOpacity 
+                    style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]} 
+                    onPress={() => { triggerHaptic(); togglePlayback(item); }}
+                  >
+                    <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>{isThisPlaying ? '||' : '▶'}</Text>
+                  </TouchableOpacity>
+                ) : showBoostButton && !isPriority ? (
+                  <TouchableOpacity 
+                    style={styles.boostButton}
+                    onPress={handleBoostDownload}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.boostButtonText}>⚡</Text>
+                    <Text style={styles.boostButtonLabel}>优先下载</Text>
+                  </TouchableOpacity>
+                ) : isPriority ? (
+                  <View style={styles.downloadingIconContainer}>
+                    <ActivityIndicator size="small" color="#6C5DD3" />
+                    <Text style={styles.downloadingPercent}>{Math.round(downloadProgress)}%</Text>
+                  </View>
+                ) : (
+                  <View style={styles.queuedIconContainer}>
+                    <Text style={styles.queuedIcon}>⬇</Text>
+                  </View>
+                )}
               </View>
               
               {/* 【进度条（仅插队时显示）】 */}
@@ -476,25 +474,34 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginTop: 8 },
   section: { width: '100%', alignItems: 'center', marginBottom: 40 },
   sectionTitle: { width: ITEM_WIDTH, fontSize: 22, color: '#fff', fontWeight: '700', marginBottom: 20 },
-  cardWrapper: { width: ITEM_WIDTH, height: 110, marginBottom: 20 },
-  cardContainer: { width: ITEM_WIDTH, height: 110 },
-  cardClip: { width: ITEM_WIDTH, height: 110, overflow: 'hidden', borderRadius: 20 },
-  memoryHighlight: { position: 'absolute', top: 10, bottom: 10, left: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 50, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.4)', zIndex: 3 },
-  card: { width: ITEM_WIDTH, height: 110, borderRadius: 20, justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
-  cardPressed: { borderColor: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.1)' },
-  cardInner: { flex: 1, borderRadius: 20, justifyContent: 'center' },
-  cardBg: { ...StyleSheet.absoluteFillObject, opacity: 0.15 },
-  cardContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
-  cardText: { flex: 1, marginRight: 16 },
-  cardTitle: { fontSize: 20, color: '#fff', fontWeight: '700' },
+  cardWrapper: { width: ITEM_WIDTH, height: 100, marginBottom: 16 },
+  cardContainer: { width: ITEM_WIDTH, height: 100 },
+  cardClip: { width: ITEM_WIDTH, height: 100, overflow: 'hidden', borderRadius: 16 },
+  memoryHighlight: { position: 'absolute', top: 8, bottom: 8, left: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 50, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)', zIndex: 3 },
+  card: { width: ITEM_WIDTH, height: 100, borderRadius: 16, justifyContent: 'center', backgroundColor: 'rgba(30, 30, 30, 0.6)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)' },
+  cardPressed: { borderColor: 'rgba(255,255,255,0.25)', backgroundColor: 'rgba(40, 40, 40, 0.7)' },
+  cardInner: { flex: 1, borderRadius: 16, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
+  cardBg: { ...StyleSheet.absoluteFillObject, borderRadius: 16 },
+
+  // 【左侧缩略图】
+  thumbnail: { width: 64, height: 64, borderRadius: 12, marginRight: 14, overflow: 'hidden' },
+  thumbnailRadius: { borderRadius: 12 },
+  thumbnailFallback: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(60, 60, 80, 0.6)' },
+
+  // 【中间信息】
+  cardText: { flex: 1, marginRight: 10 },
+  cardTitle: { fontSize: 18, color: '#fff', fontWeight: '700', letterSpacing: 0.3 },
   cardTitleDownloading: { color: 'rgba(255,255,255,0.4)' },
-  cardSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
+  cardSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 3 },
   cardDownloadingBadge: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
   cardDownloadingText: { fontSize: 20 },
-  cardPlayButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' },
-  cardPlayIcon: { fontSize: 20, color: '#333', marginLeft: 2 },
+
+  // 【右侧操作区】
+  cardRightArea: { justifyContent: 'center', alignItems: 'center' },
+  cardPlayButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' },
+  cardPlayIcon: { fontSize: 18, color: '#333', marginLeft: 2 },
   cardPauseButton: { backgroundColor: '#6C5DD3' },
-  cardPauseIcon: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  cardPauseIcon: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
   
   // 悬浮按钮容器
   noiseContainer: {
@@ -616,20 +623,20 @@ const styles = StyleSheet.create({
   cardProgressBar: {
     position: 'absolute',
     bottom: 0,
-    left: 20,
-    right: 20,
-    height: 4,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    overflow: 'hidden',
   },
   progressBarBg: {
     flex: 1,
     height: '100%',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 2,
-    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#FFD700',
-    borderRadius: 2,
+    backgroundColor: '#6C5DD3',
   },
 });
