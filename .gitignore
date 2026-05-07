@@ -73,3 +73,20 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# 【Gitee 空间优化】发布包和大文件 (2025-05-07)
+Releases/
+*.apk
+*.aab
+*.ipa
+src/assets/audio/*.m4a
+src/assets/audio/*.mp3
+src/assets/audio/*.wav
+android/app/src/main/res/raw/*.m4a
+android/app/src/main/res/raw/*.mp3
+android/app/src/main/res/drawable-*/src_assets_*.webp
+SoundTherapy081/src/constants/audioAssets.ts
+SoundTherapy081/src/constants/scenes.ts
+SoundTherapy081/src/screens/ImmersivePlayerNew.tsx
+SoundTherapy081/src/screens/ResourceDownloadScreen.tsx
+SoundTherapy081/src/services/DownloadService.ts
