@@ -10,7 +10,8 @@ import {
   InteractionManager,
   Easing,
   Alert,
-  findNodeHandle
+  findNodeHandle,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -35,7 +36,7 @@ const ITEM_WIDTH = SCREEN_WIDTH - 40;
 const BUTTON_SIZE = 80;
 
 // 抽离 SceneItem 组件
-const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused, scrollOffset, scrollViewRef }: any) => {
+const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayback, navigation, isFocused, scrollOffset, scrollViewRef, isResourceReady }: any) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
@@ -48,6 +49,26 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
 
   const triggerHaptic = () => {
     ReactNativeHapticFeedback.trigger('impactLight', { enableVibrateFallback: true });
+  };
+
+  const handlePress = () => {
+    triggerHaptic();
+    if (!isResourceReady) {
+      console.warn(`[HomeScreen] ⚠️ 场景 ${item.id} 资源未下载，禁止进入`);
+      
+      // 【流式就绪】友好提示：资源正在后台加载
+      Alert.alert(
+        '冥想资源加载中',
+        `「${t(`scenes.${item.id}.title`, { defaultValue: item.title })}」正在后台准备中，请稍后再试~\n\n💡 提示：核心场景会优先加载完成`,
+        [{ text: '知道了', style: 'cancel' }]
+      );
+      
+      return;
+    }
+    setTimeout(() => {
+      if (item.id.includes('breath')) navigation.navigate('BreathDetail', { sceneId: item.id });
+      else navigation.navigate('ImmersivePlayer', { sceneId: item.id });
+    }, 50);
   };
 
   useEffect(() => {
@@ -101,26 +122,28 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
               Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
             }}
             onPress={() => {
-              triggerHaptic();
-              setTimeout(() => {
-                if (item.id.includes('breath')) navigation.navigate('BreathDetail', { sceneId: item.id });
-                else navigation.navigate('ImmersivePlayer', { sceneId: item.id });
-              }, 50);
+              handlePress();
             }}
           >
             <View style={styles.cardInner}>
-              <View style={[styles.cardBg, { backgroundColor: item.primaryColor }]} />
+              <View style={[styles.cardBg, { backgroundColor: item.primaryColor, opacity: isResourceReady ? 1 : 0.5 }]} />
               <View style={styles.cardContent}>
                 <View style={styles.cardText}>
-                  <Text style={styles.cardTitle} numberOfLines={1}>{t(`scenes.${item.id}.title`, { defaultValue: item.title })}</Text>
+                  <Text style={[styles.cardTitle, !isResourceReady && styles.cardTitleDownloading]} numberOfLines={1}>{t(`scenes.${item.id}.title`, { defaultValue: item.title })}</Text>
                   <Text style={styles.cardSubtitle} numberOfLines={1}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
                 </View>
-                <TouchableOpacity 
-                  style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]} 
-                  onPress={() => { triggerHaptic(); togglePlayback(item); }}
-                >
-                  <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>{isThisPlaying ? '||' : '▶'}</Text>
-                </TouchableOpacity>
+                {!isResourceReady ? (
+                  <View style={styles.cardDownloadingBadge}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={[styles.cardPlayButton, isThisPlaying && styles.cardPauseButton]} 
+                    onPress={() => { triggerHaptic(); togglePlayback(item); }}
+                  >
+                    <Text style={[styles.cardPlayIcon, isThisPlaying && styles.cardPauseIcon]}>{isThisPlaying ? '||' : '▶'}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </TouchableOpacity>
@@ -142,6 +165,75 @@ export const HomeScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [downloadedSceneIds, setDownloadedSceneIds] = useState<Set<string>>(new Set());
+
+  // 【流式就绪缓存】缓存 Key
+  const CACHE_KEY = 'downloaded_scene_ids_cache';
+
+  // 检查已下载的场景资源 - 带缓存优化
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkDownloadedScenes = async () => {
+      const { getLocalPath, AUDIO_MANIFEST } = await import('../constants/audioAssets');
+      const RNFS = await import('react-native-fs');
+      const readyIds = new Set<string>();
+      
+      for (const asset of AUDIO_MANIFEST) {
+        const localPath = getLocalPath(asset.category, asset.filename);
+        const cleanPath = localPath.replace('file://', '');
+        const exists = await RNFS.exists(cleanPath);
+        
+        // 【关键修复】只检查文件是否存在，不检查大小
+        // CDN 下载的文件可能与预期大小略有差异，但只要存在就可播放
+        if (exists) {
+          readyIds.add(asset.id);
+        }
+      }
+      
+      if (isMounted) {
+        setDownloadedSceneIds(readyIds);
+        
+        // 【关键】保存到缓存，下次启动秒亮
+        try {
+          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...readyIds]));
+          console.log(`[HomeScreen] ✅ 缓存已更新: ${readyIds.size} 个场景`);
+        } catch (e) {
+          console.warn('[HomeScreen] ⚠️ 缓存保存失败:', e);
+        }
+      }
+    };
+
+    // 【秒亮策略】1. 先读缓存，立即显示 UI
+    const loadCacheFirst = async () => {
+      try {
+        const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+        if (cachedData && isMounted) {
+          const cachedIds = JSON.parse(cachedData);
+          const cachedSet = new Set<string>(cachedIds);
+          if (cachedSet.size > 0) {
+            console.log(`[HomeScreen] ⚡ 秒亮！从缓存加载: ${cachedSet.size} 个场景`);
+            setDownloadedSceneIds(cachedSet);
+          }
+        }
+      } catch (e) {
+        console.warn('[HomeScreen] ⚠️ 缓存读取失败:', e);
+      }
+
+      // 【后台校验】2. 异步检查实际文件，更新状态
+      checkDownloadedScenes();
+    };
+
+    loadCacheFirst();
+    
+    // 定期刷新（降低频率到 10 秒，减少 IO）
+    const interval = setInterval(checkDownloadedScenes, 10000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // 【核心修改】初始化 Pan 坐标，设在底部中央
   const pan = useRef(new Animated.ValueXY({ 
@@ -158,9 +250,9 @@ export const HomeScreen: React.FC = () => {
     }, [])
   );
 
-  const categories = ['Nature', 'Life', 'Healing', 'Brainwave', 'WesternChurch', 'Oriental'];
+  const CATEGORY_PRIORITY = ['Oriental', 'WesternChurch', 'Healing', 'Nature', 'Life', 'Brainwave'];
   const groupedScenes = useMemo(() => {
-    return categories.map(cat => ({
+    return CATEGORY_PRIORITY.map(cat => ({
       title: cat,
       label: t(`categories.${cat.toLowerCase()}`),
       baseScenes: SCENES.filter(s => s.category === cat && s.isBaseScene),
@@ -238,6 +330,7 @@ export const HomeScreen: React.FC = () => {
                   currentBaseSceneId={currentBaseSceneId} togglePlayback={togglePlayback} 
                   navigation={navigation} isFocused={focusedSceneId === scene.id}
                   scrollOffset={scrollOffset} scrollViewRef={scrollViewRef}
+                  isResourceReady={downloadedSceneIds.has(scene.id)}
                 />
               ))}
             </View>
@@ -287,7 +380,10 @@ const styles = StyleSheet.create({
   cardContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
   cardText: { flex: 1, marginRight: 16 },
   cardTitle: { fontSize: 20, color: '#fff', fontWeight: '700' },
+  cardTitleDownloading: { color: 'rgba(255,255,255,0.4)' },
   cardSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
+  cardDownloadingBadge: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
+  cardDownloadingText: { fontSize: 20 },
   cardPlayButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' },
   cardPlayIcon: { fontSize: 20, color: '#333', marginLeft: 2 },
   cardPauseButton: { backgroundColor: '#6C5DD3' },

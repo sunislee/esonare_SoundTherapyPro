@@ -139,7 +139,7 @@ export const LandingScreen = ({ navigation }: any) => {
 export default LandingScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#080912', justifyContent: 'center', alignItems: 'center' },
   content: { alignItems: 'center' },
   brandName: { color: '#FFFFFF', fontSize: 32, fontWeight: 'bold', letterSpacing: 8 },
   loadingText: { color: '#94A3B8', fontSize: 16, marginTop: 20, letterSpacing: 2 },

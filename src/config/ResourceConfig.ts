@@ -251,11 +251,66 @@ export const NOISE_REDUCTION_RESOURCES: AudioResource[] = [
   },
 ];
 
+// 8 张场景背景图资源配置（西方教会 5 张 + 东方禅意 3 张）
+export const SCENE_BACKGROUND_RESOURCES: AudioResource[] = [
+  // 西方教会场景背景图
+  {
+    id: 'bg_western_church_candlelight',
+    filename: 'western_church_candlelight.webp',
+    category: 'scene_backgrounds',
+    priority: 1,
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_candlelight.webp`,
+  },
+  {
+    id: 'bg_western_church_sunlight_monastery',
+    filename: 'western_church_sunlight_monastery.webp',
+    category: 'scene_backgrounds',
+    priority: 1,
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_sunlight_monastery.webp`,
+  },
+  {
+    id: 'bg_western_church_light_rays',
+    filename: 'western_church_light_rays.webp',
+    category: 'scene_backgrounds',
+    priority: 1,
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_light_rays.webp`,
+  },
+  {
+    id: 'bg_western_church_corridor',
+    filename: 'western_church_corridor.webp',
+    category: 'scene_backgrounds',
+    priority: 1,
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_corridor.webp`,
+  },
+  // 东方禅意场景背景图
+  {
+    id: 'bg_zen_temple_lantern_gate',
+    filename: 'bg_temple_lantern_gate.webp',
+    category: 'scene_backgrounds/zen',
+    priority: 1,
+    remoteUrl: `${GITHUB_BASE_URL}/zen/bg_temple_lantern_gate.webp`,
+  },
+  {
+    id: 'bg_zen_temple_zen_lantern',
+    filename: 'bg_temple_zen_lantern.webp',
+    category: 'scene_backgrounds/zen',
+    priority: 1,
+    remoteUrl: `${GITHUB_BASE_URL}/zen/bg_temple_zen_lantern.webp`,
+  },
+  {
+    id: 'bg_zen_temple_roof',
+    filename: 'bg_temple_roof.webp',
+    category: 'scene_backgrounds/zen',
+    priority: 1,
+    remoteUrl: `${GITHUB_BASE_URL}/zen/bg_temple_roof.webp`,
+  },
+];
+
 /**
  * 按优先级排序的资源列表
  * 优先级 1 的资源排在前面，优先下载
  */
-export const SORTED_RESOURCES = [...NOISE_REDUCTION_RESOURCES].sort((a, b) => {
+export const SORTED_RESOURCES = [...NOISE_REDUCTION_RESOURCES, ...SCENE_BACKGROUND_RESOURCES].sort((a, b) => {
   if (a.priority !== b.priority) {
     return a.priority - b.priority;
   }

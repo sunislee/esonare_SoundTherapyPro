@@ -96,6 +96,9 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
   const [isRoaming, setIsRoaming] = useState(false);
   const [bgLoadTimeout, setBgLoadTimeout] = useState(false);
+  
+  // 【静默模式兜底】资源加载状态
+  const [resourceLoading, setResourceLoading] = useState<{ loading: boolean; message: string }>({ loading: false, message: '' });
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
   const bgScaleAnim = useRef(new Animated.Value(1.0)).current;
@@ -270,6 +273,32 @@ const ImmersivePlayerNew: React.FC = () => {
     });
     return () => {
       unsubscribeLoading();
+    };
+  }, []);
+
+  // 【静默模式兜底】监听资源加载状态
+  useEffect(() => {
+    const audioService = AudioService.getInstance();
+    
+    // 防御性检查：确保 AudioService 已准备好
+    if (!audioService.isReady()) {
+      console.warn('[ImmersivePlayer] ⚠️ AudioService 未准备好，跳过资源加载监听器');
+      return;
+    }
+    
+    const unsubscribeResourceLoading = (audioService as any).addResourceLoadingListener?.(({ loading, message }: { loading: boolean; message: string }) => {
+      setResourceLoading({ loading, message });
+      
+      if (loading) {
+        console.log(`[ImmersivePlayer] 📢 显示提示: ${message}`);
+        // 可以在这里添加 Toast 或其他 UI 提示
+      } else {
+        console.log('[ImmersivePlayer] ✅ 资源已就绪');
+      }
+    });
+    
+    return () => {
+      unsubscribeResourceLoading?.();
     };
   }, []);
 
@@ -547,6 +576,36 @@ const ImmersivePlayerNew: React.FC = () => {
         onClose={closeSoundscapeSheet}
         onSelect={handleSelectSoundscape}
       />
+
+      {/* 【静默模式兜底】资源加载中提示 */}
+      {resourceLoading.loading && (
+        <View style={{
+          position: 'absolute',
+          bottom: 100,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+          zIndex: 9999,
+        }}>
+          <View style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            paddingHorizontal: 20,
+            paddingVertical: 12,
+            borderRadius: 25,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <ActivityIndicator size="small" color="#6C5DD3" />
+            <Text style={{
+              color: '#fff',
+              marginLeft: 10,
+              fontSize: 14,
+            }}>
+              {resourceLoading.message || '冥想资源加载中...'}
+            </Text>
+          </View>
+        </View>
+      )}
     </Animated.View>
   );
 };

@@ -132,6 +132,7 @@ export const OfflineService = {
    * 物理校验所有资源文件的完整性
    * 检查文件是否存在且大小匹配预期
    * 【关键修复】改为按文件名去重校验，支持多场景复用同一音频文件
+   * 【关键修复】只校验 AUDIO_MANIFEST 中的文件，不校验 ASSET_LIST 中的额外文件
    */
   async checkResourceIntegrity(): Promise<ResourceIntegrityResult> {
     const missingAssets: string[] = [];
@@ -143,13 +144,10 @@ export const OfflineService = {
     // 【资源复用】按文件名去重，避免同一文件被多次校验
     const checkedFiles: Set<string> = new Set();
 
-    for (const asset of ASSET_LIST) {
-      const audioAsset = AUDIO_MANIFEST.find(a => a.id === asset.id);
-      if (!audioAsset) continue;
+    for (const asset of AUDIO_MANIFEST) {
+      expectedSize += asset.size;
 
-      expectedSize += asset.expectedSize;
-
-      const localPath = getLocalPathHelper(audioAsset.category, audioAsset.filename);
+      const localPath = getLocalPathHelper(asset.category, asset.filename);
       
       // 【资源复用】如果该文件已经检查过，跳过
       if (checkedFiles.has(localPath)) {
@@ -171,13 +169,11 @@ export const OfflineService = {
         totalSize += actualSize;
         existingFileCount++;
 
-        // 文件大小偏差超过 1% 视为损坏
-        const sizeDiff = Math.abs(actualSize - asset.expectedSize);
-        const sizeDiffPercent = sizeDiff / asset.expectedSize;
-        
-        if (sizeDiffPercent > 0.01) {
+        // 【底层校验逻辑修改】只要文件存在且大小 > 0，就视为有效
+        // 不再严格比对硬编码大小，以实际下载大小为准
+        if (actualSize <= 0) {
           corruptedAssets.push(asset.id);
-          console.warn(`[OfflineService] 文件大小不匹配：${asset.id}, 实际：${actualSize}, 预期：${asset.expectedSize}`);
+          console.warn(`[OfflineService] 文件大小为 0：${asset.id}`);
         }
       } catch (e) {
         corruptedAssets.push(asset.id);
@@ -194,7 +190,7 @@ export const OfflineService = {
       totalSize,
       expectedSize,
       existingFileCount,
-      totalFileCount: ASSET_LIST.length
+      totalFileCount: AUDIO_MANIFEST.length
     };
   },
 
@@ -202,10 +198,9 @@ export const OfflineService = {
    * 校验单个资源文件
    */
   async validateAsset(assetId: string): Promise<boolean> {
-    const asset = ASSET_LIST.find(a => a.id === assetId);
     const audioAsset = AUDIO_MANIFEST.find(a => a.id === assetId);
     
-    if (!asset || !audioAsset) {
+    if (!audioAsset) {
       console.error(`[OfflineService] 未知资源：${assetId}`);
       return false;
     }
@@ -220,8 +215,9 @@ export const OfflineService = {
     try {
       const fileStat = await RNFS.stat(localPath);
       const actualSize = Number(fileStat.size);
-      const sizeDiff = Math.abs(actualSize - asset.expectedSize);
-      const sizeDiffPercent = sizeDiff / asset.expectedSize;
+      const expectedSize = audioAsset.size;
+      const sizeDiff = Math.abs(actualSize - expectedSize);
+      const sizeDiffPercent = expectedSize > 0 ? sizeDiff / expectedSize : 0;
       
       return sizeDiffPercent <= 0.01;
     } catch (e) {
@@ -231,86 +227,46 @@ export const OfflineService = {
 
   /**
    * 统一的资源就绪判断
-   * 【关键修复】分离 Core 资源就绪和完整资源就绪
-   * - Core 资源就绪：允许用户进入应用（起名/主页）
-   * - 完整资源就绪：所有资源下载完成
+   * 【铁律】所有音频必须 100% 下载完成，否则严禁进入主页
    */
   async isResourceReady(): Promise<boolean> {
     try {
-      // 1. 检查 AsyncStorage 标记
-      const readyFlag = await AsyncStorage.getItem(READY_KEY);
-      const isFlagSet = readyFlag === 'true';
-      console.log(`[OfflineService] AsyncStorage 标记：${readyFlag}`);
-
-      // 2. 物理校验
-      const integrity = await this.checkResourceIntegrity();
-      const isPhysicallyReady = integrity.isComplete;
-      console.log(`[OfflineService] 物理完整性：${isPhysicallyReady} (存在${integrity.existingFileCount}/${integrity.totalFileCount}文件)`);
-
-      // 3. 【关键修复】Core 资源检查：只要核心资源存在即可
-      const CORE_ASSET_IDS = [
-        'nature_deep_sea',      // 深海呼吸（启动场景）
-        'interactive_breath',   // 呼吸交互（核心交互）
-        'healing_zen_bowl',     // 颂钵冥想（启动音效）
-      ];
+      const checkedFiles: Set<string> = new Set();
       
-      let coreAssetsReady = true;
-      const coreCheckDetails: any[] = [];
-      for (const coreId of CORE_ASSET_IDS) {
-        const coreAsset = AUDIO_MANIFEST.find(a => a.id === coreId);
-        if (!coreAsset) {
-          coreCheckDetails.push(`${coreId}: 未找到`);
-          coreAssetsReady = false; // 找不到 Core 资源定义，标记为不就绪
+      for (const audioAsset of AUDIO_MANIFEST) {
+        const localPath = getLocalPathHelper(audioAsset.category, audioAsset.filename);
+        
+        if (checkedFiles.has(localPath)) {
           continue;
         }
+        checkedFiles.add(localPath);
         
-        const localPath = getLocalPathHelper(coreAsset.category, coreAsset.filename);
         const exists = await RNFS.exists(localPath);
         
-        // 【暴力修复 3】核心校验降级：强制打印文件大小
-        let fileSize = 0;
-        if (exists) {
-          try {
-            const stat = await RNFS.stat(localPath);
-            fileSize = Number(stat.size);
-            console.log(`[OfflineService] 正在校验文件：${coreId}, 路径：${localPath}, 大小：${fileSize} bytes (${(fileSize/1024).toFixed(2)} KB)`);
-          } catch (e) {
-            console.error(`[OfflineService] 无法读取文件大小：${coreId}, ${e}`);
-            coreAssetsReady = false;
-            continue;
-          }
-        } else {
-          console.log(`[OfflineService] 正在校验文件：${coreId}, 路径：${localPath}, 大小：0 bytes (文件不存在)`);
+        if (!exists) {
+          console.warn(`[OfflineService] 资源缺失: ${audioAsset.id}，禁止进入主页`);
+          return false;
         }
         
-        coreCheckDetails.push(`${coreId}: ${exists ? '存在' : '不存在'} (${localPath}, ${fileSize} bytes)`);
-        
-        if (!exists) {
-          coreAssetsReady = false;
+        try {
+          const stat = await RNFS.stat(localPath);
+          const actualSize = Number(stat.size);
+          const expectedSize = audioAsset.size;
+          const sizeDiff = Math.abs(actualSize - expectedSize);
+          const sizeDiffPercent = expectedSize > 0 ? sizeDiff / expectedSize : 0;
+          
+          if (sizeDiffPercent > 0.01) {
+            console.warn(`[OfflineService] 资源大小不匹配: ${audioAsset.id} (实际:${actualSize}, 预期:${expectedSize})，禁止进入主页`);
+            return false;
+          }
+        } catch (e) {
+          console.error(`[OfflineService] 资源读取失败: ${audioAsset.id}`);
+          return false;
         }
       }
       
-      console.log(`[OfflineService] Core 资源检查详情：${coreCheckDetails.join(', ')}`);
-      console.log(`[OfflineService] Core 资源就绪：${coreAssetsReady}`);
-
-      // 4. 放宽条件：只要 Core 资源就绪就认为资源就绪（允许用户进入应用）
-      const isReady = coreAssetsReady;
-
-      console.log(`[OfflineService] 资源就绪检查：flag=${isFlagSet}, physical=${isPhysicallyReady}, core=${coreAssetsReady}, result=${isReady}`);
-
-      // 5. 如果 Core 资源就绪但标记未设置，设置标记
-      if (coreAssetsReady && !isFlagSet) {
-        console.log('[OfflineService] Core 资源就绪但标记未设置，设置标记');
-        await this.markAsReady();
-      }
-
-      // 6. 如果标记为就绪但 Core 资源不完整，清除标记
-      if (isFlagSet && !coreAssetsReady) {
-        console.warn('[OfflineService] 标记为就绪但 Core 资源不完整，清除标记');
-        await this.clearReadyFlag();
-      }
-
-      return isReady;
+      console.log('[OfflineService] 所有资源全部就绪，允许进入主页');
+      return true;
     } catch (e) {
       console.error('[OfflineService] 资源就绪检查失败:', e);
       return false;

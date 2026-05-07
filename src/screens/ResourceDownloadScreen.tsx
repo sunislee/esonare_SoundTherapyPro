@@ -60,63 +60,70 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   const skipClickTimer = useRef<NodeJS.Timeout | null>(null);
   
   /**
-   * 下载 32 个降噪音频资源
+   * 并发下载控制器（根据渠道限制线程数）
    */
-  const downloadNoiseReductionResources = async () => {
-    try {
-      console.log('[ResourceDownloadScreen]  开始下载降噪音频资源...');
-      const { NOISE_REDUCTION_RESOURCES } = await import('../config/ResourceConfig');
-      
-      const NOISE_REDUCTION_COUNT = NOISE_REDUCTION_RESOURCES.length;
-      let downloadedCount = 0;
-      
-      // 并发下载所有降噪音频
-      const downloadPromises = NOISE_REDUCTION_RESOURCES.map(async (resource) => {
-        try {
-          const localPath = `${RNFS.DocumentDirectoryPath}/${resource.category}/${resource.filename}`;
-          const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-          
-          // 确保目录存在
-          if (!(await RNFS.mkdir(dirPath))) {
-            await RNFS.mkdir(dirPath);
-          }
-          
-          // 检查文件是否已存在
-          if (await RNFS.exists(localPath)) {
-            console.log(`[ResourceDownloadScreen] ✅ ${resource.id} 已存在，跳过`);
-            downloadedCount++;
-            return;
-          }
-          
-          // 下载文件
-          console.log(`[ResourceDownloadScreen] 📥 开始下载：${resource.id}`);
-          
-          const result = await RNFS.downloadFile({
-            fromUrl: resource.remoteUrl,
-            toFile: localPath,
-          }).promise;
-          
-          if (result.statusCode === 200) {
-            downloadedCount++;
-            console.log(`[ResourceDownloadScreen] ✅ ${resource.id} 下载成功 (${downloadedCount}/${NOISE_REDUCTION_COUNT})`);
-          } else {
-            console.error(`[ResourceDownloadScreen] ❌ ${resource.id} 下载失败：HTTP ${result.statusCode}`);
-          }
-        } catch (error: any) {
-          console.error(`[ResourceDownloadScreen] ❌ ${resource.id} 下载异常:`, error.message || error);
+  const downloadWithConcurrency = async (
+    resources: Array<{id: string; filename: string; category: string; remoteUrl: string}>,
+    label: string,
+    maxConcurrent: number
+  ) => {
+    const COUNT = resources.length;
+    let downloadedCount = 0;
+    let index = 0;
+    
+    const downloadSingle = async (resource: typeof resources[0]) => {
+      try {
+        const localPath = `${RNFS.DocumentDirectoryPath}/${resource.category}/${resource.filename}`;
+        const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+        
+        // 确保目录存在
+        if (!(await RNFS.exists(dirPath))) {
+          await RNFS.mkdir(dirPath);
         }
-      });
-      
-      // 等待所有下载完成
-      await Promise.all(downloadPromises);
-      console.log(`[ResourceDownloadScreen] ✅ 降噪音频下载完成！成功：${downloadedCount}/${NOISE_REDUCTION_COUNT}`);
-      
-    } catch (error) {
-      console.error('[ResourceDownloadScreen] ❌ 降噪音频下载失败:', error);
-      throw error;
-    }
+        
+        // 检查文件是否已存在
+        if (await RNFS.exists(localPath)) {
+          console.log(`[ResourceDownloadScreen] ✅ ${label} ${resource.id} 已存在，跳过`);
+          downloadedCount++;
+          return;
+        }
+        
+        // 下载文件
+        console.log(`[ResourceDownloadScreen] 📥 开始下载 ${label}：${resource.id}`);
+        
+        const result = await RNFS.downloadFile({
+          fromUrl: resource.remoteUrl,
+          toFile: localPath,
+          connectionTimeout: IS_GOOGLE_PLAY_VERSION ? 60000 : 30000,
+          readTimeout: IS_GOOGLE_PLAY_VERSION ? 120000 : 60000,
+        }).promise;
+        
+        if (result.statusCode === 200) {
+          downloadedCount++;
+          console.log(`[ResourceDownloadScreen] ✅ ${label} ${resource.id} 下载成功 (${downloadedCount}/${COUNT})`);
+        } else {
+          console.error(`[ResourceDownloadScreen] ❌ ${label} ${resource.id} 下载失败：HTTP ${result.statusCode}`);
+        }
+      } catch (error: any) {
+        console.error(`[ResourceDownloadScreen] ❌ ${label} ${resource.id} 下载异常:`, error.message || error);
+      }
+    };
+    
+    // 并发队列控制器
+    const runNext = async () => {
+      if (index >= resources.length) return;
+      const resource = resources[index++];
+      await downloadSingle(resource);
+      await runNext();
+    };
+    
+    // 启动 maxConcurrent 个并发线程
+    const workers = Array.from({ length: Math.min(maxConcurrent, resources.length) }, () => runNext());
+    await Promise.all(workers);
+    
+    console.log(`[ResourceDownloadScreen] ✅ ${label} 下载完成！成功：${downloadedCount}/${COUNT}`);
   };
-  
+
   const handleSkipDownload = async () => {
     skipClickCount.current += 1;
     console.log(`[SkipDebug] 点击次数：${skipClickCount.current}/5`);
@@ -141,7 +148,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     }, 2000);
   };
 
-  // 【暴力修复】UI 进度完全跟随真实下载进度，不再"视觉谎言"
+  // 【修复】正常进度更新，不再强制跳转
   useEffect(() => {
     const currentProgress = downloadInfo.progress;
     setRealProgress(currentProgress);
@@ -154,20 +161,11 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       useNativeDriver: false,
     }).start();
     
-    // 标记真实下载完成
+    // 【修复】只有当 DownloadService 返回 success=true 且 progress=1.0 时才标记完成
     if (currentProgress >= 1.0) {
+      console.log('[ResourceDownloadScreen] ✅ 下载完成，等待物理校验...');
       setIsDownloadCompleted(true);
-      
-      // 【关键修复】先强制进度条到 100%，然后再标记 UI 完成
-      Animated.timing(animatedProgress, {
-        toValue: 1.0,
-        duration: 300,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }).start(() => {
-        // 动画完成后，再标记 UI 完成，触发"资源准备完成"显示
-        setIsUiCompleted(true);
-      });
+      setIsUiCompleted(true);
     }
   }, [downloadInfo.progress]);
 
@@ -206,38 +204,23 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
 
   // 定义 enterMainApp 函数在组件顶层
   const enterMainApp = async () => {
-    // 【暴力修复】强制检查所有文件完整下载后才允许进入！
-    console.log('[ResourceDownloadScreen] 进入主应用前进行完整物理校验...');
-    const fullIntegrity = await OfflineService.checkFullIntegrity();
+    console.log('[ResourceDownloadScreen] 🤫 静默模式：直接进入主应用...');
     
-    if (!fullIntegrity.isComplete) {
-      // 资源不完整，但允许用户进入应用（降级体验）
-      console.warn('[ResourceDownloadScreen] ⚠️ 资源不完整，但允许进入应用（降级体验）');
-      console.warn(`[ResourceDownloadScreen] 缺失文件：${fullIntegrity.missingFiles.length}个 - ${fullIntegrity.missingFiles.join(', ')}`);
-      console.warn(`[ResourceDownloadScreen] 损坏文件：${fullIntegrity.corruptedFiles.length}个 - ${fullIntegrity.corruptedFiles.join(', ')}`);
-      
-      // 不再显示 Alert 阻塞用户，直接放行
-      // Alert.alert(...) 已移除
-      
-      // 继续执行进入主应用
-    }
-    
-    console.log('[ResourceDownloadScreen] ✅ 开始初始化音频服务...');
-    
-    // 【关键修复】设置全局标志位，通知 App.tsx 下载已完成，可以触发播放
-    await AsyncStorage.setItem('resourcesDownloaded', 'true');
-    console.log('[ResourceDownloadScreen] ✅ 已设置 resourcesDownloaded 标志位');
-    
-    EngineControl.allow();
+    // 【静默模式】简化逻辑：直接进入，后台处理资源
     try {
-      // AudioService 已经在 App.tsx 中统一初始化，这里不需要重复调用
-      // await AudioService.setupPlayer();
+      await AsyncStorage.setItem('resourcesDownloaded', 'true');
+      
+      EngineControl.allow();
+      
+      // 直接导航到主界面
+      if (savedName) {
+        navigation.replace('MainTabs');
+      } else {
+        navigation.replace('NameEntry');
+      }
     } catch (e) {
-      console.error('[ResourceDownloadScreen] AudioService setup 失败，但继续进入应用:', e);
+      console.error('[ResourceDownloadScreen] enterMainApp error:', e);
     }
-    
-    // 无论资源是否完整，都允许进入 NameEntry 页面
-    navigation.replace('NameEntry');
   };
 
   useEffect(() => {
@@ -304,11 +287,6 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         if (isResourcesReady && savedName) {
           // IF (资源齐 && 有名字) -> 老用户进主页
           console.log('[ResourceDownloadScreen] ✅ 老用户：资源完整 + 有用户名 -> 跳转到 MainTabs');
-          console.log('[ResourceDownloadScreen] 🔄 后台触发降噪音频下载...');
-          // 后台静默触发降噪音频下载（不阻塞）
-          downloadNoiseReductionResources().catch(err => {
-            console.error('[ResourceDownloadScreen] ❌ 后台下载降噪音频失败:', err);
-          });
           navigation.replace('MainTabs');
           return; // ⚠️ 关键：立即返回，禁止继续执行
         }
@@ -316,75 +294,41 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         if (isResourcesReady && !savedName) {
           // IF (资源齐 && 没名字) -> 新用户去起名
           console.log('[ResourceDownloadScreen] ✅ 新用户：资源完整 + 无用户名 -> 跳转到 NameEntry');
-          console.log('[ResourceDownloadScreen] 🔄 后台触发降噪音频下载...');
-          // 后台静默触发降噪音频下载（不阻塞）
-          downloadNoiseReductionResources().catch(err => {
-            console.error('[ResourceDownloadScreen] ❌ 后台下载降噪音频失败:', err);
-          });
           navigation.replace('NameEntry');
           return; // ⚠️ 关键：立即返回，禁止继续执行
         }
         
-        // ELSE (只有资源不齐) -> 才允许执行下载
-        console.log('[ResourceDownloadScreen] ⚠️ 资源不完整，开始下载流程...');
+        // ELSE (只有资源不齐) -> 静默模式：先进入App，后台下载
+        console.log('[ResourceDownloadScreen] 🤫 资源不完整，启动静默后台下载...');
         
-        // 检查网络状态
-        console.log('[ResourceDownloadScreen] 调用 isOfflineMode()...');
-        const isOffline = await OfflineService.isOfflineMode();
-        console.log(`[ResourceDownloadScreen] isOfflineMode() 返回：${isOffline}`);
-        
-        if (isOffline) {
-          console.warn('[ResourceDownloadScreen] 检测到离线模式，无法下载资源');
-          await enterMainApp();
-          return;
-        }
-        
-        // 资源不存在，开始下载
-        console.log('[ResourceDownloadScreen] 开始下载资源...');
-        await DownloadService.checkAndDownload((info) => { 
-          setDownloadInfo(info);
-          
-          const p = Math.floor(info.progress * 100);
-          if (p >= 25 && p < 50 && !hapticFlags.current.p25) {
-            ReactNativeHapticFeedback.trigger('impactLight');
-            hapticFlags.current.p25 = true;
-          } else if (p >= 50 && p < 75 && !hapticFlags.current.p50) {
-            ReactNativeHapticFeedback.trigger('impactLight');
-            hapticFlags.current.p50 = true;
-          } else if (p >= 75 && p < 100 && !hapticFlags.current.p75) {
-            ReactNativeHapticFeedback.trigger('impactLight');
-            hapticFlags.current.p75 = true;
-          } else if (p >= 100 && !hapticFlags.current.p100) {
-            ReactNativeHapticFeedback.trigger('impactLight');
-            hapticFlags.current.p100 = true;
-          }
-        }); 
-
-        // 【关键】18 个核心资源下载完成后，进行完整性校验
-        const integrity = await OfflineService.checkResourceIntegrity();
-        if (integrity.isComplete) {
-          await OfflineService.markAsReady();
-          console.log('[ResourceDownloadScreen] 下载完成，资源完整性校验通过');
-          
-          // 【双轨制】后台静默触发 32 个降噪音频下载（不阻塞）
-          console.log('[ResourceDownloadScreen] 🔄 后台触发降噪音频下载...');
-          downloadNoiseReductionResources().catch(err => {
-            console.error('[ResourceDownloadScreen] ❌ 后台下载降噪音频失败:', err);
-          });
-          
-          // 设置完成状态，触发跳转
-          setIsDownloadCompleted(true);
-          setIsUiCompleted(true);
+        // 【静默模式】直接进入主界面，后台下载资源
+        if (savedName) {
+          console.log('[ResourceDownloadScreen] 🤫 有用户名 -> 直接进 MainTabs + 后台下载');
+          navigation.replace('MainTabs');
         } else {
-          console.warn('[ResourceDownloadScreen] 下载完成，但资源不完整:', {
-            missing: integrity.missingAssets,
-            corrupted: integrity.corruptedAssets
-          });
-          // 即使资源不完整，也允许进入主应用
-          setIsDownloadCompleted(true);
-          setIsUiCompleted(true);
+          console.log('[ResourceDownloadScreen] 🤫 无用户名 -> 先去起名 + 后台下载');
+          navigation.replace('NameEntry');
         }
-
+        
+        // 【关键】后台静默下载，不阻塞UI
+        setTimeout(async () => {
+          console.log('[ResourceDownloadScreen] 🤫 启动后台静默下载任务...');
+          try {
+            const result = await DownloadService.silentBackgroundDownload();
+            console.log(`[ResourceDownloadScreen] 🤫 后台下载完成: 成功=${result.success}, 失败=${result.failed}`);
+            
+            if (result.failed === 0) {
+              await OfflineService.markAsReady();
+              console.log('[ResourceDownloadScreen] ✅ 所有资源已静默下载完成');
+            } else {
+              console.warn(`[ResourceDownloadScreen] ⚠️ 仍有 ${result.failed} 个文件失败，将在下次启动时重试`);
+            }
+          } catch (err) {
+            console.error('[ResourceDownloadScreen] ❌ 后台静默下载异常:', err);
+          }
+        }, 1000);
+        
+        return; // 立即返回，不执行传统下载流程
       } catch (err) {
         console.error('[ResourceDownloadScreen] Download error:', err);
         console.error('[ResourceDownloadScreen] Error stack:', (err as Error).stack);
@@ -442,10 +386,10 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
                 : t('player.landing.loading')}
           </Text>
         
-        {/* 【关键优化】显示下载状态提示 */}
+        {/* 【视觉净化】只显示感性文案，不显示技术细节 */}
         {!isUiCompleted && !isResourceAlreadyExists && (
           <Text style={styles.statusHintText}>
-            {t('download.optimizing')}
+            正在为您开启疗愈之旅...
           </Text>
         )}
         
@@ -466,13 +410,12 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
               />
             </View>
             
-            {/* 【恢复百分比显示】 */}
+            {/* 【纯净显示】显示百分比和实时大小 */}
             <Text style={styles.percentText}>
               {formatPercent(realProgress)}%
             </Text>
-            
-            <Text style={styles.progressText}>
-              {isUiCompleted ? '✅ ' : ''}{formatMB(realProgress * GLOBAL_TOTAL_SIZE)} MB / {formatMB(GLOBAL_TOTAL_SIZE)} MB
+            <Text style={styles.sizeText}>
+              {formatMB(downloadInfo.receivedBytes)} MB / {formatMB(downloadInfo.totalBytes || 153.1 * 1024 * 1024)} MB
             </Text>
           </>
         )}
@@ -509,10 +452,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   statusHintText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 30,
     fontStyle: 'italic',
+    letterSpacing: 0.5,
   },
   progressBarContainer: {
     width: SCREEN_WIDTH * 0.7,
@@ -532,6 +476,11 @@ const styles = StyleSheet.create({
     color: '#6C5DD3',
     marginTop: 15,
     marginBottom: 10,
+  },
+  sizeText: {
+    fontSize: 16,
+    color: 'rgba(108, 93, 211, 0.7)',
+    marginBottom: 20,
   },
   progressText: {
     fontSize: 14,

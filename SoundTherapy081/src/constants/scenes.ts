@@ -1,8 +1,9 @@
 import { Platform, ImageSourcePropType, Image } from 'react-native';
-import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSION, GITEE_URL, GITHUB_URL } from './audioAssets';
+import * as RNFS from 'react-native-fs';
+import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSION, GITEE_URL, GITHUB_URL, getLocalPath as getLocalPathHelper } from './audioAssets';
 
-// 背景图 URL 根据渠道自动选择
-const BG_BASE_URL = IS_GOOGLE_PLAY_VERSION ? GITHUB_URL : GITEE_URL;
+// 本地背景图存储目录（与 audioAssets.ts 中的 LOCAL_RESOURCE_PATH 一致）
+const LOCAL_BG_BASE = `${RNFS.DocumentDirectoryPath}/audio_resources`;
 
 export type SceneCategory = 'Nature' | 'Healing' | 'Brainwave' | 'Life' | 'WesternChurch' | 'Oriental';
 
@@ -20,6 +21,7 @@ export class Scene {
   backgroundSource: any;
   category: SceneCategory;
   isBaseScene: boolean;
+  order: number;
 
   constructor(data: Partial<Scene>) {
     this.id = data.id || '';
@@ -35,6 +37,7 @@ export class Scene {
     this.backgroundSource = data.backgroundSource ?? null;
     this.category = data.category || 'Nature';
     this.isBaseScene = data.isBaseScene ?? true;
+    this.order = data.order ?? 999;
   }
 
   static fromJson(json: any): Scene {
@@ -140,62 +143,53 @@ export const SMALL_SCENE_IDS = [
   'interactive_white_noise',
 ];
 
-// 西方教会场景背景图远程 URL 映射
+// 西方教会场景背景图本地路径映射
 const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
-  western_church_gregorian: 'western_church_candlelight.webp',    // 西班牙圣咏 → 烛光
-  western_church_morning_bell: 'western_church_sunlight_monastery.webp', // 晨祷钟声 → 阳光修道院
-  western_church_holy_waves: 'western_church_light_rays.webp',    // 神圣光流 → 光线
-  western_church_forest_echo: 'western_church_corridor.webp',     // 石廊回响 → 走廊
-  western_church_urban_chant: 'western_church_candlelight.webp',  // 烛光禅定 → 烛光
+  western_church_morning_bell: 'western_church_candlelight.webp',
+  western_church_gregorian: 'western_church_corridor.webp',
+  western_church_holy_waves: 'western_church_light_rays.webp',
+  western_church_urban_chant: 'western_church_sunlight_monastery.webp',
+  western_church_forest_echo: 'western_church_candlelight.webp',
 };
 
-// 东方禅意场景背景图远程 URL 映射
+// 东方禅意场景背景图本地路径映射（只包含文件名，不包含 zen/ 前缀）
 const ORIENTAL_BG_MAP: Record<string, string> = {
-  oriental_zen_monastery: 'zen/bg_temple_lantern_gate.webp',
-  oriental_tibetan_bowl: 'zen/bg_temple_zen_lantern.webp',
-  oriental_morning_buddha: 'zen/bg_temple_roof.webp',
+  oriental_zen_monastery: 'bg_temple_lantern_gate.webp',
+  oriental_tibetan_bowl: 'bg_temple_zen_lantern.webp',
+  oriental_morning_buddha: 'bg_temple_roof.webp',
 };
 
-// 新增自然场景背景图远程 URL 映射
-const NEW_NATURE_BG_MAP: Record<string, string> = {
-  nature_moonlight: 'base/moonlight.webp',
-  nature_offroad_avenue: 'base/offroad_avenue.webp',
-  nature_star_glass: 'base/star_glass.webp',
-};
-
-// 新增自然场景本地 fallback 背景图
+// 新增自然场景背景图本地 fallback 背景图
 const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
-  nature_moonlight: require('../assets/images/categories/category_nature.webp'),
-  nature_offroad_avenue: require('../assets/images/categories/category_nature.webp'),
-  nature_star_glass: require('../assets/images/categories/category_nature.webp'),
+  manual_morning_forest: require('../assets/scenes/morning_forest.webp'),
+  manual_serene_lakeside: require('../assets/scenes/serene_lakeside.webp'),
+  manual_starlit_wilderness: require('../assets/scenes/starlit_wilderness.webp'),
 };
 
 /**
  * 获取场景的背景资源
- * 西方教会和东方禅意场景使用远程 URL，其他场景使用本地 require
+ * 优先使用本地缓存，不存在时使用远程 URL
  */
 const getSceneBackground = (sceneId: string, category: SceneCategory) => {
-  // 西方教会场景：使用远程 URL
-  if (sceneId.startsWith('western_church_')) {
-    const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
-    if (bgFilename) {
-      return {
-        uri: `${BG_BASE_URL}${bgFilename}`,
-      };
-    }
-  }
-  
-  // 东方禅意场景：使用远程 URL
+  // 东方禅意场景
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
     if (bgFilename) {
-      return {
-        uri: `${BG_BASE_URL}${bgFilename}`,
-      };
+      const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
+      return { uri: localPath.startsWith('file://') ? localPath : `file://${localPath}` };
     }
   }
   
-  // 新增自然场景：使用本地 fallback（远程 .webp 待上传）
+  // 西方教会场景（背景图在根目录，无子目录）
+  if (sceneId.startsWith('western_church_')) {
+    const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
+    if (bgFilename) {
+      const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
+      return { uri: localPath.startsWith('file://') ? localPath : `file://${localPath}` };
+    }
+  }
+  
+  // 新增自然场景：使用本地 fallback
   if (NEW_NATURE_BG_FALLBACK[sceneId]) {
     return NEW_NATURE_BG_FALLBACK[sceneId];
   }
@@ -205,7 +199,57 @@ const getSceneBackground = (sceneId: string, category: SceneCategory) => {
   return bg?.source || null;
 };
 
+// 场景顺序配置（严格按照配置表排列）
+const SCENE_ORDER: Record<string, number> = {
+  // Nature 自然场景 (order 1-10)
+  nature_ocean: 1,
+  nature_forest: 2,
+  nature_deep_sea: 3,
+  nature_misty_forest: 4,
+  nature_river: 5,
+  nature_night: 6,
+  manual_morning_forest: 7,
+  manual_serene_lakeside: 8,
+  manual_starlit_wilderness: 9,
+  
+  // Life 生活场景 (order 11-20)
+  life_rain_boat: 11,
+  life_bookstore: 12,
+  
+  // Healing 疗愈场景 (order 21-30)
+  healing_zen_bowl: 21,
+  healing_clean_space: 22,
+  healing_crystal: 23,
+  
+  // Brainwave 脑波场景 (order 31-40)
+  brainwave_alpha: 31,
+  brainwave_delta: 32,
+  
+  // Interactive 交互场景 (order 41-50)
+  interactive_white_noise: 41,
+  interactive_wind_chime: 42,
+  interactive_breath: 43,
+  interactive_apple: 44,
+  interactive_match: 45,
+  
+  // WesternChurch 西方教会 (order 51-60)
+  western_church_gregorian: 51,
+  western_church_morning_bell: 52,
+  western_church_holy_waves: 53,
+  western_church_forest_echo: 54,
+  western_church_urban_chant: 55,
+  
+  // Oriental 东方禅意 (order 61-70)
+  oriental_zen_monastery: 61,
+  oriental_tibetan_bowl: 62,
+  oriental_morning_buddha: 63,
+};
+
 export const SCENES: Scene[] = AUDIO_MANIFEST
+  .filter((item) => {
+    // 【关键过滤】排除 8 轨音频文件和背景图资源
+    return !item.id.startsWith('8track_') && !item.id.startsWith('bg_');
+  })
   .map((item) => {
     const category = getCategory(item.category);
     const bg = backgrounds[category];
@@ -215,8 +259,13 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
     const baseSceneIds = [
       'nature_ocean',
       'nature_forest',
+      'nature_deep_sea',
+      'nature_misty_forest',
       'nature_river',
       'nature_night',
+      'manual_morning_forest',
+      'manual_serene_lakeside',
+      'manual_starlit_wilderness',
       'life_rain_boat',
       'life_bookstore',
       'healing_zen_bowl',
@@ -224,9 +273,17 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       'healing_crystal',
       'brainwave_alpha',
       'brainwave_delta',
+      'western_church_gregorian',
+      'western_church_morning_bell',
+      'western_church_holy_waves',
+      'western_church_forest_echo',
+      'western_church_urban_chant',
+      'oriental_zen_monastery',
+      'oriental_tibetan_bowl',
+      'oriental_morning_buddha',
     ];
 
-    let isBase = true;
+    let isBase = false;
     
     if (SMALL_SCENE_IDS.includes(item.id)) {
       isBase = false;
@@ -237,19 +294,12 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       isBase = !item.filename.startsWith('fx/') && item.category !== 'interactive';
     }
 
-    // Bellcoda 新场景自定义主题色
-    const customColors: Record<string, string> = {
-      nature_moonlight: '#0A0F1E',   // 月光-深蓝
-      nature_star_glass: '#120B1A',  // 星璃-暗紫
-      nature_offroad: '#0E1A14',     // 旷野-墨绿
-    };
-
     const scene = new Scene({
       id: item.id,
       title: item.title,
       audioUrl: `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${item.filename}`,
       backgroundUrl: '',
-      primaryColor: customColors[item.id] || bg.color,
+      primaryColor: bg.color,
       audioSource: item.id,
       audioFile: null,
       filename: item.filename,
@@ -257,8 +307,11 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       backgroundSource: getSceneBackground(item.id, category),
       category: category,
       isBaseScene: isBase,
+      order: SCENE_ORDER[item.id] ?? 999,
     });
     return scene;
-  });
+  })
+  .sort((a, b) => a.order - b.order);
 
-console.log('大哥，背景图已焊死，双源逻辑已并存！');
+console.log('[scenes] 场景已按 order 强制排序，共', SCENES.length, '个场景');
+console.log('[scenes] 场景顺序:', SCENES.map(s => s.id).join(', '));
