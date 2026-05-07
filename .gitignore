@@ -31,8 +31,20 @@ local.properties
 *.iml
 *.hprof
 .cxx/
+
+# 【⚠️ 关键安全】签名证书文件 - 严禁提交到 Git！
+# 重新生成会导致已发布 App 无法更新！
 *.keystore
+*.jks
+*.p12
+*.pfx
 !debug.keystore
+
+# 【额外保护】明确忽略 android/app/ 下的 release 签名
+android/app/my-release-key.*
+android/app/release-key.*
+android/app/production.*
+
 .kotlin/
 
 # node.js
