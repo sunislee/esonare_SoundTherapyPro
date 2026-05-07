@@ -82,16 +82,12 @@ export const LandingScreen = ({ navigation }: any) => {
             hasSkipped: hasSkipped === 'true'
           });
           
-          if (!resourceReady) {
-            // 资源未就绪，强制跳转到下载页面
-            console.log('[LandingScreen] ❌ 资源未就绪，跳转到下载页面');
-            navigation.replace('Download');
-          } else if (hasUserInfo) {
-            // 用户已经设置过信息，直接进入主应用
-            console.log('[LandingScreen] ✅ 用户已设置信息，进入主应用');
+          // 【优化】移除强制下载等待，直接进入主应用
+          // 资源下载改为后台静默模式，在 HomeScreen 中按需加载
+          if (hasUserInfo) {
+            console.log('[LandingScreen] ✅ 用户已设置信息，进入主应用（后台静默下载）');
             navigation.replace('MainTabs');
           } else {
-            // 未设置用户信息，跳转到起名页
             console.log('[LandingScreen] ❌ 未设置用户信息，跳转到起名页');
             navigation.replace('NameEntry');
           }

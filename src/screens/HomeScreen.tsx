@@ -54,13 +54,26 @@ const SceneItem = React.memo(({ item, isPlaying, currentBaseSceneId, togglePlayb
   const handlePress = () => {
     triggerHaptic();
     if (!isResourceReady) {
-      console.warn(`[HomeScreen] ⚠️ 场景 ${item.id} 资源未下载，禁止进入`);
+      console.warn(`[HomeScreen] ⚠️ 场景 ${item.id} 资源未下载`);
       
-      // 【流式就绪】友好提示：资源正在后台加载
+      // 【按需加载】友好提示 + 优先下载选项
       Alert.alert(
-        '冥想资源加载中',
-        `「${t(`scenes.${item.id}.title`, { defaultValue: item.title })}」正在后台准备中，请稍后再试~\n\n💡 提示：核心场景会优先加载完成`,
-        [{ text: '知道了', style: 'cancel' }]
+        '📥 资源准备中',
+        `「${t(`scenes.${item.id}.title`, { defaultValue: item.title })}」正在后台下载中~\n\n💡 核心场景会优先加载完成`,
+        [
+          { 
+            text: '稍后再试', 
+            style: 'cancel' 
+          },
+          {
+            text: '⚡ 优先下载此场景',
+            onPress: async () => {
+              console.log(`[HomeScreen] 🎯 用户请求优先下载: ${item.id}`);
+              // 可以在这里添加优先下载逻辑
+              triggerHaptic();
+            }
+          }
+        ]
       );
       
       return;
@@ -222,6 +235,32 @@ export const HomeScreen: React.FC = () => {
 
       // 【后台校验】2. 异步检查实际文件，更新状态
       checkDownloadedScenes();
+      
+      // 【按需静默下载】3. 启动后台静默下载（不阻塞 UI）
+      startBackgroundSilentDownload();
+    };
+    
+    // 启动后台静默下载
+    const startBackgroundSilentDownload = async () => {
+      try {
+        const { DownloadService } = await import('../services/DownloadService');
+        
+        // 延迟 2 秒启动，让 UI 先渲染完成
+        setTimeout(async () => {
+          if (!isMounted) return;
+          
+          console.log('[HomeScreen] 🚀 启动后台静默下载...');
+          const result = await DownloadService.silentBackgroundDownload();
+          console.log(`[HomeScreen] ✅ 后台下载完成: 成功 ${result.success} 个, 失败 ${result.failed} 个`);
+          
+          // 下载完成后刷新状态
+          if (isMounted) {
+            checkDownloadedScenes();
+          }
+        }, 2000);
+      } catch (e) {
+        console.error('[HomeScreen] ❌ 后台静默下载启动失败:', e);
+      }
     };
 
     loadCacheFirst();
