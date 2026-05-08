@@ -42,17 +42,8 @@ const AppBootstrap = ({ navigation }: { navigation: NavigationType }) => {
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        const userName = await AsyncStorage.getItem('USER_NAME');
-        const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
-        const hasUserInfo = !!(userName && userName.trim().length > 0) || (hasSkipped === 'true');
-        
-        console.log('[AppBootstrap] 启动检查:', { hasUserInfo });
-        
-        if (hasUserInfo) {
-          navigation.replace('MainTabs');
-        } else {
-          navigation.replace('Landing');
-        }
+        console.log('[AppBootstrap] 启动中，进入品牌展示页...');
+        navigation.replace('Landing');
       } catch (e) {
         console.error('[AppBootstrap] 异常:', e);
         navigation.replace('Landing');

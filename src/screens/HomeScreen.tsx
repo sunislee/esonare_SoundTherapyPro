@@ -324,8 +324,8 @@ const SceneItem = React.memo(({
                 )}
               </View>
               
-              {/* 【进度条（仅插队时显示）】 */}
-              {isPriority && (
+              {/* 【进度条（仅下载中且未就绪时显示）】 */}
+              {!isResourceReady && isPriority && (
                 <View style={styles.cardProgressBar}>
                   <View style={styles.progressBarBg}>
                     <Animated.View 
