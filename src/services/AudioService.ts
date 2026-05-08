@@ -137,6 +137,20 @@ class AudioService {
   private roamCheckTimer: any = null;
   private isSwitchingScene = false; // 防止重复切换
   
+  // 【进度监听定时器 - 提前淡入淡出】
+  private progressMonitorTimer: any = null;
+  private hasTriggeredEarlyFade = false; // 防止重复触发提前切换
+  private _highProgressStartTime: number | null = null; // 超级兜底计时器
+  
+  // 【双实例预加载缓存】
+  private preloadedNextScene: Scene | null = null; // 预加载的下一个场景
+  private preloadedTrack: Track | null = null; // 预加载的Track对象
+  private isPreloaded = false; // 是否已完成预加载
+  private preloadTriggered = false; // 是否已触发预加载（80%时）
+  
+  // 【Cross-fade 淡入淡出锁】
+  private isFading = false; // 防止快速连续切换导致音量逻辑冲突
+  
   // 【防双响锁】
   private isAmbientPlaying = false;
   private ambientPlaybackLock = false;
@@ -273,13 +287,21 @@ class AudioService {
           console.log(`[AudioService] 🎲 [Ended] 漫游状态: isRoaming=${isRoaming}, currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
           
           if (isRoaming && this.currentBaseScene) {
-            console.log('[AudioService] 🎲✅ [Ended] 漫游模式激活！准备自动切换');
+            // 【关键】先强制确保 RepeatMode.Off
+            await TrackPlayer.setRepeatMode(RepeatMode.Off);
+            console.log('[AudioService] 🎲✅ [Ended] 漫游模式激活！RepeatMode已强制设为Off');
+            
             const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+            console.log(`[AudioService] 🎲 [Ended] getNextRoamScene 返回: ${nextScene?.id || 'null'}`);
             
             if (nextScene) {
-              console.log('[AudioService] 🚀 [Ended] 切换到:', nextScene.id);
+              console.log(`[AudioService] 🚀 [Ended] 准备切换: ${this.currentBaseScene.id} → ${nextScene.id}`);
+              this.isFading = false; // 强制释放锁！
               await this.switchSoundscape(nextScene);
               console.log('[AudioService] ✅ [Ended] 切换完成！');
+            } else {
+              console.warn('[AudioService] ⚠️ [Ended] 无可用下一个场景，停止漫游');
+              sceneRoamManager.stopRoaming();
             }
           }
         } catch (e) {
@@ -295,7 +317,7 @@ class AudioService {
     TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async (event) => {
       console.log('═══════════════════════════════════════');
       console.log('[AudioService] 🎵🎵🎵 播放队列结束事件触发！');
-      console.log('[AudioService] 🎵 当前场景:', this.currentBaseScene?.id);
+      console.log(`[AudioService] 🎵 当前场景: ${this.currentBaseScene?.id || 'null'}`);
       console.log('═══════════════════════════════════════');
       this.isActuallyPlaying = false;
       this.notifyListeners();
@@ -305,19 +327,24 @@ class AudioService {
         const { sceneRoamManager } = await import('./SceneRoamManager');
         const isRoaming = sceneRoamManager.getIsRoaming();
         
-        console.log(`[AudioService] 🎲 漫游状态: isRoaming=${isRoaming}, currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
+        console.log(`[AudioService] 🎲 [QueueEnded] 漫游状态: isRoaming=${isRoaming}, currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
         
         if (isRoaming && this.currentBaseScene) {
-          console.log('[AudioService] 🎲✅ 漫游模式激活！准备自动切换下一场景');
+          // 【关键】先强制确保 RepeatMode.Off
+          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          console.log('[AudioService] 🎲✅ [QueueEnded] 漫游模式激活！RepeatMode已强制设为Off');
+          
           const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
-          console.log('[AudioService] 🎲 getNextRoamScene 返回:', nextScene?.id || 'null');
+          console.log(`[AudioService] 🎲 [QueueEnded] getNextRoamScene 返回: ${nextScene?.id || 'null'}`);
           
           if (nextScene) {
-            console.log('[AudioService] 🚀 开始切换到:', nextScene.id);
+            console.log(`[AudioService] 🚀 [QueueEnded] 准备切换: ${this.currentBaseScene.id} → ${nextScene.id}`);
+            this.isFading = false; // 强制释放锁！
             await this.switchSoundscape(nextScene);
-            console.log('[AudioService] ✅ 切换完成！');
+            console.log('[AudioService] ✅ [QueueEnded] 切换完成！');
           } else {
-            console.warn('[AudioService] ⚠️ 没有可用的下一个漫游场景');
+            console.warn('[AudioService] ⚠️ [QueueEnded] 无可用下一个场景，停止漫游');
+            sceneRoamManager.stopRoaming();
           }
         } else {
           console.log('[AudioService] ℹ️ 非漫游模式或不满足条件，跳过自动切换');
@@ -514,11 +541,17 @@ class AudioService {
           const currentMode = await TrackPlayer.getRepeatMode();
           console.log(`[AudioService] 🛡️ [全局拦截] 验证 RepeatMode = ${currentMode} (必须为 0=Off)`);
           
-          // 启动轮询定时器
+          // 启动轮询定时器（兜底机制）
           this.startRoamPolling();
+          
+          // 【核心】启动进度监听定时器（主要机制 - 提前2秒触发）
+          this.startProgressMonitor();
         } else {
           // 停止轮询定时器
           this.stopRoamPolling();
+          
+          // 停止进度监听定时器
+          this.stopProgressMonitor();
         }
       } catch (e) {
         console.warn('[AudioService] 🛡️ [全局拦截] 检查失败:', e);
@@ -537,56 +570,128 @@ class AudioService {
       
       console.log('[AudioService] ⏱️ [轮询] 启动漫游检查定时器 (2秒间隔)');
       
+      let highProgressStartTime: number | null = null;
+      let lastPosition: number = 0;
+      let hasPlayedPastHalf: boolean = false;
+      
       this.roamCheckTimer = setInterval(async () => {
-        // 防止重复切换
-        if (this.isSwitchingScene) {
+        if (this.isSwitchingScene || this.isFading) {
           return;
         }
         
         try {
           const { sceneRoamManager } = await import('./SceneRoamManager');
           
-          // 检查是否还在漫游模式
           if (!sceneRoamManager.getIsRoaming()) {
-            console.log('[AudioService] ⏱️ [轮询] 漫游已停止，停止轮询');
             this.stopRoamPolling();
             return;
           }
           
-          // 获取当前播放状态
           const state = await TrackPlayer.getState();
-          console.log(`[AudioService] ⏱️ [轮询] 当前状态: ${state}, isActuallyPlaying: ${this.isActuallyPlaying}`);
           
-          // 【关键修复】只要检测到 Ended 状态就立即切换（不依赖 isActuallyPlaying）
           if (state === State.Ended || state === 'ended' || state === 'Ended') {
-            console.log('═══════════════════════════════════════');
-            console.log('[AudioService] ⏱️🎯🎯🎯 [轮询] 检测到播放结束状态！准备自动切换！');
-            console.log('═══════════════════════════════════════');
+            console.log('[AudioService] ⏱️ [轮询] 检测到播放结束状态，准备切换');
             
             if (this.currentBaseScene) {
-              this.isSwitchingScene = true;
-              this.isActuallyPlaying = false; // 强制更新状态
+              await this.executeRoamSwitch(sceneRoamManager);
+            }
+            return;
+          }
+          
+          const shouldCheckProgress = (state === State.Playing || state === State.Paused) 
+                                       && this.currentBaseScene;
+          
+          if (shouldCheckProgress) {
+            try {
+              const position = await TrackPlayer.getPosition();
+              const duration = await TrackPlayer.getDuration();
               
-              const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
-              console.log(`[AudioService] ⏱️ [轮询] 下一个场景: ${nextScene?.id || 'null'}`);
-              
-              if (nextScene) {
-                console.log(`[AudioService] ⏱️🚀 [轮询] 切换到: ${nextScene.id}`);
-                await this.switchSoundscape(nextScene);
-                console.log('[AudioService] ⏱️✅ [轮询] 切换完成！');
-              } else {
-                console.warn('[AudioService] ⏱️ [轮询] 没有可用场景，停止漫游');
-                sceneRoamManager.stopRoaming();
-                this.stopRoamPolling();
+              if (position > 0 && duration > 0) {
+                const progressPercent = (position / duration) * 100;
+                
+                if (hasPlayedPastHalf && lastPosition > 10) {
+                  const positionDrop = lastPosition - position;
+                  
+                  if (positionDrop > 10) {
+                    console.log(`[AudioService] ⏱️ [循环检测] position回退${positionDrop.toFixed(1)}s，触发切换`);
+                    
+                    lastPosition = position;
+                    hasPlayedPastHalf = false;
+                    
+                    await this.executeRoamSwitch(sceneRoamManager);
+                    return;
+                  }
+                }
+                
+                if (progressPercent >= 50) {
+                  hasPlayedPastHalf = true;
+                }
+                
+                lastPosition = position;
+                
+                if (progressPercent >= 98) {
+                  if (!highProgressStartTime) {
+                    highProgressStartTime = Date.now();
+                  } else if ((Date.now() - highProgressStartTime) > 5000) {
+                    console.log(`[AudioService] ⏱️ [强制切换] 进度${progressPercent.toFixed(1)}%持续5秒+`);
+                    
+                    highProgressStartTime = null;
+                    await this.executeRoamSwitch(sceneRoamManager);
+                    return;
+                  }
+                } else {
+                  highProgressStartTime = null;
+                }
+                
+                if (state === State.Paused && progressPercent >= 95) {
+                  console.log(`[AudioService] ⏱️ [超级兜底] paused + ${progressPercent.toFixed(1)}%，切换`);
+                  
+                  highProgressStartTime = null;
+                  await this.executeRoamSwitch(sceneRoamManager);
+                  return;
+                }
               }
-              
-              this.isSwitchingScene = false;
+            } catch (e) {
+              // 忽略获取进度失败
             }
           }
+          
         } catch (e) {
-          console.error('[AudioService] ⏱️❌ [轮询] 检查异常:', e);
+          // 忽略轮询异常
         }
       }, 2000); // 每2秒检查一次
+    }
+    
+    /**
+     * 执行漫游切换的统一方法
+     */
+    private async executeRoamSwitch(sceneRoamManager: any): Promise<void> {
+      if (!this.currentBaseScene) return;
+      
+      this.isSwitchingScene = true;
+      this.isFading = false;
+      this.isActuallyPlaying = false;
+      
+      const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+      
+      if (nextScene) {
+        console.log(`[AudioService] 🎲 [漫游切换] ${this.currentBaseScene.id} → ${nextScene.id}`);
+        
+        try {
+          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          
+          await this.switchSoundscape(nextScene);
+        } catch (e) {
+          console.error('[AudioService] [漫游切换] 失败:', e);
+        }
+      } else {
+        console.warn('[AudioService] [漫游切换] 没有可用场景，停止漫游');
+        sceneRoamManager.stopRoaming();
+        this.stopRoamPolling();
+      }
+      
+      this.isSwitchingScene = false;
+      this.isFading = false;
     }
     
     /**
@@ -599,6 +704,432 @@ class AudioService {
         this.roamCheckTimer = null;
       }
       this.isSwitchingScene = false;
+    }
+    
+    /**
+     * 【核心功能】启动进度监听 - 80%预加载 + 提前切换
+     * 在漫游模式下，实时监控播放进度
+     * - 80%时：预加载下一个场景到队列（后台静默）
+     * - 剩余2秒时：执行无缝切换（使用预加载数据）
+     */
+    private startProgressMonitor() {
+      if (this.progressMonitorTimer) {
+        console.log('[AudioService] 📊 [进度监听] 定时器已在运行');
+        return;
+      }
+      
+      console.log('[AudioService] 📊 [进度监听] 启动进度监听定时器 (500ms间隔)');
+      console.log('[AudioService] 📊 [进度监听] 策略：80%预加载 + 剩余2秒无缝切换');
+      
+      // 重置所有标志
+      this.hasTriggeredEarlyFade = false;
+      this.preloadTriggered = false;
+      this.isPreloaded = false;
+      this.preloadedNextScene = null;
+      this.preloadedTrack = null;
+      
+      // 【关键修复】记录启动时间，用于超时检测
+      const startTime = Date.now();
+      let lastProgressLog = 0;
+      
+      this.progressMonitorTimer = setInterval(async () => {
+        // ════════════════════════════════════════
+        // 【超时保护】如果运行超过60秒且没有成功切换，强制重置所有锁！
+        // ════════════════════════════════════════
+        const elapsedSeconds = (Date.now() - startTime) / 1000;
+        if (elapsedSeconds > 60 && (this.isFading || this.isSwitchingScene || this.hasTriggeredEarlyFade)) {
+          console.warn(`[AudioService] ⚠️📊 [进度-超时] 运行${elapsedSeconds.toFixed(0)}秒未切换，强制重置所有锁！`);
+          console.warn(`[AudioService] ⚠️📊 [进度-超时] 重置前: isFading=${this.isFading}, isSwitching=${this.isSwitchingScene}, hasTriggered=${this.hasTriggeredEarlyFade}`);
+          
+          // 强制重置所有锁
+          this.isFading = false;
+          this.isSwitchingScene = false;
+          this.hasTriggeredEarlyFade = false;
+          this.preloadTriggered = false;
+          this.isPreloaded = false;
+          
+          console.warn(`[AudioService] ✅📊 [进度-超时] 重置完成: isFading=${this.isFading}, isSwitching=${this.isSwitchingScene}`);
+        }
+        
+        // 防止重复切换或正在淡入淡出
+        if (this.isSwitchingScene || this.isFading || this.hasTriggeredEarlyFade) {
+          // 【诊断】打印为什么跳过
+          if (Math.random() < 0.1) { // 只打印10%避免刷屏
+            console.log(`[AudioService] 📊 [进度-跳过] isSwitching=${this.isSwitchingScene}, isFading=${this.isFading}, hasTriggered=${this.hasTriggeredEarlyFade}`);
+          }
+          return;
+        }
+        
+        try {
+          const { sceneRoamManager } = await import('./SceneRoamManager');
+          
+          // 检查是否还在漫游模式
+          if (!sceneRoamManager.getIsRoaming()) {
+            this.stopProgressMonitor();
+            return;
+          }
+          
+          // 检查是否有正在播放的场景
+          if (!this.currentBaseScene || !this.isActuallyPlaying) {
+            return;
+          }
+          
+          // 获取播放进度
+          const position = await TrackPlayer.getPosition();
+          const duration = await TrackPlayer.getDuration();
+          
+          // 验证数据有效性
+          if (!position || !duration || duration <= 0 || position < 0) {
+            return;
+          }
+          
+          // 计算播放进度百分比
+          const progressPercent = (position / duration) * 100;
+          const remainingTime = (duration - position) * 1000;
+          
+          __DEV__ && console.log(
+            `[AudioService] 📊 [进度] ${progressPercent.toFixed(1)}% | ${position.toFixed(1)}s/${duration.toFixed(1)}s | 剩余: ${(remainingTime/1000).toFixed(1)}s`
+          );
+          
+          // ══════════════════════════════════════════
+          // 【Phase 1】80% 时触发预加载！
+          // ══════════════════════════════════════════
+          if (!this.preloadTriggered && progressPercent >= 80 && progressPercent < 95) {
+            console.log('═══════════════════════════════════════════════');
+            console.log(`[AudioService] 🚀🚀🚀 [预加载] 播放进度达到 ${progressPercent.toFixed(1)}%！`);
+            console.log('[AudioService] 🚀🚀🚀 开始后台预加载下一个场景...');
+            console.log('═══════════════════════════════════════════════');
+            
+            this.preloadTriggered = true;
+            await this.preloadNextScene(sceneRoamManager);
+          }
+          
+          // ══════════════════════════════════════════
+          // 【Phase 2】剩余2秒时触发无缝切换！
+          // ══════════════════════════════════════════
+          const EARLY_TRIGGER_MS = 2000; // 提前2秒触发
+          
+          if (remainingTime <= EARLY_TRIGGER_MS && remainingTime > 0) {
+            console.log('═══════════════════════════════════════════════');
+            console.log(`[AudioService] 🎯🎯🎯 [无缝切换] 检测到即将结束！`);
+            console.log(`[AudioService] 🎯🎯🎯 剩余时间: ${(remainingTime/1000).toFixed(2)}s | 预加载状态: ${this.isPreloaded ? '✅就绪' : '⏳未完成'}`);
+            console.log('═══════════════════════════════════════════════');
+            
+            // 标记已触发，防止重复执行
+            this.hasTriggeredEarlyFade = true;
+            
+            // 执行无缝切换（使用预加载数据或即时加载）
+            await this.seamlessSwitch(sceneRoamManager);
+          }
+          
+          // 兜底：如果已经结束但没触发，也执行切换
+          const state = await TrackPlayer.getState();
+          if ((state === State.Ended || state === 'ended') && !this.hasTriggeredEarlyFade) {
+            console.log('[AudioService] 📊 [兜底-Ended] 播放已结束，强制切换');
+            this.hasTriggeredEarlyFade = true;
+            await this.seamlessSwitch(sceneRoamManager);
+          }
+          
+          // ════════════════════════════════════════
+          // 【超级兜底】超过98%持续3秒，强制切换！（防止某些音频不触发Ended）
+          // ════════════════════════════════════════
+          if (progressPercent >= 98 && !this.hasTriggeredEarlyFade) {
+            if (!this._highProgressStartTime) {
+              this._highProgressStartTime = Date.now();
+              console.log(`[AudioService] ⚠️📊 [超级兜底] 进度达到${progressPercent.toFixed(1)}%，开始计时...`);
+            } else if ((Date.now() - this._highProgressStartTime) > 3000) {
+              console.log('═══════════════════════════════════════════════');
+              console.log(`[AudioService] 🚨🚨🚨 [超级兜底] 进度${progressPercent.toFixed(1)}%已持续3秒+，强制切换！`);
+              console.log('(原因：播放器未正常触发Ended事件)');
+              console.log('═══════════════════════════════════════════════');
+              
+              this.hasTriggeredEarlyFade = true;
+              this._highProgressStartTime = null;
+              await this.seamlessSwitch(sceneRoamManager);
+            }
+          } else {
+            this._highProgressStartTime = null;
+          }
+          
+        } catch (error) {
+          // 忽略临时错误，不停止监听
+          __DEV__ && console.warn('[AudioService] 📊 [进度监听] 检查异常:', error);
+        }
+      }, 500); // 每500ms检查一次（足够精确）
+    }
+    
+    /**
+     * 停止进度监听定时器
+     */
+    private stopProgressMonitor() {
+      if (this.progressMonitorTimer) {
+        console.log('[AudioService] 📊 [进度监听] 停止进度监听定时器');
+        clearInterval(this.progressMonitorTimer);
+        this.progressMonitorTimer = null;
+      }
+      // 重置所有状态
+      this.hasTriggeredEarlyFade = false;
+      this.preloadTriggered = false;
+      this.isPreloaded = false;
+      this.preloadedNextScene = null;
+      this.preloadedTrack = null;
+    }
+    
+    /**
+     * 【双实例缓存】预加载下一个场景到队列（后台静默）
+     * 在播放到80%时调用，提前准备好下一个Track
+     */
+    private async preloadNextScene(sceneRoamManager: any): Promise<void> {
+      try {
+        if (!this.currentBaseScene) {
+          console.warn('[AudioService] ⚠️ [预加载] 无当前场景');
+          return;
+        }
+        
+        // 获取下一个随机场景
+        const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+        
+        if (!nextScene) {
+          console.warn('[AudioService] ⚠️ [预加载] 无可用下一个场景');
+          return;
+        }
+        
+        console.log(`[AudioService] 🔮 [预加载] 目标场景: ${nextScene.id}`);
+        
+        // 构建Track对象（复用playScene的逻辑）
+        const track = await this.buildTrackForScene(nextScene);
+        
+        if (!track) {
+          console.error('[AudioService] ❌ [预加载] 构建Track失败');
+          return;
+        }
+        
+        // 缓存预加载结果
+        this.preloadedNextScene = nextScene;
+        this.preloadedTrack = track;
+        this.isPreloaded = true;
+        
+        console.log('═══════════════════════════════════════════════');
+        console.log('[AudioService] ✅✅✅ [预加载] 完成！');
+        console.log(`[AudioService] ✅ 场景: ${nextScene.id} (${nextScene.title})`);
+        console.log(`[AudioService] ✅ URL: ${(track.url as string)?.substring(0, 50)}...`);
+        console.log('[AudioService] ✅ 状态：已缓存到内存，等待切换指令');
+        console.log('═══════════════════════════════════════════════');
+        
+      } catch (error) {
+        console.error('[AudioService] ❌ [预加载] 失败:', error);
+        this.isPreloaded = false;
+      }
+    }
+    
+    /**
+     * 构建场景的Track对象（从playScene提取）
+     */
+    private async buildTrackForScene(scene: Scene): Promise<Track | null> {
+      try {
+        const audioPath = getAudioFilePath(scene.id);
+        const fileExists = await RNFS.exists(audioPath);
+        
+        let url: string;
+        let title: string;
+        let artist: string;
+        
+        if (fileExists) {
+          url = `file://${audioPath}`;
+          title = scene.title;
+          artist = 'SoundTherapy Pro';
+        } else {
+          console.warn(`[AudioService] ⚠️ 音频文件不存在: ${audioPath}`);
+          return null;
+        }
+        
+        const i18n = await import('../i18n');
+        const t = i18n.default.t;
+        const translatedTitle = t(`scenes.${scene.id}.title`, { defaultValue: scene.title });
+        const translatedArtist = t('common.artist', { defaultValue: 'SoundTherapy Pro' });
+        
+        const track: Track = {
+          id: scene.id,
+          url: url,
+          title: translatedTitle,
+          artist: translatedArtist,
+          duration: scene.duration ?? 0,
+        };
+        
+        return track;
+        
+      } catch (error) {
+        console.error('[AudioService] ❌ buildTrackForScene 失败:', error);
+        return null;
+      }
+    }
+    
+    /**
+     * 【稳定版】无缝切换 - 使用预加载 + reset（稳定可靠）
+     * 核心策略：
+     * 1. 80%时预加载Track对象到内存（节省切换时的构建时间）
+     * 2. 切换时使用reset()清空播放器（100%稳定，无队列混乱风险）
+     * 3. 利用预加载数据加速reset后的恢复速度
+     */
+    private async seamlessSwitch(sceneRoamManager: any): Promise<void> {
+      if (this.isSwitchingScene || this.isFading) {
+        console.warn('[AudioService] ⚠️ [无缝切换] 正在切换中，跳过');
+        return;
+      }
+      
+      if (!this.currentBaseScene) {
+        console.warn('[AudioService] ⚠️ [无缝切换] 无当前场景');
+        return;
+      }
+      
+      this.isSwitchingScene = true;
+      
+      try {
+        // ═══════════════════════════════════════════════════
+        // 【决策点】使用预加载还是即时构建？
+        // ═══════════════════════════════════════════════════
+        
+        let nextScene: Scene;
+        let nextTrack: Track | null = null;
+        
+        if (this.isPreloaded && this.preloadedNextScene && this.preloadedTrack) {
+          // ✅ 使用预加载数据（最佳路径 - 已在80%时准备好）
+          console.log('[AudioService] 🚀 [无缝切换] 使用预加载数据！');
+          nextScene = this.preloadedNextScene;
+          nextTrack = this.preloadedTrack;
+          console.log(`[AudioService] 🚀 [无缝切换] 预加载场景: ${nextScene.id}`);
+        } else {
+          // ⏳ 即时构建（备用路径 - 如果80%预加载没来得及完成）
+          console.log('[AudioService] ⏳ [无缝切换] 预加载未完成，即时构建...');
+          nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+          
+          if (!nextScene) {
+            console.warn('[AudioService] ⚠️ [无缝切换] 无可用下一个场景，停止漫游');
+            sceneRoamManager.stopRoaming();
+            this.stopProgressMonitor();
+            this.stopRoamPolling();
+            return;
+          }
+          
+          // 即时构建Track（会比预加载慢一点，但仍然可用）
+          nextTrack = await this.buildTrackForScene(nextScene);
+          if (!nextTrack) {
+            throw new Error('构建Track失败');
+          }
+        }
+        
+        console.log(`[AudioService] 🎬✨ [无缝切换] 开始！${this.currentBaseScene.id} → ${nextScene.id}`);
+        console.log('[AudioService] 🎬✨ 策略：淡出(1.5s) → reset → 加载预缓存 → 淡入(1.5s)');
+        
+        // ═══════════════════════════════════════════════════
+        // 【Phase 1】淡出旧音频（1500ms）
+        // ═══════════════════════════════════════════════════
+        
+        console.log('[AudioService] 🔽 [Phase 1/3] 开始淡出旧音 (1500ms)...');
+        await this.fadeOutVolume(1500);
+        console.log('[AudioService] ✅ [Phase 1/3] 旧音淡出完成');
+        
+        // ═══════════════════════════════════════════════════
+        // 【Phase 2】reset + 使用预加载数据快速恢复
+        // ═══════════════════════════════════════════════════
+        
+        console.log('[AudioService] 🛑 [Phase 2/3] reset 播放器 + 加载新场景...');
+        
+        // 完全重置播放器（确保干净的状态）
+        await TrackPlayer.reset();
+        this.isActuallyPlaying = false;
+        
+        // 更新场景信息
+        this.currentBaseScene = nextScene;
+        this.notifyListeners();
+        
+        // 设置RepeatMode为Off（关键！防止循环播放）
+        await TrackPlayer.setRepeatMode(RepeatMode.Off);
+        
+        // 使用预构建好的Track直接添加（比playScene快，因为省去了构建时间）
+        console.log('[AudioService] 📥 [Phase 2/3] 使用预缓存Track加载...');
+        await TrackPlayer.add([nextTrack]);
+        
+        // seekTo(0.15) 跳过开头
+        await TrackPlayer.seekTo(0.15);
+        
+        // 设置volume=0（静音状态开始播放）
+        await TrackPlayer.setVolume(0);
+        
+        // 开始播放
+        await TrackPlayer.play();
+        console.log('[AudioService] ▶️ [Phase 2/3] 新音轨开始播放（静音）');
+        
+        // 初始化均衡器
+        await this.initEqualizerIfNeeded();
+        
+        // ═══════════════════════════════════════════════════
+        // 【Phase 3】淡入新音频（1500ms）- 平滑出现！
+        // ═══════════════════════════════════════════════════
+        
+        console.log('[AudioService] 🔼 [Phase 3/3] 淡入新音 (1500ms)...');
+        await this.fadeInVolume(1500);
+        console.log('[AudioService] ✅ [Phase 3/3] 新音淡入完成');
+        
+        // 更新最终状态
+        this.isActuallyPlaying = true;
+        
+        console.log('═══════════════════════════════════════════════');
+        console.log('[AudioService] ✅✅✅ [无缝切换] 完成！');
+        console.log(`[AudioService] ✅ 当前场景: ${nextScene.id}`);
+        console.log(`[AudioService] ✅ 上一个场景: ${this.currentBaseScene?.id === nextScene.id ? '相同（异常！）' : '不同（正确）'}`);
+        console.log('[AudioService] ✅ 切换时长: ~3秒 (淡出1.5s + reset+加载~0s + 淡入1.5s)');
+        console.log('═══════════════════════════════════════════════');
+        
+        // ═══════════════════════════════════════════════════
+        // 【关键修复】无缝切换完成后，重新启动进度监听！
+        // ═══════════════════════════════════════════════════
+        
+        try {
+          const { sceneRoamManager } = await import('./SceneRoamManager');
+          
+          if (sceneRoamManager.getIsRoaming()) {
+            console.log('[AudioService] 🔄 [无缝切换] 漫游仍在进行，重新启动进度监听...');
+            
+            // 先停止旧的（确保干净）
+            this.stopProgressMonitor();
+            
+            // 延迟一小段时间再启动（确保播放器状态稳定）
+            setTimeout(() => {
+              this.startProgressMonitor();
+              console.log('[AudioService] 🔄 [无缝切换] 进度监听已重启！');
+            }, 500);
+          }
+        } catch (e) {
+          console.warn('[AudioService] ⚠️ [无缝切换] 重启监听失败:', e);
+        }
+        
+      } catch (error) {
+        console.error('[AudioService] ❌ [无缝切换] 失败:', error);
+        
+        // 回滚机制：尝试恢复播放
+        this.isFading = false;
+        
+        if (this.currentBaseScene) {
+          try {
+            console.log('[AudioService] 🔄 [回滚] 尝试恢复当前场景...');
+            await this.playScene(this.currentBaseScene);
+            await this.fadeInVolume(1000);
+            console.log('[AudioService] ✅ [回滚] 恢复成功');
+          } catch (e) {
+            console.error('[AudioService] ❌ [回滚] 也失败了:', e);
+          }
+        }
+      } finally {
+        // 重置所有标志位（包括isFading锁！）
+        this.isSwitchingScene = false;
+        this.isFading = false;
+        this.hasTriggeredEarlyFade = false;
+        this.preloadTriggered = false;
+        this.isPreloaded = false;
+        this.preloadedNextScene = null;
+        this.preloadedTrack = null;
+      }
     }
     
     /**
@@ -627,6 +1158,8 @@ class AudioService {
   async playScene(scene: Scene, options?: { triggerLoading?: boolean; skipNotify?: boolean }) {
     if (!scene || !scene.filename) return;
 
+    console.log(`[AudioService] 🎬 [playScene] 开始！目标: ${scene.id}`);
+    
     // 【性能优化】取消播放状态锁，允许指令覆盖
     if (isProcessing) {
       // 不返回，继续执行新请求
@@ -636,6 +1169,20 @@ class AudioService {
     isProcessing = true;
     
     try {
+      // ══════════════════════════════════════════
+      // 【关键修复】在最开始就强制设置 RepeatMode.Off！
+      // 防止任何后续操作覆盖导致循环播放！
+      // ══════════════════════════════════════════
+      try {
+        const { sceneRoamManager } = await import('./SceneRoamManager');
+        if (sceneRoamManager.getIsRoaming()) {
+          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          console.log('[AudioService] 🛡️ [playScene] 漫游模式：强制 RepeatMode.Off！');
+        }
+      } catch (e) {
+        console.warn('[AudioService] ⚠️ [playScene] 设置RepeatMode失败:', e);
+      }
+      
       // 【RN 0.81 保护】初始化未完成前禁止播放
       if (!this._isReady) {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -1440,39 +1987,143 @@ class AudioService {
     this.volumeListeners.forEach(l => l(volume));
   }
 
+  /**
+   * 【Cross-fade】音量淡出：平滑降低至 0
+   * @param duration 淡出时长（毫秒），默认 2000ms (2秒)
+   */
+  private async fadeOutVolume(duration: number = 2000): Promise<void> {
+    if (!this._isReady || this.isFading) return;
+    
+    this.isFading = true;
+    console.log(`[AudioService] 🎵 [淡出] 开始，时长: ${duration}ms`);
+    
+    try {
+      const steps = 40; // 40步完成
+      const stepDuration = duration / steps; // 每步 50ms
+      
+      for (let i = steps; i >= 0; i--) {
+        const volume = (i / steps) * this.ambientVolume; // 从 ambientVolume 降到 0
+        await TrackPlayer.setVolume(volume);
+        
+        if (i > 0 && this.isFading) {
+          await new Promise(resolve => setTimeout(resolve, stepDuration));
+        }
+      }
+      
+      console.log('[AudioService] ✅ [淡出] 完成，volume=0');
+    } catch (error) {
+      console.error('[AudioService] ❌ [淡出] 异常:', error);
+    }
+  }
+
+  /**
+   * 【Cross-fade】音量淡入：从 0 平滑升高至用户预设音量
+   * @param duration 淡入时长（毫秒），默认 2000ms (2秒)
+   */
+  private async fadeInVolume(duration: number = 2000): Promise<void> {
+    if (!this._isReady) return;
+    
+    console.log(`[AudioService] 🎵 [淡入] 开始，时长: ${duration}ms, 目标音量: ${this.ambientVolume}`);
+    
+    try {
+      const steps = 40; // 40步完成
+      const stepDuration = duration / steps; // 每步 50ms
+      
+      for (let i = 1; i <= steps; i++) {
+        const volume = (i / steps) * this.ambientVolume; // 从 0 升到 ambientVolume
+        await TrackPlayer.setVolume(volume);
+        
+        if (i < steps && this.isFading) {
+          await new Promise(resolve => setTimeout(resolve, stepDuration));
+        }
+      }
+      
+      console.log('[AudioService] ✅ [淡入] 完成，volume=', this.ambientVolume);
+    } catch (error) {
+      console.error('[AudioService] ❌ [淡入] 异常:', error);
+    } finally {
+      this.isFading = false;
+      console.log('[AudioService] 🔓 [Cross-fade] 锁已释放');
+    }
+  }
+
   async switchSoundscape(scene: Scene): Promise<void> {
-    console.log('[AudioService] 🔄 switchSoundscape: 切换到新场景', scene.id);
+    console.log(`[AudioService] 🎬 [switchSoundscape] 被调用！目标场景: ${scene.id}, 当前场景: ${this.currentBaseScene?.id || 'null'}, isFading: ${this.isFading}`);
+    
+    // 【Cross-fade 防冲突】如果正在淡入淡出，直接返回
+    if (this.isFading) {
+      console.warn('[AudioService] ⚠️ [Cross-fade] 正在淡入淡出中，忽略本次切换请求 (isFading=true)');
+      return;
+    }
+    
+    console.log('[AudioService] 🎬 [Parallel Cross-fade] 开始场景切换:', scene.id);
     const prevScene = this.currentBaseScene;
     
     try {
-      await TrackPlayer.reset();
-    } catch (e) {
-      console.warn('[AudioService] reset 失败（可忽略）:', e);
-    }
-    this.isActuallyPlaying = false;
-    
-    this.currentBaseScene = scene;
-    this.notifyListeners();
-    
-    try {
+      // ════════════════════════════════════════════════════════
+      // 【Phase 1】并行执行：淡出旧音频 + 预加载新音频
+      // ════════════════════════════════════════════════════════
+      
+      // 【并行任务A】开始淡出旧音频（1500ms）
+      let fadeOutPromise: Promise<void> | null = null;
+      if (this.isActuallyPlaying && this._isReady) {
+        console.log('[AudioService] 🔽 [Phase 1] 启动旧音频淡出 (1500ms)...');
+        fadeOutPromise = this.fadeOutVolume(1500);
+      }
+      
+      // 【并行任务B】同时开始准备新音频（不等待淡出完成！）
+      console.log('[AudioService] 🔄 [Phase 1] 并行：准备新音频...');
+      
+      // 更新 RepeatMode（快速操作，不影响音量）
       const { sceneRoamManager } = await import('./SceneRoamManager');
       const isRoaming = sceneRoamManager.getIsRoaming();
       
       if (isRoaming) {
-        console.log('[AudioService] 🎲 漫游模式：关闭循环，启用自动切换');
         await TrackPlayer.setRepeatMode(RepeatMode.Off);
       } else {
-        console.log('[AudioService] 🎵 普通模式：开启单曲循环');
         await TrackPlayer.setRepeatMode(RepeatMode.Track);
       }
       
-      const currentRepeatMode = await TrackPlayer.getRepeatMode();
-      console.log(`[AudioService] ✅ 当前 RepeatMode: ${currentRepeatMode} (0=Off, 1=Track, 2=Queue)`);
+      // 等待淡出完成（如果有的话）
+      if (fadeOutPromise) {
+        await fadeOutPromise;
+        console.log('[AudioService] ✅ [Phase 1] 旧音频淡出完成');
+      }
       
+      // ════════════════════════════════════════════════════════
+      // 【Phase 2】停止旧音频 + 加载新音频（静音状态）
+      // ════════════════════════════════════════════════════════
+      
+      console.log('[AudioService] 🛑 [Phase 2] 停止旧音频 + 加载新音频...');
+      
+      try {
+        await TrackPlayer.reset();
+      } catch (e) {
+        console.warn('[AudioService] reset 失败（可忽略）:', e);
+      }
+      this.isActuallyPlaying = false;
+      
+      // 更新场景信息
+      this.currentBaseScene = scene;
+      this.notifyListeners();
+      
+      // 【关键】playScene 内部会以 volume=0 开始播放
+      console.log('[AudioService] 🎵 [Phase 2] 加载新音频 (volume=0)...');
       await this.playScene(scene);
+      
+      // ════════════════════════════════════════════════════════
+      // 【Phase 3】淡入新音频（1500ms）- 无缝衔接！
+      // ════════════════════════════════════════════════════════
+      
+      console.log('[AudioService] 🔼 [Phase 3] 淡入新音频 (1500ms)...');
+      await this.fadeInVolume(1500);
+      
+      console.log('[AudioService] ✅ [Parallel Cross-fade] 场景切换完成！(总时长~3s)');
+      
     } catch (error) {
-      console.error('[AudioService] switchSoundscape playScene 失败，回滚到上一个场景:', error);
+      console.error('[AudioService] ❌ [Cross-fade] 切换失败，回滚到上一个场景:', error);
       this.currentBaseScene = prevScene;
+      this.isFading = false; // 释放锁
       this.notifyListeners();
       throw error;
     }
