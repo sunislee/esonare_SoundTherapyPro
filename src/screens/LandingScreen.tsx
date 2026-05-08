@@ -26,19 +26,28 @@ export const LandingScreen = ({ navigation }: any) => {
       try {
         await initLanguage();
         
-        // 【关键】保存用户已进入过起名流程的标记
-        await AsyncStorage.setItem('HAS_SEEN_LANDING', 'true');
+        const userName = await AsyncStorage.getItem('USER_NAME');
+        const hasSkipped = await AsyncStorage.getItem('HAS_SET_NAME');
+        const hasUserInfo = !!(userName && userName.trim().length > 0) || (hasSkipped === 'true');
         
-        console.log('[LandingScreen] ✅ 品牌展示完成，进入主应用');
+        console.log('[LandingScreen] 用户信息检查:', { userName, hasSkipped, hasUserInfo });
+        
+        setTimeout(() => {
+          if (hasUserInfo) {
+            console.log('[LandingScreen] ✅ 已有用户信息，进入主应用');
+            navigation.replace('MainTabs');
+          } else {
+            console.log('[LandingScreen] ❌ 未设置用户名，跳转到起名页');
+            navigation.replace('NameEntry');
+          }
+        }, 1200);
         
       } catch (e) {
         console.error('[LandingScreen] 异常:', e);
+        setTimeout(() => {
+          navigation.replace('NameEntry');
+        }, 1200);
       }
-      
-      // 固定 1.2 秒后直接进入主界面
-      setTimeout(() => {
-        navigation.replace('MainTabs');
-      }, 1200);
     };
     
     enterApp();
