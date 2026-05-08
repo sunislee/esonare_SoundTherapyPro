@@ -5,6 +5,27 @@
 > RN 版本：0.81.5  
 
 ---
+## [2026-05-08] 版本 1.5.0：漫游模式与无缝切换优化 (v1.0-stable)
+
+### 核心工作
+- [音频] 实装 Shuffle 随机漫游模式，支持分类内自动切换场景
+- [音频] 实现音频淡入淡出（Cross-fade）效果，提升切换体验
+- [音频] 添加进度监控机制，提前2秒触发场景切换
+- [修复] 解决 Android 端 Shuffle 模式卡死问题（循环播放检测）
+- [优化] 清理调试日志，代码整洁化
+
+### 技术实现
+- **循环检测算法**：通过 position 回退检测（>10秒）识别循环播放
+- **三重保障机制**：Ended事件 + 进度98%超时 + paused状态兜底
+- **状态管理**：isFading锁防止重复切换，isSwitchingScene保证原子性
+- **跨平台兼容**：同时支持 Playing/Paused 状态检测
+
+### 已知待优化项
+- [ ] Optimization: Fine-tune audio cross-fade transition and further minimize latency in Android
+- [ ] 调整 fadeOut/fadeIn 时间参数以获得更平滑的过渡效果
+- [ ] 评估双实例预加载方案以进一步减少切换延迟
+
+---
 ## [2026-05-06] 版本 1.4.2：资源下载系统完整修复
 
 ### 核心工作
