@@ -43,21 +43,25 @@ const BUTTON_SIZE = 80;
 //   - null → 使用语义化占位块（磨砂色块 + Icon）
 const getThumbnailSource = (item: Scene, isResourceReady: boolean): any => {
   if (!item.backgroundSource) {
+    console.log(`[Thumbnail] ${item.id}: 无 backgroundSource → 占位块`);
     return null;
   }
-  
+
   const bgSource = item.backgroundSource;
-  
+
   // require() 格式的静态资源（数字类型）→ 直接使用
   if (typeof bgSource === 'number') {
+    console.log(`[Thumbnail] ${item.id}: 静态资源 (require) ✅`);
     return bgSource;
   }
-  
+
   // file:// 路径格式 → 仅当资源确认已下载时使用
   if (isResourceReady && bgSource?.uri && bgSource.uri.startsWith('file://')) {
+    console.log(`[Thumbnail] ${item.id}: 本地路径 ${bgSource.uri} (isResourceReady=${isResourceReady})`);
     return bgSource;
   }
-  
+
+  console.log(`[Thumbnail] ${item.id}: 条件不满足 (isResourceReady=${isResourceReady}, uri=${bgSource?.uri?.substring(0, 50)}...) → 占位块`);
   // 其他情况：返回 null，触发语义化占位块
   return null;
 };
@@ -104,6 +108,16 @@ const SceneItem = React.memo(({
   const [hasAnimated, setHasAnimated] = useState(false);
   const viewRef = useRef<View>(null);
   const { t } = useTranslation();
+
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (isResourceReady) {
+      setRefreshKey(k => k + 1);
+      setImageLoadFailed(false);
+    }
+  }, [isResourceReady]);
 
   // 【重构】使用全局进度状态（从 HomeScreen 传入）
   const downloadProgress = globalProgress?.progress || 0;
@@ -174,9 +188,10 @@ const SceneItem = React.memo(({
   const highlightOpacity = highlightAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.6] });
 
   return (
-    <View 
+    <View
       ref={viewRef}
       style={styles.cardWrapper}
+      key={`scene-${item.id}-${refreshKey}`}
       onLayout={() => {
         if (viewRef.current && scrollViewRef.current) {
           const scrollNode = findNodeHandle(scrollViewRef.current);
@@ -215,18 +230,30 @@ const SceneItem = React.memo(({
               {/* 【左侧缩略图 - 优雅语义化版】 */}
               {(() => {
                 const thumbSource = getThumbnailSource(item, isResourceReady);
-                
-                if (thumbSource) {
+
+                if (thumbSource && !imageLoadFailed) {
                   return (
                     <ImageBackground
                       source={thumbSource}
                       style={styles.thumbnail}
                       resizeMode="cover"
                       imageStyle={styles.thumbnailRadius}
+                      key={`thumb-${item.id}-${isResourceReady ? 'ready' : 'pending'}-${refreshKey}`}
+                      onError={(e) => {
+                        console.error(`[Thumbnail] ❌ ${item.id} 图片加载失败:`, e?.nativeEvent?.error);
+                        setImageLoadFailed(true);
+                      }}
+                      onLoad={() => {
+                        console.log(`[Thumbnail] ✅ ${item.id} 图片加载成功`);
+                      }}
                     />
                   );
                 }
-                
+
+                if (imageLoadFailed) {
+                  console.log(`[Thumbnail] ⚠️ ${item.id}: 图片加载失败，降级显示占位块`);
+                }
+
                 return (
                   <View style={[styles.thumbnailPlaceholder, { backgroundColor: getCategoryColor(item.category) }]}>
                     <Text style={styles.placeholderIcon}>{getCategoryIcon(item.category)}</Text>
@@ -235,37 +262,35 @@ const SceneItem = React.memo(({
               })()}
               
               {/* 【中间信息区】 */}
-              <View style={styles.cardText}>
-                <Text 
+              <View style={[styles.cardText, isResourceReady && styles.cardTextCentered]}>
+                <Text
                   style={[
-                    styles.cardTitle, 
+                    styles.cardTitle,
                     !isResourceReady && downloadStatus !== 'ready' && styles.cardTitleDownloading,
                     downloadStatus === 'ready' && styles.cardTitleReady
-                  ]} 
+                  ]}
                   numberOfLines={1}
                 >
                   {t(`scenes.${item.id}.title`, { defaultValue: item.title })}
                 </Text>
-                
-                {!isResourceReady && downloadStatus !== 'ready' && (
-                  <Text style={styles.cardStatusText} numberOfLines={1}>
-                    {isPriority 
-                      ? `${Math.round(downloadProgress)}% - Downloading`
-                      : showBoostButton
-                        ? 'Waiting in Queue'
-                        : `${downloadProgress}% - Queued`
-                    }
-                  </Text>
-                )}
-                
-                {downloadStatus === 'ready' && (
-                  <Text style={styles.cardReadyText} numberOfLines={1}>
-                    Ready to Play ✨
-                  </Text>
-                )}
-                
-                {isResourceReady && downloadStatus !== 'ready' && (
-                  <Text style={styles.cardSubtitle} numberOfLines={1}>{t(`categories.${item.category.toLowerCase()}`)}</Text>
+
+                {!isResourceReady && (
+                  <>
+                    {downloadStatus !== 'ready' ? (
+                      <Text style={styles.cardStatusText} numberOfLines={1}>
+                        {isPriority
+                          ? `${Math.round(downloadProgress)}% - Downloading`
+                          : showBoostButton
+                            ? 'Waiting in Queue'
+                            : `${downloadProgress}% - Queued`
+                        }
+                      </Text>
+                    ) : (
+                      <Text style={styles.cardReadyText} numberOfLines={1}>
+                        Ready to Play ✨
+                      </Text>
+                    )}
+                  </>
                 )}
               </View>
               
@@ -343,26 +368,56 @@ export const HomeScreen: React.FC = () => {
     
     const checkDownloadedScenes = async () => {
       const { getLocalPath, AUDIO_MANIFEST } = await import('../constants/audioAssets');
+      const { SCENES, getSceneBackground } = await import('../constants/scenes');
       const RNFS = await import('react-native-fs');
       const readyIds = new Set<string>();
-      
+
       for (const asset of AUDIO_MANIFEST) {
         const localPath = getLocalPath(asset.category, asset.filename);
         const cleanPath = localPath.replace('file://', '');
         const exists = await RNFS.exists(cleanPath);
-        
-        // 【关键修复】只检查文件是否存在，不检查大小
+
         if (exists) {
           readyIds.add(asset.id);
         }
       }
-      
+
+      const fullyReadyIds = new Set<string>();
+
+      for (const scene of SCENES) {
+        if (!scene.isBaseScene) continue;
+
+        const audioReady = readyIds.has(scene.id);
+        if (!audioReady) continue;
+
+        const bgSource = getSceneBackground(scene.id, scene.category);
+        if (!bgSource) {
+          fullyReadyIds.add(scene.id);
+          continue;
+        }
+
+        let bgReady = true;
+        if (bgSource.uri && bgSource.uri.startsWith('file://')) {
+          const bgCleanPath = bgSource.uri.replace('file://', '');
+          bgReady = await RNFS.exists(bgCleanPath);
+
+          if (!bgReady) {
+            console.log(`[HomeScreen] ⚠️ ${scene.id}: 音频✅ 但背景图缺失 (${bgCleanPath})`);
+          }
+        }
+
+        if (bgReady) {
+          fullyReadyIds.add(scene.id);
+          console.log(`[HomeScreen] ✅ ${scene.id}: 音频+背景图都已就绪`);
+        }
+      }
+
       if (isMounted) {
-        setDownloadedSceneIds(readyIds);
-        
+        setDownloadedSceneIds(fullyReadyIds);
+
         try {
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...readyIds]));
-          console.log(`[HomeScreen] ✅ 缓存已更新: ${readyIds.size} 个场景`);
+          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...fullyReadyIds]));
+          console.log(`[HomeScreen] ✅ 缓存已更新: ${fullyReadyIds.size} 个完全就绪的场景`);
         } catch (e) {
           console.warn('[HomeScreen] ⚠️ 缓存保存失败:', e);
         }
@@ -390,13 +445,33 @@ export const HomeScreen: React.FC = () => {
     };
     
     loadCacheFirst();
-    
+
+    // 【事件驱动】监听单个文件下载完成，立即刷新缩略图
+    import('../services/DownloadService').then(({ DownloadService }) => {
+      if (!isMounted) return;
+
+      DownloadService.setFileDownloadedCallback((assetId: string) => {
+        console.log(`[HomeScreen] 🎉 收到文件下载完成事件: ${assetId}`);
+
+        // 延迟 500ms 确保文件完全落盘后再检查
+        setTimeout(() => {
+          if (isMounted) {
+            checkDownloadedScenes();
+          }
+        }, 500);
+      });
+    });
+
     // 定期刷新（降低频率到 10 秒，减少 IO）
     const interval = setInterval(checkDownloadedScenes, 10000);
-    
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+
+      import('../services/DownloadService').then(({ DownloadService }) => {
+        DownloadService.setFileDownloadedCallback(null);
+      }).catch(() => {});
     };
   }, []);
 
@@ -570,6 +645,7 @@ const styles = StyleSheet.create({
 
   // 【中间信息】
   cardText: { flex: 1, marginRight: 10 },
+  cardTextCentered: { justifyContent: 'center' },
   cardTitle: { fontSize: 18, color: '#fff', fontWeight: '700', letterSpacing: 0.3 },
   cardTitleDownloading: { color: 'rgba(255,255,255,0.4)' },
   cardSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 3 },

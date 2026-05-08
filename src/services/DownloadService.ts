@@ -24,6 +24,7 @@ const MAX_CONCURRENT_TASKS = 6;
 let boostPrioritySceneId: string | null = null;
 let onProgressCallback: ((sceneId: string, progress: number) => void) | null = null;
 let onCompleteCallback: ((sceneId: string) => void) | null = null;
+let onFileDownloadedCallback: ((assetId: string) => void) | null = null;
 
 export interface DownloadProgress {
   progress: number;
@@ -422,6 +423,11 @@ export const DownloadService = {
                     status.status = 'success';
                     status.maxConfirmedBytes = Number(finalStat.size);
                     console.log(`[App-Download] ✅ 完成: ${asset.filename} (实际大小: ${finalStat.size} bytes)`);
+
+                    if (onFileDownloadedCallback) {
+                      onFileDownloadedCallback(asset.id);
+                    }
+
                     return true;
                   }
                 }
@@ -575,6 +581,10 @@ export const DownloadService = {
 
   setCompleteCallback(callback: (sceneId: string) => void) {
     onCompleteCallback = callback;
+  },
+
+  setFileDownloadedCallback(callback: (assetId: string) => void) {
+    onFileDownloadedCallback = callback;
   },
 
   clearBoost() {

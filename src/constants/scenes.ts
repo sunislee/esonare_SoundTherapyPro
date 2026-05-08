@@ -170,7 +170,7 @@ const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
  * 获取场景的背景资源
  * 优先使用本地缓存，不存在时使用远程 URL
  */
-const getSceneBackground = (sceneId: string, category: SceneCategory) => {
+export const getSceneBackground = (sceneId: string, category: SceneCategory) => {
   // 东方禅意场景
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
