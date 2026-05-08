@@ -103,6 +103,12 @@ const ImmersivePlayerNew: React.FC = () => {
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
   const bgScaleAnim = useRef(new Animated.Value(1.0)).current;
   const sceneCrossFadeAnim = useRef(new Animated.Value(1)).current;
+  
+  // 【双层背景交叉淡入淡出】
+  const prevBgOpacityAnim = useRef(new Animated.Value(1)).current;  // 旧图: 1 → 0
+  const nextBgOpacityAnim = useRef(new Animated.Value(0)).current;  // 新图: 0 → 1
+  const [prevSceneId, setPrevSceneId] = useState<string | null>(null);  // 保存上一个场景ID
+  
   const pendingSceneIdRef = useRef<string | null>(null);
   const bgTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -138,16 +144,62 @@ const ImmersivePlayerNew: React.FC = () => {
     if (!effectiveSceneId) return null;
     return SCENES.find(s => s.id === effectiveSceneId) || null;
   }, [effectiveSceneId]);
+  
+  // 【双层背景】获取前一个场景
+  const prevScene = useMemo(() => {
+    if (!prevSceneId) return null;
+    return SCENES.find(s => s.id === prevSceneId) || null;
+  }, [prevSceneId]);
+  
   const titleScene = targetScene;
 
+  // 【关键修复】双层背景交叉淡入淡出 - 防止黑色闪屏
   useEffect(() => {
-    sceneCrossFadeAnim.setValue(0);
-    Animated.timing(sceneCrossFadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
+    if (!effectiveSceneId || !prevSceneId) {
+      // 首次加载或无前一个场景，直接显示
+      nextBgOpacityAnim.setValue(1);
+      prevBgOpacityAnim.setValue(0);
+      return;
+    }
+    
+    console.log(`[ImmersivePlayer] 🎬 交叉淡入淡出: ${prevSceneId} → ${effectiveSceneId}`);
+    
+    // 重置动画状态：旧图保持可见，新图准备渐入
+    prevBgOpacityAnim.setValue(1);   // 旧图: 保持完全可见
+    nextBgOpacityAnim.setValue(0);   // 新图: 初始透明
+    
+    // 启动交叉淡入淡出动画
+    Animated.parallel([
+      // 旧图: 淡出 (1 → 0)
+      Animated.timing(prevBgOpacityAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      // 新图: 淡入 (0 → 1)
+      Animated.timing(nextBgOpacityAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // 动画完成后，更新 prevSceneId 为当前场景
+      setPrevSceneId(effectiveSceneId);
+      console.log('[ImmersivePlayer] ✅ 交叉淡入淡出完成');
+    });
+    
+    // 内容层也使用平滑过渡（不再 setValue(0)）
+    sceneCrossFadeAnim.setValue(1);  // 保持内容始终可见
   }, [effectiveSceneId]);
+
+  // 初始化时设置 prevSceneId
+  useEffect(() => {
+    if (effectiveSceneId && !prevSceneId) {
+      setPrevSceneId(effectiveSceneId);
+      nextBgOpacityAnim.setValue(1);
+      prevBgOpacityAnim.setValue(0);
+    }
+  }, [effectiveSceneId, prevSceneId]);
 
   // 条件分支返回逻辑
   const handleBackPress = () => {
@@ -490,9 +542,39 @@ const ImmersivePlayerNew: React.FC = () => {
     if (!scene) return <View key={`empty-${index}`} style={styles.page} />;
 
     return (
-      <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
-        {/* 背景图：crossFade 过渡，3秒超时显示占位图 */}
-        <Animated.View style={[styles.backgroundImage, { opacity: sceneCrossFadeAnim }]}>
+      <View key={scene.id} style={[styles.page, { backgroundColor: '#000' }]}>
+        {/* 【双层背景】旧背景图 - 淡出 (1 → 0) */}
+        {prevScene && prevScene.id !== scene.id && (
+          <Animated.View 
+            style={[
+              styles.backgroundImage, 
+              { opacity: prevBgOpacityAnim, zIndex: 0 }
+            ]}
+            pointerEvents="none"
+          >
+            {prevScene.backgroundSource ? (
+              <Animated.Image
+                source={prevScene.backgroundSource}
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  { transform: [{ scale: bgScaleAnim }] }
+                ]}
+                fadeDuration={0}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: placeholderColor }]} />
+            )}
+          </Animated.View>
+        )}
+        
+        {/* 【双层背景】新背景图 - 淡入 (0 → 1) */}
+        <Animated.View 
+          style={[
+            styles.backgroundImage, 
+            { opacity: nextBgOpacityAnim, zIndex: 1 }
+          ]}
+        >
           {scene.backgroundSource && !bgLoadTimeout ? (
             <Animated.Image
               source={scene.backgroundSource}
