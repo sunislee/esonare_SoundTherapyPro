@@ -102,6 +102,7 @@ const ImmersivePlayerNew: React.FC = () => {
   const bgFadeAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
   const bgScaleAnim = useRef(new Animated.Value(1.0)).current;
+  const sceneCrossFadeAnim = useRef(new Animated.Value(1)).current;
   const pendingSceneIdRef = useRef<string | null>(null);
   const bgTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -119,17 +120,34 @@ const ImmersivePlayerNew: React.FC = () => {
     ReactNativeHapticFeedback.trigger('impactLight', options);
   };
 
-  // DO NOT TOUCH: Stable logic for scene switching - 获取目标场景
-  // 【关键修复】优先使用 route params，确保每次点击都触发场景切换
   const routeSceneId = route.params?.sceneId;
-  const targetSceneId = routeSceneId || currentBaseSceneId || SCENES[0].id;
-  const targetScene = useMemo(() => 
-    SCENES.find(s => s.id === targetSceneId) || SCENES[0]
-  , [targetSceneId]);
-  const titleSceneId = currentBaseSceneId || targetScene.id;
-  const titleScene = useMemo(() => 
-    SCENES.find(s => s.id === titleSceneId) || targetScene
-  , [titleSceneId, targetScene]);
+  const [displaySceneId, setDisplaySceneId] = useState<string | null>(null);
+  const prevValidSceneRef = useRef<string | null>(null);
+  
+  useEffect(() => {
+    const newId = currentBaseSceneId || routeSceneId || null;
+    if (newId && newId !== displaySceneId) {
+      console.log(`[ImmersivePlayer] 🎬 场景切换: ${displaySceneId} → ${newId}`);
+      prevValidSceneRef.current = newId;
+      setDisplaySceneId(newId);
+    }
+  }, [currentBaseSceneId, routeSceneId]);
+
+  const effectiveSceneId = displaySceneId || currentBaseSceneId || routeSceneId || prevValidSceneRef.current;
+  const targetScene = useMemo(() => {
+    if (!effectiveSceneId) return null;
+    return SCENES.find(s => s.id === effectiveSceneId) || null;
+  }, [effectiveSceneId]);
+  const titleScene = targetScene;
+
+  useEffect(() => {
+    sceneCrossFadeAnim.setValue(0);
+    Animated.timing(sceneCrossFadeAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, [effectiveSceneId]);
 
   // 条件分支返回逻辑
   const handleBackPress = () => {
@@ -159,15 +177,16 @@ const ImmersivePlayerNew: React.FC = () => {
 
   // DO NOT TOUCH: Stable logic for scene switching - 背景颜色计算
   const placeholderColor = useMemo(() => {
+    if (!targetScene) return '#121212';
     if (targetScene.id.includes('ocean') || targetScene.id.includes('deep_sea')) return '#001a33';
     if (targetScene.id.includes('forest')) return '#1a2e1a';
     return '#121212';
-  }, [targetScene.id]);
+  }, [targetScene?.id]);
 
   // 背景图呼吸感缩放动画 - 使用可配置参数
   useEffect(() => {
-    const config = getBreathingConfig(targetScene.id);
-    console.log('[BreathingAnim] Starting for scene:', targetScene.id, 
+    const config = getBreathingConfig(targetScene?.id || '');
+    console.log('[BreathingAnim] Starting for scene:', targetScene?.id, 
       '| Duration:', config.duration, 'ms | MaxScale:', config.maxScale);
     
     // 重置动画状态
@@ -198,11 +217,11 @@ const ImmersivePlayerNew: React.FC = () => {
     });
     
     return () => {
-      console.log('[BreathingAnim] Stopping for scene:', targetScene.id);
+      console.log('[BreathingAnim] Stopping for scene:', targetScene?.id);
       breathingLoop.stop();
       bgScaleAnim.removeListener(listenerId);
     };
-  }, [targetScene.id]);  // 场景切换时重新触发动画
+  }, [targetScene?.id]);  // 场景切换时重新触发动画
 
   // DO NOT TOUCH: Stable logic for scene switching - 路由参数变化时重新初始化播放器
   useEffect(() => {
@@ -216,7 +235,12 @@ const ImmersivePlayerNew: React.FC = () => {
         console.warn('[ImmersivePlayer] ⚠️ AudioService 未准备好，延迟重试');
         const retryTimer = setTimeout(() => {
           if (audioService.isReady()) {
-            audioService.switchSoundscape(SCENES.find(s => s.id === sceneIdFromRoute) || SCENES[0]);
+            const targetScene = SCENES.find(s => s.id === sceneIdFromRoute);
+            if (targetScene) {
+              audioService.switchSoundscape(targetScene);
+            } else {
+              console.error('[ImmersivePlayer] ❌ 找不到场景:', sceneIdFromRoute);
+            }
           } else {
             console.error('[ImmersivePlayer] ❌ AudioService 初始化超时，跳过场景切换');
           }
@@ -224,7 +248,12 @@ const ImmersivePlayerNew: React.FC = () => {
         return () => clearTimeout(retryTimer);
       }
       
-      audioService.switchSoundscape(SCENES.find(s => s.id === sceneIdFromRoute) || SCENES[0]);
+      const targetScene = SCENES.find(s => s.id === sceneIdFromRoute);
+      if (targetScene) {
+        audioService.switchSoundscape(targetScene);
+      } else {
+        console.error('[ImmersivePlayer] ❌ 找不到场景:', sceneIdFromRoute);
+      }
     }
   }, [route.params?.sceneId]);
 
@@ -307,7 +336,7 @@ const ImmersivePlayerNew: React.FC = () => {
   // 改用 Image 的 onError 处理加载失败
   useEffect(() => {
     setBgLoadTimeout(false);
-  }, [targetScene.id]);
+  }, [targetScene?.id]);
 
   // DO NOT TOUCH: Stable logic for scene switching - 页面初始化
   useEffect(() => {
@@ -334,6 +363,10 @@ const ImmersivePlayerNew: React.FC = () => {
       }).start();
 
       const currentPlayingId = service.getCurrentScene()?.id;
+      if (!targetScene) {
+        console.warn('[ImmersivePlayer] ⚠️ targetScene 为 null，跳过初始化');
+        return;
+      }
       AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', targetScene.id).catch(() => {});
 
       if (currentPlayingId === targetScene.id) {
@@ -352,7 +385,7 @@ const ImmersivePlayerNew: React.FC = () => {
         audioService.stopAllAmbient();
       }
     };
-  }, [targetScene.id]);
+  }, [targetScene?.id]);
 
   const togglePlayback = async () => {
     triggerHaptic();
@@ -411,6 +444,7 @@ const ImmersivePlayerNew: React.FC = () => {
       setIsRoaming(false);
       console.log('[ImmersivePlayer] 漫游模式已关闭');
     } else {
+      if (!targetScene) return;
       const category = targetScene.category;
       sceneRoamManager.startRoaming(category);
       sceneRoamManager.recordPlayedScene(targetScene.id);
@@ -457,25 +491,27 @@ const ImmersivePlayerNew: React.FC = () => {
 
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#121212' }]}>
-        {/* 背景图：使用 fade 过渡避免翻转，3秒超时显示占位图 */}
-        {scene.backgroundSource && !bgLoadTimeout ? (
-          <Animated.Image
-            source={scene.backgroundSource}
-            style={[
-              styles.backgroundImage,
-              { transform: [{ scale: bgScaleAnim }] }
-            ]}
-            fadeDuration={0}
-            onLoad={() => {
-              if (bgTimeoutRef.current) {
-                clearTimeout(bgTimeoutRef.current);
-                bgTimeoutRef.current = null;
-              }
-            }}
-          />
-        ) : (
-          <View style={[styles.backgroundFallback, { backgroundColor: placeholderColor }]} />
-        )}
+        {/* 背景图：crossFade 过渡，3秒超时显示占位图 */}
+        <Animated.View style={[styles.backgroundImage, { opacity: sceneCrossFadeAnim }]}>
+          {scene.backgroundSource && !bgLoadTimeout ? (
+            <Animated.Image
+              source={scene.backgroundSource}
+              style={[
+                StyleSheet.absoluteFillObject,
+                { transform: [{ scale: bgScaleAnim }] }
+              ]}
+              fadeDuration={0}
+              onLoad={() => {
+                if (bgTimeoutRef.current) {
+                  clearTimeout(bgTimeoutRef.current);
+                  bgTimeoutRef.current = null;
+                }
+              }}
+            />
+          ) : (
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: placeholderColor }]} />
+          )}
+        </Animated.View>
 
         <View style={styles.backgroundOverlay} />
 
@@ -487,9 +523,14 @@ const ImmersivePlayerNew: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <Text key={titleSceneId} style={styles.sceneTitle} numberOfLines={1} adjustsFontSizeToFit>
-            {t(`scenes.${titleScene.id}.title`, { defaultValue: titleScene.title })}
-          </Text>
+          <Animated.Text 
+            key={effectiveSceneId || 'loading'} 
+            style={[styles.sceneTitle, { opacity: sceneCrossFadeAnim }]} 
+            numberOfLines={1} 
+            adjustsFontSizeToFit
+          >
+            {targetScene ? t(`scenes.${targetScene.id}.title`, { defaultValue: targetScene.title }) : ''}
+          </Animated.Text>
 
           {/* 交互按钮 */}
           <InteractiveButtons
@@ -572,7 +613,7 @@ const ImmersivePlayerNew: React.FC = () => {
       <SoundscapeBottomSheet
         visible={isSoundscapeVisible}
         soundscapes={displayScenes}
-        selectedId={currentBaseSceneId || targetScene.id}
+        selectedId={currentBaseSceneId || targetScene?.id}
         onClose={closeSoundscapeSheet}
         onSelect={handleSelectSoundscape}
       />

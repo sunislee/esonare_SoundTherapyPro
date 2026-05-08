@@ -1290,17 +1290,27 @@ class AudioService {
   }
 
   async switchSoundscape(scene: Scene): Promise<void> {
-    console.log('[AudioService] 🔄 switchSoundscape: 强制停止旧音频', scene.id);
-    // 强制 reset 播放器，清除旧队列
+    console.log('[AudioService] 🔄 switchSoundscape: 切换到新场景', scene.id);
+    const prevScene = this.currentBaseScene;
+    
     try {
       await TrackPlayer.reset();
     } catch (e) {
       console.warn('[AudioService] reset 失败（可忽略）:', e);
     }
     this.isActuallyPlaying = false;
-    this.currentBaseScene = null;
+    
+    this.currentBaseScene = scene;
     this.notifyListeners();
-    await this.playScene(scene);
+    
+    try {
+      await this.playScene(scene);
+    } catch (error) {
+      console.error('[AudioService] switchSoundscape playScene 失败，回滚到上一个场景:', error);
+      this.currentBaseScene = prevScene;
+      this.notifyListeners();
+      throw error;
+    }
   }
 
   async togglePlayback(scene: Scene): Promise<void> {

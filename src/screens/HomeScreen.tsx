@@ -266,8 +266,9 @@ const SceneItem = React.memo(({
                 <Text
                   style={[
                     styles.cardTitle,
-                    !isResourceReady && downloadStatus !== 'ready' && styles.cardTitleDownloading,
-                    downloadStatus === 'ready' && styles.cardTitleReady
+                    isThisPlaying && styles.cardTitleActive,
+                    !isThisPlaying && isResourceReady && styles.cardTitleInactive,
+                    !isResourceReady && downloadStatus !== 'ready' && styles.cardTitleDownloading
                   ]}
                   numberOfLines={1}
                 >
@@ -712,8 +713,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: '500',
   },
-  cardTitleReady: {
-    color: '#4CAF50',
+  cardTitleActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  cardTitleInactive: {
+    color: 'rgba(255, 255, 255, 0.45)',
+    fontWeight: '600',
   },
   cardReadyText: {
     fontSize: 12,
