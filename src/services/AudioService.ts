@@ -133,6 +133,10 @@ class AudioService {
   private _isReady = false;
   private _setupPromise: Promise<void> | null = null;
   
+  // 【漫游轮询定时器】
+  private roamCheckTimer: any = null;
+  private isSwitchingScene = false; // 防止重复切换
+  
   // 【防双响锁】
   private isAmbientPlaying = false;
   private ambientPlaybackLock = false;
@@ -250,11 +254,38 @@ class AudioService {
    * 初始化基础监听，辅助定位 0.81 没声音的问题
    */
   private setupListeners() {
-    TrackPlayer.addEventListener(Event.PlaybackState, (event) => {
+    TrackPlayer.addEventListener(Event.PlaybackState, async (event) => {
       const state = (event as PlaybackState).state;
       console.log('[AudioService] 状态变更:', state);
       this.isActuallyPlaying = state === State.Playing;
       this.notifyListeners();
+      
+      // 【备用方案】检测 Ended 状态触发漫游切换
+      if (state === State.Ended) {
+        console.log('═══════════════════════════════════════');
+        console.log('[AudioService] 🎵🎵🎵 检测到播放结束状态(Ended)！');
+        console.log('═══════════════════════════════════════');
+        
+        try {
+          const { sceneRoamManager } = await import('./SceneRoamManager');
+          const isRoaming = sceneRoamManager.getIsRoaming();
+          
+          console.log(`[AudioService] 🎲 [Ended] 漫游状态: isRoaming=${isRoaming}, currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
+          
+          if (isRoaming && this.currentBaseScene) {
+            console.log('[AudioService] 🎲✅ [Ended] 漫游模式激活！准备自动切换');
+            const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+            
+            if (nextScene) {
+              console.log('[AudioService] 🚀 [Ended] 切换到:', nextScene.id);
+              await this.switchSoundscape(nextScene);
+              console.log('[AudioService] ✅ [Ended] 切换完成！');
+            }
+          }
+        } catch (e) {
+          console.error('[AudioService] ❌ [Ended] 漫游切换异常:', e);
+        }
+      }
     });
 
     TrackPlayer.addEventListener(Event.PlaybackError, (error) => {
@@ -262,22 +293,37 @@ class AudioService {
     });
 
     TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async (event) => {
-      console.log('[AudioService] 🎵 播放队列结束');
+      console.log('═══════════════════════════════════════');
+      console.log('[AudioService] 🎵🎵🎵 播放队列结束事件触发！');
+      console.log('[AudioService] 🎵 当前场景:', this.currentBaseScene?.id);
+      console.log('═══════════════════════════════════════');
       this.isActuallyPlaying = false;
       this.notifyListeners();
       
       // 触发漫游切换
       try {
         const { sceneRoamManager } = await import('./SceneRoamManager');
-        if (sceneRoamManager.getIsRoaming() && this.currentBaseScene) {
-          console.log('[AudioService] 🎲 漫游模式激活，自动切换下一场景');
+        const isRoaming = sceneRoamManager.getIsRoaming();
+        
+        console.log(`[AudioService] 🎲 漫游状态: isRoaming=${isRoaming}, currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
+        
+        if (isRoaming && this.currentBaseScene) {
+          console.log('[AudioService] 🎲✅ 漫游模式激活！准备自动切换下一场景');
           const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+          console.log('[AudioService] 🎲 getNextRoamScene 返回:', nextScene?.id || 'null');
+          
           if (nextScene) {
+            console.log('[AudioService] 🚀 开始切换到:', nextScene.id);
             await this.switchSoundscape(nextScene);
+            console.log('[AudioService] ✅ 切换完成！');
+          } else {
+            console.warn('[AudioService] ⚠️ 没有可用的下一个漫游场景');
           }
+        } else {
+          console.log('[AudioService] ℹ️ 非漫游模式或不满足条件，跳过自动切换');
         }
       } catch (e) {
-        console.error('[AudioService] 漫游切换失败:', e);
+        console.error('[AudioService] ❌❌❌ 漫游切换异常:', e);
       }
     });
   }
@@ -445,7 +491,7 @@ class AudioService {
       compactCapabilities: [Capability.Play, Capability.Pause],
     });
 
-    await TrackPlayer.setRepeatMode(RepeatMode.Track);
+    await TrackPlayer.setRepeatMode(RepeatMode.Off);
     await TrackPlayer.setVolume(this.ambientVolume);
     await NotificationService.setup();
     
@@ -453,6 +499,107 @@ class AudioService {
     this._isReady = true;
     console.log('[AudioService] ✅ 初始化完成，isReady = true，均衡器将在首次播放时初始化');
   }
+    
+    /**
+     * 【全局拦截】强制确保漫游模式下 RepeatMode 为 Off
+     * 在所有播放操作后调用，防止任何地方覆盖设置
+     */
+    private async forceRepeatModeOffForRoaming() {
+      try {
+        const { sceneRoamManager } = await import('./SceneRoamManager');
+        if (sceneRoamManager.getIsRoaming()) {
+          console.log('[AudioService] 🛡️ [全局拦截] 检测到漫游模式，强制关闭循环！');
+          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          
+          const currentMode = await TrackPlayer.getRepeatMode();
+          console.log(`[AudioService] 🛡️ [全局拦截] 验证 RepeatMode = ${currentMode} (必须为 0=Off)`);
+          
+          // 启动轮询定时器
+          this.startRoamPolling();
+        } else {
+          // 停止轮询定时器
+          this.stopRoamPolling();
+        }
+      } catch (e) {
+        console.warn('[AudioService] 🛡️ [全局拦截] 检查失败:', e);
+      }
+    }
+    
+    /**
+     * 【终极保底】启动漫游轮询定时器
+     * 每2秒检查一次播放状态，如果播放结束则自动切换
+     */
+    private startRoamPolling() {
+      if (this.roamCheckTimer) {
+        console.log('[AudioService] ⏱️ [轮询] 定时器已在运行');
+        return;
+      }
+      
+      console.log('[AudioService] ⏱️ [轮询] 启动漫游检查定时器 (2秒间隔)');
+      
+      this.roamCheckTimer = setInterval(async () => {
+        // 防止重复切换
+        if (this.isSwitchingScene) {
+          return;
+        }
+        
+        try {
+          const { sceneRoamManager } = await import('./SceneRoamManager');
+          
+          // 检查是否还在漫游模式
+          if (!sceneRoamManager.getIsRoaming()) {
+            console.log('[AudioService] ⏱️ [轮询] 漫游已停止，停止轮询');
+            this.stopRoamPolling();
+            return;
+          }
+          
+          // 获取当前播放状态
+          const state = await TrackPlayer.getState();
+          console.log(`[AudioService] ⏱️ [轮询] 当前状态: ${state}, isActuallyPlaying: ${this.isActuallyPlaying}`);
+          
+          // 【关键修复】只要检测到 Ended 状态就立即切换（不依赖 isActuallyPlaying）
+          if (state === State.Ended || state === 'ended' || state === 'Ended') {
+            console.log('═══════════════════════════════════════');
+            console.log('[AudioService] ⏱️🎯🎯🎯 [轮询] 检测到播放结束状态！准备自动切换！');
+            console.log('═══════════════════════════════════════');
+            
+            if (this.currentBaseScene) {
+              this.isSwitchingScene = true;
+              this.isActuallyPlaying = false; // 强制更新状态
+              
+              const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
+              console.log(`[AudioService] ⏱️ [轮询] 下一个场景: ${nextScene?.id || 'null'}`);
+              
+              if (nextScene) {
+                console.log(`[AudioService] ⏱️🚀 [轮询] 切换到: ${nextScene.id}`);
+                await this.switchSoundscape(nextScene);
+                console.log('[AudioService] ⏱️✅ [轮询] 切换完成！');
+              } else {
+                console.warn('[AudioService] ⏱️ [轮询] 没有可用场景，停止漫游');
+                sceneRoamManager.stopRoaming();
+                this.stopRoamPolling();
+              }
+              
+              this.isSwitchingScene = false;
+            }
+          }
+        } catch (e) {
+          console.error('[AudioService] ⏱️❌ [轮询] 检查异常:', e);
+        }
+      }, 2000); // 每2秒检查一次
+    }
+    
+    /**
+     * 停止漫游轮询定时器
+     */
+    private stopRoamPolling() {
+      if (this.roamCheckTimer) {
+        console.log('[AudioService] ⏱️ [轮询] 停止漫游检查定时器');
+        clearInterval(this.roamCheckTimer);
+        this.roamCheckTimer = null;
+      }
+      this.isSwitchingScene = false;
+    }
     
     /**
      * 【关键】初始化专业音频处理器 - 在播放音频后调用
@@ -818,6 +965,10 @@ class AudioService {
       
       // 通知 UI 层更新
       this.notifyListeners();
+      
+      // 【全局拦截】播放完成后强制确保漫游模式下 RepeatMode 为 Off
+      await this.forceRepeatModeOffForRoaming();
+      
       console.log('[AudioService] ====== playScene 结束 ======');
     } catch (error: any) {
       console.error('[AudioService] ❌ playScene 失败:', error);
@@ -1304,6 +1455,20 @@ class AudioService {
     this.notifyListeners();
     
     try {
+      const { sceneRoamManager } = await import('./SceneRoamManager');
+      const isRoaming = sceneRoamManager.getIsRoaming();
+      
+      if (isRoaming) {
+        console.log('[AudioService] 🎲 漫游模式：关闭循环，启用自动切换');
+        await TrackPlayer.setRepeatMode(RepeatMode.Off);
+      } else {
+        console.log('[AudioService] 🎵 普通模式：开启单曲循环');
+        await TrackPlayer.setRepeatMode(RepeatMode.Track);
+      }
+      
+      const currentRepeatMode = await TrackPlayer.getRepeatMode();
+      console.log(`[AudioService] ✅ 当前 RepeatMode: ${currentRepeatMode} (0=Off, 1=Track, 2=Queue)`);
+      
       await this.playScene(scene);
     } catch (error) {
       console.error('[AudioService] switchSoundscape playScene 失败，回滚到上一个场景:', error);

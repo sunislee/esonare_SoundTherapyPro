@@ -540,23 +540,6 @@ const ImmersivePlayerNew: React.FC = () => {
 
           {/* 底部控制：场景切换按钮提升 zIndex */}
           <View style={styles.bottomSection}>
-            {/* 紫色胶囊漫游开关 */}
-            <TouchableOpacity
-              style={[styles.roamCapsule, isRoaming && styles.roamCapsuleActive]}
-              onPress={toggleRoaming}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon 
-                name={isRoaming ? "shuffle" : "shuffle-outline"} 
-                size={18} 
-                color={isRoaming ? "#FFF" : "rgba(255,255,255,0.6)"} 
-              />
-              <Text style={[styles.roamText, isRoaming && styles.roamTextActive]}>
-                {isRoaming ? t('player.roaming') : t('player.roam')}
-              </Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.scenePickerButton}
               onPress={openSoundscapeSheet}

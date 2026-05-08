@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import AudioService from '../services/AudioService';
 import { RainDrop } from '../components/RainDrop';
-import { SCENES, Scene } from '../constants/scenes';
+import { SCENES, Scene, SceneCategory } from '../constants/scenes';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
@@ -32,6 +32,7 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useBackHandler } from '../hooks/useBackHandler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResourceDownloader } from '../hooks/useResourceDownloader';
+import { sceneRoamManager } from '../services/SceneRoamManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
@@ -356,6 +357,8 @@ export const HomeScreen: React.FC = () => {
   const [focusedSceneId, setFocusedSceneId] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [downloadedSceneIds, setDownloadedSceneIds] = useState<Set<string>>(new Set());
+  const [shufflingCategory, setShufflingCategory] = useState<SceneCategory | null>(null);
+  const shuffleAnimRef = useRef(new Animated.Value(0)).current;
   
   // 【核心】使用后台下载 Hook（替代手动实现）
   const { downloadProgress: globalDownloadProgress, prioritizeScene } = useResourceDownloader();
@@ -507,6 +510,43 @@ export const HomeScreen: React.FC = () => {
     Animated.timing(greetingFadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
   }, [t]);
 
+  const handleShuffle = useCallback((category: SceneCategory) => {
+    ReactNativeHapticFeedback.trigger('impactLight', { enableVibrateFallback: true });
+    
+    if (shufflingCategory === category) {
+      console.log(`[HomeScreen] 🛑 停止分类漫游: ${category}`);
+      sceneRoamManager.stopRoaming();
+      setShufflingCategory(null);
+      Animated.timing(shuffleAnimRef, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      return;
+    }
+
+    const scenesInCategory = SCENES.filter(s => s.isBaseScene && s.category === category);
+    const readyScenes = scenesInCategory.filter(s => downloadedSceneIds.has(s.id));
+
+    if (readyScenes.length === 0) {
+      console.warn(`[HomeScreen] ⚠️ 分类 ${category} 没有已下载场景`);
+      return;
+    }
+
+    const randomScene = readyScenes[Math.floor(Math.random() * readyScenes.length)];
+    
+    console.log(`[HomeScreen] 🎲 启动分类漫游: ${category} -> ${randomScene.id}`);
+    
+    sceneRoamManager.startRoaming(category);
+    sceneRoamManager.recordPlayedScene(randomScene.id);
+    setShufflingCategory(category);
+    
+    Animated.timing(shuffleAnimRef, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+    
+    const audioService = AudioService.getInstance();
+    audioService.switchSoundscape(randomScene).catch(e => {
+      console.error('[HomeScreen] ❌ 切换场景失败:', e);
+      sceneRoamManager.stopRoaming();
+      setShufflingCategory(null);
+    });
+  }, [shufflingCategory, downloadedSceneIds, shuffleAnimRef]);
+
   // 【核心修改】PanResponder 逻辑：去掉了回弹跳变，增加 flattenOffset
   const panResponder = useRef(
     PanResponder.create({
@@ -562,9 +602,29 @@ export const HomeScreen: React.FC = () => {
             </Animated.View>
           </View>
 
-          {groupedScenes.map((group) => (
+          {groupedScenes.map((group) => {
+            const isShuffling = shufflingCategory === group.title;
+            return (
             <View key={group.title} style={styles.section}>
-              <Text style={styles.sectionTitle}>{group.label}</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>{group.label}</Text>
+                <TouchableOpacity
+                  onPress={() => handleShuffle(group.title)}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Animated.View style={{ transform: [{ rotate: shuffleAnimRef.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '180deg']
+                  }) }] }}>
+                    <Icon 
+                      name={isShuffling ? "shuffle" : "shuffle-outline"} 
+                      size={20} 
+                      color={isShuffling ? "#6C5DD3" : "rgba(255,255,255,0.5)"} 
+                    />
+                  </Animated.View>
+                </TouchableOpacity>
+              </View>
               {group.baseScenes.map((scene: Scene) => (
                 <SceneItem 
                   key={scene.id} item={scene} isPlaying={isPlaying} 
@@ -580,7 +640,8 @@ export const HomeScreen: React.FC = () => {
                 />
               ))}
             </View>
-          ))}
+            );
+          })}
         </ScrollView>
         
         {/* 【核心修改】简化的悬浮按钮：只用 Transform 控制 */}
@@ -614,7 +675,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, color: '#fff', fontWeight: '700', letterSpacing: 1 },
   subtitle: { fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginTop: 8 },
   section: { width: '100%', alignItems: 'center', marginBottom: 40 },
-  sectionTitle: { width: ITEM_WIDTH, fontSize: 22, color: '#fff', fontWeight: '700', marginBottom: 20 },
+  sectionHeaderRow: {
+    width: ITEM_WIDTH,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sectionTitle: { fontSize: 22, color: '#fff', fontWeight: '700' },
   cardWrapper: { width: ITEM_WIDTH, height: 100, marginBottom: 16 },
   cardContainer: { width: ITEM_WIDTH, height: 100 },
   cardClip: { width: ITEM_WIDTH, height: 100, overflow: 'hidden', borderRadius: 16 },
