@@ -130,6 +130,7 @@ export const AUDIO_MANIFEST = [
   { id: 'bg_zen_bamboo_sunrise', filename: 'zen/bg_bamboo_sunrise.webp', category: 'scene_backgrounds', title: '东方禅意日出', description: '场景背景图', size: 70574 },
   { id: 'bg_zen_fountain_ritual', filename: 'zen/bg_fountain_ritual.webp', category: 'scene_backgrounds', title: '东方禅意喷泉', description: '场景背景图', size: 146774 },
   { id: 'bg_zen_guzheng_zen', filename: 'zen/bg_guzheng_zen.webp', category: 'scene_backgrounds', title: '东方禅意古筝', description: '场景背景图', size: 55704 },
+  { id: 'bg_zen_buddha_morning', filename: 'zen/buddha_morning.webp', category: 'scene_backgrounds', title: '晨光佛意', description: '老僧古钟晨光场景背景图', size: 84908 },
 
   // 西方教会场景背景图（4张，根目录，第5张复用candlelight）
   { id: 'bg_western_church_candlelight', filename: 'western_church_candlelight.webp', category: 'scene_backgrounds', title: '西方教会烛光', description: '场景背景图', size: 150974 },
@@ -232,6 +233,7 @@ export const ASSET_LIST = [
   { id: 'bg_zen_bamboo_sunrise', expectedSize: 70574 },
   { id: 'bg_zen_fountain_ritual', expectedSize: 146774 },
   { id: 'bg_zen_guzheng_zen', expectedSize: 55704 },
+  { id: 'bg_zen_buddha_morning', expectedSize: 84908 },
 
   // 西方教会场景背景图（4张，根目录，第5张复用candlelight）
   { id: 'bg_western_church_candlelight', expectedSize: 150974 },

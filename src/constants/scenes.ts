@@ -156,7 +156,7 @@ const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
 const ORIENTAL_BG_MAP: Record<string, string> = {
   oriental_zen_monastery: 'bg_temple_lantern_gate.webp',
   oriental_tibetan_bowl: 'bg_temple_zen_lantern.webp',
-  oriental_morning_buddha: 'bg_temple_roof.webp',
+  oriental_morning_buddha: 'buddha_morning.webp',
 };
 
 // 新增自然场景背景图本地 fallback 背景图
