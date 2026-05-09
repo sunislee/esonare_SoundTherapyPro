@@ -83,7 +83,7 @@ export const AUDIO_MANIFEST = [
 
   { id: 'oriental_zen_monastery', filename: 'zen/zen_bell.mp3', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 482184 },
   { id: 'oriental_tibetan_bowl', filename: 'zen/zen_bowl.mp3', category: 'oriental', title: 'scenes.oriental_tibetan_bowl.title', description: 'scenes.oriental_tibetan_bowl.desc', size: 595869 },
-  { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.mp3', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 1181012 },
+  { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.m4a', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 822079 },
 
   // 8 轨音频资源（降噪实验室 EQ 调节用）
   { id: '8track_balanced_1', filename: 'noise reduction/balanced_noise_track_1.mp3', category: 'noise_reduction', title: '均衡降噪 Track 1', description: '8 轨均衡降噪音频', size: 4438143 },
@@ -177,7 +177,7 @@ export const ASSET_LIST = [
   // 东方禅意音频（3个，oriental/ 子目录）
   { id: 'oriental_zen_monastery', expectedSize: 482184 },    // zen/zen_bell.mp3
   { id: 'oriental_tibetan_bowl', expectedSize: 595869 },     // zen/zen_bowl.mp3
-  { id: 'oriental_morning_buddha', expectedSize: 1181012 },  // zen/zen_hum.mp3
+  { id: 'oriental_morning_buddha', expectedSize: 822079 },  // zen/zen_hum.m4a (sacred bell temple)
   
   { id: 'western_church_gregorian', expectedSize: 427392 },    // 实际：427KB
   { id: 'western_church_morning_bell', expectedSize: 194690 }, // 实际：195KB
