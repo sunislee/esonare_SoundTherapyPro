@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   BackHandler,
+  Easing,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -89,13 +90,19 @@ const ImmersivePlayerNew: React.FC = () => {
   const route = useRoute<ImmersivePlayerRouteProp>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
-  const { isPlaying } = usePlayerState();
+  const { isPlaying: contextIsPlaying } = usePlayerState();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
   const [isRoaming, setIsRoaming] = useState(false);
   const [bgLoadTimeout, setBgLoadTimeout] = useState(false);
+  
+  // 【⚡️ 乐观更新】本地播放状态，优先于 Context 状态，实现瞬时 UI 响应
+  const [optimisticIsPlaying, setOptimisticIsPlaying] = useState<boolean | null>(null); // null=未覆盖，使用 Context
+  
+  // 【最终播放状态】：乐观状态优先，否则使用 Context
+  const isPlaying = optimisticIsPlaying ?? contextIsPlaying;
   
   // 【静默模式兜底】资源加载状态
   const [resourceLoading, setResourceLoading] = useState<{ loading: boolean; message: string }>({ loading: false, message: '' });
@@ -111,6 +118,7 @@ const ImmersivePlayerNew: React.FC = () => {
   
   const pendingSceneIdRef = useRef<string | null>(null);
   const bgTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const optimisticUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null); // 【乐观更新】timeout 引用
 
   const {
     currentBaseSceneId,
@@ -153,43 +161,41 @@ const ImmersivePlayerNew: React.FC = () => {
   
   const titleScene = targetScene;
 
-  // 【关键修复】双层背景交叉淡入淡出 - 防止黑色闪屏
+  // 【音画同步 v2.0-响应】Sine-Crossfade 双层背景交叉淡入淡出
+  // 与 AudioService 的 Fade Out (2000ms) 完全同步，实现快速响应
   useEffect(() => {
     if (!effectiveSceneId || !prevSceneId) {
-      // 首次加载或无前一个场景，直接显示
       nextBgOpacityAnim.setValue(1);
       prevBgOpacityAnim.setValue(0);
       return;
     }
     
-    console.log(`[ImmersivePlayer] 🎬 交叉淡入淡出: ${prevSceneId} → ${effectiveSceneId}`);
+    console.log(`[ImmersivePlayer] 🎬🎵 [Sine-Crossfade v2.0-响应] 音画同步: ${prevSceneId} → ${effectiveSceneId}`);
     
-    // 重置动画状态：旧图保持可见，新图准备渐入
-    prevBgOpacityAnim.setValue(1);   // 旧图: 保持完全可见
-    nextBgOpacityAnim.setValue(0);   // 新图: 初始透明
+    prevBgOpacityAnim.setValue(1);
+    nextBgOpacityAnim.setValue(0);
     
-    // 启动交叉淡入淡出动画
+    const CROSSFADE_DURATION = 2000; // 与音频 Fade Out 完全同步！
+    
     Animated.parallel([
-      // 旧图: 淡出 (1 → 0)
       Animated.timing(prevBgOpacityAnim, {
         toValue: 0,
-        duration: 300,
+        duration: CROSSFADE_DURATION,
         useNativeDriver: true,
+        easing: Easing.inOut(Easing.sin),
       }),
-      // 新图: 淡入 (0 → 1)
       Animated.timing(nextBgOpacityAnim, {
         toValue: 1,
-        duration: 300,
+        duration: CROSSFADE_DURATION,
         useNativeDriver: true,
+        easing: Easing.inOut(Easing.sin),
       }),
     ]).start(() => {
-      // 动画完成后，更新 prevSceneId 为当前场景
       setPrevSceneId(effectiveSceneId);
-      console.log('[ImmersivePlayer] ✅ 交叉淡入淡出完成');
+      console.log(`[ImmersivePlayer] ✅ [Sine-Crossfade v2.0-响应] 完成 (${CROSSFADE_DURATION}ms)`);
     });
     
-    // 内容层也使用平滑过渡（不再 setValue(0)）
-    sceneCrossFadeAnim.setValue(1);  // 保持内容始终可见
+    sceneCrossFadeAnim.setValue(1);
   }, [effectiveSceneId]);
 
   // 初始化时设置 prevSceneId
@@ -202,8 +208,9 @@ const ImmersivePlayerNew: React.FC = () => {
   }, [effectiveSceneId, prevSceneId]);
 
   // 条件分支返回逻辑
-  const handleBackPress = () => {
+  const handleBackPress = async () => {
     triggerHaptic();
+    
     if (navigation.canGoBack()) {
       navigation.goBack();
       return true; // 已消费事件
@@ -443,6 +450,11 @@ const ImmersivePlayerNew: React.FC = () => {
     triggerHaptic();
     const audioService = AudioService.getInstance();
     
+    // ⚡️【乐观更新】点击瞬间立即切换 UI 状态，不等待 AudioService！
+    const targetPlayState = !isPlaying;
+    setOptimisticIsPlaying(targetPlayState);
+    console.log(`[ImmersivePlayer] ⚡️ [乐观更新] UI 即时响应: ${isPlaying} → ${targetPlayState}`);
+    
     // 防御性检查：确保 AudioService 已准备好
     if (!audioService.isReady()) {
       console.log('[ImmersivePlayer] ⏳ AudioService 未准备好，触发初始化...');
@@ -457,27 +469,53 @@ const ImmersivePlayerNew: React.FC = () => {
         if (!audioService.isReady()) {
           console.warn('[ImmersivePlayer] ⚠️ 初始化超时');
           setIsLoading(false);
+          setOptimisticIsPlaying(null); // 回退到 Context 状态
           return;
         }
       } catch (e) {
         console.error('[ImmersivePlayer] ❌ 初始化失败:', e);
         setIsLoading(false);
+        setOptimisticIsPlaying(null); // 回退到 Context 状态
         return;
       }
     }
     
     if (isPlaying) {
-      await audioService.pause();
+      // 用户点击暂停
+      try {
+        await audioService.pause();
+        console.log('[ImmersivePlayer] ✅ [同步] pause() 完成，Context 已更新');
+      } catch (e) {
+        console.error('[ImmersivePlayer] ❌ pause() 失败:', e);
+        setOptimisticIsPlaying(null); // 失败时立即回退
+        return;
+      }
     } else {
+      // 用户点击播放
       setIsLoading(true);
       try {
         await audioService.play();
+        console.log('[ImmersivePlayer] ✅ [同步] play() 完成，Context 已更新');
       } catch (e) {
         console.error('[ImmersivePlayer] ❌ 播放失败:', e);
+        setOptimisticIsPlaying(null); // 失败时立即回退
+        return;
       } finally {
         setIsLoading(false);
       }
     }
+    
+    // 【✅ 关键修复】AudioService 完成后立即清除乐观状态
+    // 此时 notifyListeners() 已执行，Context 状态已同步，不会闪烁！
+    if (optimisticUpdateTimeoutRef.current) {
+      clearTimeout(optimisticUpdateTimeoutRef.current);
+    }
+    
+    // 使用 requestAnimationFrame 确保 React 已处理完 Context 更新
+    requestAnimationFrame(() => {
+      setOptimisticIsPlaying(null);
+      console.log('[ImmersivePlayer] ✅ [乐观更新] 已安全回退到 Context 状态（AudioService已完成）');
+    });
   };
 
   const openSoundscapeSheet = () => {

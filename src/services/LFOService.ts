@@ -5,20 +5,30 @@
  * 1. 生成三种基础波形：正弦波、三角波、方波
  * 2. 可调节速率（Rate）和深度（Depth）
  * 3. 为 8 段音轨提供动态音量调制
+ * 4. 【Cross-fade】基于正弦曲线的平滑音量包络（Volume Envelope）
  * 
  * 应用场景：
  * - 为白噪音添加"呼吸感"和"流动感"
  * - 模拟自然环境的声音起伏
  * - 增强沉浸式听觉体验
+ * - 场景切换时的无缝 Cross-fade 过渡
  */
 
 export type LFOWaveform = 'sine' | 'triangle' | 'square';
+export type EnvelopeType = 'fadeIn' | 'fadeOut';
 
 export interface LFOParams {
   waveform: LFOWaveform;
   rate: number;      // 0.1Hz - 10Hz (每秒周期数)
   depth: number;     // 0.0 - 1.0 (调制深度)
   phase?: number;    // 0.0 - 1.0 (相位偏移，可选)
+}
+
+export interface VolumeEnvelopeParams {
+  startVolume: number;    // 起始音量 (0.0 - 1.0)
+  endVolume: number;      // 结束音量 (0.0 - 1.0)
+  duration: number;       // 时长（毫秒）
+  curveType?: 'sine';     // 曲线类型，目前仅支持 sine
 }
 
 /**
@@ -135,6 +145,53 @@ class LFOService {
     
     // 限制在 0.0 - 1.0 范围内
     return Math.max(0.0, Math.min(1.0, modulatedVolume));
+  }
+
+  /**
+   * 【Cross-fade 核心】生成基于正弦曲线的音量包络（Volume Envelope）
+   * 
+   * 使用正弦函数（Sine Curve）映射，实现平滑的淡入淡出效果：
+   * - Fade In: 音量从 0 随 sin²(t) 曲线平滑升至目标值（起始柔和，结尾自然）
+   * - Fade Out: 从当前值随 sin²(π/2 → π) 曲线降至 0（起始平缓，结束柔和）
+   * 
+   * @param params 包络参数
+   * @returns 音量数组 { volumes: number[], stepDuration: number }
+   * 
+   * @example
+   * // Fade In: 0 → 1.0, 1500ms, 60 步
+   * lfoService.createVolumeEnvelope({ startVolume: 0, endVolume: 1.0, duration: 1500 })
+   * 
+   * @example  
+   * // Fade Out: 0.8 → 0, 2000ms, 60 步
+   * lfoService.createVolumeEnvelope({ startVolume: 0.8, endVolume: 0, duration: 2000 })
+   */
+  createVolumeEnvelope(params: VolumeEnvelopeParams): { volumes: number[]; stepDuration: number } {
+    const { startVolume, endVolume, duration } = params;
+    
+    const STEPS = 40; // 40 步平衡精度（50ms/步，减轻 JS 桥接负担，保证听不出阶梯感）
+    const stepDuration = duration / STEPS;
+    
+    const volumes: number[] = [];
+    const volumeRange = endVolume - startVolume;
+    
+    for (let i = 0; i <= STEPS; i++) {
+      const progress = i / STEPS; // 0.0 → 1.0
+      
+      // 【核心算法】正弦曲线映射
+      // 使用 sin²(θ) 实现平滑过渡：
+      // - progress=0 时，sin(0)=0 → 起始点无突变
+      // - progress=1 时，sin(π/2)=1 → 终点自然到达
+      // - 导数在两端为 0，确保无 Clicking Sound
+      const sineProgress = Math.sin((progress * Math.PI) / 2);
+      
+      const volume = startVolume + (volumeRange * sineProgress);
+      volumes.push(Math.max(0, Math.min(1, volume)));
+    }
+    
+    console.log(`[LFO] 🎵 VolumeEnvelope 生成完成: ${STEPS+1} 步, ${duration}ms, ${stepDuration.toFixed(1)}ms/步`);
+    console.log(`[LFO] 🎵 音量范围: ${startVolume.toFixed(3)} → ${endVolume.toFixed(3)}`);
+    
+    return { volumes, stepDuration };
   }
 
   /**

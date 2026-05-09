@@ -62,11 +62,17 @@ export const PlaybackService = async function() {
       
       const audioService = AudioService.getInstance();
       
-      // 强制同步状态到 AudioService
+      // 【🔥🔥🔥 精准修复】只对"最终停止状态"设为 false！中间状态不覆盖！
       if (state === State.Playing) {
         audioService.setIsActuallyPlaying(true);
-      } else if (state === State.Paused || state === State.Stopped) {
+        console.log('[PlaybackService] ▶️ state=Playing → isActuallyPlaying=true');
+      } else if (state === State.Stopped || state === State.Ended || state === State.None || state === State.Paused) {
+        // 只有明确停止的状态才设为 false
         audioService.setIsActuallyPlaying(false);
+        console.log(`[PlaybackService] ⏹️ state=${state} → isActuallyPlaying=false`);
+      } else {
+        // Buffering / Ready 等中间状态 → 保持 isActuallyPlaying 不变！
+        console.log(`[PlaybackService] ⏳ state=${state} → 中间状态，保持 isActuallyPlaying=${audioService.isActuallyPlaying}`);
       }
       
       // 强制通知 UI 更新

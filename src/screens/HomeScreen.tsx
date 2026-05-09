@@ -13,6 +13,7 @@ import {
   findNodeHandle,
   ActivityIndicator,
   ImageBackground,
+  DeviceEventEmitter,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -100,7 +101,8 @@ const SceneItem = React.memo(({
   item, isPlaying, currentBaseSceneId, togglePlayback, navigation, 
   isFocused, scrollOffset, scrollViewRef, isResourceReady,
   globalProgress,  // { progress, status, isPriority }
-  onBoostPriority  // (sceneId) => void
+  onBoostPriority,  // (sceneId) => void
+  stateVersion  // 【关键】强制刷新计数器
 }: any) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const highlightAnim = useRef(new Animated.Value(0)).current;
@@ -112,6 +114,46 @@ const SceneItem = React.memo(({
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  // ════════════════════════════════════════
+  // 【🔥🔥🔥 终极修复】直接从 AudioService 单例获取真实状态
+  // ════════════════════════════════════════
+  
+  // 【修复点 2】单例获取：直接使用顶部导入的 AudioService，无需 require
+  const directState = useMemo(() => {
+    try {
+      // 【修复点 1】废弃 isReady() 强校验：只要 getInstance() 能拿到实例就直接读取
+      const service = AudioService.getInstance();
+      
+      if (service) {
+        // 直接读取内存属性，不依赖 isReady() 检查
+        const realIsPlaying = service.isActuallyPlaying;
+        const realSceneId = service.getCurrentBaseSceneId();
+        
+        console.log(`[SceneItem] ✅ [useMemo] 成功获取状态: isActuallyPlaying=${realIsPlaying}, sceneId=${realSceneId}`);
+        
+        return {
+          isPlaying: realIsPlaying,
+          sceneId: realSceneId,
+          success: true,
+        };
+      } else {
+        console.warn('[SceneItem] ⚠️ [useMap] AudioService.getInstance() 返回 null');
+      }
+    } catch (e) {
+      // 【修复点 5】日志哨兵：详细报错日志
+      console.error('[SceneItem] ❌ [useMap] 获取状态失败:', e?.message || e);
+      console.error('[SceneItem] ❌ [useMap] 错误堆栈:', e?.stack);
+    }
+    
+    // 失败时返回标记
+    return { isPlaying: null, sceneId: null, success: false };
+  }, [stateVersion]);  // ← 每次版本号变化都重新计算
+
+  // 【修复点 3】强化"状态自愈"逻辑：
+  // 如果 directState 成功拿到布尔值 → 100% 信任它，完全覆盖 props 的旧状态！
+  const finalPlaying = directState.success ? directState.isPlaying : isPlaying;
+  const finalSceneId = directState.success ? directState.sceneId : currentBaseSceneId;
 
   useEffect(() => {
     if (isResourceReady) {
@@ -127,7 +169,11 @@ const SceneItem = React.memo(({
   const [showBoostButton, setShowBoostButton] = useState(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isThisPlaying = isPlaying && currentBaseSceneId === item.id;
+  // 【🔥 关键】使用最终状态（directState 优先）
+  const isThisPlaying = finalPlaying && finalSceneId === item.id;
+
+  // 【调试日志】追踪列表项播放状态（显示完整状态来源）
+  console.log(`[SceneItem] 🔍 [${item.name}] props=${isPlaying}, direct=${directState.isPlaying}, success=${directState.success}, final=${finalPlaying}, sceneId=${finalSceneId}, isThis=${isThisPlaying}, v=${stateVersion}`);
 
   const triggerHaptic = (type: 'light' | 'heavy' | 'success' = 'light') => {
     ReactNativeHapticFeedback.trigger(type === 'success' ? 'success' : type === 'heavy' ? 'impactHeavy' : 'impactLight', { enableVibrateFallback: true });
@@ -138,7 +184,7 @@ const SceneItem = React.memo(({
     triggerHaptic();
     
     if (isResourceReady) {
-      // 资源就绪 → 直接播放
+      // 资源就绪 → 直接导航
       if (item.id.includes('breath')) navigation.navigate('BreathDetail', { sceneId: item.id });
       else navigation.navigate('ImmersivePlayer', { sceneId: item.id });
     } else if (showBoostButton && !isPriority) {
@@ -350,6 +396,83 @@ export const HomeScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
 
+  // 【关键】状态版本计数器 - 强制 SceneItem 重渲染
+  const [stateVersion, setStateVersion] = useState(0);
+  
+  // 【🔥🔥🔥 关键修复】监听 AudioService 发射的全局事件，强制刷新列表状态
+  useEffect(() => {
+    console.log('[HomeScreen] 📡 [DeviceEventEmitter] 注册 audioStateChanged 监听器');
+    
+    const subscription = DeviceEventEmitter.addListener('audioStateChanged', (event) => {
+      console.log(`[HomeScreen] ✅ [DeviceEventEmitter] 收到事件: isPlaying=${event.isActuallyPlaying}, sceneId=${event.currentBaseSceneId}, timestamp=${event.timestamp}`);
+      
+      // 【关键】立即递增版本号 → 强制所有 SceneItem 重新执行 useMemo
+      setStateVersion(v => v + 1);
+    });
+    
+    return () => {
+      console.log('[HomeScreen] 📡 [DeviceEventEmitter] 移除 audioStateChanged 监听器');
+      subscription.remove();
+    };
+  }, []);
+  
+  // 【🔥 根本性修复】直接从 AudioService 获取真实播放状态（绕过 Context 传播问题）
+  const [realIsPlaying, setRealIsPlaying] = useState<boolean | null>(null); // null=使用 Context
+  const [realBaseSceneId, setRealBaseSceneId] = useState<string | null>(null); // null=使用 Context
+  
+  // 【最终使用的播放状态】：真实状态优先，否则使用 Context
+  const effectiveIsPlaying = realIsPlaying ?? isPlaying;
+  const effectiveBaseSceneId = realBaseSceneId ?? currentBaseSceneId;
+  
+  // 【监听播放状态变化 → 递增版本号 → 强制刷新所有列表项】
+  useEffect(() => {
+    console.log(`[HomeScreen] 🔄 [状态监控] isPlaying=${isPlaying}, currentBaseSceneId=${currentBaseSceneId}, 触发版本更新: ${stateVersion + 1}`);
+    setStateVersion(v => v + 1);
+  }, [isPlaying, currentBaseSceneId]);
+  
+  // 【🔥 关键】页面获得焦点时，直接从 AudioService 获取真实状态
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[HomeScreen] 🎯 [焦点同步] 页面获得焦点，开始同步真实状态...');
+      
+      const syncRealState = () => {
+        try {
+          const { AudioService: AS } = require('../services/AudioService');
+          const audioService = AS.getInstance();
+          
+          if (audioService.isReady()) {
+            const actualPlaying = audioService.isActuallyPlaying;
+            const actualSceneId = audioService.getCurrentBaseSceneId();
+            
+            console.log(`[HomeScreen] ✅ [焦点同步] 真实状态: isActuallyPlaying=${actualPlaying}, sceneId=${actualSceneId}`);
+            
+            // 更新真实状态（触发重渲染）
+            setRealIsPlaying(actualPlaying);
+            setRealBaseSceneId(actualSceneId);
+            setStateVersion(v => v + 1);
+          } else {
+            console.log('[HomeScreen] ⚠️ [焦点同步] AudioService 未准备好');
+          }
+        } catch (e) {
+          console.error('[HomeScreen] ❌ [焦点同步] 失败:', e);
+        }
+      };
+      
+      // 立即执行一次
+      syncRealState();
+      
+      // 延迟再执行一次（确保异步操作完成）
+      const timeoutId = setTimeout(syncRealState, 300);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        // 离开页面时清除真实状态，回退到 Context
+        setRealIsPlaying(null);
+        setRealBaseSceneId(null);
+      };
+    }, [])
+  );
+
   const [userName, setUserName] = useState('');
   const [slogan, setSlogan] = useState('');
   const greetingFadeAnim = useRef(new Animated.Value(0)).current;
@@ -511,6 +634,7 @@ export const HomeScreen: React.FC = () => {
   }, [t]);
 
   const handleShuffle = useCallback((category: SceneCategory) => {
+    console.log(`[HomeScreen] 🔘 [handleShuffle] 按钮被点击! category=${category}, shufflingCategory=${shufflingCategory}`);
     ReactNativeHapticFeedback.trigger('impactLight', { enableVibrateFallback: true });
     
     if (shufflingCategory === category) {
@@ -627,8 +751,8 @@ export const HomeScreen: React.FC = () => {
               </View>
               {group.baseScenes.map((scene: Scene) => (
                 <SceneItem 
-                  key={scene.id} item={scene} isPlaying={isPlaying} 
-                  currentBaseSceneId={currentBaseSceneId} togglePlayback={togglePlayback} 
+                  key={scene.id} item={scene} isPlaying={effectiveIsPlaying} 
+                  currentBaseSceneId={effectiveBaseSceneId} togglePlayback={togglePlayback} 
                   navigation={navigation} isFocused={focusedSceneId === scene.id}
                   scrollOffset={scrollOffset} scrollViewRef={scrollViewRef}
                   isResourceReady={downloadedSceneIds.has(scene.id)}
@@ -637,6 +761,7 @@ export const HomeScreen: React.FC = () => {
                     // 【全局】触发优先下载（使用 Hook）
                     prioritizeScene(sceneId);
                   }}
+                  stateVersion={stateVersion}  // 【关键】强制刷新
                 />
               ))}
             </View>

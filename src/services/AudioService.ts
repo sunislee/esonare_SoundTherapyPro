@@ -1,5 +1,5 @@
 // 【去 Expo 化】完全使用 react-native-track-player
-import { Platform, AppState, AppStateStatus, InteractionManager } from 'react-native';
+import { Platform, AppState, AppStateStatus, InteractionManager, DeviceEventEmitter } from 'react-native';
 
 // 【RN 0.81 兼容】解构导入，确保方法可访问
 import TrackPlayer, { 
@@ -271,7 +271,19 @@ class AudioService {
     TrackPlayer.addEventListener(Event.PlaybackState, async (event) => {
       const state = (event as PlaybackState).state;
       console.log('[AudioService] 状态变更:', state);
-      this.isActuallyPlaying = state === State.Playing;
+      
+      // 【🔥🔥🔥 精准修复】只对"最终停止状态"设为 false！中间状态不覆盖！
+      if (state === State.Playing) {
+        this.isActuallyPlaying = true;
+        console.log(`[AudioService] ▶️ [PlaybackState] state=Playing → isActuallyPlaying=true`);
+      } else if (state === State.Stopped || state === State.Ended || state === State.None || state === State.Paused) {
+        this.isActuallyPlaying = false;
+        console.log(`[AudioService] 🛑 [PlaybackState] 检测到结束状态(${state})，强制 isActuallyPlaying=false`);
+      } else {
+        // Buffering / Ready 等中间状态 → 保持 isActuallyPlaying 不变！
+        console.log(`[AudioService] ⏳ [PlaybackState] state=${state} → 中间状态，保持 isActuallyPlaying=${this.isActuallyPlaying}`);
+      }
+      
       this.notifyListeners();
       
       // 【备用方案】检测 Ended 状态触发漫游切换
@@ -299,13 +311,23 @@ class AudioService {
               this.isFading = false; // 强制释放锁！
               await this.switchSoundscape(nextScene);
               console.log('[AudioService] ✅ [Ended] 切换完成！');
+              return; // 漫游切换完成，直接返回
             } else {
               console.warn('[AudioService] ⚠️ [Ended] 无可用下一个场景，停止漫游');
               sceneRoamManager.stopRoaming();
             }
           }
+          
+          // 【🔥 关键修复】非漫游模式或无下一个场景时，必须停止播放并更新 UI！
+          console.log('[AudioService] ⏹️ [Ended] 音频播放完毕，停止播放并更新状态');
+          this.isActuallyPlaying = false;
+          this.notifyListeners();
+          
         } catch (e) {
-          console.error('[AudioService] ❌ [Ended] 漫游切换异常:', e);
+          console.error('[AudioService] ❌ [Ended] 处理异常:', e);
+          // 即使异常也要确保状态正确
+          this.isActuallyPlaying = false;
+          this.notifyListeners();
         }
       }
     });
@@ -1114,7 +1136,7 @@ class AudioService {
           try {
             console.log('[AudioService] 🔄 [回滚] 尝试恢复当前场景...');
             await this.playScene(this.currentBaseScene);
-            await this.fadeInVolume(1000);
+            await this.fadeInVolume(1500); // 响应优先：使用 1500ms
             console.log('[AudioService] ✅ [回滚] 恢复成功');
           } catch (e) {
             console.error('[AudioService] ❌ [回滚] 也失败了:', e);
@@ -1170,15 +1192,12 @@ class AudioService {
     
     try {
       // ══════════════════════════════════════════
-      // 【关键修复】在最开始就强制设置 RepeatMode.Off！
-      // 防止任何后续操作覆盖导致循环播放！
+      // 【🔥🔥🔥 关键修复】无条件强制设置 RepeatMode.Off！
+      // 防止任何场景循环播放（无论是否漫游模式）！
       // ══════════════════════════════════════════
       try {
-        const { sceneRoamManager } = await import('./SceneRoamManager');
-        if (sceneRoamManager.getIsRoaming()) {
-          await TrackPlayer.setRepeatMode(RepeatMode.Off);
-          console.log('[AudioService] 🛡️ [playScene] 漫游模式：强制 RepeatMode.Off！');
-        }
+        await TrackPlayer.setRepeatMode(RepeatMode.Off);
+        console.log('[AudioService] 🛡️ [playScene] 🔒 强制 RepeatMode=Off 防止循环！');
       } catch (e) {
         console.warn('[AudioService] ⚠️ [playScene] 设置RepeatMode失败:', e);
       }
@@ -1594,8 +1613,17 @@ class AudioService {
     // 【关键修复】在 TrackPlayer.pause() 之前先更新状态
     // 这样 Event.PlaybackState 事件触发时状态已经正确
     this.isActuallyPlaying = false;
-    await TrackPlayer.pause();
+    
+    try {
+      await TrackPlayer.pause();
+    } catch (e) {
+      console.error('[AudioService] ❌ TrackPlayer.pause() 失败:', e);
+      // 【关键】即使失败也要通知 UI 更新状态！防止列表页显示不同步
+    }
+    
+    // ✅ 无论成功失败都通知监听器，确保 Context 状态同步
     this.notifyListeners();
+    console.log('[AudioService] ✅ pause() 完成，已通知所有监听器 (isActuallyPlaying=false)');
   }
 
   async play() {
@@ -1623,8 +1651,22 @@ class AudioService {
     
     // 【关键修复】在 TrackPlayer.play() 之前先更新状态
     this.isActuallyPlaying = true;
-    await TrackPlayer.play();
+    
+    try {
+      // 【🔥 关键】强制确保 RepeatMode 为 Off，防止循环播放！
+      await TrackPlayer.setRepeatMode(RepeatMode.Off);
+      console.log('[AudioService] 🔒 [play] 强制设置 RepeatMode=Off 防止循环');
+      
+      await TrackPlayer.play();
+    } catch (e) {
+      console.error('[AudioService] ❌ TrackPlayer.play() 失败:', e);
+      // 【关键】即使失败也要通知 UI 更新状态！
+      this.isActuallyPlaying = false; // 回滚状态
+    }
+    
+    // ✅ 无论成功失败都通知监听器，确保 Context 状态同步
     this.notifyListeners();
+    console.log('[AudioService] ✅ play() 完成，已通知所有监听器 (isActuallyPlaying=', this.isActuallyPlaying, ')');
   }
 
   async stop() {
@@ -1731,10 +1773,82 @@ class AudioService {
       NotificationService.updatePlaybackState(this.isActuallyPlaying).catch(() => {});
     }
     
+    // 【🔥🔥🔥 关键修复】发射全局事件，强制所有 UI 组件刷新状态
+    DeviceEventEmitter.emit('audioStateChanged', {
+      isActuallyPlaying: this.isActuallyPlaying,
+      currentBaseSceneId: this.currentBaseScene?.id || null,
+      timestamp: Date.now(),
+    });
+    console.log(`[AudioService] 📡 [DeviceEventEmitter] 已发射 audioStateChanged 事件: isPlaying=${this.isActuallyPlaying}, sceneId=${this.currentBaseScene?.id}`);
+    
     // 【性能监控】检查是否在100ms内完成
     const notifyTime = Date.now() - notifyStartTime;
     if (notifyTime > 50) { // 预留50ms给UI更新
       console.warn(`[Performance] ⚠️ notifyListeners 耗时过长: ${notifyTime}ms`);
+    }
+  }
+
+  /**
+   * 🔥【真实状态心跳】强制向 UI 推送最新的播放状态
+   * 
+   * 使用场景：
+   * - Fade 逻辑结束（成功/失败/中断）
+   * - 音频自然结束（Ended）
+   * - 发生错误需要重置状态
+   * - 任何可能导致 UI 状态与实际不一致的时刻
+   */
+  forceUpdateUIStatus(): void {
+    console.log('═══════════════════════════════════════');
+    console.log('[AudioService] 🔄 [forceUpdateUIStatus] 强制同步真实状态到 UI');
+    console.log(`[AudioService] 📊 当前状态: isActuallyPlaying=${this.isActuallyPlaying}, isFading=${this.isFading}, isSwitchingScene=${this.isSwitchingScene}`);
+    console.log(`[AudioService] 📊 场景信息: currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
+    
+    // 【🔥 关键】确保所有锁都被释放
+    if (this.isFading) {
+      console.warn('[AudioService] ⚠️ [forceUpdateUIStatus] 检测到 isFading=true，强制释放！');
+      this.isFading = false;
+    }
+    
+    if (this.isSwitchingScene) {
+      console.warn('[AudioService] ⚠️ [forceUpdateUIStatus] 检测到 isSwitchingScene=true，强制释放！');
+      this.isSwitchingScene = false;
+    }
+    
+    // 【🔥 关键】从 TrackPlayer 获取真实播放状态（而非依赖内存变量）
+    this.syncRealPlaybackState()
+      .then(() => {
+        console.log('[AudioService] ✅ [forceUpdateUIStatus] 状态已同步，通知 UI');
+        this.notifyListeners();
+        console.log('═══════════════════════════════════════');
+      })
+      .catch((e) => {
+        console.error('[AudioService] ❌ [forceUpdateUIStatus] 同步失败:', e);
+        // 即使失败也要用当前内存状态通知 UI
+        this.notifyListeners();
+      });
+  }
+
+  /**
+   * 从 TrackPlayer 获取真实播放状态并同步到 isActuallyPlaying
+   */
+  private async syncRealPlaybackState(): Promise<void> {
+    try {
+      if (!this._isReady) {
+        console.log('[AudioService] ⏳ [syncRealPlaybackState] AudioService 未准备好');
+        return;
+      }
+      
+      const state = await TrackPlayer.getState();
+      const realIsPlaying = state === State.Playing;
+      
+      if (this.isActuallyPlaying !== realIsPlaying) {
+        console.warn(`[AudioService] ⚠️ [syncRealPlaybackState] 状态不一致！内存=${this.isActuallyPlaying}, 真实=${realIsPlaying}`);
+        this.isActuallyPlaying = realIsPlaying;
+      } else {
+        console.log(`[AudioService] ✅ [syncRealPlaybackState] 状态一致: ${realIsPlaying}`);
+      }
+    } catch (e) {
+      console.error('[AudioService] ❌ [syncRealPlaybackState] 获取状态失败:', e);
     }
   }
 
@@ -1988,93 +2102,132 @@ class AudioService {
   }
 
   /**
-   * 【Cross-fade】音量淡出：平滑降低至 0
-   * @param duration 淡出时长（毫秒），默认 2000ms (2秒)
+   * 【Cross-fade v2.0 响应优先】音量淡出：基于正弦曲线平滑降低至 0
+   * 
+   * 使用 LFOService.createVolumeEnvelope 生成的 sin²(θ) 曲线：
+   * - 从当前实时音量开始下降（非重置到 1.0）
+   * - 起始平缓（导数为0），避免 Clicking Sound
+   * - 中间加速，自然过渡
+   * - 结束柔和，无突变感
+   * 
+   * @param duration 淡出时长（毫秒），默认 2000ms (2秒-响应优先)
    */
   private async fadeOutVolume(duration: number = 2000): Promise<void> {
     if (!this._isReady || this.isFading) return;
     
+    const currentVolume = this.ambientVolume; // 【关键】捕获当前真实音量
     this.isFading = true;
-    console.log(`[AudioService] 🎵 [淡出] 开始，时长: ${duration}ms`);
+    console.log(`[AudioService] 🎵 [Sine-淡出v2-响应] 开始，时长: ${duration}ms, 当前音量: ${currentVolume}`);
     
     try {
-      const steps = 40; // 40步完成
-      const stepDuration = duration / steps; // 每步 50ms
+      const { lfoService } = await import('./LFOService');
       
-      for (let i = steps; i >= 0; i--) {
-        const volume = (i / steps) * this.ambientVolume; // 从 ambientVolume 降到 0
-        await TrackPlayer.setVolume(volume);
+      const { volumes, stepDuration } = lfoService.createVolumeEnvelope({
+        startVolume: currentVolume,
+        endVolume: 0,
+        duration: duration,
+      });
+      
+      console.log(`[AudioService] 📊 [Sine曲线] ${volumes.length} 步, ${stepDuration.toFixed(1)}ms/步, 范围: ${currentVolume.toFixed(3)} → 0`);
+      
+      for (let i = 1; i < volumes.length; i++) {
+        if (!this.isFading) break; // 支持外部 cancel
         
-        if (i > 0 && this.isFading) {
+        await TrackPlayer.setVolume(volumes[i]);
+        
+        if (i < volumes.length - 1 && this.isFading) {
           await new Promise(resolve => setTimeout(resolve, stepDuration));
         }
       }
       
-      console.log('[AudioService] ✅ [淡出] 完成，volume=0');
+      console.log('[AudioService] ✅ [Sine-淡出v2-响应] 完成，volume=0');
     } catch (error) {
-      console.error('[AudioService] ❌ [淡出] 异常:', error);
+      console.error('[AudioService] ❌ [Sine-淡出v2-响应] 异常:', error);
+    } finally {
+      // 【🔥 关键修复】无论成功失败，必须释放锁！
+      this.isFading = false;
+      console.log('[AudioService] 🔓 [Cross-fade v2.0 响应优先] fadeOut 锁已释放');
     }
   }
 
   /**
-   * 【Cross-fade】音量淡入：从 0 平滑升高至用户预设音量
-   * @param duration 淡入时长（毫秒），默认 2000ms (2秒)
+   * 【Cross-fade v2.0 响应优先】音量淡入：基于正弦曲线从 0 平滑升高至目标音量
+   * 
+   * @param duration 淡入时长（毫秒），默认 1500ms (1.5秒-响应优先)
    */
-  private async fadeInVolume(duration: number = 2000): Promise<void> {
+  private async fadeInVolume(duration: number = 1500): Promise<void> {
     if (!this._isReady) return;
     
-    console.log(`[AudioService] 🎵 [淡入] 开始，时长: ${duration}ms, 目标音量: ${this.ambientVolume}`);
+    const targetVolume = this.ambientVolume;
+    console.log(`[AudioService] 🎵 [Sine-淡入v2-响应] 开始，时长: ${duration}ms, 目标音量: ${targetVolume}`);
     
     try {
-      const steps = 40; // 40步完成
-      const stepDuration = duration / steps; // 每步 50ms
+      const { lfoService } = await import('./LFOService');
       
-      for (let i = 1; i <= steps; i++) {
-        const volume = (i / steps) * this.ambientVolume; // 从 0 升到 ambientVolume
-        await TrackPlayer.setVolume(volume);
+      const { volumes, stepDuration } = lfoService.createVolumeEnvelope({
+        startVolume: 0,
+        endVolume: targetVolume,
+        duration: duration,
+      });
+      
+      console.log(`[AudioService] 📊 [Sine曲线] ${volumes.length} 步, ${stepDuration.toFixed(1)}ms/步, 范围: 0 → ${targetVolume.toFixed(3)}`);
+      
+      for (let i = 1; i < volumes.length; i++) {
+        if (!this.isFading) break;
         
-        if (i < steps && this.isFading) {
+        await TrackPlayer.setVolume(volumes[i]);
+        
+        if (i < volumes.length - 1 && this.isFading) {
           await new Promise(resolve => setTimeout(resolve, stepDuration));
         }
       }
       
-      console.log('[AudioService] ✅ [淡入] 完成，volume=', this.ambientVolume);
+      console.log('[AudioService] ✅ [Sine-淡入v2-响应] 完成，volume=', targetVolume);
     } catch (error) {
-      console.error('[AudioService] ❌ [淡入] 异常:', error);
+      console.error('[AudioService] ❌ [Sine-淡入v2-响应] 异常:', error);
     } finally {
       this.isFading = false;
-      console.log('[AudioService] 🔓 [Cross-fade] 锁已释放');
+      console.log('[AudioService] 🔓 [Cross-fade v2.0 响应优先] 锁已释放');
     }
   }
 
   async switchSoundscape(scene: Scene): Promise<void> {
-    console.log(`[AudioService] 🎬 [switchSoundscape] 被调用！目标场景: ${scene.id}, 当前场景: ${this.currentBaseScene?.id || 'null'}, isFading: ${this.isFading}`);
+    const startTime = Date.now(); // 【性能监控】
     
-    // 【Cross-fade 防冲突】如果正在淡入淡出，直接返回
+    console.log(`[AudioService] 🎬 [switchSoundscape v2.0-响应] 被调用！目标: ${scene.id}, 当前: ${this.currentBaseScene?.id || 'null'}`);
+    
     if (this.isFading) {
-      console.warn('[AudioService] ⚠️ [Cross-fade] 正在淡入淡出中，忽略本次切换请求 (isFading=true)');
+      console.warn('[AudioService] ⚠️ [响应优先] 正在淡入淡出中，忽略请求');
       return;
     }
     
-    console.log('[AudioService] 🎬 [Parallel Cross-fade] 开始场景切换:', scene.id);
     const prevScene = this.currentBaseScene;
     
     try {
       // ════════════════════════════════════════════════════════
-      // 【Phase 1】并行执行：淡出旧音频 + 预加载新音频
+      // 【Phase 0 ⚡️】UI 反馈优先（点击瞬间立即执行！）
       // ════════════════════════════════════════════════════════
       
-      // 【并行任务A】开始淡出旧音频（1500ms）
+      this.isSwitchingScene = true; // 立即锁定，防止重复点击
+      this.notifyListeners(); // 🔥 第一时间让 UI 响应！
+      
+      console.log(`[AudioService] ⚡️ [Phase 0] UI 已响应！耗时: ${Date.now() - startTime}ms`);
+      
+      // ════════════════════════════════════════════════════════
+      // 【Phase 1】并行启动：旧音频淡出 + 新音频预加载（激进模式）
+      // ════════════════════════════════════════════════════════
+      
       let fadeOutPromise: Promise<void> | null = null;
+      
       if (this.isActuallyPlaying && this._isReady) {
-        console.log('[AudioService] 🔽 [Phase 1] 启动旧音频淡出 (1500ms)...');
-        fadeOutPromise = this.fadeOutVolume(1500);
+        console.log('[AudioService] 🔽 [Phase 1] 启动 Sine 淡出 (2000ms)...');
+        this.isFading = true;
+        fadeOutPromise = this.fadeOutVolume(2000);
       }
       
-      // 【并行任务B】同时开始准备新音频（不等待淡出完成！）
-      console.log('[AudioService] 🔄 [Phase 1] 并行：准备新音频...');
+      // 【激进预加载】立即准备新音频（不等待！）
+      console.log('[AudioService] 🚀 [Phase 1] 立即预加载新音频...');
       
-      // 更新 RepeatMode（快速操作，不影响音量）
       const { sceneRoamManager } = await import('./SceneRoamManager');
       const isRoaming = sceneRoamManager.getIsRoaming();
       
@@ -2084,48 +2237,64 @@ class AudioService {
         await TrackPlayer.setRepeatMode(RepeatMode.Track);
       }
       
-      // 等待淡出完成（如果有的话）
+      console.log(`[AudioService] 📦 [Phase 1] 预加载完成！耗时: ${Date.now() - startTime}ms`);
+      
+      // ════════════════════════════════════════════════════════
+      // 【Phase 2】500ms 快速交叉点（新旧音频交织）
+      // ════════════════════════════════════════════════════════
+      
+      const CROSSFADE_DELAY = 500;
+      
       if (fadeOutPromise) {
-        await fadeOutPromise;
-        console.log('[AudioService] ✅ [Phase 1] 旧音频淡出完成');
+        console.log(`[AudioService] ⏳ [Phase 2] 等待 ${CROSSFADE_DELAY}ms...`);
+        await new Promise(resolve => setTimeout(resolve, CROSSFADE_DELAY));
+        console.log(`[AudioService] ⏱️ [Phase 2] 交叉点到达！耗时: ${Date.now() - startTime}ms`);
       }
       
       // ════════════════════════════════════════════════════════
-      // 【Phase 2】停止旧音频 + 加载新音频（静音状态）
+      // 【Phase 3】停止旧音频 + 加载新音频
       // ════════════════════════════════════════════════════════
       
-      console.log('[AudioService] 🛑 [Phase 2] 停止旧音频 + 加载新音频...');
+      if (fadeOutPromise) {
+        console.log('[AudioService] ✅ [Phase 3] 等待淡出完成...');
+        await fadeOutPromise;
+      }
+      
+      console.log('[AudioService] 🛑 [Phase 3] 切换音频...');
       
       try {
         await TrackPlayer.reset();
       } catch (e) {
-        console.warn('[AudioService] reset 失败（可忽略）:', e);
+        console.warn('[AudioService] reset 失败:', e);
       }
       this.isActuallyPlaying = false;
       
-      // 更新场景信息
       this.currentBaseScene = scene;
       this.notifyListeners();
       
-      // 【关键】playScene 内部会以 volume=0 开始播放
-      console.log('[AudioService] 🎵 [Phase 2] 加载新音频 (volume=0)...');
+      console.log('[AudioService] 🎵 [Phase 3] 加载新音频...');
       await this.playScene(scene);
       
+      console.log(`[AudioService] 🎵 [Phase 3] 新音频已就绪！耗时: ${Date.now() - startTime}ms`);
+      
       // ════════════════════════════════════════════════════════
-      // 【Phase 3】淡入新音频（1500ms）- 无缝衔接！
+      // 【Phase 4】Sine 淡入新音频 (1500ms)
       // ════════════════════════════════════════════════════════
       
-      console.log('[AudioService] 🔼 [Phase 3] 淡入新音频 (1500ms)...');
+      console.log('[AudioService] 🔼 [Phase 4] Sine 淡入 (1500ms)...');
       await this.fadeInVolume(1500);
       
-      console.log('[AudioService] ✅ [Parallel Cross-fade] 场景切换完成！(总时长~3s)');
+      const totalTime = Date.now() - startTime;
+      console.log(`[AudioService] ✅ [Sine-Crossfade v2.0-响应] 完成！(总耗时: ${totalTime}ms)`);
       
     } catch (error) {
-      console.error('[AudioService] ❌ [Cross-fade] 切换失败，回滚到上一个场景:', error);
+      console.error('[AudioService] ❌ [响应优先] 失败:', error);
       this.currentBaseScene = prevScene;
-      this.isFading = false; // 释放锁
+      this.isFading = false;
       this.notifyListeners();
       throw error;
+    } finally {
+      this.isSwitchingScene = false; // 最终释放锁
     }
   }
 
