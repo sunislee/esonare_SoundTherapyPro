@@ -96,6 +96,7 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
   const [isRoaming, setIsRoaming] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
   const [bgLoadTimeout, setBgLoadTimeout] = useState(false);
   
   // 【⚡️ 乐观更新】本地播放状态，优先于 Context 状态，实现瞬时 UI 响应
@@ -543,6 +544,17 @@ const ImmersivePlayerNew: React.FC = () => {
     }
   }, [isRoaming, targetScene]);
 
+  const toggleLoop = useCallback(async () => {
+    triggerHaptic();
+    const newLoopState = !isLooping;
+    setIsLooping(newLoopState);
+    
+    const audioService = AudioService.getInstance();
+    await audioService.applyLoopMode(isRoaming || !newLoopState);
+    
+    console.log(`[ImmersivePlayer] 🔁 循环模式: ${newLoopState ? '开启(Track)' : '关闭(Off)'}`);
+  }, [isLooping, isRoaming]);
+
   // DO NOT TOUCH: Stable logic for scene switching - 场景选择处理
   const handleSelectSoundscape = async (scene: Scene) => {
     if (scene.id === currentBaseSceneId) {
@@ -660,14 +672,30 @@ const ImmersivePlayerNew: React.FC = () => {
 
           {/* 底部控制：场景切换按钮提升 zIndex */}
           <View style={styles.bottomSection}>
-            <TouchableOpacity
-              style={styles.scenePickerButton}
-              onPress={openSoundscapeSheet}
-              activeOpacity={0.8}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon name="grid-outline" size={20} color="#FFF" />
-            </TouchableOpacity>
+            {/* 功能按钮行：循环 + 场景选择 */}
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={[styles.loopButton, isLooping && styles.loopButtonActive]}
+                onPress={toggleLoop}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon 
+                  name={isLooping ? "repeat" : "repeat-outline"} 
+                  size={22} 
+                  color={isLooping ? "#6C5DD3" : "rgba(255,255,255,0.5)"} 
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.scenePickerButton}
+                onPress={openSoundscapeSheet}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name="grid-outline" size={20} color="#FFF" />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity 
               style={[styles.playButton, isLoading && styles.playButtonDisabled]} 
@@ -818,6 +846,20 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 30,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  loopButton: {
+    padding: 10,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 24,
+  },
+  loopButtonActive: {
+    backgroundColor: 'rgba(108,93,211,0.2)',
   },
   roamCapsule: {
     flexDirection: 'row',

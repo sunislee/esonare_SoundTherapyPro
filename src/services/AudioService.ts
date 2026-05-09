@@ -318,6 +318,15 @@ class AudioService {
             }
           }
           
+          // 【🔁 Loop 实验】非漫游模式 + RepeatMode.Track → 自动循环，不停止！
+          if (!isRoaming) {
+            const currentMode = await TrackPlayer.getRepeatMode();
+            if (currentMode === RepeatMode.Track) {
+              console.log('[AudioService] 🔁 [Ended] 单场景循环模式 → 音频自动重播，保持播放状态');
+              return;
+            }
+          }
+          
           // 【🔥 关键修复】非漫游模式或无下一个场景时，必须停止播放并更新 UI！
           console.log('[AudioService] ⏹️ [Ended] 音频播放完毕，停止播放并更新状态');
           this.isActuallyPlaying = false;
@@ -341,6 +350,22 @@ class AudioService {
       console.log('[AudioService] 🎵🎵🎵 播放队列结束事件触发！');
       console.log(`[AudioService] 🎵 当前场景: ${this.currentBaseScene?.id || 'null'}`);
       console.log('═══════════════════════════════════════');
+      
+      // 【🔁 Loop 实验】检查是否单场景循环模式
+      try {
+        const { sceneRoamManager } = await import('./SceneRoamManager');
+        const isRoaming = sceneRoamManager.getIsRoaming();
+        if (!isRoaming) {
+          const currentMode = await TrackPlayer.getRepeatMode();
+          if (currentMode === RepeatMode.Track) {
+            console.log('[AudioService] 🔁 [QueueEnded] 单场景循环 → 自动重播，保持状态');
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('[AudioService] ⚠️ [QueueEnded] 检查循环模式失败:', e);
+      }
+      
       this.isActuallyPlaying = false;
       this.notifyListeners();
       
@@ -550,6 +575,24 @@ class AudioService {
   }
     
     /**
+     * 【🔁 Loop 实验】公共方法：根据漫游状态设置 RepeatMode
+     * @param isRoaming true=漫游模式(Off), false=单场景循环(Track)
+     */
+    async applyLoopMode(isRoaming: boolean): Promise<void> {
+      try {
+        if (isRoaming) {
+          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          console.log('[AudioService] 🎲 [applyLoopMode] 漫游模式 → RepeatMode=Off');
+        } else {
+          await TrackPlayer.setRepeatMode(RepeatMode.Track);
+          console.log('[AudioService] 🔁 [applyLoopMode] 单场景 → RepeatMode=Track (循环)');
+        }
+      } catch (e) {
+        console.warn('[AudioService] ⚠️ [applyLoopMode] 设置失败:', e);
+      }
+    }
+
+    /**
      * 【全局拦截】强制确保漫游模式下 RepeatMode 为 Off
      * 在所有播放操作后调用，防止任何地方覆盖设置
      */
@@ -569,6 +612,8 @@ class AudioService {
           // 【核心】启动进度监听定时器（主要机制 - 提前2秒触发）
           this.startProgressMonitor();
         } else {
+          // 【🔁 Loop 实验】非漫游模式 → 默认 Off（用户手动激活循环才设 Track）
+          
           // 停止轮询定时器
           this.stopRoamPolling();
           
@@ -1192,12 +1237,16 @@ class AudioService {
     
     try {
       // ══════════════════════════════════════════
-      // 【🔥🔥🔥 关键修复】无条件强制设置 RepeatMode.Off！
-      // 防止任何场景循环播放（无论是否漫游模式）！
+      // 【🔁 Loop 实验】根据漫游状态智能设置 RepeatMode：
+      //   - 非漫游（单场景）→ RepeatMode.Off（默认不循环，用户手动激活）
+      //   - 漫游模式 → RepeatMode.Off（由漫游逻辑切换）
+      //   - 用户点击循环按钮 → applyLoopMode() 设为 Track
       // ══════════════════════════════════════════
       try {
+        const { sceneRoamManager } = await import('./SceneRoamManager');
+        const isRoaming = sceneRoamManager.getIsRoaming();
         await TrackPlayer.setRepeatMode(RepeatMode.Off);
-        console.log('[AudioService] 🛡️ [playScene] 🔒 强制 RepeatMode=Off 防止循环！');
+        console.log(`[AudioService] [playScene] RepeatMode=Off (isRoaming=${isRoaming}, 用户需手动激活循环)`);
       } catch (e) {
         console.warn('[AudioService] ⚠️ [playScene] 设置RepeatMode失败:', e);
       }
@@ -1653,9 +1702,9 @@ class AudioService {
     this.isActuallyPlaying = true;
     
     try {
-      // 【🔥 关键】强制确保 RepeatMode 为 Off，防止循环播放！
+      // 【🔁 Loop 实验】默认 Off，用户手动激活循环
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
-      console.log('[AudioService] 🔒 [play] 强制设置 RepeatMode=Off 防止循环');
+      console.log('[AudioService] [play] RepeatMode=Off (用户需手动激活循环)');
       
       await TrackPlayer.play();
     } catch (e) {

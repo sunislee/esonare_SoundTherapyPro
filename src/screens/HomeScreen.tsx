@@ -642,6 +642,10 @@ export const HomeScreen: React.FC = () => {
       sceneRoamManager.stopRoaming();
       setShufflingCategory(null);
       Animated.timing(shuffleAnimRef, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      
+      // 【🔁 Loop 实验】停止漫游 → 恢复单场景循环 (RepeatMode.Track)
+      const audioService = AudioService.getInstance();
+      audioService.applyLoopMode(false);
       return;
     }
 
@@ -664,6 +668,10 @@ export const HomeScreen: React.FC = () => {
     Animated.timing(shuffleAnimRef, { toValue: 1, duration: 300, useNativeDriver: true }).start();
     
     const audioService = AudioService.getInstance();
+    
+    // 【🔁 Loop 实验】启动漫游 → 关闭循环 (RepeatMode.Off)
+    audioService.applyLoopMode(true);
+    
     audioService.switchSoundscape(randomScene).catch(e => {
       console.error('[HomeScreen] ❌ 切换场景失败:', e);
       sceneRoamManager.stopRoaming();
