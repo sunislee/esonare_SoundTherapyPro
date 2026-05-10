@@ -159,7 +159,7 @@ const ORIENTAL_BG_MAP: Record<string, string> = {
   oriental_morning_buddha: 'buddha_morning.webp',
 };
 
-// 新增自然场景背景图本地 fallback 背景图
+// 【🔥 Release 兼容】新增自然场景必须使用 require() 静态资源（因为这些图在 assets 目录中）
 const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
   manual_morning_forest: require('../assets/scenes/morning_forest.webp'),
   manual_serene_lakeside: require('../assets/scenes/serene_lakeside.webp'),
@@ -168,33 +168,41 @@ const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
 
 /**
  * 获取场景的背景资源
- * 优先使用本地缓存，不存在时使用远程 URL
+ * 
+ * 资源来源优先级：
+ * 1. 新增自然场景 → require() 静态资源（Release 兼容）
+ * 2. 东方禅意/西方教会 → file:// 动态路径（需先下载）
+ *    - 已下载 → 返回 { uri: 'file://...' }
+ *    - 未下载 → 返回 null（触发 HomeScreen 占位块显示 🏯/⛪）
+ * 3. 其他场景 → backgrounds[category] 的 require() 静态资源
  */
 export const getSceneBackground = (sceneId: string, category: SceneCategory) => {
-  // 东方禅意场景
+  // 新增自然场景：优先使用静态资源 fallback
+  if (NEW_NATURE_BG_FALLBACK[sceneId]) {
+    return NEW_NATURE_BG_FALLBACK[sceneId];
+  }
+
+  // 东方禅意场景：使用动态路径（需下载后才能显示）
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
+      // 返回 file:// 路径，由 HomeScreen 判断 isResourceReady 决定是否显示
       return { uri: localPath.startsWith('file://') ? localPath : `file://${localPath}` };
     }
   }
   
-  // 西方教会场景（背景图在根目录，无子目录）
+  // 西方教会场景：使用动态路径（需下载后才能显示）
   if (sceneId.startsWith('western_church_')) {
     const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
+      // 返回 file:// 路径，由 HomeScreen 判断 isResourceReady 决定是否显示
       return { uri: localPath.startsWith('file://') ? localPath : `file://${localPath}` };
     }
   }
   
-  // 新增自然场景：使用本地 fallback
-  if (NEW_NATURE_BG_FALLBACK[sceneId]) {
-    return NEW_NATURE_BG_FALLBACK[sceneId];
-  }
-  
-  // 其他场景：使用本地 require
+  // 其他场景：使用本地 require 静态资源
   const bg = backgrounds[category];
   return bg?.source || null;
 };
