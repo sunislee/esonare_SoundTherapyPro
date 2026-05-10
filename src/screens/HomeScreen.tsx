@@ -39,6 +39,9 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
 const BUTTON_SIZE = 80;
 
+// 【状态持久化】Shuffle 模式存储 Key
+const SHUFFLE_STATE_KEY = '@soundtherapy/shuffle_state';
+
 // 【智能缩略图源选择器 - 优雅语义化版】
 // 返回值：
 //   - 有效图片源 (number 或 {uri}) → 显示真实图片
@@ -482,6 +485,7 @@ export const HomeScreen: React.FC = () => {
   const [downloadedSceneIds, setDownloadedSceneIds] = useState<Set<string>>(new Set());
   const [shufflingCategory, setShufflingCategory] = useState<SceneCategory | null>(null);
   const shuffleAnimRef = useRef(new Animated.Value(0)).current;
+  const [isDataReady, setIsDataReady] = useState(false); // 【数据就绪标志】
   
   // 【核心】使用后台下载 Hook（替代手动实现）
   const { downloadProgress: globalDownloadProgress, prioritizeScene } = useResourceDownloader();
@@ -541,6 +545,8 @@ export const HomeScreen: React.FC = () => {
 
       if (isMounted) {
         setDownloadedSceneIds(fullyReadyIds);
+        setIsDataReady(true); // 【数据就绪】实际文件检查完成
+        console.log('[HomeScreen] ✅ [数据就绪] downloadedSceneIds 已从实际文件加载完成');
 
         try {
           await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...fullyReadyIds]));
@@ -561,6 +567,12 @@ export const HomeScreen: React.FC = () => {
           if (cachedSet.size > 0) {
             console.log(`[HomeScreen] ⚡ 秒亮！从缓存加载: ${cachedSet.size} 个场景`);
             setDownloadedSceneIds(cachedSet);
+            setIsDataReady(true); // 【数据就绪】缓存已加载
+            console.log('[HomeScreen] ⚡ [数据就绪] downloadedSceneIds 已从缓存秒级加载');
+          } else {
+            // 缓存为空，但仍然标记就绪（避免阻塞恢复逻辑）
+            setIsDataReady(true);
+            console.log('[HomeScreen] ⚡ [数据就绪] 缓存为空，但标记数据已就绪');
           }
         }
       } catch (e) {
@@ -626,12 +638,193 @@ export const HomeScreen: React.FC = () => {
     }));
   }, [t, i18n.language]);
 
+  // 【状态持久化】严格校验并恢复 Shuffle 模式状态
+  const restoreShuffleState = useCallback(async () => {
+    console.log('[HomeScreen] 🔄 [持久化] 开始恢复 Shuffle 状态...');
+    console.log(`[HomeScreen] 📊 [持久化] 当前状态: isDataReady=${isDataReady}, downloadedSceneIds.size=${downloadedSceneIds.size}`);
+    
+    try {
+      // 【立即读取】不等待任何前置条件
+      const savedState = await AsyncStorage.getItem(SHUFFLE_STATE_KEY);
+      
+      if (!savedState) {
+        console.log('[HomeScreen] 📭 [持久化] 无保存的 Shuffle 状态 → 保持默认灰色');
+        return;
+      }
+
+      console.log(`[HomeScreen] 📦 [持久化] 发现保存的数据: ${savedState.substring(0, 100)}...`);
+
+      let parsedData: { category: string; timestamp: number };
+      try {
+        parsedData = JSON.parse(savedState);
+        console.log(`[HomeScreen] ✅ [持久化] JSON 解析成功: category=${parsedData.category}, timestamp=${parsedData.timestamp}`);
+      } catch (parseError) {
+        console.warn('[HomeScreen] ❌ [持久化-校验1失败] JSON 解析失败 → 原因：数据格式损坏', parseError);
+        await AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+        return;
+      }
+
+      // 【严格校验1】检查数据结构完整性
+      if (!parsedData.category || !parsedData.timestamp || typeof parsedData.timestamp !== 'number') {
+        console.warn('[HomeScreen] ❌ [持久化-校验1失败] 数据结构不完整 → 原因：缺少 category 或 timestamp 字段', parsedData);
+        await AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+        return;
+      }
+
+      // 【严格校验2】检查是否过期（1小时）
+      const EXPIRY_DURATION = 60 * 60 * 1000; // 1小时
+      const elapsedMinutes = Math.round((Date.now() - parsedData.timestamp) / 60000);
+      const isExpired = Date.now() - parsedData.timestamp > EXPIRY_DURATION;
+      
+      if (isExpired) {
+        console.warn(`[HomeScreen] ❌ [持久化-校验2失败] 已过期 → 原因：距离上次激活已过 ${elapsedMinutes} 分钟（超过1小时限制）`);
+        await AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+        return;
+      }
+      
+      console.log(`[HomeScreen] ✅ [持久化-校验2通过] 未过期 (${elapsedMinutes} 分钟前)`);
+
+      // 【严格校验3】验证 category 是否是合法分类名（使用实际的 CATEGORY_PRIORITY）
+            const validCategories = CATEGORY_PRIORITY;
+            
+            if (!validCategories.includes(parsedData.category)) {
+              console.warn(`[HomeScreen] ❌ [持久化-校验3失败] 分类名无效 → 原因："${parsedData.category}" 不在合法列表 [${validCategories.join(', ')}] 中`);
+              await AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+              return;
+            }
+      
+      console.log(`[HomeScreen] ✅ [持久化-校验3通过] 分类名有效: ${parsedData.category}`);
+
+      // 【宽松校验4】检查该分类下是否有基础场景定义（不强制要求已下载）
+      const hasScenesInCategory = SCENES.some(s => 
+        s.category === parsedData.category && s.isBaseScene
+      );
+
+      if (!hasScenesInCategory) {
+        console.warn(`[HomeScreen] ❌ [持久化-校验4失败] 场景不存在 → 原因：分类 "${parsedData.category}" 下无任何基础场景定义`);
+        await AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+        return;
+      }
+      
+      console.log(`[HomeScreen] ✅ [持久化-校验4通过] 该分类下有场景定义`);
+
+      // ✅ 所有校验通过，安全恢复状态
+      console.log(`[HomeScreen] 🎉 [持久化] 全部校验通过！开始恢复 Shuffle 状态: ${parsedData.category}`);
+      
+      const category = parsedData.category as SceneCategory;
+      
+      sceneRoamManager.startRoaming(category);
+      setShufflingCategory(category);
+      Animated.timing(shuffleAnimRef, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      
+      // 【关键】自动选择一个场景并开始播放（与 handleShuffle 逻辑一致）
+      const scenesInCategory = SCENES.filter(s => s.isBaseScene && s.category === category);
+      const readyScenes = scenesInCategory.filter(s => downloadedSceneIds.has(s.id));
+      
+      if (readyScenes.length > 0) {
+        const randomScene = readyScenes[Math.floor(Math.random() * readyScenes.length)];
+        
+        console.log(`[HomeScreen] 🎵 [持久化-自动播放] 恢复后自动开始播放: ${randomScene.id}`);
+        console.log(`[HomeScreen] 🎵 [持久化-自动播放] 该分类可用场景数: ${readyScenes.length}`);
+        
+        sceneRoamManager.recordPlayedScene(randomScene.id);
+        
+        const audioService = AudioService.getInstance();
+        audioService.applyLoopMode(true); // 🔁 Loop 实验：关闭循环
+        
+        audioService.switchSoundscape(randomScene).catch(e => {
+          console.error('[HomeScreen] ❌ [持久化-自动播放] 恢复播放失败:', e);
+          sceneRoamManager.stopRoaming();
+          setShufflingCategory(null);
+          AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+        });
+      } else {
+        console.warn('[HomeScreen] ⚠️ [持久化-自动播放] 该分类下没有已下载场景，仅恢复 UI 状态');
+      }
+      
+    } catch (error) {
+      console.error('[HomeScreen] ❌ [持久化] 恢复 Shuffle 状态异常:', error);
+      await AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+    }
+  }, [isDataReady, downloadedSceneIds]); // 依赖数据就绪状态
+
   useEffect(() => {
+    console.log('[HomeScreen] 🚀 [初始化] HomeScreen 组件挂载，开始初始化...');
+    
     AsyncStorage.getItem('USER_NAME').then(name => setUserName(name || ''));
     const slogans = [t('slogans.journey'), t('slogans.peace'), t('slogans.silence')];
     setSlogan(slogans[Math.floor(Math.random() * slogans.length)]);
     Animated.timing(greetingFadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
-  }, [t]);
+    
+    // 【关键改进】不使用 setTimeout！改为监听 isDataReady 变化
+    // 原因：冷启动时 downloadedSceneIds 加载时间不确定（可能 100ms-2000ms）
+    // 使用 isDataReady 标志确保数据真正就绪后才恢复
+    console.log('[HomeScreen] ⏳ [持久化] 等待 isDataReady=true 后触发恢复逻辑...');
+  }, [t]); // 只在 t 变化时执行（语言切换）
+
+  // 【核心】当数据就绪后立即触发 Shuffle 状态恢复
+  useEffect(() => {
+    if (isDataReady) {
+      console.log(`[HomeScreen] ✅ [数据就绪触发] isDataReady=${isDataReady}，开始执行 restoreShuffleState()`);
+      restoreShuffleState();
+    }
+  }, [isDataReady, restoreShuffleState]);
+
+  // 【统一清理函数】彻底清空 Shuffle 状态（供多处调用）
+  const clearShuffleState = useCallback(async () => {
+    console.log('[HomeScreen] 🧹 [彻底清理] 开始清除所有 Shuffle 相关状态...');
+    
+    try {
+      // 1. 停止漫游引擎
+      sceneRoamManager.stopRoaming();
+      
+      // 2. 清空本地状态
+      setShufflingCategory(null);
+      
+      // 3. 重置动画到默认值
+      Animated.timing(shuffleAnimRef, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      
+      // 4. 清除持久化存储
+      await AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
+      
+      // 5. 恢复循环模式
+      const audioService = AudioService.getInstance();
+      audioService.applyLoopMode(false);
+      
+      console.log('[HomeScreen] ✅ [彻底清理] 所有 Shuffle 状态已清除');
+    } catch (error) {
+      console.error('[HomeScreen] ❌ [彻底清理] 清除状态异常:', error);
+    }
+  }, []);
+
+  // 【跨页面同步】监听播放页 Shuffle 状态变化
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      'shuffleStateChanged',
+      (data: { isRoaming: boolean; category: SceneCategory | null }) => {
+        console.log(`[HomeScreen] 📡 [跨页同步] 收到播放页通知: isRoaming=${data.isRoaming}, category=${data.category}`);
+        
+        if (data.isRoaming && data.category) {
+          // 播放页开启了漫游 → 同步点亮 HomeScreen 的图标
+          setShufflingCategory(data.category);
+          Animated.timing(shuffleAnimRef, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+          console.log(`[HomeScreen] ✅ [跨页同步] 已更新为激活状态: ${data.category}`);
+        } else {
+          // 播放页关闭了漫游 → 彻底清空状态（包括 AsyncStorage）
+          clearShuffleState();
+          console.log('[HomeScreen] ✅ [跨页同步] 已彻底清空 Shuffle 状态');
+        }
+      }
+    );
+
+    console.log('[HomeScreen] 👂 [跨页同步] 已注册 shuffleStateChanged 监听器');
+    
+    // 【内存安全】组件卸载时移除监听器
+    return () => {
+      subscription.remove();
+      console.log('[HomeScreen] 🧹 [跨页同步] 已移除 shuffleStateChanged 监听器');
+    };
+  }, [clearShuffleState]);
 
   const handleShuffle = useCallback((category: SceneCategory) => {
     console.log(`[HomeScreen] 🔘 [handleShuffle] 按钮被点击! category=${category}, shufflingCategory=${shufflingCategory}`);
@@ -639,13 +832,8 @@ export const HomeScreen: React.FC = () => {
     
     if (shufflingCategory === category) {
       console.log(`[HomeScreen] 🛑 停止分类漫游: ${category}`);
-      sceneRoamManager.stopRoaming();
-      setShufflingCategory(null);
-      Animated.timing(shuffleAnimRef, { toValue: 0, duration: 300, useNativeDriver: true }).start();
-      
-      // 【🔁 Loop 实验】停止漫游 → 恢复单场景循环 (RepeatMode.Track)
-      const audioService = AudioService.getInstance();
-      audioService.applyLoopMode(false);
+      // 使用统一清理函数彻底清空所有状态
+      clearShuffleState();
       return;
     }
 
@@ -667,6 +855,34 @@ export const HomeScreen: React.FC = () => {
     
     Animated.timing(shuffleAnimRef, { toValue: 1, duration: 300, useNativeDriver: true }).start();
     
+    // 【状态持久化】保存 Shuffle 状态（带时间戳，1小时后过期）
+    const stateToSave = {
+      category,
+      timestamp: Date.now(),
+    };
+    
+    console.log(`[HomeScreen] 💾 [持久化-保存] 准备保存数据: ${JSON.stringify(stateToSave)}`);
+    console.log(`[HomeScreen] 💾 [持久化-保存] 使用 Key: ${SHUFFLE_STATE_KEY}`);
+    
+    AsyncStorage.setItem(SHUFFLE_STATE_KEY, JSON.stringify(stateToSave)).then(async () => {
+      console.log(`[HomeScreen] ✅ [持久化-保存] AsyncStorage.setItem() Promise 已 resolve`);
+      
+      // 【立即验证】确认数据真的写入了
+      try {
+        const verifyData = await AsyncStorage.getItem(SHUFFLE_STATE_KEY);
+        if (verifyData) {
+          const parsed = JSON.parse(verifyData);
+          console.log(`[HomeScreen] ✅ [持久化-验证] 保存成功！读取到的数据: category=${parsed.category}, timestamp=${parsed.timestamp}`);
+        } else {
+          console.error('[HomeScreen] ❌ [持久化-验证] 严重错误：setItem 成功但 getItem 返回 null！');
+        }
+      } catch (verifyError) {
+        console.error('[HomeScreen] ❌ [持久化-验证] 验证读取失败:', verifyError);
+      }
+    }).catch((saveError) => {
+      console.error('[HomeScreen] ❌ [持久化-保存] AsyncStorage.setItem() 失败:', saveError);
+    });
+    
     const audioService = AudioService.getInstance();
     
     // 【🔁 Loop 实验】启动漫游 → 关闭循环 (RepeatMode.Off)
@@ -676,6 +892,8 @@ export const HomeScreen: React.FC = () => {
       console.error('[HomeScreen] ❌ 切换场景失败:', e);
       sceneRoamManager.stopRoaming();
       setShufflingCategory(null);
+      // 【状态持久化】失败时也清除
+      AsyncStorage.removeItem(SHUFFLE_STATE_KEY);
     });
   }, [shufflingCategory, downloadedSceneIds, shuffleAnimRef]);
 
@@ -740,10 +958,18 @@ export const HomeScreen: React.FC = () => {
             <View key={group.title} style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <Text style={styles.sectionTitle}>{group.label}</Text>
+                {/* 🔴🔴🔴 调试版本 Shuffle 按钮 - 已优化样式 */}
                 <TouchableOpacity
-                  onPress={() => handleShuffle(group.title)}
+                  onPress={() => {
+                    console.log(`[HomeScreen] 🔥🔥🔴 [DEBUG] Shuffle 按钮被点击！！！ group.title=${group.title}, group.label=${group.label}`);
+                    console.log(`[HomeScreen] 🔥 [DEBUG] shufflingCategory 当前值: ${shufflingCategory}`);
+                    handleShuffle(group.title);
+                  }}
                   activeOpacity={0.7}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                  style={{
+                    padding: 8,
+                  }}
                 >
                   <Animated.View style={{ transform: [{ rotate: shuffleAnimRef.interpolate({
                     inputRange: [0, 1],
@@ -751,8 +977,8 @@ export const HomeScreen: React.FC = () => {
                   }) }] }}>
                     <Icon 
                       name={isShuffling ? "shuffle" : "shuffle-outline"} 
-                      size={20} 
-                      color={isShuffling ? "#6C5DD3" : "rgba(255,255,255,0.5)"} 
+                      size={24} 
+                      color={isShuffling ? "#6C5DD3" : "rgba(255,255,255,0.6)"} 
                     />
                   </Animated.View>
                 </TouchableOpacity>

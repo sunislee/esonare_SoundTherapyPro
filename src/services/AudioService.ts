@@ -29,6 +29,9 @@ import i18n from '../i18n';
 // 【交互音效独立播放器】
 import SFXPlayer from './SFXPlayer';
 
+// 【Shuffle 后台切换优化】静态导入 SceneRoamManager，避免锁屏后 await import() 卡死
+import { sceneRoamManager } from './SceneRoamManager';
+
 // 【防御性检查】确保 TrackPlayer 正确导入
 if (!TrackPlayer || !TrackPlayer.setupPlayer) {
   console.error('[AudioService] ❌ TrackPlayer 导入失败:', TrackPlayer);
@@ -147,6 +150,9 @@ class AudioService {
   private preloadedTrack: Track | null = null; // 预加载的Track对象
   private isPreloaded = false; // 是否已完成预加载
   private preloadTriggered = false; // 是否已触发预加载（80%时）
+  
+  // 【🆕 Shuffle 原生队列预加载】
+  private shuffleQueuePreloaded = false; // Shuffle 队列是否已预加载到原生层
   
   // 【Cross-fade 淡入淡出锁】
   private isFading = false; // 防止快速连续切换导致音量逻辑冲突
@@ -293,16 +299,38 @@ class AudioService {
         console.log('═══════════════════════════════════════');
         
         try {
-          const { sceneRoamManager } = await import('./SceneRoamManager');
           const isRoaming = sceneRoamManager.getIsRoaming();
           
           console.log(`[AudioService] 🎲 [Ended] 漫游状态: isRoaming=${isRoaming}, currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
           
           if (isRoaming && this.currentBaseScene) {
-            // 【关键】先强制确保 RepeatMode.Off
-            await TrackPlayer.setRepeatMode(RepeatMode.Off);
-            console.log('[AudioService] 🎲✅ [Ended] 漫游模式激活！RepeatMode已强制设为Off');
+            console.log('[AudioService] 🎲✅ [Ended] 漫游模式激活！');
             
+            // ══════════════════════════════════════════
+            // 【🔑 核心修复】检查是否有预加载的下一首在队列中
+            // 如果有 → 让原生层自动推进（不依赖 JS）
+            // 如果没有 → 尝试 JS 切换（前台可用，后台可能失败）
+            // ══════════════════════════════════════════
+            try {
+              const queue = await TrackPlayer.getQueue();
+              const currentTrackIndex = await TrackPlayer.getCurrentTrack();
+              
+              console.log(`[AudioService] 🔍 [Ended] 队列长度: ${queue.length}, 当前索引: ${currentTrackIndex}`);
+              
+              if (queue.length > 1 && currentTrackIndex !== null && currentTrackIndex < queue.length - 1) {
+                console.log('[AudioService] ✅ [Ended] 队列中有下一首！等待原生层自动推进...');
+                console.log('[AudioService] ✅ [Ended] 不执行 JS 切换，避免锁屏卡死');
+                
+                this.isActuallyPlaying = true; // 保持播放状态
+                return; // 让原生层处理！
+              } else {
+                console.warn('[AudioService] ⚠️ [Ended] 队列为空或无下一首，尝试 JS 切换...');
+              }
+            } catch (queueError) {
+              console.warn('[AudioService] ⚠️ [Ended] 检查队列失败:', queueError);
+            }
+            
+            // 【兜底】如果没有预加载或队列检查失败，尝试 JS 切换
             const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
             console.log(`[AudioService] 🎲 [Ended] getNextRoamScene 返回: ${nextScene?.id || 'null'}`);
             
@@ -353,7 +381,6 @@ class AudioService {
       
       // 【🔁 Loop 实验】检查是否单场景循环模式
       try {
-        const { sceneRoamManager } = await import('./SceneRoamManager');
         const isRoaming = sceneRoamManager.getIsRoaming();
         if (!isRoaming) {
           const currentMode = await TrackPlayer.getRepeatMode();
@@ -371,15 +398,28 @@ class AudioService {
       
       // 触发漫游切换
       try {
-        const { sceneRoamManager } = await import('./SceneRoamManager');
         const isRoaming = sceneRoamManager.getIsRoaming();
         
         console.log(`[AudioService] 🎲 [QueueEnded] 漫游状态: isRoaming=${isRoaming}, currentBaseScene=${this.currentBaseScene?.id || 'null'}`);
         
         if (isRoaming && this.currentBaseScene) {
-          // 【关键】先强制确保 RepeatMode.Off
-          await TrackPlayer.setRepeatMode(RepeatMode.Off);
-          console.log('[AudioService] 🎲✅ [QueueEnded] 漫游模式激活！RepeatMode已强制设为Off');
+          console.log('[AudioService] 🎲✅ [QueueEnded] 漫游模式激活！');
+          
+          // ══════════════════════════════════════════
+          // 【🔑 核心修复】队列结束时，检查是否需要重新加载
+          // 正常情况下不应该走到这里（因为有预加载机制）
+          // 如果走到了 → 说明预加载失败或队列异常
+          // ══════════════════════════════════════════
+          try {
+            const queue = await TrackPlayer.getQueue();
+            console.log(`[AudioService] 🔍 [QueueEnded] 当前队列长度: ${queue.length}`);
+            
+            if (queue.length > 0) {
+              console.log('[AudioService] ⚠️ [QueueEnded] 队列非空但触发了 QueueEnded，尝试重新加载...');
+            }
+          } catch (queueError) {
+            console.warn('[AudioService] ⚠️ [QueueEnded] 检查队列失败:', queueError);
+          }
           
           const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
           console.log(`[AudioService] 🎲 [QueueEnded] getNextRoamScene 返回: ${nextScene?.id || 'null'}`);
@@ -398,6 +438,143 @@ class AudioService {
         }
       } catch (e) {
         console.error('[AudioService] ❌❌❌ 漫游切换异常:', e);
+      }
+    });
+
+    // ═══════════════════════════════════════════════════
+    // 【🔑 核心优化】PlaybackTrackChanged 监听器
+    // 当 TrackPlayer 原生层自动推进到下一首时触发
+    // 用于：锁屏后 Shuffle 自动切换的场景同步
+    // ═══════════════════════════════════════════════════
+    TrackPlayer.addEventListener(Event.PlaybackTrackChanged, async (event) => {
+      try {
+        const { track, position, nextTrack } = event as any;
+        
+        console.log('═══════════════════════════════════════');
+        console.log('[AudioService] 🎵🎵🎵 [TrackChanged] 检测到曲目切换！');
+        console.log(`[AudioService] 🎵 [TrackChanged] prevTrack: ${track?.id || 'null'}`);
+        console.log(`[AudioService] 🎵 [TrackChanged] nextTrack: ${nextTrack?.id || 'null'}`);
+        console.log(`[AudioService] 🎵 [TrackChanged] position: ${position || 0}`);
+        console.log('═══════════════════════════════════════');
+        
+        // 检查是否是 Shuffle 模式下的自动切换
+        if (!sceneRoamManager.getIsRoaming()) {
+          console.log('[AudioService] ℹ️ [TrackChanged] 非漫游模式，跳过处理');
+          return;
+        }
+        
+        // ══════════════════════════════════════════
+        // 【🆕 核心改进】从 nextTrack 获取场景信息
+        // 新方案：不再依赖 preloadedNextScene，直接从 Track 对象获取！
+        // ══════════════════════════════════════════
+        const nextTrackId = nextTrack?.id;
+        
+        if (!nextTrackId) {
+          console.warn('[AudioService] ⚠️ [TrackChanged] 无法获取下一首 ID');
+          return;
+        }
+        
+        console.log(`[AudioService] 🔍 [TrackChanged] 下一首ID: ${nextTrackId}`);
+        
+        // 尝试从 SceneRoamManager 或全局配置中查找对应的场景对象
+        let nextScene: Scene | null = null;
+        
+        // 方法1：检查预加载缓存（兼容旧逻辑）
+        if (this.preloadedNextScene?.id === nextTrackId) {
+          nextScene = this.preloadedNextScene;
+          console.log('[AudioService] ✅ [TrackChanged] 从预加载缓存找到场景');
+        }
+        
+        // 方法2：从 SceneRoamManager 获取（新方案）
+        if (!nextScene) {
+          const allScenes = sceneRoamManager.getBaseScenesByCategory(sceneRoamManager.roamCategory);
+          nextScene = allScenes.find((s: any) => s.id === nextTrackId) || null;
+          if (nextScene) {
+            console.log('[AudioService] ✅ [TrackChanged] 从 RoamManager 找到场景');
+          }
+        }
+        
+        if (!nextScene) {
+          console.warn(`[AudioService] ⚠️ [TrackChanged] 未找到场景: ${nextTrackId}，使用基本信息`);
+          // 即使找不到完整场景对象，也要更新基本状态
+          this.currentBaseScene = { 
+            id: nextTrackId, 
+            title: nextTrack?.title || nextTrackId,
+            filename: '',
+            category: sceneRoamManager.roamCategory || 'nature',
+            duration: 0
+          } as Scene;
+        } else {
+          // ══════════════════════════════════════════
+          // 【核心】更新全局播放状态！
+          // ══════════════════════════════════════════
+          
+          const previousScene = this.currentBaseScene;
+          this.currentBaseScene = nextScene;
+          
+          console.log(`[AudioService] ✅ [TrackChanged] 场景已更新: ${previousScene?.id} → ${this.currentBaseScene.id}`);
+          console.log(`[AudioService] ✅ [TrackChanged] 标题: ${this.currentBaseScene.title}`);
+          
+          // 记录已播放场景（用于避重）
+          sceneRoamManager.recordPlayedScene(nextScene.id);
+        }
+        
+        // 重置播放状态
+        this.isActuallyPlaying = true;
+        this.isFading = false;
+        this.isSwitchingScene = false;
+        
+        // 清空旧的预加载缓存
+        this.preloadedNextScene = null;
+        this.preloadedTrack = null;
+        this.isPreloaded = false;
+        this.preloadTriggered = false;
+        this.hasTriggeredEarlyFade = false;
+        
+        // 通知 UI 层更新（封面、标题、进度条等）
+        this.notifyListeners();
+        
+        console.log('[AudioService] ✅✅✅ [TrackChanged] 全局状态已同步！');
+        console.log(`[AudioService] ✅ [TrackChanged] 当前播放: ${this.currentBaseScene.title}`);
+        
+        // ══════════════════════════════════════════
+        // 【🆕 关键优化】检查并补充队列！
+        // 当剩余曲目不足时，提前补充新的随机曲目
+        // ══════════════════════════════════════════
+        try {
+          const queue = await TrackPlayer.getQueue();
+          const currentTrackIndex = await TrackPlayer.getCurrentTrack();
+          const remainingTracks = queue.length - (currentTrackIndex !== null ? currentTrackIndex + 1 : 0);
+          
+          console.log(`[AudioService] 📊 [TrackChanged-队列检查] 剩余待播放: ${remainingTracks} 首`);
+          
+          if (remainingTracks <= 2 && this.shuffleQueuePreloaded) {
+            console.log('[AudioService] 🔄 [TrackChanged] 队列即将耗尽，补充新曲目...');
+            await this.preloadShuffleQueue(sceneRoamManager);
+          }
+        } catch (queueCheckError) {
+          console.warn('[AudioService] ⚠️ [TrackChanged] 队列检查失败:', queueCheckError);
+        }
+        
+        // 重新启动进度监听器（为后续操作做准备）
+        this.stopProgressMonitor();
+        this.stopRoamPolling();
+        
+        // 延迟一小段时间再启动，确保原生层已经稳定
+        setTimeout(() => {
+          if (sceneRoamManager.getIsRoaming() && this.isActuallyPlaying) {
+            this.startProgressMonitor();
+            this.startRoamPolling();
+            console.log('[AudioService] 🔄 [TrackChanged] 监听器已重启');
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('[AudioService] ❌ [TrackChanged] 处理异常:', error);
+        
+        // 即使异常也要确保状态正确
+        this.isActuallyPlaying = true; // 假设正在播放
+        this.notifyListeners();
       }
     });
   }
@@ -598,21 +775,47 @@ class AudioService {
      */
     private async forceRepeatModeOffForRoaming() {
       try {
-        const { sceneRoamManager } = await import('./SceneRoamManager');
         if (sceneRoamManager.getIsRoaming()) {
-          console.log('[AudioService] 🛡️ [全局拦截] 检测到漫游模式，强制关闭循环！');
-          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          console.log('[AudioService] 🛡️ [全局拦截] 检测到漫游模式！');
+          console.log('═══════════════════════════════════════');
+          console.log('[AudioService] 🚀🚀🚀 [原生队列方案] 启动 Shuffle 原生队列预加载！');
+          console.log('═══════════════════════════════════════');
           
-          const currentMode = await TrackPlayer.getRepeatMode();
-          console.log(`[AudioService] 🛡️ [全局拦截] 验证 RepeatMode = ${currentMode} (必须为 0=Off)`);
+          // ══════════════════════════════════════════
+          // 【🔑🔑🔑 核心新方案】启动时一次性预加载多首到队列！
+          // 原理：锁屏后 JS 线程挂起，无法动态添加曲目
+          // 方案：在启动 Shuffle 时就预加载 5-10 首随机曲目
+          // 效果：原生层自动按顺序播放整个队列，无需 JS 参与！
+          // ══════════════════════════════════════════
+          const preloadResult = await this.preloadShuffleQueue(sceneRoamManager);
           
-          // 启动轮询定时器（兜底机制）
+          // ══════════════════════════════════════════
+          // 【🚨 关键】显式设置 RepeatMode.Queue 确保队列自动推进！
+          // Queue = 循环播放整个队列（播完最后一首回到第一首）
+          // Off = 播放完当前就停止 ❌❌❌
+          // Track = 循环当前单曲 ❌
+          // ══════════════════════════════════════════
+          if (preloadResult) {
+            try {
+              await TrackPlayer.setRepeatMode(RepeatMode.Queue);
+              console.log('[AudioService] 🔄 [全局拦截] RepeatMode=Queue ✅✅✅ （队列将循环播放）');
+            } catch (queueError) {
+              console.warn('[AudioService] ⚠️ [全局拦截] 设置Queue失败，尝试保持默认:', queueError);
+            }
+          } else {
+            console.warn('[AudioService] ⚠️ [全局拦截] 预加载失败，不设置Queue模式');
+          }
+          
+          // 启动轮询定时器（兜底机制 - 前台时使用）
           this.startRoamPolling();
           
-          // 【核心】启动进度监听定时器（主要机制 - 提前2秒触发）
+          // 【核心】启动进度监听定时器（主要机制 - 提前2秒触发，前台使用）
           this.startProgressMonitor();
         } else {
           // 【🔁 Loop 实验】非漫游模式 → 默认 Off（用户手动激活循环才设 Track）
+          
+          // 清空预加载的队列信息
+          this.shuffleQueuePreloaded = false;
           
           // 停止轮询定时器
           this.stopRoamPolling();
@@ -622,6 +825,89 @@ class AudioService {
         }
       } catch (e) {
         console.warn('[AudioService] 🛡️ [全局拦截] 检查失败:', e);
+      }
+    }
+    
+    /**
+     * 【🆕 核心方法】预加载 Shuffle 队列到原生层
+     * 在启动 Shuffle 时调用，一次性添加多首随机曲目到 TrackPlayer 队列
+     * 这样即使锁屏后 JS 线程挂起，原生层也能自动推进！
+     * @returns 是否成功预加载
+     */
+    private async preloadShuffleQueue(sceneRoamManager: any): Promise<boolean> {
+      if (!this.currentBaseScene) {
+        console.warn('[AudioService] ⚠️ [Shuffle队列] 无当前场景');
+        return false;
+      }
+      
+      const SHUFFLE_QUEUE_SIZE = 8; // 预加载 8 首随机曲目
+      
+      try {
+        console.log(`[AudioService] 🎲 [Shuffle队列] 开始预加载 ${SHUFFLE_QUEUE_SIZE} 首随机曲目...`);
+        
+        // 获取当前分类下的所有可用场景
+        const category = sceneRoamManager.roamCategory;
+        const allScenes = sceneRoamManager.getBaseScenesByCategory(category);
+        
+        // 过滤掉当前正在播放的场景
+        const availableScenes = allScenes.filter((scene: any) => scene.id !== this.currentBaseScene?.id);
+        
+        if (availableScenes.length === 0) {
+          console.warn('[AudioService] ⚠️ [Shuffle队列] 无可用场景');
+          return false;
+        }
+        
+        console.log(`[AudioService] 📊 [Shuffle队列] 可用场景数: ${availableScenes.length}`);
+        
+        // 随机打乱并选择 SHUFFLE_QUEUE_SIZE 首
+        const shuffled = [...availableScenes].sort(() => Math.random() - 0.5);
+        const selectedScenes = shuffled.slice(0, Math.min(SHUFFLE_QUEUE_SIZE, shuffled.length));
+        
+        console.log(`[AudioService] 🎯 [Shuffle队列] 已选择 ${selectedScenes.length} 首随机场景:`);
+        selectedScenes.forEach((scene: any, index: number) => {
+          console.log(`   ${index + 1}. ${scene.id} (${scene.title})`);
+        });
+        
+        // 构建所有 Track 对象
+        const tracks: any[] = [];
+        for (const scene of selectedScenes) {
+          const track = await this.buildTrackForScene(scene);
+          if (track) {
+            tracks.push(track);
+          }
+        }
+        
+        if (tracks.length === 0) {
+          console.error('[AudioService] ❌ [Shuffle队列] 所有 Track 构建失败');
+          return false;
+        }
+        
+        console.log(`[AudioService] 📦 [Shuffle队列] 成功构建 ${tracks.length} 个 Track 对象`);
+        
+        // 添加到 TrackPlayer 原生队列
+        await TrackPlayer.add(tracks);
+        
+        // 验证队列
+        const queue = await TrackPlayer.getQueue();
+        console.log('═══════════════════════════════════════');
+        console.log(`[AudioService] ✅✅✅ [Shuffle队列-成功] 已添加 ${tracks.length} 首到原生队列！`);
+        console.log(`[AudioService] ✅ [Shuffle队列] 当前队列总长度: ${queue.length}`);
+        console.log('[AudioService] ✅ [Shuffle队列] 队列内容:');
+        queue.forEach((track: any, index: number) => {
+          console.log(`   [${index}] ${track.id}${index === 0 ? ' ← 当前播放' : ''}`);
+        });
+        console.log('═══════════════════════════════════════');
+        console.log('[AudioService] 🎉 [Shuffle队列] 锁屏后将由原生层自动推进，无需JS参与！');
+        
+        // 标记已预加载
+        this.shuffleQueuePreloaded = true;
+        
+        return true; // ✅ 成功
+        
+      } catch (error) {
+        console.error('[AudioService] ❌ [Shuffle队列] 预加载失败:', error);
+        this.shuffleQueuePreloaded = false;
+        return false; // ❌ 失败
       }
     }
     
@@ -647,7 +933,6 @@ class AudioService {
         }
         
         try {
-          const { sceneRoamManager } = await import('./SceneRoamManager');
           
           if (!sceneRoamManager.getIsRoaming()) {
             this.stopRoamPolling();
@@ -828,7 +1113,6 @@ class AudioService {
         }
         
         try {
-          const { sceneRoamManager } = await import('./SceneRoamManager');
           
           // 检查是否还在漫游模式
           if (!sceneRoamManager.getIsRoaming()) {
@@ -977,10 +1261,33 @@ class AudioService {
         this.isPreloaded = true;
         
         console.log('═══════════════════════════════════════════════');
-        console.log('[AudioService] ✅✅✅ [预加载] 完成！');
+        console.log('[AudioService] ✅✅✅ [预加载-内存缓存] 完成！');
         console.log(`[AudioService] ✅ 场景: ${nextScene.id} (${nextScene.title})`);
         console.log(`[AudioService] ✅ URL: ${(track.url as string)?.substring(0, 50)}...`);
-        console.log('[AudioService] ✅ 状态：已缓存到内存，等待切换指令');
+        
+        // ══════════════════════════════════════════
+        // 【🔑 核心优化】将下一首添加到 TrackPlayer 原生队列！
+        // 这样即使锁屏后 JS 线程挂起，原生层也能自动推进到下一首
+        // ══════════════════════════════════════════
+        try {
+          const queue = await TrackPlayer.getQueue();
+          
+          if (queue.length <= 1) {
+            console.log('[AudioService] 🎯 [预加载-队列] 当前队列长度:', queue.length);
+            console.log('[AudioService] 🎯 [预加载-队列] 正在添加下一首到原生队列...');
+            
+            await TrackPlayer.add(track);
+            
+            const newQueue = await TrackPlayer.getQueue();
+            console.log(`[AudioService] ✅✅✅ [预加载-队列成功] 已添加到队列！新队列长度: ${newQueue.length}`);
+            console.log('[AudioService] ✅ [预加载-队列] 锁屏后将由原生层自动推进到下一首！');
+          } else {
+            console.log('[AudioService] ℹ️ [预加载-队列跳过] 队列已有待播放曲目，跳过重复添加');
+          }
+        } catch (queueError) {
+          console.warn('[AudioService] ⚠️ [预加载-队列失败] 添加到队列失败（不影响内存缓存）:', queueError);
+        }
+        
         console.log('═══════════════════════════════════════════════');
         
       } catch (error) {
@@ -994,19 +1301,27 @@ class AudioService {
      */
     private async buildTrackForScene(scene: Scene): Promise<Track | null> {
       try {
-        const audioPath = getAudioFilePath(scene.id);
-        const fileExists = await RNFS.exists(audioPath);
+        const effectiveCategory = scene.id.startsWith('manual_') ? 'nature' : scene.category;
+        const localPath = getLocalPath(effectiveCategory, scene.filename);
         
-        let url: string;
-        let title: string;
-        let artist: string;
+        let url: string | null = null;
         
-        if (fileExists) {
-          url = `file://${audioPath}`;
-          title = scene.title;
-          artist = 'SoundTherapy Pro';
-        } else {
-          console.warn(`[AudioService] ⚠️ 音频文件不存在: ${audioPath}`);
+        if (localPath) {
+          const fileExists = await RNFS.exists(localPath.replace('file://', ''));
+          if (fileExists) {
+            url = localPath;
+          }
+        }
+        
+        if (!url) {
+          const downloadUrls = getDownloadUrl(scene.id);
+          if (downloadUrls && downloadUrls.length > 0 && downloadUrls[0]) {
+            url = downloadUrls[0];
+          }
+        }
+        
+        if (!url) {
+          console.warn(`[AudioService] ⚠️ [buildTrack] 无可用音频源: ${scene.id}`);
           return null;
         }
         
@@ -1110,8 +1425,17 @@ class AudioService {
         this.currentBaseScene = nextScene;
         this.notifyListeners();
         
-        // 设置RepeatMode为Off（关键！防止循环播放）
-        await TrackPlayer.setRepeatMode(RepeatMode.Off);
+        // ══════════════════════════════════════════
+        // 【🚨 关键修复】RepeatMode 智能设置
+        // 漫游模式 → 保持默认（支持队列自动推进）✅
+        // 非漫游模式 → Off（防止循环）
+        // ══════════════════════════════════════════
+        if (sceneRoamManager.getIsRoaming()) {
+          console.log('[AudioService] [seamlessSwitch] 漫游模式，保持默认RepeatMode');
+        } else {
+          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          console.log('[AudioService] [seamlessSwitch] 非漫游模式，RepeatMode=Off');
+        }
         
         // 使用预构建好的Track直接添加（比playScene快，因为省去了构建时间）
         console.log('[AudioService] 📥 [Phase 2/3] 使用预缓存Track加载...');
@@ -1153,7 +1477,6 @@ class AudioService {
         // ═══════════════════════════════════════════════════
         
         try {
-          const { sceneRoamManager } = await import('./SceneRoamManager');
           
           if (sceneRoamManager.getIsRoaming()) {
             console.log('[AudioService] 🔄 [无缝切换] 漫游仍在进行，重新启动进度监听...');
@@ -1239,14 +1562,17 @@ class AudioService {
       // ══════════════════════════════════════════
       // 【🔁 Loop 实验】根据漫游状态智能设置 RepeatMode：
       //   - 非漫游（单场景）→ RepeatMode.Off（默认不循环，用户手动激活）
-      //   - 漫游模式 → RepeatMode.Off（由漫游逻辑切换）
+      //   - 漫游模式 → 保持默认（允许原生队列自动推进）✅
       //   - 用户点击循环按钮 → applyLoopMode() 设为 Track
       // ══════════════════════════════════════════
       try {
-        const { sceneRoamManager } = await import('./SceneRoamManager');
         const isRoaming = sceneRoamManager.getIsRoaming();
-        await TrackPlayer.setRepeatMode(RepeatMode.Off);
-        console.log(`[AudioService] [playScene] RepeatMode=Off (isRoaming=${isRoaming}, 用户需手动激活循环)`);
+        if (!isRoaming) {
+          await TrackPlayer.setRepeatMode(RepeatMode.Off);
+          console.log(`[AudioService] [playScene] RepeatMode=Off (非漫游模式)`);
+        } else {
+          console.log(`[AudioService] [playScene] 漫游模式，保持默认RepeatMode（支持队列自动推进）`);
+        }
       } catch (e) {
         console.warn('[AudioService] ⚠️ [playScene] 设置RepeatMode失败:', e);
       }
@@ -1328,8 +1654,39 @@ class AudioService {
       }
 
       await this.setupPlayer();
-      await TrackPlayer.reset();
-      await TrackPlayer.removeUpcomingTracks();
+      
+      // ══════════════════════════════════════════
+      // 【🔑🔑🔑 核心修复】漫游模式下保护预加载队列！
+      // 问题：reset() + removeUpcomingTracks() 会清空 preloadNextScene() 添加的下一首
+      // 方案：漫游模式 + 队列有下一首 → 跳过清空操作
+      // ══════════════════════════════════════════
+      const isRoaming = sceneRoamManager.getIsRoaming();
+      let shouldPreserveQueue = false;
+      
+      if (isRoaming) {
+        try {
+          const queue = await TrackPlayer.getQueue();
+          const currentTrack = await TrackPlayer.getCurrentTrack();
+          
+          console.log(`[AudioService] 🛡️ [playScene-队列检查] 漫游模式，当前队列长度: ${queue.length}, 当前索引: ${currentTrack}`);
+          
+          if (queue.length > 1 && currentTrack !== null && currentTrack < queue.length - 1) {
+            shouldPreserveQueue = true;
+            console.log('[AudioService] ✅ [playScene-队列保护] 检测到预加载的下一首，跳过 reset/removeUpcomingTracks！');
+            console.log(`[AudioService] ✅ [playScene-队列保护] 保护队列: ${queue.map(t => t.id).join(' → ')}`);
+          } else {
+            console.log('[AudioService] ⚠️ [playScene-队列检查] 队列无待播放曲目或只有一首，正常清空');
+          }
+        } catch (checkError) {
+          console.warn('[AudioService] ⚠️ [playScene-队列检查失败]:', checkError);
+        }
+      }
+      
+      if (!shouldPreserveQueue) {
+        await TrackPlayer.reset();
+        await TrackPlayer.removeUpcomingTracks();
+        __DEV__ && console.log('[AudioService] [playScene] 执行 reset + removeUpcomingTracks');
+      }
 
       // 【关键修复】本地文件直接使用原始路径，不要经过 getValidUrl 二次处理
       let finalUri: string;
@@ -2166,6 +2523,7 @@ class AudioService {
     
     const currentVolume = this.ambientVolume; // 【关键】捕获当前真实音量
     this.isFading = true;
+    const startTime = Date.now();
     console.log(`[AudioService] 🎵 [Sine-淡出v2-响应] 开始，时长: ${duration}ms, 当前音量: ${currentVolume}`);
     
     try {
@@ -2182,6 +2540,12 @@ class AudioService {
       for (let i = 1; i < volumes.length; i++) {
         if (!this.isFading) break; // 支持外部 cancel
         
+        const elapsed = Date.now() - startTime;
+        if (elapsed > duration + 1000) {
+          console.warn('[AudioService] ⚠️ [Sine-淡出] 超时保护触发，强制完成');
+          break;
+        }
+        
         await TrackPlayer.setVolume(volumes[i]);
         
         if (i < volumes.length - 1 && this.isFading) {
@@ -2189,11 +2553,10 @@ class AudioService {
         }
       }
       
-      console.log('[AudioService] ✅ [Sine-淡出v2-响应] 完成，volume=0');
+      console.log(`[AudioService] ✅ [Sine-淡出v2-响应] 完成，volume=0, 耗时: ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('[AudioService] ❌ [Sine-淡出v2-响应] 异常:', error);
     } finally {
-      // 【🔥 关键修复】无论成功失败，必须释放锁！
       this.isFading = false;
       console.log('[AudioService] 🔓 [Cross-fade v2.0 响应优先] fadeOut 锁已释放');
     }
@@ -2208,6 +2571,7 @@ class AudioService {
     if (!this._isReady) return;
     
     const targetVolume = this.ambientVolume;
+    const startTime = Date.now();
     console.log(`[AudioService] 🎵 [Sine-淡入v2-响应] 开始，时长: ${duration}ms, 目标音量: ${targetVolume}`);
     
     try {
@@ -2224,6 +2588,12 @@ class AudioService {
       for (let i = 1; i < volumes.length; i++) {
         if (!this.isFading) break;
         
+        const elapsed = Date.now() - startTime;
+        if (elapsed > duration + 1000) {
+          console.warn('[AudioService] ⚠️ [Sine-淡入] 超时保护触发，强制完成');
+          break;
+        }
+        
         await TrackPlayer.setVolume(volumes[i]);
         
         if (i < volumes.length - 1 && this.isFading) {
@@ -2231,7 +2601,7 @@ class AudioService {
         }
       }
       
-      console.log('[AudioService] ✅ [Sine-淡入v2-响应] 完成，volume=', targetVolume);
+      console.log(`[AudioService] ✅ [Sine-淡入v2-响应] 完成，volume=${targetVolume}, 耗时: ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('[AudioService] ❌ [Sine-淡入v2-响应] 异常:', error);
     } finally {
@@ -2277,13 +2647,18 @@ class AudioService {
       // 【激进预加载】立即准备新音频（不等待！）
       console.log('[AudioService] 🚀 [Phase 1] 立即预加载新音频...');
       
-      const { sceneRoamManager } = await import('./SceneRoamManager');
       const isRoaming = sceneRoamManager.getIsRoaming();
       
+      // ══════════════════════════════════════════
+      // 【🚨 关键修复】RepeatMode 智能设置
+      // 漫游模式 → 保持默认（支持队列自动推进）✅
+      // 非漫游模式 → Track（单场景循环）
+      // ══════════════════════════════════════════
       if (isRoaming) {
-        await TrackPlayer.setRepeatMode(RepeatMode.Off);
+        console.log('[AudioService] [switchSoundscape] 漫游模式，保持默认RepeatMode（支持队列推进）');
       } else {
         await TrackPlayer.setRepeatMode(RepeatMode.Track);
+        console.log('[AudioService] [switchSoundscape] 非漫游模式，RepeatMode=Track');
       }
       
       console.log(`[AudioService] 📦 [Phase 1] 预加载完成！耗时: ${Date.now() - startTime}ms`);
@@ -2312,7 +2687,38 @@ class AudioService {
       console.log('[AudioService] 🛑 [Phase 3] 切换音频...');
       
       try {
-        await TrackPlayer.reset();
+        // ══════════════════════════════════════════
+        // 【🔑🔑🔑 核心修复】漫游模式下保护预加载队列！
+        // 问题：reset() 会清空 preloadNextScene() 添加的下一首
+        // 方案：漫游模式 + 队列有下一首 → 跳过 reset，让原生层继续使用队列
+        // ══════════════════════════════════════════
+        const isRoamingMode = sceneRoamManager.getIsRoaming();
+        let shouldPreserveQueueInSwitch = false;
+        
+        if (isRoamingMode) {
+          try {
+            const queue = await TrackPlayer.getQueue();
+            const currentTrackIndex = await TrackPlayer.getCurrentTrack();
+            
+            console.log(`[AudioService] 🛡️ [switch-队列检查] 漫游模式，队列长度: ${queue.length}, 当前索引: ${currentTrackIndex}`);
+            
+            if (queue.length > 1 && currentTrackIndex !== null && currentTrackIndex < queue.length - 1) {
+              shouldPreserveQueueInSwitch = true;
+              console.log('[AudioService] ✅ [switch-队列保护] 检测到预加载队列，跳过 reset！');
+            } else {
+              console.log('[AudioService] ⚠️ [switch-队列检查] 队列为空或只有当前首，执行 reset');
+            }
+          } catch (checkError) {
+            console.warn('[AudioService] ⚠️ [switch-队列检查失败]:', checkError);
+          }
+        }
+        
+        if (!shouldPreserveQueueInSwitch) {
+          await TrackPlayer.reset();
+          __DEV__ && console.log('[AudioService] [switch] 执行 reset');
+        } else {
+          __DEV__ && console.log('[AudioService] [switch] 跳过 reset（保护预加载队列）');
+        }
       } catch (e) {
         console.warn('[AudioService] reset 失败:', e);
       }
@@ -2343,7 +2749,12 @@ class AudioService {
       this.notifyListeners();
       throw error;
     } finally {
-      this.isSwitchingScene = false; // 最终释放锁
+      this.isSwitchingScene = false;
+      // 【🔒 锁安全】确保 isFading 在所有路径下都释放（防止后台切换时死锁）
+      if (this.isFading) {
+        console.warn('[AudioService] ⚠️ [switchSoundscape-finally] 检测到未释放的 fade 锁，强制释放');
+        this.isFading = false;
+      }
     }
   }
 
