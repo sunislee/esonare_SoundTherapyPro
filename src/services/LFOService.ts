@@ -195,6 +195,74 @@ class LFOService {
   }
 
   /**
+   * 【方案 A - 等功率交叉淡入淡出 v3.0】Equal Power Crossfade
+   * 
+   * 核心原理：使用三角函数确保交叉点总能量恒定，消除听感"凹陷感"
+   * 
+   * 数学模型：
+   * - 旧场景（Fade Out）：gain = sin((1 - progress) × π/2)
+   *   → progress=0 时 sin(π/2)=1.0（满音量）
+   *   → progress=1 时 sin(0)=0（静音）
+   *   
+   * - 新场景（Fade In）：gain = cos((1 - progress) × π/2)
+   *   → progress=0 时 cos(π/2)=0（静音）
+   *   → progress=1 时 cos(0)=1.0（满音量）
+   * 
+   * 能量守恒验证：
+   * - sin²θ + cos²θ = 1 （恒等于 1，总能量恒定！）
+   * - 在任意重叠点，两轨能量之和 = 原始音量的平方和
+   * 
+   * @param params 等功率交叉参数
+   * @returns { fadeOut: { volumes, stepDuration }, fadeIn: { volumes, stepDuration } }
+   */
+  createEqualPowerCrossfade(params: {
+    maxVolume: number;
+    duration: number;
+    steps?: number;
+  }): {
+    fadeOut: { volumes: number[]; stepDuration: number };
+    fadeIn: { volumes: number[]; stepDuration: number };
+  } {
+    const { maxVolume, duration, steps = 50 } = params;
+    
+    const stepDuration = duration / steps;
+    const fadeOutVolumes: number[] = [];
+    const fadeInVolumes: number[] = [];
+    
+    for (let i = 0; i <= steps; i++) {
+      const progress = i / steps; // 0.0 → 1.0
+      
+      // 【旧场景】使用 sin 曲线衰减：sin((1-p) × π/2)
+      // 特性：起始平缓（导数≈0），中间快速下降，结束柔和（导数≈0）
+      const fadeOutGain = Math.sin((1 - progress) * Math.PI / 2);
+      fadeOutVolumes.push(Math.max(0, maxVolume * fadeOutGain));
+      
+      // 【新场景】使用 cos 曲线上升：cos((1-p) × π/2) = sin(p × π/2)
+      // 特性与 fadeOut 完全对称，确保能量互补
+      const fadeInGain = Math.cos((1 - progress) * Math.PI / 2);
+      fadeInVolumes.push(Math.max(0, Math.min(1, maxVolume * fadeInGain)));
+    }
+    
+    // 【能量守恒验证】输出关键点的增益值用于调试
+    if (steps >= 10) {
+      const midPoint = Math.floor(steps / 2);
+      const totalEnergyAtMid = Math.pow(fadeOutVolumes[midPoint], 2) + Math.pow(fadeInVolumes[midPoint], 2);
+      
+      console.log(`[LFO] 🎵 [等功率交叉fade v3.0] 生成完成:`);
+      console.log(`[LFO] 🎵   步数: ${steps + 1}, 时长: ${duration}ms, 步进: ${stepDuration.toFixed(1)}ms`);
+      console.log(`[LFO] 🎵   最大音量: ${maxVolume.toFixed(3)}`);
+      console.log(`[LFO] 🎵   FadeOut: ${fadeOutVolumes[0].toFixed(3)} → ${fadeOutVolumes[steps].toFixed(3)}`);
+      console.log(`[LFO] 🎵   FadeIn: ${fadeInVolumes[0].toFixed(3)} → ${fadeInVolumes[steps].toFixed(3)}`);
+      console.log(`[LFO] 🎵   中点能量验证: out²+in²=${totalEnergyAtMid.toFixed(4)} (应接近 ${Math.pow(maxVolume, 2).toFixed(4)})`);
+    }
+    
+    return {
+      fadeOut: { volumes: fadeOutVolumes, stepDuration },
+      fadeIn: { volumes: fadeInVolumes, stepDuration }
+    };
+  }
+
+  /**
    * 内部时钟循环
    */
   private tick = () => {

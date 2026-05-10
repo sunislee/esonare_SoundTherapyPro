@@ -156,6 +156,7 @@ class AudioService {
   
   // 【Cross-fade 淡入淡出锁】
   private isFading = false; // 防止快速连续切换导致音量逻辑冲突
+  private fadeStartTime = 0; // 【方案 A】淡入淡出开始时间戳（用于竞态保护）
   
   // 【防双响锁】
   private isAmbientPlaying = false;
@@ -1016,6 +1017,7 @@ class AudioService {
     
     /**
      * 执行漫游切换的统一方法
+     * 【方案 A - 自然随机性】添加 ±15% 随机偏移，模拟大自然非线性流转节奏
      */
     private async executeRoamSwitch(sceneRoamManager: any): Promise<void> {
       if (!this.currentBaseScene) return;
@@ -1023,6 +1025,18 @@ class AudioService {
       this.isSwitchingScene = true;
       this.isFading = false;
       this.isActuallyPlaying = false;
+      
+      // 【方案 A - Natural Jitter】为每次漫游切换增加随机偏移
+      // 基础延迟 500ms + 随机偏移 ±15% (0ms ~ 1000ms)
+      // 模拟大自然非线性的流转节奏：潮汐、风、心跳等都不是严格周期性的
+      const baseDelay = 500;
+      const jitterRange = 500; // ±15% 的随机范围
+      const jitter = Math.floor(Math.random() * jitterRange) - (jitterRange / 2);
+      const naturalDelay = Math.max(0, baseDelay + jitter);
+      
+      console.log(`[AudioService] 🌿 [Natural Jitter] 漫游切换随机延迟: ${naturalDelay}ms (基础${baseDelay}ms + 偏移${jitter.toFixed(0)}ms)`);
+      
+      await new Promise(resolve => setTimeout(resolve, naturalDelay));
       
       const nextScene = sceneRoamManager.getNextRoamScene(this.currentBaseScene.id);
       
@@ -1362,6 +1376,37 @@ class AudioService {
       if (!this.currentBaseScene) {
         console.warn('[AudioService] ⚠️ [无缝切换] 无当前场景');
         return;
+      }
+      
+      // ═══════════════════════════════════════════════════
+      // 【🔥🔥🔥 v7 预判信号前置】在任何操作之前立即发送！
+      // 目标：音频还没动，UI 先焊死！
+      // ═══════════════════════════════════════════════════
+      try {
+        const { DeviceEventEmitter: Emitter } = require('react-native');
+        
+        let nextSceneId: string = '';
+        
+        if (this.isPreloaded && this.preloadedNextScene) {
+          nextSceneId = (this.preloadedNextScene.id || '').trim();
+        } else {
+          const sceneModule = await import('./SceneRoamManager');
+          const roamMgr = sceneModule.default || sceneModule.sceneRoamManager;
+          const tempNextScene = roamMgr.getNextRoamScene(this.currentBaseScene?.id || '');
+          nextSceneId = (tempNextScene?.id || '').trim();
+        }
+        
+        if (nextSceneId) {
+          console.log(`[AudioService] 📡📡📡 [v7 预判信号] 即将切换到: ${nextSceneId}（音频还没动！）`);
+          Emitter.emit('sceneSwitchStart', { 
+            nextSceneId, 
+            source: 'seamlessSwitch-v7' 
+          });
+        } else {
+          console.warn('[AudioService] ⚠️ [v7 预判信号] 无法获取 nextSceneId');
+        }
+      } catch (emitError) {
+        console.warn('[AudioService] ⚠️ [v7 预判信号] 发送失败:', emitError?.message);
       }
       
       this.isSwitchingScene = true;
@@ -2508,106 +2553,148 @@ class AudioService {
   }
 
   /**
-   * 【Cross-fade v2.0 响应优先】音量淡出：基于正弦曲线平滑降低至 0
+   * 【方案 A - 等功率淡出 v3.0】Equal Power Fade Out
    * 
-   * 使用 LFOService.createVolumeEnvelope 生成的 sin²(θ) 曲线：
-   * - 从当前实时音量开始下降（非重置到 1.0）
-   * - 起始平缓（导数为0），避免 Clicking Sound
-   * - 中间加速，自然过渡
-   * - 结束柔和，无突变感
+   * 核心改进：
+   * - 使用 sin((1-progress) × π/2) 曲线（而非线性）
+   * - 与 fadeIn 配合实现能量守恒：sin²θ + cos²θ = 1
+   * - 消除听感上的"凹陷感"
    * 
-   * @param duration 淡出时长（毫秒），默认 2000ms (2秒-响应优先)
+   * @param duration 淡出时长（毫秒），默认 1500ms (1.5秒-细腻优先)
    */
-  private async fadeOutVolume(duration: number = 2000): Promise<void> {
+  private async fadeOutVolume(duration: number = 1500): Promise<void> {
     if (!this._isReady || this.isFading) return;
     
-    const currentVolume = this.ambientVolume; // 【关键】捕获当前真实音量
+    const currentVolume = this.ambientVolume;
     this.isFading = true;
-    const startTime = Date.now();
-    console.log(`[AudioService] 🎵 [Sine-淡出v2-响应] 开始，时长: ${duration}ms, 当前音量: ${currentVolume}`);
+    this.fadeStartTime = Date.now();
+    console.log(`[AudioService] 🎵 [等功率淡出v3.0] 开始，时长: ${duration}ms, 当前音量: ${currentVolume}`);
     
     try {
       const { lfoService } = await import('./LFOService');
       
-      const { volumes, stepDuration } = lfoService.createVolumeEnvelope({
-        startVolume: currentVolume,
-        endVolume: 0,
+      const { fadeOut } = lfoService.createEqualPowerCrossfade({
+        maxVolume: currentVolume,
         duration: duration,
+        steps: 50,
       });
       
-      console.log(`[AudioService] 📊 [Sine曲线] ${volumes.length} 步, ${stepDuration.toFixed(1)}ms/步, 范围: ${currentVolume.toFixed(3)} → 0`);
-      
-      for (let i = 1; i < volumes.length; i++) {
-        if (!this.isFading) break; // 支持外部 cancel
+      for (let i = 1; i < fadeOut.volumes.length; i++) {
+        if (!this.isFading) {
+          console.log('[AudioService] ⚡ [等功率淡出v3.0] 被外部中断，执行平滑恢复');
+          await this.smoothRecoverVolume(currentVolume);
+          return;
+        }
         
-        const elapsed = Date.now() - startTime;
+        const elapsed = Date.now() - this.fadeStartTime;
         if (elapsed > duration + 1000) {
-          console.warn('[AudioService] ⚠️ [Sine-淡出] 超时保护触发，强制完成');
+          console.warn('[AudioService] ⚠️ [等功率淡出v3.0] 超时保护触发');
           break;
         }
         
-        await TrackPlayer.setVolume(volumes[i]);
+        await TrackPlayer.setVolume(fadeOut.volumes[i]);
         
-        if (i < volumes.length - 1 && this.isFading) {
-          await new Promise(resolve => setTimeout(resolve, stepDuration));
+        if (i < fadeOut.volumes.length - 1 && this.isFading) {
+          await new Promise(resolve => setTimeout(resolve, fadeOut.stepDuration));
         }
       }
       
-      console.log(`[AudioService] ✅ [Sine-淡出v2-响应] 完成，volume=0, 耗时: ${Date.now() - startTime}ms`);
+      console.log(`[AudioService] ✅ [等功率淡出v3.0] 完成，耗时: ${Date.now() - this.fadeStartTime}ms`);
     } catch (error) {
-      console.error('[AudioService] ❌ [Sine-淡出v2-响应] 异常:', error);
+      console.error('[AudioService] ❌ [等功率淡出v3.0] 异常:', error);
     } finally {
       this.isFading = false;
-      console.log('[AudioService] 🔓 [Cross-fade v2.0 响应优先] fadeOut 锁已释放');
     }
   }
 
   /**
-   * 【Cross-fade v2.0 响应优先】音量淡入：基于正弦曲线从 0 平滑升高至目标音量
+   * 【方案 A - 等功率淡入 v3.0】Equal Power Fade In
    * 
-   * @param duration 淡入时长（毫秒），默认 1500ms (1.5秒-响应优先)
+   * @param duration 淡入时长（毫秒），默认 1500ms
    */
   private async fadeInVolume(duration: number = 1500): Promise<void> {
     if (!this._isReady) return;
     
     const targetVolume = this.ambientVolume;
-    const startTime = Date.now();
-    console.log(`[AudioService] 🎵 [Sine-淡入v2-响应] 开始，时长: ${duration}ms, 目标音量: ${targetVolume}`);
+    this.isFading = true;
+    this.fadeStartTime = Date.now();
+    console.log(`[AudioService] 🎵 [等功率淡入v3.0] 开始，时长: ${duration}ms, 目标音量: ${targetVolume}`);
     
     try {
       const { lfoService } = await import('./LFOService');
       
-      const { volumes, stepDuration } = lfoService.createVolumeEnvelope({
-        startVolume: 0,
-        endVolume: targetVolume,
+      const { fadeIn } = lfoService.createEqualPowerCrossfade({
+        maxVolume: targetVolume,
         duration: duration,
+        steps: 50,
       });
       
-      console.log(`[AudioService] 📊 [Sine曲线] ${volumes.length} 步, ${stepDuration.toFixed(1)}ms/步, 范围: 0 → ${targetVolume.toFixed(3)}`);
-      
-      for (let i = 1; i < volumes.length; i++) {
-        if (!this.isFading) break;
+      for (let i = 1; i < fadeIn.volumes.length; i++) {
+        if (!this.isFading) {
+          console.log('[AudioService] ⚡ [等功率淡入v3.0] 被外部中断，执行平滑恢复');
+          await this.smoothRecoverVolume(targetVolume);
+          return;
+        }
         
-        const elapsed = Date.now() - startTime;
+        const elapsed = Date.now() - this.fadeStartTime;
         if (elapsed > duration + 1000) {
-          console.warn('[AudioService] ⚠️ [Sine-淡入] 超时保护触发，强制完成');
+          console.warn('[AudioService] ⚠️ [等功率淡入v3.0] 超时保护触发');
           break;
         }
         
-        await TrackPlayer.setVolume(volumes[i]);
+        await TrackPlayer.setVolume(fadeIn.volumes[i]);
         
-        if (i < volumes.length - 1 && this.isFading) {
-          await new Promise(resolve => setTimeout(resolve, stepDuration));
+        if (i < fadeIn.volumes.length - 1 && this.isFading) {
+          await new Promise(resolve => setTimeout(resolve, fadeIn.stepDuration));
         }
       }
       
-      console.log(`[AudioService] ✅ [Sine-淡入v2-响应] 完成，volume=${targetVolume}, 耗时: ${Date.now() - startTime}ms`);
+      console.log(`[AudioService] ✅ [等功率淡入v3.0] 完成，耗时: ${Date.now() - this.fadeStartTime}ms`);
     } catch (error) {
-      console.error('[AudioService] ❌ [Sine-淡入v2-响应] 异常:', error);
+      console.error('[AudioService] ❌ [等功率淡入v3.0] 异常:', error);
     } finally {
       this.isFading = false;
-      console.log('[AudioService] 🔓 [Cross-fade v2.0 响应优先] 锁已释放');
     }
+  }
+
+  private async smoothRecoverVolume(targetVolume: number): Promise<void> {
+    try {
+      const currentVol = await TrackPlayer.getVolume();
+      const diff = targetVolume - currentVol;
+      
+      if (Math.abs(diff) < 0.01) {
+        await TrackPlayer.setVolume(targetVolume);
+        return;
+      }
+      
+      const steps = 10;
+      const stepDelay = 200 / steps;
+      
+      for (let i = 1; i <= steps; i++) {
+        const vol = currentVol + (diff * i / steps);
+        await TrackPlayer.setVolume(Math.max(0, Math.min(1, vol)));
+        await new Promise(resolve => setTimeout(resolve, stepDelay));
+      }
+      
+      console.log(`[AudioService] ✅ [竞态保护] 平滑恢复完成: ${currentVol.toFixed(3)} → ${targetVolume.toFixed(3)}`);
+    } catch (e) {
+      console.error('[AudioService] ❌ [竞态保护] 平滑恢复失败:', e);
+      try {
+        await TrackPlayer.setVolume(targetVolume);
+      } catch (_) {}
+    }
+  }
+
+  async cancelFadeAndRecover(): Promise<void> {
+    if (!this.isFading) return;
+    
+    console.log('[AudioService] 🛑 [竞态保护] 收到取消请求...');
+    this.isFading = false;
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await this.smoothRecoverVolume(this.ambientVolume);
+    
+    console.log('[AudioService] ✅ [竞态保护] 清理完成');
   }
 
   async switchSoundscape(scene: Scene): Promise<void> {

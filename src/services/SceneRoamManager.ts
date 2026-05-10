@@ -55,10 +55,12 @@ class SceneRoamManager {
   }
 
   /**
-   * 获取指定分类下的所有大场景（isBaseScene: true）
+   * 获取指定分类下的所有大场景（isBaseScene: true）- 公开方法
    */
-  private getBaseScenesByCategory(category: SceneCategory): Scene[] {
-    return SCENES.filter(scene => scene.isBaseScene && scene.category === category);
+  getBaseScenesByCategory(category: SceneCategory): Scene[] {
+    const scenes = SCENES.filter(scene => scene.isBaseScene && scene.category === category);
+    console.log(`[Roam] 📋 [getBaseScenesByCategory] 分类=${category}, 找到 ${scenes.length} 个场景`);
+    return scenes;
   }
 
   /**
