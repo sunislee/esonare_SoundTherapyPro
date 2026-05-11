@@ -2760,8 +2760,36 @@ class AudioService {
         console.log(`[AudioService] ⏳ [Phase 2] 等待 ${CROSSFADE_DELAY}ms...`);
         await new Promise(resolve => setTimeout(resolve, CROSSFADE_DELAY));
         console.log(`[AudioService] ⏱️ [Phase 2] 交叉点到达！耗时: ${Date.now() - startTime}ms`);
+
+        // ═══════════════════════════════════════════════════
+        // 【🔥🔥🔥 v7 预判信号补丁 - Phase 2/3 路径】
+        // 问题：Shuffle 漫游走的是 Phase 2/3 路径（非 seamlessSwitch）
+        // 导致 v8 双向锁定机制未触发，UI 出现闪烁
+        // 修复：在 Phase 2 交叉点到达后、切换音频前，立即发射信号
+        // ═══════════════════════════════════════════════════
+        try {
+          const { DeviceEventEmitter: Emitter } = require('react-native');
+
+          let nextSceneId = this.preloadedNextScene?.id || '';
+
+          if (!nextSceneId && scene?.id) {
+            nextSceneId = scene.id;
+          }
+
+          if (nextSceneId) {
+            console.log(`[AudioService] 📡 [v7-Phase2补丁] 发射预判信号: ${nextSceneId}`);
+            Emitter.emit('sceneSwitchStart', {
+              nextSceneId,
+              source: 'Phase2-v7-Fix'
+            });
+          } else {
+            console.warn('[AudioService] ⚠️ [v7-Phase2补丁] 无法获取 nextSceneId');
+          }
+        } catch (emitError) {
+          console.warn('[AudioService] ⚠️ [v7-Phase2补丁] 发送失败:', emitError?.message);
+        }
       }
-      
+
       // ════════════════════════════════════════════════════════
       // 【Phase 3】停止旧音频 + 加载新音频
       // ════════════════════════════════════════════════════════

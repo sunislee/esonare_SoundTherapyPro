@@ -109,9 +109,6 @@ const SceneItem = React.memo(({
   lockedIds        // 【🔥🔥🔥 v8 双向锁定集合】同时锁住新旧两个场景
 }: any) => {
   
-  // 【🔍 v8 基础日志】确认组件是否渲染 + lockedIds 状态
-  console.log(`[SceneItem-Render] ${item.id} lockedIds-Size:${lockedIds?.size || 0} lockedIds-Keys:${lockedIds ? Array.from(lockedIds).join(',') : 'empty'}`);
-  
   // ══════════════════════════════════════════════════════════
   // 【🔥🔥🔥 终极暴力修复】强制覆盖 isResourceReady 为 true
   // ══════════════════════════════════════════════════════════
@@ -211,9 +208,6 @@ const SceneItem = React.memo(({
   };
   
   const isActive = isItemActive(item.id);
-
-  // 【🔍 v8 调试日志】帧级状态追踪
-  console.log(`[DEBUG-FLICKER] ${item.id} Frame-State:${isActive} Locked:${lockedIds?.has(item.id) || false} Playing:${isThisPlaying} Size:${lockedIds?.size || 0}`);
 
   const triggerHaptic = (type: 'light' | 'heavy' | 'success' = 'light') => {
     ReactNativeHapticFeedback.trigger(type === 'success' ? 'success' : type === 'heavy' ? 'impactHeavy' : 'impactLight', { enableVibrateFallback: true });
