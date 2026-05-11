@@ -11,6 +11,7 @@ import {
   Modal,
   BackHandler,
   Easing,
+  DeviceEventEmitter,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -96,6 +97,7 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
   const [isRoaming, setIsRoaming] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
   const [bgLoadTimeout, setBgLoadTimeout] = useState(false);
   
   // 【⚡️ 乐观更新】本地播放状态，优先于 Context 状态，实现瞬时 UI 响应
@@ -146,6 +148,15 @@ const ImmersivePlayerNew: React.FC = () => {
       setDisplaySceneId(newId);
     }
   }, [currentBaseSceneId, routeSceneId]);
+
+  // 【UI 联动】从 sceneRoamManager 同步漫游状态（确保从 HomeScreen 进入时状态一致）
+  useEffect(() => {
+    const roamingState = sceneRoamManager.getIsRoaming();
+    if (roamingState !== isRoaming) {
+      console.log(`[ImmersivePlayer] 🔄 [UI联动] 同步漫游状态: ${isRoaming} → ${roamingState}`);
+      setIsRoaming(roamingState);
+    }
+  }, []);
 
   const effectiveSceneId = displaySceneId || currentBaseSceneId || routeSceneId || prevValidSceneRef.current;
   const targetScene = useMemo(() => {
@@ -532,16 +543,54 @@ const ImmersivePlayerNew: React.FC = () => {
     if (isRoaming) {
       sceneRoamManager.stopRoaming();
       setIsRoaming(false);
-      console.log('[ImmersivePlayer] 漫游模式已关闭');
+      console.log('[ImmersivePlayer] 🎲 漫游模式已关闭');
+      
+      // 【跨页面同步】通知 HomeScreen 更新状态
+      DeviceEventEmitter.emit('shuffleStateChanged', {
+        isRoaming: false,
+        category: null,
+      });
+      
+      // 【联动】关闭漫游时，如果之前开启了 Loop，自动恢复
+      if (isLooping) {
+        console.log('[ImmersivePlayer] 🔁 自动恢复循环模式');
+        AudioService.getInstance().applyLoopMode(false);
+      }
     } else {
       if (!targetScene) return;
       const category = targetScene.category;
       sceneRoamManager.startRoaming(category);
       sceneRoamManager.recordPlayedScene(targetScene.id);
       setIsRoaming(true);
-      console.log(`[ImmersivePlayer] 漫游模式已开启: ${category}`);
+      console.log(`[ImmersivePlayer] 🎲 漫游模式已开启: ${category}`);
+      
+      // 【跨页面同步】通知 HomeScreen 更新状态
+      DeviceEventEmitter.emit('shuffleStateChanged', {
+        isRoaming: true,
+        category,
+      });
+      
+      // 【联动】开启漫游时，视觉上禁用 Loop（但不改变状态，方便恢复）
+      console.log('[ImmersivePlayer] 🔁 循环按钮已灰显（漫游模式下由队列管理）');
     }
-  }, [isRoaming, targetScene]);
+  }, [isRoaming, targetScene, isLooping]);
+
+  const toggleLoop = useCallback(async () => {
+    // 【联动】如果在漫游模式下点击 Loop，提示用户
+    if (isRoaming) {
+      console.log('[ImmersivePlayer] ⚠️ 漫游模式下无法单独控制循环');
+      return;
+    }
+    
+    triggerHaptic();
+    const newLoopState = !isLooping;
+    setIsLooping(newLoopState);
+    
+    const audioService = AudioService.getInstance();
+    await audioService.applyLoopMode(!newLoopState);
+    
+    console.log(`[ImmersivePlayer] 🔁 循环模式: ${newLoopState ? '开启(Track)' : '关闭(Off)'}`);
+  }, [isLooping, isRoaming]);
 
   // DO NOT TOUCH: Stable logic for scene switching - 场景选择处理
   const handleSelectSoundscape = async (scene: Scene) => {
@@ -660,14 +709,60 @@ const ImmersivePlayerNew: React.FC = () => {
 
           {/* 底部控制：场景切换按钮提升 zIndex */}
           <View style={styles.bottomSection}>
-            <TouchableOpacity
-              style={styles.scenePickerButton}
-              onPress={openSoundscapeSheet}
-              activeOpacity={0.8}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon name="grid-outline" size={20} color="#FFF" />
-            </TouchableOpacity>
+            {/* 功能按钮行：Shuffle + 循环 + 场景选择 */}
+            <View style={styles.actionRow}>
+              {/* Shuffle 按钮 */}
+              <View style={styles.modeButtonWrapper}>
+                <TouchableOpacity
+                  style={[styles.modeButton, isRoaming && styles.modeButtonActive]}
+                  onPress={toggleRoaming}
+                  activeOpacity={0.8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Icon 
+                    name={isRoaming ? "shuffle" : "shuffle-outline"} 
+                    size={22} 
+                    color={isRoaming ? "#6C5DD3" : "rgba(255,255,255,0.5)"} 
+                  />
+                </TouchableOpacity>
+                {isRoaming && (
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>●</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Loop 按钮 */}
+              <View style={styles.loopButtonWrapper}>
+                <TouchableOpacity
+                  style={[styles.loopButton, isLooping && !isRoaming && styles.loopButtonActive]}
+                  onPress={toggleLoop}
+                  activeOpacity={0.8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  disabled={isRoaming}
+                >
+                  <Icon 
+                    name={isLooping && !isRoaming ? "repeat" : "repeat-outline"} 
+                    size={22} 
+                    color={isLooping && !isRoaming ? "#6C5DD3" : isRoaming ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.5)"} 
+                  />
+                </TouchableOpacity>
+                {!isRoaming && isLooping && (
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>●</Text>
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity
+                style={styles.scenePickerButton}
+                onPress={openSoundscapeSheet}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name="grid-outline" size={20} color="#FFF" />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity 
               style={[styles.playButton, isLoading && styles.playButtonDisabled]} 
@@ -818,6 +913,59 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 30,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 8,
+  },
+  loopButton: {
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loopButtonActive: {
+    backgroundColor: 'rgba(108,93,211,0.2)',
+  },
+  modeButton: {
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeButtonActive: {
+    backgroundColor: 'rgba(108,93,211,0.2)',
+  },
+  modeButtonWrapper: {
+    position: 'relative',
+  },
+  loopButtonWrapper: {
+    position: 'relative',
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#6C5DD3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusBadgeText: {
+    fontSize: 8,
+    color: '#FFF',
+    fontWeight: 'bold',
   },
   roamCapsule: {
     flexDirection: 'row',
