@@ -27,12 +27,5 @@ apply plugin: "com.facebook.react.rootproject"
 
 configurations.all {
     resolutionStrategy {
-        // 强制统一 React Android 版本为 0.73.6
-        force 'com.facebook.react:react-android:0.73.6'
-        
-        // 替换所有 react-native 依赖为 react-android:0.73.6
-        dependencySubstitution {
-            substitute module('com.facebook.react:react-native') using module('com.facebook.react:react-android:0.73.6')
-        }
     }
 }

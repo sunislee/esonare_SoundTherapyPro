@@ -10,6 +10,7 @@ import {
   Animated,
   TouchableOpacity,
 } from 'react-native';
+import RNFS from 'react-native-fs';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MODAL_WIDTH = SCREEN_WIDTH * 0.92;
@@ -59,6 +60,7 @@ const DB_MIN = -24;
 const DB_MAX = 6;
 const DB_RANGE = DB_MAX - DB_MIN;
 const DEADZONE_PX = 2;
+const AUDIO_BASE_PATH = RNFS.DocumentDirectoryPath + '/audio_resources';
 
 function snapToGrid(db: number): number { return Math.round(db); }
 function clampDb(db: number): number { return Math.max(DB_MIN, Math.min(DB_MAX, db)); }
