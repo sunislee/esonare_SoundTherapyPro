@@ -1,309 +1,342 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   Text,
-  TouchableOpacity,
   Dimensions,
-  Image,
+  Modal,
   BackHandler,
+  PanResponder,
+  Animated,
+  TouchableOpacity,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/MainNavigator';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { AudioAnalyzer, FrequencyDistribution } from '../services/AudioAnalyzer';
-import { SCENES } from '../constants/scenes';
 
-const { width, height } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const MODAL_WIDTH = SCREEN_WIDTH * 0.92;
+const SLIDER_HEIGHT = 200;
+const TRANSITION_DURATION = 300;
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+interface NoiseLabModalProps {
+  visible: boolean;
+  onClose: () => void;
+}
 
-/**
- * NoiseCancellationExperiment - AI 降噪实验室（独立实验页面）
- * 
- * 功能：
- * 1. 实时显示环境噪音的低/中/高频分布
- * 2. 仅做展示，不干预任何音频播放逻辑
- * 3. 权限拒绝时自动隐藏频谱条，不影响使用
- */
-const NoiseCancellationExperiment: React.FC = () => {
-  const { t } = useTranslation();
-  const navigation = useNavigation<NavigationProp>();
-  const insets = useSafeAreaInsets();
-  
-  const [frequencyDist, setFrequencyDist] = useState<FrequencyDistribution | null>(null);
-  const [hasPermission, setHasPermission] = useState(true);
+type SceneType = 'commute' | 'office' | 'social' | 'outdoor' | 'manual';
 
-  // 页面获得焦点时启动音频分析器
-  useFocusEffect(
-    useCallback(() => {
-      console.log('[NoiseCancellationExperiment] 页面聚焦，启动音频分析器');
-      
-      // 启动音频分析器
-      AudioAnalyzer.start((distribution) => {
-        setFrequencyDist(distribution);
-        setHasPermission(true);
-      });
-      
-      // 页面失焦时停止分析器
-      return () => {
-        console.log('[NoiseCancellationExperiment] 页面失焦，停止音频分析器');
-        AudioAnalyzer.stop();
-      };
-    }, [])
+interface ScenePreset {
+  id: SceneType;
+  label: string;
+  icon: string;
+  color: string;
+  values: number[];
+}
+
+const SCENE_PRESETS: ScenePreset[] = [
+  { id: 'commute', label: '通勤', icon: '🚗', color: '#4ECDC4', values: [-18, -12, -5, 0, +3, +2, -3, -9] },
+  { id: 'office', label: '办公室', icon: '💼', color: '#45B7AA', values: [-8, -5, -3, 0, +2, +1, -6, -12] },
+  { id: 'social', label: '社交', icon: '👥', color: '#4A90E4', values: [-5, -3, 0, +3, +6, +5, -3, -15] },
+  { id: 'outdoor', label: '户外', icon: '🌲', color: '#7D5AC9', values: [-20, -15, -8, -3, 0, -2, -9, -18] },
+];
+
+interface BandConfig {
+  frequency: string;
+  color: string;
+  initialDb: number;
+}
+
+const BANDS: BandConfig[] = [
+  { frequency: '32Hz', color: '#4ECDC4', initialDb: -12 },
+  { frequency: '64Hz', color: '#45B7AA', initialDb: -5 },
+  { frequency: '125Hz', color: '#3DA190', initialDb: 0 },
+  { frequency: '250Hz', color: '#358B76', initialDb: +3 },
+  { frequency: '500Hz', color: '#4A90E4', initialDb: +5 },
+  { frequency: '1kHz', color: '#6C6CD2', initialDb: 0 },
+  { frequency: '2kHz', color: '#7D5AC9', initialDb: -9 },
+  { frequency: '4kHz', color: '#9F36B7', initialDb: -18 },
+];
+
+const DB_MIN = -24;
+const DB_MAX = 6;
+const DB_RANGE = DB_MAX - DB_MIN;
+const DEADZONE_PX = 2;
+
+function snapToGrid(db: number): number { return Math.round(db); }
+function clampDb(db: number): number { return Math.max(DB_MIN, Math.min(DB_MAX, db)); }
+function dbToHeight(db: number): number { return ((db - DB_MIN) / DB_RANGE) * SLIDER_HEIGHT; }
+
+interface VerticalSliderProps {
+  bandIndex: number; color: string; currentDb: number; isLocked: boolean;
+  onValueChange: (bandIndex: number, value: number) => void;
+  onDragStart: (bandIndex: number) => void;
+  onDragEnd: (bandIndex: number) => void;
+}
+
+const VerticalSlider: React.FC<VerticalSliderProps> = React.memo(({
+  bandIndex, color, currentDb, isLocked, onValueChange, onDragStart, onDragEnd,
+}) => {
+  const lastDbRef = useRef(currentDb);
+  const fillViewRef = useRef<View>(null);
+  const dbTextRef = useRef<Text>(null);
+  const pendingValueRef = useRef<number | null>(null);
+  const isLockedRef = useRef(isLocked);
+  const isDraggingRef = useRef(false);
+  const startDbRef = useRef<number | null>(null);
+
+  isLockedRef.current = isLocked;
+
+  useEffect(() => {
+    if (isDraggingRef.current) return;
+    if (dbTextRef.current) dbTextRef.current.setNativeProps({ text: `${currentDb}dB` });
+    if (fillViewRef.current) fillViewRef.current.setNativeProps({ style: [{ height: Math.max(0, dbToHeight(currentDb)) }] });
+    lastDbRef.current = currentDb;
+  }, [currentDb]);
+
+  const applyNativeUI = useCallback((db: number) => {
+    if (fillViewRef.current) fillViewRef.current.setNativeProps({ style: [{ height: Math.max(0, dbToHeight(db)) }] });
+    if (dbTextRef.current) dbTextRef.current.setNativeProps({ text: `${db}dB` });
+  }, []);
+
+  const computeDbFromDelta = useCallback((dy: number): number | null => {
+    if (isLockedRef.current || startDbRef.current === null) return null;
+    const newDb = startDbRef.current - (dy / SLIDER_HEIGHT) * DB_RANGE;
+    return clampDb(snapToGrid(newDb));
+  }, []);
+
+  const panResponder = useMemo(() =>
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_evt, gestureState) =>
+        Math.abs(gestureState.dy) > DEADZONE_PX || Math.abs(gestureState.dx) > DEADZONE_PX,
+
+      onPanResponderGrant: () => {
+        if (isLockedRef.current) return;
+        isDraggingRef.current = true;
+        startDbRef.current = lastDbRef.current;
+        onDragStart(bandIndex);
+        applyNativeUI(lastDbRef.current);
+      },
+
+      onPanResponderMove: (_evt, gestureState) => {
+        if (isLockedRef.current) return;
+        if (Math.abs(gestureState.dy) < DEADZONE_PX && Math.abs(gestureState.dx) < DEADZONE_PX) return;
+        const finalDb = computeDbFromDelta(gestureState.dy);
+        if (finalDb !== null && finalDb !== lastDbRef.current) {
+          lastDbRef.current = finalDb;
+          pendingValueRef.current = finalDb;
+          applyNativeUI(finalDb);
+        }
+      },
+
+      onPanResponderRelease: () => {
+        isDraggingRef.current = false;
+        startDbRef.current = null;
+        if (pendingValueRef.current !== null && pendingValueRef.current !== currentDb) {
+          onValueChange(bandIndex, pendingValueRef.current);
+          pendingValueRef.current = null;
+        }
+        onDragEnd(bandIndex);
+      },
+
+      onPanResponderTerminate: () => {
+        isDraggingRef.current = false;
+        startDbRef.current = null;
+        if (pendingValueRef.current !== null && pendingValueRef.current !== currentDb) {
+          onValueChange(bandIndex, pendingValueRef.current);
+          pendingValueRef.current = null;
+        }
+        onDragEnd(bandIndex);
+      },
+    }), [bandIndex, onValueChange, onDragStart, onDragEnd, computeDbFromDelta, applyNativeUI]
   );
 
-  const handleBackPress = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-      return true;
-    }
-    return true;
-  };
-
-  // 注册系统返回键拦截
-  useFocusEffect(
-    useCallback(() => {
-      const sub = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-      return () => sub.remove();
-    }, [])
-  );
+  const initHeight = dbToHeight(currentDb);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* 背景图 */}
-      <Image 
-        source={require('../assets/logo.png')} 
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
-      <View style={styles.overlay} />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Icon name="chevron-down" size={32} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.title}>AI 降噪实验室</Text>
-        <View style={styles.placeholder} />
-      </View>
-
-      {/* 提示文案 */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoText}>
-          实时显示环境噪音的频率分布
-        </Text>
-        <Text style={styles.infoSubText}>
-          （仅展示，不影响音频播放）
-        </Text>
-        {!hasPermission && (
-          <Text style={styles.permissionWarning}>
-            ⚠️ 麦克风权限未授予，无法显示频谱
-          </Text>
-        )}
-      </View>
-
-      {/* 环境噪音频谱显示条（只读，不可交互） */}
-      {frequencyDist && hasPermission ? (
-        <View style={styles.frequencyBarsContainer}>
-          <Text style={styles.frequencyLabel}>环境噪音分布</Text>
-          <View style={styles.frequencyBars}>
-            {/* 低频 */}
-            <View style={styles.frequencyBar}>
-              <View style={styles.frequencyBarBackground}>
-                <View 
-                  style={[
-                    styles.frequencyBarFill, 
-                    { 
-                      width: `${frequencyDist.low}%`,
-                      backgroundColor: '#FF6B6B' // 红色
-                    }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.frequencyBarText}>低频{'\n'}20-300Hz</Text>
-            </View>
-            
-            {/* 中频 */}
-            <View style={styles.frequencyBar}>
-              <View style={styles.frequencyBarBackground}>
-                <View 
-                  style={[
-                    styles.frequencyBarFill, 
-                    { 
-                      width: `${frequencyDist.mid}%`,
-                      backgroundColor: '#4ECDC4' // 青色
-                    }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.frequencyBarText}>中频{'\n'}300-2kHz</Text>
-            </View>
-            
-            {/* 高频 */}
-            <View style={styles.frequencyBar}>
-              <View style={styles.frequencyBarBackground}>
-                <View 
-                  style={[
-                    styles.frequencyBarFill, 
-                    { 
-                      width: `${frequencyDist.high}%`,
-                      backgroundColor: '#FFE66D' // 黄色
-                    }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.frequencyBarText}>高频{'\n'}2k-20kHz</Text>
-            </View>
-          </View>
-          <Text style={styles.frequencyDBText}>总强度：{frequencyDist.totalDB} dB</Text>
+    <View style={styles.sliderItem}>
+      <Text style={[styles.frequencyLabel, { color }]}>{BANDS[bandIndex].frequency}</Text>
+      <View style={[styles.sliderTrack, { backgroundColor: `${color}33` }]} pointerEvents="box-only" {...panResponder.panHandlers}>
+        <View
+          ref={fillViewRef}
+          style={[styles.sliderFill, { height: Math.max(0, initHeight), backgroundColor: color }]}
+        >
+          <View style={[styles.thumb, { backgroundColor: color }]} />
         </View>
-      ) : hasPermission ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>正在分析环境噪音...</Text>
-        </View>
-      ) : null}
-
-      {/* 底部说明 */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          数据基于麦克风实时采集，每 100ms 更新一次
-        </Text>
       </View>
+      <Text ref={dbTextRef} style={[styles.dbLabel, { color }]}>{`${currentDb}dB`}</Text>
     </View>
+  );
+}, (prevProps, nextProps) =>
+  prevProps.currentDb === nextProps.currentDb &&
+  prevProps.color === nextProps.color
+);
+
+VerticalSlider.displayName = 'VerticalSlider';
+
+const SpectrumBar: React.FC<{ height: number; color: string }> = React.memo(({ height, color }) => (
+  <View style={styles.spectrumBarContainer}>
+    <View style={[styles.spectrumBar, { height: `${height}%`, backgroundColor: color }]} />
+  </View>
+));
+SpectrumBar.displayName = 'SpectrumBar';
+
+const SceneTab: React.FC<{ scene: ScenePreset; isActive: boolean; onPress: () => void }> = React.memo(
+  ({ scene, isActive, onPress }) => (
+    <TouchableOpacity style={[styles.sceneTab, isActive && styles.sceneTabActive, isActive && { borderColor: scene.color }]} onPress={onPress} activeOpacity={0.8}>
+      <Text style={styles.sceneIcon}>{scene.icon}</Text>
+      <Text style={[styles.sceneLabel, isActive ? { color: scene.color } : styles.sceneLabelInactive]}>{scene.label}</Text>
+    </TouchableOpacity>
+  )
+);
+SceneTab.displayName = 'SceneTab';
+
+const NoiseLabModal: React.FC<NoiseLabModalProps> = ({ visible, onClose }) => {
+  const [bandValues, setBandValues] = useState<number[]>(() => BANDS.map(b => b.initialDb));
+  const [activeScene, setActiveScene] = useState<SceneType>('manual');
+  const animatedValues = useRef<Animated.Value[]>(BANDS.map(b => new Animated.Value(b.initialDb))).current;
+  const transitionAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  const onValueChangeRef = useRef<(bandIndex: number, dbValue: number) => void>(undefined);
+
+  useEffect(() => {
+    if (visible) {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => { onClose(); return true; });
+      return () => backHandler.remove();
+    }
+  }, [visible, onClose]);
+
+  useEffect(() => {
+    if (!visible && transitionAnimRef.current) { transitionAnimRef.current.stop(); transitionAnimRef.current = null; }
+  }, [visible]);
+
+  const handleBandChange = useCallback((bandIndex: number, dbValue: number) => {
+    if (transitionAnimRef.current) return;
+    setBandValues(prev => { const newValues = [...prev]; newValues[bandIndex] = dbValue; return newValues; });
+    if (activeScene !== 'manual') setActiveScene('manual');
+  }, [activeScene]);
+
+  useEffect(() => {
+    onValueChangeRef.current = handleBandChange;
+  }, [handleBandChange]);
+
+  const stableOnValueChange = useCallback((bandIndex: number, value: number) => { onValueChangeRef.current?.(bandIndex, value); }, []);
+  const stableOnDragStart = useCallback((_bandIndex: number) => {}, []);
+  const stableOnDragEnd = useCallback((_bandIndex: number) => {}, []);
+
+  const handleSceneSelect = useCallback((sceneId: SceneType) => {
+    if (sceneId === activeScene) return;
+    const preset = SCENE_PRESETS.find(p => p.id === sceneId);
+    if (!preset) return;
+    setActiveScene(sceneId);
+    if (transitionAnimRef.current) transitionAnimRef.current.stop();
+    const animations = preset.values.map((targetValue, index) =>
+      Animated.timing(animatedValues[index], { toValue: targetValue, duration: TRANSITION_DURATION, useNativeDriver: false })
+    );
+    transitionAnimRef.current = Animated.parallel(animations);
+    (transitionAnimRef.current as Animated.CompositeAnimation).start(({ finished }: { finished: boolean }) => {
+      if (finished) { setBandValues([...preset.values]); transitionAnimRef.current = null; }
+    });
+  }, [activeScene, animatedValues]);
+
+  const spectrumHeights = useMemo(() => BANDS.map((_, index) => ((bandValues[index] - DB_MIN) / DB_RANGE) * 100), [bandValues]);
+
+  const handleCalibrate = useCallback(() => {
+    if (transitionAnimRef.current) return;
+    setActiveScene('manual');
+    const optimizedValues = BANDS.map(() => Math.floor(Math.random() * 10) - 5);
+    const animations = optimizedValues.map((targetValue, index) =>
+      Animated.timing(animatedValues[index], { toValue: targetValue, duration: TRANSITION_DURATION, useNativeDriver: false })
+    );
+    transitionAnimRef.current = Animated.parallel(animations);
+    (transitionAnimRef.current as Animated.CompositeAnimation).start(({ finished }: { finished: boolean }) => {
+      if (finished) { setBandValues([...optimizedValues]); transitionAnimRef.current = null; }
+    });
+  }, [animatedValues]);
+
+  return (
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.modalContainer}>
+        <View style={[styles.absoluteFill, styles.overlayBackground]} />
+        <View style={styles.panelContainer}>
+          <View style={styles.glassPanel}>
+            <Text style={styles.headerTitle}>← Noise Lab Pro</Text>
+            <Text style={styles.mainTitle}>🎙️ AI 降噪实验室 (8-BAND Pro) 🧠</Text>
+
+            <View style={styles.sceneTabsContainer}>
+              {SCENE_PRESETS.map(scene => (
+                <SceneTab key={scene.id} scene={scene} isActive={activeScene === scene.id} onPress={() => handleSceneSelect(scene.id)} />
+              ))}
+              {activeScene === 'manual' && (
+                <View style={[styles.sceneTab, styles.sceneTabActive, { borderColor: '#FFD700' }]}>
+                  <Text style={styles.sceneIcon}>✋</Text>
+                  <Text style={[styles.sceneLabel, { color: '#FFD700' }]}>自定义</Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={styles.sectionTitle}>8-BAND FREQUENCY CONTROL</Text>
+
+            <View style={styles.spectrumDisplay}>
+              {BANDS.map((band, index) => (
+                <SpectrumBar key={`spectrum-${index}`} height={spectrumHeights[index]} color={band.color} />
+              ))}
+            </View>
+
+            <View style={styles.slidersGrid}>
+              {BANDS.map((band, index) => (
+                <VerticalSlider key={`slider-${index}`} bandIndex={index} color={band.color}
+                  currentDb={bandValues[index]} isLocked={false}
+                  onValueChange={stableOnValueChange} onDragStart={stableOnDragStart} onDragEnd={stableOnDragEnd}
+                />
+              ))}
+            </View>
+
+            <TouchableOpacity style={styles.calibrateButton} onPress={handleCalibrate}>
+              <Text style={styles.calibrateButtonText}>CALIBRATE ANC</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Text style={styles.closeButtonText}>关闭</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-    width,
-    height,
-    opacity: 0.1,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  placeholder: {
-    width: 44,
-  },
-  infoContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    alignItems: 'center',
-  },
-  infoText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  infoSubText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  permissionWarning: {
-    color: '#FF6B6B',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  frequencyBarsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 12,
-    marginHorizontal: 24,
-    marginVertical: 20,
-    paddingVertical: 30,
-  },
-  frequencyLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  frequencyBars: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  frequencyBar: {
-    flex: 1,
-    marginHorizontal: 8,
-    alignItems: 'center',
-  },
-  frequencyBarBackground: {
-    width: '100%',
-    height: 12,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  frequencyBarFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  frequencyBarText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 11,
-    marginTop: 8,
-    textAlign: 'center',
-    lineHeight: 14,
-  },
-  frequencyDBText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    marginTop: 24,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 14,
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    alignItems: 'center',
-  },
-  footerText: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 11,
-    textAlign: 'center',
-  },
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  absoluteFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  overlayBackground: { backgroundColor: 'rgba(0, 0, 0, 0.85)' },
+  panelContainer: { width: MODAL_WIDTH, maxHeight: Dimensions.get('window').height * 0.92, borderRadius: 28, overflow: 'hidden',
+    borderWidth: 2, borderColor: 'rgba(108, 93, 211, 0.6)', shadowColor: '#6C5DD3', shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7, shadowRadius: 25, elevation: 20 },
+  glassPanel: { backgroundColor: 'rgba(13, 20, 36, 0.92)', borderRadius: 26, paddingVertical: 28, paddingHorizontal: 22, alignItems: 'center' },
+  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '600', marginBottom: 18 },
+  mainTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 1, marginBottom: 20, textAlign: 'center' },
+  sceneTabsContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 16, paddingHorizontal: 4 },
+  sceneTab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, marginHorizontal: 3, borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.1)' },
+  sceneTabActive: { backgroundColor: 'rgba(108, 93, 211, 0.2)', shadowColor: '#6C5DD3', shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5, shadowRadius: 10, elevation: 8 },
+  sceneIcon: { fontSize: 20, marginBottom: 4 },
+  sceneLabel: { fontSize: 11, fontWeight: '700' },
+  sceneLabelInactive: { color: 'rgba(255, 255, 255, 0.4)' },
+  sectionTitle: { color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, fontWeight: '600', letterSpacing: 2, textAlign: 'center', marginBottom: 16 },
+  spectrumDisplay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 120, width: '100%', paddingHorizontal: 8, marginBottom: 20 },
+  spectrumBarContainer: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', marginHorizontal: 2 },
+  spectrumBar: { width: '80%', minHeight: 10, borderRadius: 5, borderTopLeftRadius: 8, borderTopRightRadius: 8 },
+  slidersGrid: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 4, marginBottom: 20 },
+  sliderItem: { flex: 1, alignItems: 'center', marginHorizontal: 2 },
+  frequencyLabel: { fontSize: 11, fontWeight: '700', marginBottom: 6 },
+  sliderTrack: { width: 28, height: SLIDER_HEIGHT, borderRadius: 14, overflow: 'hidden', marginBottom: 6 },
+  sliderFill: { position: 'absolute', bottom: 0, left: 0, right: 0, borderRadius: 14, justifyContent: 'flex-start', paddingTop: 2 },
+  thumb: { width: 24, height: 24, borderRadius: 12, alignSelf: 'center', shadowColor: '#000000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6, shadowRadius: 4, elevation: 5 },
+  dbLabel: { fontSize: 12, fontWeight: '700', width: 40, textAlign: 'center' },
+  calibrateButton: { paddingVertical: 14, paddingHorizontal: 32, backgroundColor: '#4ECDC4', borderRadius: 22, marginBottom: 10 },
+  calibrateButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', letterSpacing: 2 },
+  closeButton: { paddingVertical: 10, paddingHorizontal: 22, backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 18 },
+  closeButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '500' },
 });
 
-export default NoiseCancellationExperiment;
+export default NoiseLabModal;

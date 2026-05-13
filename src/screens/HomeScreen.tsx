@@ -14,19 +14,22 @@ import {
   ActivityIndicator,
   ImageBackground,
   DeviceEventEmitter,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import AudioService from '../services/AudioService';
 import { RainDrop } from '../components/RainDrop';
 import { SCENES, Scene, SceneCategory } from '../constants/scenes';
+import { assetMap } from '../constants/assetMap';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import { useAudio } from '../context/AudioContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import NoiseLabIcon from '../components/NoiseLabIcon';
-import { ScrollView } from 'react-native-gesture-handler';
+import NoiseLabModal from '../screens/NoiseCancellationExperiment';
+// ✅ 使用 React Native 原生 ScrollView（移除 gesture-handler 依赖）
 import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -47,6 +50,17 @@ const SHUFFLE_STATE_KEY = '@soundtherapy/shuffle_state';
 //   - 有效图片源 (number 或 {uri}) → 显示真实图片
 //   - null → 使用语义化占位块（磨砂色块 + Icon）
 const getThumbnailSource = (item: Scene, isResourceReady: boolean): any => {
+  const originalId = item.id;
+  const sanitizedId = originalId.replace(/^0+/, '');
+  const assetMapAny = assetMap as any;
+  const lookupKey = assetMapAny[originalId] ? originalId : (assetMapAny[sanitizedId] ? sanitizedId : null);
+
+  console.log('[AssetCheck] Trying to load asset for:', originalId, 'Sanitized:', sanitizedId, 'Resolved Key:', lookupKey, 'Asset Path:', assetMapAny[lookupKey || '']);
+  
+  if (lookupKey && assetMapAny[lookupKey]) {
+    return assetMapAny[lookupKey];
+  }
+
   if (!item.backgroundSource) {
     console.log(`[Thumbnail] ${item.id}: 无 backgroundSource → 占位块`);
     return null;
@@ -110,15 +124,18 @@ const SceneItem = React.memo(({
 }: any) => {
   
   // ══════════════════════════════════════════════════════════
-  // 【🔥🔥🔥 终极暴力修复】强制覆盖 isResourceReady 为 true
-  // ══════════════════════════════════════════════════════════
-  // 原因：38个音频文件已确认存在，但多层状态传递链路有问题
-  // 方案：直接在此处强制设为 true，绕过所有上游状态
-  const forceIsResourceReady = true;  // ← 强制点亮！
-  
-  // 使用强制值替代传入值
-  const effectiveIsResourceReady = forceIsResourceReady || isResourceReady;
+// 使用传入的 isResourceReady 状态
+const effectiveIsResourceReady = isResourceReady;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // 【自动触发下载】确保资源未准备好时，触发静默下载
+  useEffect(() => {
+    console.log('[SceneItem] Checking Download Status:', item.id);
+    if (!effectiveIsResourceReady && globalProgress?.status === 'waiting' && onBoostPriority) {
+      console.log(`[SceneItem] 🚀 [Auto-Download] Triggering silent download for: ${item.id}`);
+      onBoostPriority(item.id);
+    }
+  }, [effectiveIsResourceReady, globalProgress?.status, item.id, onBoostPriority]);
   const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
   const [itemY, setItemY] = useState<number | null>(null);
@@ -137,7 +154,7 @@ const SceneItem = React.memo(({
   const directState = useMemo(() => {
     try {
       // 【修复点 1】废弃 isReady() 强校验：只要 getInstance() 能拿到实例就直接读取
-      const service = AudioService.getInstance();
+      const service = AudioService.getInstance() as any;
       
       if (service) {
         // 直接读取内存属性，不依赖 isReady() 检查
@@ -154,9 +171,9 @@ const SceneItem = React.memo(({
       } else {
         console.warn('[SceneItem] ⚠️ [useMap] AudioService.getInstance() 返回 null');
       }
-    } catch (e) {
+    } catch (e: any) {
       // 【修复点 5】日志哨兵：详细报错日志
-      console.error('[SceneItem] ❌ [useMap] 获取状态失败:', e?.message || e);
+      console.error('[ ❌ [useMap] 获取状态失败:', e?.message || e);
       console.error('[SceneItem] ❌ [useMap] 错误堆栈:', e?.stack);
     }
     
@@ -477,6 +494,9 @@ export const HomeScreen: React.FC = () => {
   const { isPlaying, currentBaseSceneId, togglePlayback } = useAudio();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+
+  // 【Noise Lab Modal 状态】
+  const [showNoiseLabModal, setShowNoiseLabModal] = useState(false);
 
   // 【关键】状态版本计数器 - 强制 SceneItem 重渲染
   const [stateVersion, setStateVersion] = useState(0);
@@ -1281,9 +1301,9 @@ export const HomeScreen: React.FC = () => {
       onPanResponderRelease: (e, gestureState) => {
         pan.flattenOffset(); // 合并偏移量
 
-        // 如果是点击（移动距离极小）
+        // 如果是点击（移动距离极小）→ 打开毛玻璃 Modal
         if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
-          navigation.navigate('NoiseRoom');
+          setShowNoiseLabModal(true);
           return;
         }
 
@@ -1385,7 +1405,9 @@ export const HomeScreen: React.FC = () => {
             style={styles.noiseCancelHexagon} 
             activeOpacity={0.8}
             onPress={() => {
-              navigation.navigate('NoiseRoom');
+              console.log('[HomeScreen] 🔥🔥🔥 NoiseLab 按钮被点击！准备打开 Modal...');
+              setShowNoiseLabModal(true);  // 🎯 打开毛玻璃 Modal
+              console.log('[HomeScreen] ✅ showNoiseLabModal 已设置为:', true);
             }}
           >
             <NoiseLabIcon size={40} />
@@ -1394,6 +1416,12 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.noiseCancelDesc}>{t('home_noise_desc')}</Text>
         </Animated.View>
       </View>
+
+      {/* 🎨 Noise Lab 毛玻璃 Modal */}
+      <NoiseLabModal
+        visible={showNoiseLabModal}
+        onClose={() => setShowNoiseLabModal(false)}
+      />
     </View>
   );
 };
