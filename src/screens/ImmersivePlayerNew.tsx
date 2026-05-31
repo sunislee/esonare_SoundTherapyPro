@@ -641,6 +641,7 @@ const ImmersivePlayerNew: React.FC = () => {
           >
             {prevScene.backgroundSource ? (
               <Animated.Image
+                key={prevScene.backgroundSource.uri || 'placeholder-prev'}
                 source={prevScene.backgroundSource}
                 style={[
                   StyleSheet.absoluteFillObject,
@@ -664,12 +665,14 @@ const ImmersivePlayerNew: React.FC = () => {
         >
           {scene.backgroundSource && !bgLoadTimeout ? (
             <Animated.Image
+              key={scene.backgroundSource.uri || 'placeholder'}
               source={scene.backgroundSource}
               style={[
                 StyleSheet.absoluteFillObject,
                 { transform: [{ scale: bgScaleAnim }] }
               ]}
               fadeDuration={0}
+              resizeMode="cover"
               onLoad={() => {
                 if (bgTimeoutRef.current) {
                   clearTimeout(bgTimeoutRef.current);

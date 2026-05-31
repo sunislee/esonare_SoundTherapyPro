@@ -15,7 +15,6 @@ import { NativeModules } from 'react-native';
 import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
 import RNFS from 'react-native-fs';
 import { NotificationService } from './NotificationService';
-import { OfflineService } from './OfflineService';
 import { Scene, SCENES } from '../constants/scenes';
 import { EQManager } from './EQManager';
 import { DownloaderServiceInstance, isDownloaded } from '../services/DownloaderService';
@@ -1677,13 +1676,13 @@ class AudioService {
         // 这样即使本地没有，也能从网络播放（降级方案）
       }
       
-      const isOffline = await OfflineService.isOfflineMode();
+      const isOffline = false;
       
       let uri: string | null = null;
       if (isLocal) {
         uri = localPath;
         console.log(`[AudioService] ✅ 使用本地文件: ${uri}`);
-      } else if (!isOffline) {
+      } else {
         const downloadUrls = getDownloadUrl(scene.id);
         if (!downloadUrls || downloadUrls.length === 0 || !downloadUrls[0]) {
           console.error('[AudioService] ❌ 远程 URL 无效:', scene.id);

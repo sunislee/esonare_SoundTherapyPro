@@ -1,4 +1,4 @@
-import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import { Scene } from '../constants/scenes';
 import AnimatedFloatingButton from './AnimatedFloatingButton';
@@ -25,33 +25,43 @@ const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
     };
     ReactNativeHapticFeedback.trigger('impactLight', options);
   }, []);
-
-  const renderButton = useCallback((ambient: Scene, idx: number) => {
-    const isActive = activeSmallSceneIds.includes(ambient.id);
-    const column = idx % 2;
-    const row = Math.floor(idx / 2);
+  
+  // 【优化】预计算按钮布局数据，避免每次渲染都重新计算
+  const buttonLayouts = useMemo(() => {
+    return globalAmbientScenes.map((ambient, idx) => ({
+      ambient,
+      idx,
+      isActive: activeSmallSceneIds.includes(ambient.id),
+      column: idx % 2,
+      row: Math.floor(idx / 2),
+    }));
+  }, [globalAmbientScenes, activeSmallSceneIds]);
+  
+  const handlePress = useCallback(async (ambient: Scene, targetState: boolean) => {
+    triggerHaptic();
+    console.log('[InteractiveButtons] Toggle ambience:', ambient.id, 'isActive:', targetState);
+    await toggleAmbience(ambient, targetState);
+  }, [triggerHaptic, toggleAmbience]);
+  
+  const renderButton = useCallback((layout: { ambient: Scene; idx: number; isActive: boolean; column: number; row: number }) => {
     return (
       <AnimatedFloatingButton
-        key={`floating-${ambient.id}`}
-        ambient={ambient}
-        isActive={isActive}
-        column={column}
-        row={row}
-        onPress={async () => {
-          triggerHaptic();
-          // 计算目标状态
-          const targetState = !activeSmallSceneIds.includes(ambient.id);
-          console.log('[InteractiveButtons] Toggle ambience:', ambient.id, 'isActive:', targetState);
-          // 通过 AudioContext 切换交互音
-          await toggleAmbience(ambient, targetState);
+        key={`floating-${layout.ambient.id}`}
+        ambient={layout.ambient}
+        isActive={layout.isActive}
+        column={layout.column}
+        row={layout.row}
+        onPress={() => {
+          const targetState = !layout.isActive;
+          handlePress(layout.ambient, targetState);
         }}
       />
     );
-  }, [globalAmbientScenes, triggerHaptic, activeSmallSceneIds, toggleAmbience]);
+  }, [handlePress]);
 
   return (
     <View style={[styles.floatingIconsContainer, { height: getDynamicHeight(insets) }]} pointerEvents="box-none">
-      {globalAmbientScenes.map(renderButton)}
+      {buttonLayouts.map(renderButton)}
     </View>
   );
 };

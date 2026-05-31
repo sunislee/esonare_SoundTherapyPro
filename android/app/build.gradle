@@ -63,8 +63,9 @@ react {
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ * 【Debug】已禁用 Proguard，以便在 Release 构建中保留完整的日志输出
  */
-def enableProguardInReleaseBuilds = true
+def enableProguardInReleaseBuilds = false
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -119,7 +120,7 @@ android {
             // 【修复签名】使用正确的 release 签名证书
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
-            shrinkResources true
+            shrinkResources false  // 【Debug】禁用资源压缩，保留完整日志
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }

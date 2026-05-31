@@ -319,9 +319,10 @@ export const SORTED_RESOURCES = [...NOISE_REDUCTION_RESOURCES, ...SCENE_BACKGROU
 
 /**
  * 获取资源映射表（按 ID 索引）
+ * 【修复】包含降噪资源和场景背景图，确保 getLocalPath() 能找到所有资源
  */
 export const RESOURCE_MAP: Record<string, AudioResource> = 
-  NOISE_REDUCTION_RESOURCES.reduce((acc, resource) => {
+  [...NOISE_REDUCTION_RESOURCES, ...SCENE_BACKGROUND_RESOURCES].reduce((acc, resource) => {
     acc[resource.id] = resource;
     return acc;
   }, {} as Record<string, AudioResource>);

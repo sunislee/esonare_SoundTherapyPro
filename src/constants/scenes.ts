@@ -104,6 +104,9 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
   },
 };
 
+// 【背景图缓存】避免重复创建引用，防止 Image 组件闪烁
+const backgroundSourceCache: Record<string, any> = {};
+
 const getCategory = (cat: string): SceneCategory => {
   switch (cat.toLowerCase()) {
     case 'nature':
@@ -121,6 +124,14 @@ const getCategory = (cat: string): SceneCategory => {
     default:
       return 'Nature';
   }
+};
+
+// 【背景图缓存工具】返回相同 URI 的相同引用
+const getCachedBackgroundSource = (uri: string) => {
+  if (!backgroundSourceCache[uri]) {
+    backgroundSourceCache[uri] = { uri };
+  }
+  return backgroundSourceCache[uri];
 };
 
 export const getIconName = (id: string) => {
@@ -187,8 +198,9 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      // 返回 file:// 路径，由 HomeScreen 判断 isResourceReady 决定是否显示
-      return { uri: localPath.startsWith('file://') ? localPath : `file://${localPath}` };
+      // 【🔥🔥🔨 修复闪烁】使用缓存，确保相同 URI 返回相同引用
+      const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
+      return getCachedBackgroundSource(uri);
     }
   }
   
@@ -197,8 +209,9 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
     const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      // 返回 file:// 路径，由 HomeScreen 判断 isResourceReady 决定是否显示
-      return { uri: localPath.startsWith('file://') ? localPath : `file://${localPath}` };
+      // 【🔥🔥🔨 修复闪烁】使用缓存，确保相同 URI 返回相同引用
+      const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
+      return getCachedBackgroundSource(uri);
     }
   }
   

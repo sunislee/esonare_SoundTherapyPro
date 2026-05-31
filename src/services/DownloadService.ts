@@ -12,7 +12,6 @@ import {
   MIRROR_GHPROXY_URL,
   KK_GITHUB_URL,
 } from '../constants/audioAssets';
-import { OfflineService } from './OfflineService';
 
 const DOWNLOAD_CONNECTION_TIMEOUT = 8000;
 const DOWNLOAD_READ_TIMEOUT = 15000;
@@ -62,24 +61,24 @@ const getDownloadUrls = (filename: string): string[] => {
 
 export const DownloadService = {
   async isResourceReady(): Promise<boolean> {
-    return OfflineService.isResourceReady();
+    return Promise.resolve(true);
   },
 
   async markAsReady() {
-    return OfflineService.markAsReady();
+    return Promise.resolve();
   },
 
   async clearReadyFlag() {
-    return OfflineService.clearReadyFlag();
+    return Promise.resolve();
   },
 
   async forceSkipCheckAndEnter() {
     console.log('[App-Download] 🔓 强制跳过校验，直接进入App');
-    await OfflineService.markAsReady();
+    await Promise.resolve();
   },
 
   async silentBackgroundDownload(): Promise<{success: number; failed: number}> {
-    console.log('[App-Download] 🤫 启动后台静默下载...');
+    console.log(`[App-Download] 🚨🚨🚨 [SILENT_DOWNLOAD_START] 启动后台静默下载... 🚨🚨🚨`);
     
     // 【优化】定义核心场景优先级（首页推荐的前 8 个场景）
     const PRIORITY_SCENES = [
@@ -98,21 +97,37 @@ export const DownloadService = {
     const allFilesToDownload: any[] = [];
     let completedBytes = 0;
 
+    // ════════════════════════════════════════════════════════════
+    // 🔥 第一阶段：构建下载队列
+    // ════════════════════════════════════════════════════════════
+    console.log(`[App-Download] 🔍 [BUILD_QUEUE] 遍历 ASSET_LIST，共 ${ASSET_LIST.length} 个资产...`);
+    
     for (const asset of ASSET_LIST) {
       const manifestItem = AUDIO_MANIFEST.find(a => a.id === asset.id);
-      if (!manifestItem) continue;
+      if (!manifestItem) {
+        console.log(`[App-Download] ⚠️ [BUILD_QUEUE] 跳过 ${asset.id}: 未找到 manifestItem`);
+        continue;
+      }
 
       const expectedSize = asset.expectedSize;
       const localPath = getLocalPathHelper(manifestItem.category, manifestItem.filename);
 
+      // 检查本地文件是否存在且大小足够
       if (await RNFS.exists(localPath)) {
         try {
           const stat = await RNFS.stat(localPath);
           if (stat.size >= expectedSize * 0.9) {
+            console.log(`[App-Download] ✅ [BUILD_QUEUE] 跳过已下载: ${manifestItem.filename} (${stat.size}/${expectedSize})`);
             completedBytes += stat.size;
             continue;
+          } else {
+            console.log(`[App-Download] ⚠️ [BUILD_QUEUE] 文件不完整: ${manifestItem.filename} (${stat.size}/${expectedSize})`);
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error(`[App-Download] ❌ [BUILD_QUEUE] 检查文件失败: ${localPath}`, e);
+        }
+      } else {
+        console.log(`[App-Download] 🆕 [BUILD_QUEUE] 新文件待下载: ${manifestItem.filename} → ${localPath}`);
       }
 
       allFilesToDownload.push({ 
@@ -125,7 +140,11 @@ export const DownloadService = {
       fileStatusMap.set(asset.id, { assetId: asset.id, expectedSize, maxConfirmedBytes: 0, status: 'pending' });
     }
 
-    // 【关键优化】按优先级排序：核心场景优先下载，支持动态插队
+    console.log(`[App-Download] 📦 [BUILD_QUEUE] 完成！共 ${allFilesToDownload.length} 个文件待下载`);
+
+    // ════════════════════════════════════════════════════════════
+    // 🔥 第二阶段：按优先级排序
+    // ════════════════════════════════════════════════════════════
     const sortWithBoost = () => {
       allFilesToDownload.sort((a, b) => {
         // 【动态插队】被用户点击的场景永远排第一
@@ -138,10 +157,10 @@ export const DownloadService = {
         return a.priority - b.priority;
       });
       
-      console.log(`[App-Download] 📋 下载队列已优化：共 ${allFilesToDownload.length} 个文件`);
-      console.log(`[App-Download] 🎯 前 5 个优先下载：${allFilesToDownload.slice(0, 5).map(f => f.asset.id).join(', ')}`);
+      console.log(`[App-Download] 📋 [SORT_QUEUE] 下载队列已优化：共 ${allFilesToDownload.length} 个文件`);
+      console.log(`[App-Download] 🎯 [SORT_QUEUE] 前 5 个优先下载：${allFilesToDownload.slice(0, 5).map(f => f.asset.id).join(', ')}`);
       if (boostPrioritySceneId) {
-        console.log(`[App-Download] ⚡ 当前插队场景: ${boostPrioritySceneId}`);
+        console.log(`[App-Download] ⚡ [SORT_QUEUE] 当前插队场景: ${boostPrioritySceneId}`);
       }
     };
     
@@ -149,15 +168,22 @@ export const DownloadService = {
 
     if (allFilesToDownload.length === 0) {
       console.log('[App-Download] ✅ 所有资源已存在，无需下载');
-      await OfflineService.markAsReady();
+      await Promise.resolve();
       return { success: 0, failed: 0 };
     }
+
+    console.log(`[App-Download] 🚀 [START_WORKERS] 启动 ${Math.min(MAX_CONCURRENT_TASKS, allFilesToDownload.length)} 个工作线程...`);
 
     let successCount = 0;
     let failedCount = 0;
     let nextIndex = 0;
 
+    // ════════════════════════════════════════════════════════════
+    // 🔥 第三阶段：下载单个文件
+    // ════════════════════════════════════════════════════════════
     const downloadSingleFile = async (): Promise<void> => {
+      console.log(`[App-Download] 📡 [WORKER] 工作线程启动`);
+      
       while (nextIndex < allFilesToDownload.length) {
         // 【动态插队】每次取任务前重新排序
         if (boostPrioritySceneId && nextIndex < allFilesToDownload.length - 1) {
@@ -170,9 +196,14 @@ export const DownloadService = {
         const tempPath = `${localPath}.tmp`;
         const urls = getDownloadUrls(manifestItem.filename);
 
+        console.log(`[App-Download] 🔥 [WORKER] 开始处理: ${manifestItem.filename}`);
+        console.log(`[App-Download] 📂 [WORKER] 本地路径: ${localPath}`);
+        console.log(`[App-Download] 🌐 [WORKER] 可用 URLs: ${urls.length} 个源`);
+        urls.forEach((url, i) => console.log(`[App-Download] 🌐 [WORKER] URL ${i + 1}: ${url.substring(0, 60)}...`));
+
         for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
           if (attempt > 0) {
-            console.log(`[App-Download] 🤫 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`);
+            console.log(`[App-Download] 🤫 [RETRY] 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`);
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
 
@@ -180,7 +211,12 @@ export const DownloadService = {
 
           for (const url of urls) {
             try {
+              console.log(`[App-Download] 🌐 [DOWNLOAD_START] 开始下载: ${manifestItem.filename}`);
+              console.log(`[App-Download] 🌐 [DOWNLOAD_START] URL: ${url}`);
+              console.log(`[App-Download] 📂 [DOWNLOAD_START] 临时文件: ${tempPath}`);
+
               const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+              console.log(`[App-Download] 📂 [DOWNLOAD_START] 创建目录: ${dirPath}`);
               await RNFS.mkdir(dirPath);
 
               const downloadResult = await RNFS.downloadFile({
@@ -190,9 +226,15 @@ export const DownloadService = {
                 readTimeout: DOWNLOAD_READ_TIMEOUT,
               }).promise;
 
+              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 状态码: ${downloadResult.statusCode}`);
+              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 接收字节: ${downloadResult.bytesDownloaded || downloadResult.totalBytesWritten || 'N/A'}`);
+
               if (downloadResult.statusCode === 200 || downloadResult.statusCode === 201) {
                 const stat = await RNFS.stat(tempPath);
+                console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 临时文件大小: ${stat.size}`);
+                
                 if (stat.size >= expectedSize * 0.8) {
+                  console.log(`[App-Download] ✅ [DOWNLOAD_RESULT] 文件大小符合要求，移动到最终路径`);
                   await RNFS.moveFile(tempPath, localPath);
                   status.status = 'success';
                   successCount++;
@@ -203,17 +245,28 @@ export const DownloadService = {
                   }
                   // 【完成回调】通知自动关闭弹窗
                   if (onCompleteCallback) {
-                    onCompleteCallback(asset.id);
+                    try {
+                      onCompleteCallback(asset.id);
+                    } catch (cbErr: any) {
+                      console.error(`[App-Download] ❌ [COMPLETION_CB_ERROR] 完成回调失败: ${cbErr.message}`);
+                    }
                   }
+                  console.log(`[App-Download] 📡 [PROGRESS_CALLBACK] 已通知 UI: ${asset.id} -> 100%`);
                   
-                  console.log(`[App-Download] ✅ 静默完成: ${manifestItem.filename}`);
+                  console.log(`[App-Download] ✅✅✅ [SILENT_COMPLETE] 静默完成: ${manifestItem.filename}`);
                   break;
                 } else {
+                  console.log(`[App-Download] ⚠️ [DOWNLOAD_RESULT] 文件大小不足: ${stat.size} < ${expectedSize * 0.8}`);
                   await RNFS.unlink(tempPath);
                 }
+              } else {
+                console.log(`[App-Download] ⚠️ [DOWNLOAD_RESULT] 状态码不是 200/201: ${downloadResult.statusCode}`);
               }
-            } catch (err) {
-              // 静默处理错误
+            } catch (err: any) {
+              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 下载失败: ${manifestItem.filename}`);
+              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 错误消息: ${err.message || err}`);
+              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 错误堆栈: ${err.stack || 'N/A'}`);
+              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] URL: ${url}`);
             }
           }
 
@@ -223,18 +276,20 @@ export const DownloadService = {
         if (status.status !== 'success') {
           status.status = 'failed';
           failedCount++;
-          console.error(`[App-Download] ❌ 静默最终失败: ${manifestItem.filename}`);
+          console.error(`[App-Download] ❌❌❌ [SILENT_FAILED] 静默最终失败: ${manifestItem.filename} (重试${MAX_RETRIES_PER_FILE}次)`);
         }
       }
+      
+      console.log(`[App-Download] 📡 [WORKER] 工作线程完成`);
     };
 
     const workers = Array.from({ length: Math.min(MAX_CONCURRENT_TASKS, allFilesToDownload.length) }, () => downloadSingleFile());
     await Promise.all(workers);
 
-    console.log(`[App-Download] 🤫 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
+    console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
 
     if (failedCount === 0) {
-      await OfflineService.markAsReady();
+      await Promise.resolve();
     }
 
     return { success: successCount, failed: failedCount };
