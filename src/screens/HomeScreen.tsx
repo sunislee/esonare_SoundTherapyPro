@@ -1092,22 +1092,15 @@ export const HomeScreen: React.FC = () => {
       
       console.log(`[HomeScreen] 🔒 [切换锁v8] ⚡ 双向锁定：`, Array.from(newLockedSet));
       
-      // 🔥 使用 flushSync 强制同步渲染！（消除帧间空隙）
-      try {
-        const { flushSync } = require('react-dom');
-        
-        flushSync(() => {
-          setLockedIds(newLockedSet);
-          lockedIdsRef.current = newLockedSet;
-        });
-        
-        console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 flushSync 同步渲染完成！`);
-      } catch (flushError) {
-        // 如果 flushSync 不可用，回退到普通 setState
-        console.warn('[HomeScreen] ⚠️ [切换锁v8] flushSync 不可用，使用异步更新');
-        setLockedIds(newLockedSet);
-        lockedIdsRef.current = newLockedSet;
-      }
+  // 🔥 使用 flushSync 强制同步渲染！（消除帧间空隙）
+  const { flushSync } = require('react');
+  
+  flushSync(() => {
+    setLockedIds(newLockedSet);
+    lockedIdsRef.current = newLockedSet;
+  });
+  
+  console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 flushSync 同步渲染完成！`);
       
       // 统一延时释放（4000ms，覆盖全过程）
       lockTimeoutRef.current = setTimeout(() => {
