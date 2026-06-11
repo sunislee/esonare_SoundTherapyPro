@@ -1014,19 +1014,15 @@ export const HomeScreen: React.FC = () => {
         newLockedSet.add(currentPlayingId); // 旧场景：保持紫色不熄灭！
       }
       
-      console.log(`[HomeScreen] 🔒 [切换锁v8] ⚡ 双向锁定：`, Array.from(newLockedSet));
-      
-  // 🔥 使用 flushSync 强制同步渲染！（消除帧间空隙）
-  const { flushSync } = require('react');
+  console.log(`[HomeScreen] 🔒 [切换锁v8] ⚡ 双向锁定：`, Array.from(newLockedSet));
   
-  flushSync(() => {
-    setLockedIds(newLockedSet);
-    lockedIdsRef.current = newLockedSet;
-  });
-  
-  console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 flushSync 同步渲染完成！`);
-      
-      // 统一延时释放（4000ms，覆盖全过程）
+// React Native 不支持 flushSync，直接使用 setState
+setLockedIds(newLockedSet);
+lockedIdsRef.current = newLockedSet;
+
+console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
+    
+    // 统一延时释放（4000ms，覆盖全过程）
       lockTimeoutRef.current = setTimeout(() => {
         console.log(`[HomeScreen] 🔓 [切换锁v8] 4000ms 结束，释放所有锁`);
         setLockedIds(new Set());
