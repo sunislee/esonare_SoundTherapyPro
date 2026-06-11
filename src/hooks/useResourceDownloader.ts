@@ -78,21 +78,6 @@ export function useResourceDownloader() {
       // 启动下载（由 ResourceStatusManager 内部处理）
       const { DownloadService } = await import('../services/DownloadService');
       
-      // 设置进度回调
-      DownloadService.setProgressCallback((sceneId: string, progress: number) => {
-        setDownloadProgress(prev => {
-          const newMap = new Map(prev);
-          newMap.set(sceneId, {
-            progress,
-            status: progress >= 100 ? 'ready' : 'downloading',
-            isPriority: prev.get(sceneId)?.isPriority || false,
-          });
-          // 清除缓存以确保下次检查时获取最新状态
-          clearCache(sceneId);
-          return newMap;
-        });
-      });
-
       // 开始下载
       const result = await DownloadService.silentBackgroundDownload();
       console.log(`[useResourceDownloader] ✅ 后台下载完成: 成功 ${result.success} 个, 失败 ${result.failed} 个`);
