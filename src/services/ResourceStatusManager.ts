@@ -33,7 +33,7 @@ export interface SceneResourceStatus {
 // 【缓存管理】避免重复计算
 const audioStatusCache = new Map<string, { ready: boolean; timestamp: number }>();
 const imageStatusCache = new Map<string, { ready: boolean; timestamp: number }>();
-const CACHE_TTL = 5000; // 缓存 5 秒
+const CACHE_TTL = 60000; // 缓存 60 秒
 
 /**
  * 【音频状态检查】带缓存优化
