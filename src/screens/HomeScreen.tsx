@@ -942,6 +942,12 @@ export const HomeScreen: React.FC = () => {
     setSlogan(slogans[Math.floor(Math.random() * slogans.length)]);
     Animated.timing(greetingFadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
     
+    // 【核心】强制将所有 isBaseScene 场景标记为资源就绪
+    const baseIds = SCENES.filter(s => s.isBaseScene).map(s => s.id);
+    const readyMap: Record<string, boolean> = {};
+    baseIds.forEach(id => { readyMap[id] = true; });
+    setDownloadedSceneIds(new Set(baseIds));
+    
     // 【关键改进】不使用 setTimeout！改为监听 isDataReady 变化
     // 原因：冷启动时 downloadedSceneIds 加载时间不确定（可能 100ms-2000ms）
     // 使用 isDataReady 标志确保数据真正就绪后才恢复
