@@ -1,4 +1,5 @@
 import RNFS from 'react-native-fs';
+import pLimit from 'p-limit';
 import {
   AUDIO_MANIFEST,
   IS_GOOGLE_PLAY_VERSION,
@@ -39,6 +40,16 @@ class DownloadServiceImpl {
   private onProgressCallback: ((sceneId: string, progress: number) => void) | null = null;
   private onCompleteCallback: ((sceneId: string) => void) | null = null;
   private onFileDownloadedCallback: ((assetId: string) => void) | null = null;
+
+  /**
+   * 清理所有回调引用，防止内存泄漏
+   */
+  clearCallbacks(): void {
+    this.onProgressCallback = null;
+    this.onCompleteCallback = null;
+    this.onFileDownloadedCallback = null;
+    console.log('[DownloadService] 🧹 回调已清理');
+  }
 
   async isResourceReady(): Promise<boolean> {
     return Promise.resolve(true);
@@ -134,6 +145,25 @@ class DownloadServiceImpl {
     
     sortWithBoost();
 
+    // 🔥 临时文件清理：防止残留 .tmp 文件干扰下次校验
+    console.log(`[App-Download] 🧹 [CLEANUP_TMP] 开始清理残留临时文件...`);
+    for (const asset of ASSET_LIST) {
+      const manifestItem = AUDIO_MANIFEST.find(a => a.id === asset.id);
+      if (manifestItem) {
+        const localPath = getLocalPathHelper(manifestItem.category, manifestItem.filename);
+        const tempPath = `${localPath}.tmp`;
+        try {
+          if (await RNFS.exists(tempPath)) {
+            await RNFS.unlink(tempPath);
+            console.log(`[App-Download] 🧹 [CLEANUP_TMP] 已清理: ${manifestItem.filename}`);
+          }
+        } catch (e) {
+          console.error(`[App-Download] ❌ [CLEANUP_TMP] 清理失败: ${tempPath}`, e);
+        }
+      }
+    }
+    console.log(`[App-Download] ✅ [CLEANUP_TMP] 临时文件清理完成`);
+
     if (allFilesToDownload.length === 0) {
       console.log('[App-Download] ✅ 所有资源已存在，无需下载');
       return { success: 0, failed: 0 };
@@ -141,101 +171,109 @@ class DownloadServiceImpl {
 
     let successCount = 0;
     let failedCount = 0;
-    let nextIndex = 0;
 
-    const downloadSingleFile = async (): Promise<void> => {
-      console.log(`[App-Download] 📡 [WORKER] 工作线程启动`);
+    // 🔥 使用 p-limit 实现并发控制（最多4个并发任务）
+    const limit = pLimit(4);
+
+    const downloadSingleFile = async (item: any): Promise<void> => {
+      console.log(`[App-Download] 📡 [WORKER_LIMITED] 启动（并发受限）: ${item.manifestItem.filename}`);
       
-      while (nextIndex < allFilesToDownload.length) {
-        if (this.boostPrioritySceneId && nextIndex < allFilesToDownload.length - 1) {
-          sortWithBoost();
+      const { asset, manifestItem, localPath, expectedSize } = item;
+      const status = fileStatusMap.get(asset.id)!;
+      const tempPath = `${localPath}.tmp`;
+      const urls = getDownloadUrls(manifestItem.filename);
+
+      console.log(`[App-Download] 🔥 [WORKER_LIMITED] 开始处理: ${manifestItem.filename}`);
+      console.log(`[App-Download] 📂 [WORKER_LIMITED] 本地路径: ${localPath}`);
+
+      for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
+        if (attempt > 0) {
+          console.log(`[App-Download] 🤫 [RETRY] 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`);
+          await new Promise<void>(resolve => setTimeout(resolve as unknown as () => void, 5000));
         }
-        
-        const idx = nextIndex++;
-        const { asset, manifestItem, localPath, expectedSize } = allFilesToDownload[idx];
-        const status = fileStatusMap.get(asset.id)!;
-        const tempPath = `${localPath}.tmp`;
-        const urls = getDownloadUrls(manifestItem.filename);
 
-        console.log(`[App-Download] 🔥 [WORKER] 开始处理: ${manifestItem.filename}`);
-        console.log(`[App-Download] 📂 [WORKER] 本地路径: ${localPath}`);
+        status.status = 'downloading';
 
-        for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
-          if (attempt > 0) {
-            console.log(`[App-Download] 🤫 [RETRY] 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`);
-            await new Promise<void>(resolve => setTimeout(resolve as any, 5000));
-          }
+        for (const url of urls) {
+          try {
+            console.log(`[App-Download] 🌐 [DOWNLOAD_START] 开始下载: ${manifestItem.filename}`);
+            console.log(`[App-Download] 🌐 [DOWNLOAD_START] URL: ${url}`);
 
-          status.status = 'downloading';
+            const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+            await RNFS.mkdir(dirPath);
 
-          for (const url of urls) {
-            try {
-              console.log(`[App-Download] 🌐 [DOWNLOAD_START] 开始下载: ${manifestItem.filename}`);
-              console.log(`[App-Download] 🌐 [DOWNLOAD_START] URL: ${url}`);
-
-              const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-              await RNFS.mkdir(dirPath);
-
-              const downloadResult = await RNFS.downloadFile({
-                fromUrl: url,
-                toFile: tempPath,
-                connectionTimeout: DOWNLOAD_CONNECTION_TIMEOUT,
-                readTimeout: DOWNLOAD_READ_TIMEOUT,
-              }).promise;
-
-              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 状态码: ${downloadResult.statusCode}`);
-              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 接收字节: ${downloadResult.bytesWritten || 'N/A'}`);
-
-              if (downloadResult.statusCode === 200 || downloadResult.statusCode === 201) {
-                const stat = await RNFS.stat(tempPath);
-                console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 临时文件大小: ${stat.size}`);
-                
-                if (stat.size >= expectedSize * 0.8) {
-                  console.log(`[App-Download] ✅ [DOWNLOAD_RESULT] 文件大小符合要求，移动到最终路径`);
-                  await RNFS.moveFile(tempPath, localPath);
-                  status.status = 'success';
-                  successCount++;
-                  
-                  if (this.onProgressCallback) {
-                    this.onProgressCallback(asset.id, 100);
-                  }
-                  if (this.onCompleteCallback) {
-                    try {
-                      this.onCompleteCallback(asset.id);
-                    } catch (cbErr: any) {
-                      console.error(`[App-Download] ❌ [COMPLETION_CB_ERROR] 完成回调失败: ${cbErr.message}`);
-                    }
-                  }
-                  
-                  console.log(`[App-Download] ✅✅✅ [SILENT_COMPLETE] 静默完成: ${manifestItem.filename}`);
-                  break;
-                } else {
-                  console.log(`[App-Download] ⚠️ [DOWNLOAD_RESULT] 文件大小不足: ${stat.size} < ${expectedSize * 0.8}`);
-                  await RNFS.unlink(tempPath);
+            const downloadResult = await RNFS.downloadFile({
+              fromUrl: url,
+              toFile: tempPath,
+              connectionTimeout: DOWNLOAD_CONNECTION_TIMEOUT,
+              readTimeout: DOWNLOAD_READ_TIMEOUT,
+              background: false,
+              discretionary: false,
+              progressDivider: 5,
+              progress: (res) => {
+                if (status.status === 'downloading') {
+                  status.maxConfirmedBytes = res.bytesWritten || 0;
                 }
+              },
+            }).promise;
+
+             console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 状态码: ${downloadResult.statusCode}`);
+
+             if (downloadResult.statusCode === 200 || downloadResult.statusCode === 201) {
+              const stat = await RNFS.stat(tempPath);
+              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 临时文件大小: ${stat.size}`);
+              
+              if (stat.size >= expectedSize * 0.8) {
+                console.log(`[App-Download] ✅ [DOWNLOAD_RESULT] 文件大小符合要求，移动到最终路径`);
+                await RNFS.moveFile(tempPath, localPath);
+                status.status = 'success';
+                successCount++;
+                
+                if (this.onProgressCallback) {
+                  this.onProgressCallback(asset.id, 100);
+                }
+                if (this.onCompleteCallback) {
+                  try {
+                    this.onCompleteCallback(asset.id);
+                  } catch (cbErr: any) {
+                    console.error(`[App-Download] ❌ [COMPLETION_CB_ERROR] 完成回调失败: ${cbErr.message}`);
+                  }
+                }
+                
+                // 移除单文件完成时的 clearCallbacks，避免中断批量任务进度
+                
+                console.log(`[App-Download] ✅✅✅ [SILENT_COMPLETE] 静默完成: ${manifestItem.filename}`);
+                break;
               } else {
-                console.log(`[App-Download] ⚠️ [DOWNLOAD_RESULT] 状态码不是 200/201: ${downloadResult.statusCode}`);
+                console.log(`[App-Download] ⚠️ [DOWNLOAD_RESULT] 文件大小不足: ${stat.size} < ${expectedSize * 0.8}`);
+                await RNFS.unlink(tempPath);
               }
-            } catch (err: any) {
-              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 下载失败: ${manifestItem.filename}`);
-              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 错误消息: ${err.message || err}`);
+            } else {
+              console.log(`[App-Download] ⚠️ [DOWNLOAD_RESULT] 状态码不是 200/201: ${downloadResult.statusCode}`);
             }
+          } catch (err: any) {
+            console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 下载失败: ${manifestItem.filename}`);
+            console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 错误消息: ${err.message || err}`);
           }
-
-          if (status.status === 'success') break;
         }
 
-        if (status.status !== 'success') {
-          status.status = 'failed';
-          failedCount++;
-        }
+        if (status.status === 'success') break;
+      }
+
+      if (status.status !== 'success') {
+        status.status = 'failed';
+        failedCount++;
+        // 移除单文件失败时的 clearCallbacks，避免中断批量任务进度
       }
       
-      console.log(`[App-Download] 📡 [WORKER] 工作线程完成`);
+      console.log(`[App-Download] 📡 [WORKER_LIMITED] 完成: ${manifestItem.filename}`);
     };
 
-    const workers = Array.from({ length: Math.min(MAX_CONCURRENT_TASKS, allFilesToDownload.length) }, () => downloadSingleFile());
-    await Promise.all(workers);
+    // 🔥 使用 p-limit 包装所有下载任务
+    const downloadPromises = allFilesToDownload.map(item => 
+      limit(() => downloadSingleFile(item))
+    );
+    await Promise.all(downloadPromises);
 
     console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
 
@@ -352,7 +390,7 @@ class DownloadServiceImpl {
       for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
         if (attempt > 0) {
           console.log(`[App-Download] ⚠️ 静默重试 ${asset.filename} (第${attempt + 1}/5次)`);
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          await new Promise<void>(resolve => setTimeout(resolve as unknown as () => void, 5000));
         }
 
         status.status = 'downloading';

@@ -280,7 +280,7 @@ class DownloaderService {
       }).promise;
       
       console.log(`[Downloader] 🔥 [RNFS.downloadFile] 状态码: ${downloadResult.statusCode}`);
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 接收字节: ${downloadResult.bytesWritten || 'N/A'}`);
+      // RNFS Result 对象没有 bytesWritten，只有 Progress 回调才有
       
       // ════════════════════════════════════════════════════════════
       // 🔥 物理证据日志 - 下载结果
