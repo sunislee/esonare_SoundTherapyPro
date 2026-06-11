@@ -184,12 +184,21 @@ export async function initializeResources(): Promise<void> {
   const scenesToScan = SCENES.filter(s => s.isBaseScene);
   let unreadyCount = 0;
   
-  for (const scene of scenesToScan) {
-    const { isFullyReady, progress } = await checkSceneResourceStatus(scene.id);
+  const results = await Promise.allSettled(scenesToScan.map(scene => checkSceneResourceStatus(scene.id)));
+  
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const scene = scenesToScan[i];
     
-    if (!isFullyReady) {
+    if (result.status === 'fulfilled') {
+      if (!result.value.isFullyReady) {
+        unreadyCount++;
+        console.log(`[ResourceStatus] 🆕 [初始化] ${scene.id}: 未就绪 (progress=${result.value.progress}%)`);
+      }
+    } else {
+      // 处理异常情况
       unreadyCount++;
-      console.log(`[ResourceStatus] 🆕 [初始化] ${scene.id}: 未就绪 (progress=${progress}%)`);
+      console.error(`[ResourceStatus] ❌ [初始化] ${scene.id}: 检查失败`, result.reason);
     }
   }
   
