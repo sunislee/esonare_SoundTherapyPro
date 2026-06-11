@@ -20,11 +20,6 @@ const UI_UPDATE_INTERVAL_MS = 2000;
 const MAX_RETRIES_PER_FILE = 5;
 const MAX_CONCURRENT_TASKS = 6;
 
-let boostPrioritySceneId: string | null = null;
-let onProgressCallback: ((sceneId: string, progress: number) => void) | null = null;
-let onCompleteCallback: ((sceneId: string) => void) | null = null;
-let onFileDownloadedCallback: ((assetId: string) => void) | null = null;
-
 export interface DownloadProgress {
   progress: number;
   receivedBytes: number;
@@ -39,57 +34,41 @@ interface FileStatus {
   status: 'pending' | 'downloading' | 'success' | 'failed';
 }
 
-const encodeFilename = (filename: string): string => {
-  return filename.split('/').map(part => encodeURIComponent(part)).join('/');
-};
+class DownloadServiceImpl {
+  private boostPrioritySceneId: string | null = null;
+  private onProgressCallback: ((sceneId: string, progress: number) => void) | null = null;
+  private onCompleteCallback: ((sceneId: string) => void) | null = null;
+  private onFileDownloadedCallback: ((assetId: string) => void) | null = null;
 
-const getDownloadUrls = (filename: string): string[] => {
-  const encoded = encodeFilename(filename);
-  
-  // 【2025年最新修复】所有文件路径已在 audioAssets.ts 中完整定义
-  // 直接使用 filename，无需添加任何前缀
-  // 路径示例: base/xxx.m4a, fx/xxx.m4a, zen/xxx.mp3, noise reduction/xxx.mp3
-  
-  // 【国内最稳 GitHub Proxy 加速源优先级
-  return [
-    `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encoded}`,
-    `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${encoded}`,
-    `${KK_GITHUB_URL}sunislee/sound-therapy-assets/main/${encoded}`,
-    `${JSDDELIVR_URL}${encoded}`,
-  ];
-};
-
-export const DownloadService = {
   async isResourceReady(): Promise<boolean> {
     return Promise.resolve(true);
-  },
+  }
 
   async markAsReady() {
     return Promise.resolve();
-  },
+  }
 
   async clearReadyFlag() {
     return Promise.resolve();
-  },
+  }
 
   async forceSkipCheckAndEnter() {
     console.log('[App-Download] 🔓 强制跳过校验，直接进入App');
     await Promise.resolve();
-  },
+  }
 
   async silentBackgroundDownload(): Promise<{success: number; failed: number}> {
     console.log(`[App-Download] 🚨🚨🚨 [SILENT_DOWNLOAD_START] 启动后台静默下载... 🚨🚨🚨`);
     
-    // 【优化】定义核心场景优先级（首页推荐的前 8 个场景）
     const PRIORITY_SCENES = [
-      'nature_ocean',        // 海洋
-      'nature_forest',       // 森林
-      'nature_deep_sea',     // 深海呼吸
-      'nature_misty_forest', // 雾林
-      'healing_zen_bowl',    // 禅音钵
-      'oriental_zen_monastery', // 东方禅意·寺院
-      'life_rain_boat',      // 雨天小船
-      'brainwave_alpha',     // α脑波
+      'nature_ocean',
+      'nature_forest',
+      'nature_deep_sea',
+      'nature_misty_forest',
+      'healing_zen_bowl',
+      'oriental_zen_monastery',
+      'life_rain_boat',
+      'brainwave_alpha',
     ];
     
     const CONST_TOTAL_SIZE = GLOBAL_TOTAL_SIZE > 0 ? GLOBAL_TOTAL_SIZE : ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
@@ -97,9 +76,6 @@ export const DownloadService = {
     const allFilesToDownload: any[] = [];
     let completedBytes = 0;
 
-    // ════════════════════════════════════════════════════════════
-    // 🔥 第一阶段：构建下载队列
-    // ════════════════════════════════════════════════════════════
     console.log(`[App-Download] 🔍 [BUILD_QUEUE] 遍历 ASSET_LIST，共 ${ASSET_LIST.length} 个资产...`);
     
     for (const asset of ASSET_LIST) {
@@ -112,7 +88,6 @@ export const DownloadService = {
       const expectedSize = asset.expectedSize;
       const localPath = getLocalPathHelper(manifestItem.category, manifestItem.filename);
 
-      // 检查本地文件是否存在且大小足够
       if (await RNFS.exists(localPath)) {
         try {
           const stat = await RNFS.stat(localPath);
@@ -135,32 +110,25 @@ export const DownloadService = {
         manifestItem, 
         localPath, 
         expectedSize,
-        priority: PRIORITY_SCENES.indexOf(asset.id)  // 添加优先级字段
+        priority: PRIORITY_SCENES.indexOf(asset.id)
       });
       fileStatusMap.set(asset.id, { assetId: asset.id, expectedSize, maxConfirmedBytes: 0, status: 'pending' });
     }
 
     console.log(`[App-Download] 📦 [BUILD_QUEUE] 完成！共 ${allFilesToDownload.length} 个文件待下载`);
 
-    // ════════════════════════════════════════════════════════════
-    // 🔥 第二阶段：按优先级排序
-    // ════════════════════════════════════════════════════════════
     const sortWithBoost = () => {
       allFilesToDownload.sort((a, b) => {
-        // 【动态插队】被用户点击的场景永远排第一
-        if (boostPrioritySceneId === a.asset.id) return -1;
-        if (boostPrioritySceneId === b.asset.id) return 1;
-        // 核心场景（priority >= 0）排前面
+        if (this.boostPrioritySceneId === a.asset.id) return -1;
+        if (this.boostPrioritySceneId === b.asset.id) return 1;
         if (a.priority >= 0 && b.priority < 0) return -1;
         if (a.priority < 0 && b.priority >= 0) return 1;
-        // 都是核心场景或都不是，按 priority 升序
         return a.priority - b.priority;
       });
       
       console.log(`[App-Download] 📋 [SORT_QUEUE] 下载队列已优化：共 ${allFilesToDownload.length} 个文件`);
-      console.log(`[App-Download] 🎯 [SORT_QUEUE] 前 5 个优先下载：${allFilesToDownload.slice(0, 5).map(f => f.asset.id).join(', ')}`);
-      if (boostPrioritySceneId) {
-        console.log(`[App-Download] ⚡ [SORT_QUEUE] 当前插队场景: ${boostPrioritySceneId}`);
+      if (this.boostPrioritySceneId) {
+        console.log(`[App-Download] ⚡ [SORT_QUEUE] 当前插队场景: ${this.boostPrioritySceneId}`);
       }
     };
     
@@ -168,25 +136,18 @@ export const DownloadService = {
 
     if (allFilesToDownload.length === 0) {
       console.log('[App-Download] ✅ 所有资源已存在，无需下载');
-      await Promise.resolve();
       return { success: 0, failed: 0 };
     }
-
-    console.log(`[App-Download] 🚀 [START_WORKERS] 启动 ${Math.min(MAX_CONCURRENT_TASKS, allFilesToDownload.length)} 个工作线程...`);
 
     let successCount = 0;
     let failedCount = 0;
     let nextIndex = 0;
 
-    // ════════════════════════════════════════════════════════════
-    // 🔥 第三阶段：下载单个文件
-    // ════════════════════════════════════════════════════════════
     const downloadSingleFile = async (): Promise<void> => {
       console.log(`[App-Download] 📡 [WORKER] 工作线程启动`);
       
       while (nextIndex < allFilesToDownload.length) {
-        // 【动态插队】每次取任务前重新排序
-        if (boostPrioritySceneId && nextIndex < allFilesToDownload.length - 1) {
+        if (this.boostPrioritySceneId && nextIndex < allFilesToDownload.length - 1) {
           sortWithBoost();
         }
         
@@ -198,13 +159,11 @@ export const DownloadService = {
 
         console.log(`[App-Download] 🔥 [WORKER] 开始处理: ${manifestItem.filename}`);
         console.log(`[App-Download] 📂 [WORKER] 本地路径: ${localPath}`);
-        console.log(`[App-Download] 🌐 [WORKER] 可用 URLs: ${urls.length} 个源`);
-        urls.forEach((url, i) => console.log(`[App-Download] 🌐 [WORKER] URL ${i + 1}: ${url.substring(0, 60)}...`));
 
         for (let attempt = 0; attempt < MAX_RETRIES_PER_FILE; attempt++) {
           if (attempt > 0) {
             console.log(`[App-Download] 🤫 [RETRY] 静默重试 ${manifestItem.filename} (${attempt + 1}/5)`);
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise<void>(resolve => setTimeout(resolve as any, 5000));
           }
 
           status.status = 'downloading';
@@ -213,10 +172,8 @@ export const DownloadService = {
             try {
               console.log(`[App-Download] 🌐 [DOWNLOAD_START] 开始下载: ${manifestItem.filename}`);
               console.log(`[App-Download] 🌐 [DOWNLOAD_START] URL: ${url}`);
-              console.log(`[App-Download] 📂 [DOWNLOAD_START] 临时文件: ${tempPath}`);
 
               const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-              console.log(`[App-Download] 📂 [DOWNLOAD_START] 创建目录: ${dirPath}`);
               await RNFS.mkdir(dirPath);
 
               const downloadResult = await RNFS.downloadFile({
@@ -227,7 +184,7 @@ export const DownloadService = {
               }).promise;
 
               console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 状态码: ${downloadResult.statusCode}`);
-              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 接收字节: ${downloadResult.bytesDownloaded || downloadResult.totalBytesWritten || 'N/A'}`);
+              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 接收字节: ${downloadResult.bytesWritten || 'N/A'}`);
 
               if (downloadResult.statusCode === 200 || downloadResult.statusCode === 201) {
                 const stat = await RNFS.stat(tempPath);
@@ -239,19 +196,16 @@ export const DownloadService = {
                   status.status = 'success';
                   successCount++;
                   
-                  // 【进度回调】通知 UI 更新
-                  if (onProgressCallback) {
-                    onProgressCallback(asset.id, 100);
+                  if (this.onProgressCallback) {
+                    this.onProgressCallback(asset.id, 100);
                   }
-                  // 【完成回调】通知自动关闭弹窗
-                  if (onCompleteCallback) {
+                  if (this.onCompleteCallback) {
                     try {
-                      onCompleteCallback(asset.id);
+                      this.onCompleteCallback(asset.id);
                     } catch (cbErr: any) {
                       console.error(`[App-Download] ❌ [COMPLETION_CB_ERROR] 完成回调失败: ${cbErr.message}`);
                     }
                   }
-                  console.log(`[App-Download] 📡 [PROGRESS_CALLBACK] 已通知 UI: ${asset.id} -> 100%`);
                   
                   console.log(`[App-Download] ✅✅✅ [SILENT_COMPLETE] 静默完成: ${manifestItem.filename}`);
                   break;
@@ -265,8 +219,6 @@ export const DownloadService = {
             } catch (err: any) {
               console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 下载失败: ${manifestItem.filename}`);
               console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 错误消息: ${err.message || err}`);
-              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] 错误堆栈: ${err.stack || 'N/A'}`);
-              console.error(`[App-Download] ❌❌❌ [DOWNLOAD_ERROR] URL: ${url}`);
             }
           }
 
@@ -276,7 +228,6 @@ export const DownloadService = {
         if (status.status !== 'success') {
           status.status = 'failed';
           failedCount++;
-          console.error(`[App-Download] ❌❌❌ [SILENT_FAILED] 静默最终失败: ${manifestItem.filename} (重试${MAX_RETRIES_PER_FILE}次)`);
         }
       }
       
@@ -288,18 +239,14 @@ export const DownloadService = {
 
     console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
 
-    if (failedCount === 0) {
-      await Promise.resolve();
-    }
-
     return { success: successCount, failed: failedCount };
-  },
+  }
 
   async checkAndDownload(onProgress: (p: DownloadProgress) => void) {
     const CONST_TOTAL_SIZE = GLOBAL_TOTAL_SIZE > 0 ? GLOBAL_TOTAL_SIZE : ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
 
     const fileStatusMap = new Map<string, FileStatus>();
-    const allFilesToDownload: any[] = []; // 【修复】所有文件（包括背景图）都必须进入核心下载队列
+    const allFilesToDownload: any[] = [];
     let completedBytes = 0;
 
     for (const asset of ASSET_LIST) {
@@ -327,7 +274,6 @@ export const DownloadService = {
         } catch (e) {}
       }
 
-      // 【修复】所有文件统一进入下载队列，不再区分核心音频和背景图
       allFilesToDownload.push({ ...manifestItem, expectedSize });
       
       fileStatusMap.set(asset.id, {
@@ -352,7 +298,7 @@ export const DownloadService = {
       return { failedAssets: [], success: true };
     }
 
-    console.log(`[App-Download] 📦 需要下载 ${allFilesToDownload.length} 个文件，总大小约 ${(CONST_TOTAL_SIZE / 1024 / 1024).toFixed(1)}MB`);
+    console.log(`[App-Download] 📦 需要下载 ${allFilesToDownload.length} 个文件`);
 
     let uiUpdateTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -381,8 +327,6 @@ export const DownloadService = {
 
     uiUpdateTimer = setInterval(updateUI, UI_UPDATE_INTERVAL_MS);
 
-    const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
-
     const downloadSingleFile = async (asset: any): Promise<boolean> => {
       const status = fileStatusMap.get(asset.id);
       if (!status) return false;
@@ -390,7 +334,6 @@ export const DownloadService = {
       const localPath = getLocalPathHelper(asset.category, asset.filename);
       const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
 
-      // 【强制建目录】zen/ western/ 等子目录必须提前创建
       try {
         const dirExists = await RNFS.exists(dirPath);
         console.log(`[App-Download] 📁 检查目录: ${dirPath} (存在: ${dirExists})`);
@@ -402,9 +345,6 @@ export const DownloadService = {
         console.error(`[App-Download] ❌ 创建目录失败: ${dirPath} - ${e.message}`);
         return false;
       }
-
-      // 【详细日志追踪】Downloader: [文件名] -> [本地路径]
-      console.log(`[App-Download] 📥 Downloader: [${asset.filename}] -> [${localPath}]`);
 
       const tempPath = `${localPath}.tmp`;
       const urls = getDownloadUrls(asset.filename);
@@ -420,22 +360,12 @@ export const DownloadService = {
         for (const url of urls) {
           let currentJobId: number | undefined = undefined;
 
-          const stopDownloadSafe = (jobId: number) => {
-            try {
-              RNFS.stopDownload(jobId);
-            } catch (e) {}
-          };
-
           try {
             if (await RNFS.exists(tempPath)) {
               try { await RNFS.unlink(tempPath); } catch (e) {}
             }
 
             let currentMaxBytes = 0;
-
-            // 【打印完整下载 URL】让用户看到到底是哪个 URL 在 404
-            console.log(`[App-Download] 🔗 完整URL: ${url}`);
-            console.log(`[App-Download]  开始下载: ${asset.filename} → ${localPath}`);
 
             const downloadJob = RNFS.downloadFile({
               fromUrl: url,
@@ -479,8 +409,8 @@ export const DownloadService = {
                     status.maxConfirmedBytes = Number(finalStat.size);
                     console.log(`[App-Download] ✅ 完成: ${asset.filename} (实际大小: ${finalStat.size} bytes)`);
 
-                    if (onFileDownloadedCallback) {
-                      onFileDownloadedCallback(asset.id);
+                    if (this.onFileDownloadedCallback) {
+                      this.onFileDownloadedCallback(asset.id);
                     }
 
                     return true;
@@ -525,20 +455,16 @@ export const DownloadService = {
       }
     };
 
-    // 【修复】统一下载所有文件（包括背景图），必须等待全部完成
-    console.log(`[App-Download] 🎵 开始下载所有资源文件：${allFilesToDownload.length} 个（含背景图）`);
+    console.log(`[App-Download] 🎵 开始下载所有资源文件：${allFilesToDownload.length} 个`);
     await runNext();
     await Promise.allSettled(runningTasks);
 
-    // 清除 UI 更新定时器
     if (uiUpdateTimer) {
       clearInterval(uiUpdateTimer);
     }
 
-    // 最终更新 UI
     updateUI();
 
-    // 重试失败的文件
     if (failedAssets.length > 0 && failedAssets.length < allFilesToDownload.length) {
       console.log(`[App-Download] ⚠️ 重试 ${failedAssets.length} 个失败文件...`);
       for (const failedId of failedAssets) {
@@ -566,7 +492,6 @@ export const DownloadService = {
       }
     }
 
-    // 【修复】检查总字节数，确保所有文件（包括背景图）都已下载
     const totalExpectedBytes = ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
     const completionRate = totalSuccessBytes / totalExpectedBytes;
 
@@ -582,7 +507,7 @@ export const DownloadService = {
 
     console.log(`[App-Download] ✅ 所有资源下载完成！总大小: ${(totalSuccessBytes / 1024 / 1024).toFixed(1)}MB`);
     return { failedAssets: [], success: true };
-  },
+  }
 
   async getLocalPath(id: string) {
     const asset = AUDIO_MANIFEST.find(a => a.id === id);
@@ -590,7 +515,7 @@ export const DownloadService = {
     const path = getLocalPathHelper(asset.category, asset.filename);
     if (await RNFS.exists(path)) return path;
     return null;
-  },
+  }
 
   async downloadAudio(id: string, urls?: string[], retries = 3): Promise<string | null> {
     const asset = AUDIO_MANIFEST.find(a => a.id === id);
@@ -623,28 +548,45 @@ export const DownloadService = {
     }
 
     return null;
-  },
-
-  prioritizeScene(sceneId: string) {
-    console.log(`[DownloadService] ⚡ 场景 ${sceneId} 被提升为最高优先级！`);
-    boostPrioritySceneId = sceneId;
-  },
-
-  setProgressCallback(callback: (sceneId: string, progress: number) => void) {
-    onProgressCallback = callback;
-  },
-
-  setCompleteCallback(callback: (sceneId: string) => void) {
-    onCompleteCallback = callback;
-  },
-
-  setFileDownloadedCallback(callback: (assetId: string) => void) {
-    onFileDownloadedCallback = callback;
-  },
-
-  clearBoost() {
-    boostPrioritySceneId = null;
   }
+
+  prioritizeScene(sceneId: string): void {
+    console.log(`[DownloadService] ⚡ 场景 ${sceneId} 被提升为最高优先级！`);
+    this.boostPrioritySceneId = sceneId;
+  }
+
+  setProgressCallback(callback: (sceneId: string, progress: number) => void): void {
+    this.onProgressCallback = callback;
+  }
+
+  setCompleteCallback(callback: (sceneId: string) => void): void {
+    this.onCompleteCallback = callback;
+  }
+
+  setFileDownloadedCallback(callback: (assetId: string) => void): void {
+    this.onFileDownloadedCallback = callback;
+  }
+
+  clearBoost(): void {
+    this.boostPrioritySceneId = null;
+  }
+}
+
+const encodeFilename = (filename: string): string => {
+  return filename.split('/').map(part => encodeURIComponent(part)).join('/');
 };
+
+const getDownloadUrls = (filename: string): string[] => {
+  const encoded = encodeFilename(filename);
+  
+  return [
+    `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encoded}`,
+    `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${encoded}`,
+    `${KK_GITHUB_URL}sunislee/sound-therapy-assets/main/${encoded}`,
+    `${JSDDELIVR_URL}${encoded}`,
+  ];
+};
+
+export const DownloadService = new DownloadServiceImpl();
 
 export default DownloadService;
