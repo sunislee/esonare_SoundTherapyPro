@@ -43,6 +43,10 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
 const BUTTON_SIZE = 80;
 
+// 【辅助函数】Set 内容比对
+const setsAreEqual = (a: Set<string>, b: Set<string>) => 
+  a.size === b.size && [...a].every(x => b.has(x));
+
 // 【状态持久化】Shuffle 模式存储 Key
 const SHUFFLE_STATE_KEY = '@soundtherapy/shuffle_state';
 
@@ -395,9 +399,9 @@ const SceneItem = React.memo(({
   const currentItemId = nextProps.item.id || prevProps.item.id;
   const prevLockedToThis = prevProps.lockedIds?.has(currentItemId) || false;
   const nextLockedToThis = nextProps.lockedIds?.has(currentItemId) || false;
-  const prevSetSize = prevProps.lockedIds?.size || 0;
-  const nextSetSize = nextProps.lockedIds?.size || 0;
-  const lockedIdsChanged = prevProps.lockedIds !== nextProps.lockedIds;
+  
+  // 使用内容比对代替引用比对
+  const lockedIdsChanged = !setsAreEqual(prevProps.lockedIds, nextProps.lockedIds);
   
   if (lockedIdsChanged && (prevLockedToThis || nextLockedToThis)) {
     console.log(`[SceneItem] 🚨 [Memo-v8-霸王条款] 强制刷新: ${currentItemId}`);
