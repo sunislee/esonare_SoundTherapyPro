@@ -229,22 +229,20 @@ export async function initializeResources(): Promise<void> {
 
 /**
  * 【文件读取防护】所有 RNFS 操作都用 try-catch 包裹
- * 在 isFullyReady 为 false 时，任何文件读取都返回 null
+ * 在 isReady 为 false 时，任何文件读取都返回 null
  */
-export async function safeReadFile<T>(sceneId: string, reader: () => Promise<T | null>): Promise<T | null> {
-  const { isFullyReady } = await checkSceneResourceStatus(sceneId);
-  
-  if (!isFullyReady) {
-    console.warn(`[ResourceStatus] ⚠️ [文件读取防护] ${sceneId} 未就绪，跳过读取`);
-    return null;
-  }
-  
-  try {
-    return await reader();
-  } catch (error) {
-    console.error(`[ResourceStatus] ❌ [文件读取失败] ${sceneId}`, error);
-    return null;
-  }
+export async function safeReadFile<T>(isReady: boolean, reader: () => Promise<T | null>): Promise<T | null> {
+   if (!isReady) {
+     console.warn('[ResourceStatus] ⚠️ [文件读取防护] 资源未就绪，跳过读取');
+     return null;
+   }
+   
+   try {
+     return await reader();
+   } catch (error) {
+     console.error('[ResourceStatus] ❌ [文件读取失败]', error);
+     return null;
+   }
 }
 
 /**
