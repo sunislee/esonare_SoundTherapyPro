@@ -46,51 +46,6 @@ const BUTTON_SIZE = 80;
 // 【状态持久化】Shuffle 模式存储 Key
 const SHUFFLE_STATE_KEY = '@soundtherapy/shuffle_state';
 
-// 【智能缩略图源选择器 - 优雅语义化版】
-// 返回值：
-//   - 有效图片源 (number 或 {uri}) → 显示真实图片
-//   - null → 使用语义化占位块（磨砂色块 + Icon）
-const getThumbnailSource = (item: Scene, isResourceReady: boolean): any => {
-  const originalId = item.id;
-  const sanitizedId = originalId.replace(/^0+/, '');
-  const assetMapAny = assetMap as any;
-  const lookupKey = assetMapAny[originalId] ? originalId : (assetMapAny[sanitizedId] ? sanitizedId : null);
-
-  console.log('[AssetCheck] Trying to load asset for:', originalId, 'Sanitized:', sanitizedId, 'Resolved Key:', lookupKey, 'Asset Path:', assetMapAny[lookupKey || '']);
-  
-  if (lookupKey && assetMapAny[lookupKey]) {
-    return assetMapAny[lookupKey];
-  }
-
-  if (!item.backgroundSource) {
-    console.log(`[Thumbnail] ${item.id}: 无 backgroundSource → 占位块`);
-    return null;
-  }
-
-  const bgSource = item.backgroundSource;
-
-  // require() 格式的静态资源（数字类型）→ 直接使用
-  if (typeof bgSource === 'number') {
-    console.log(`[Thumbnail] ${item.id}: 静态资源 (require) ✅`);
-    return bgSource;
-  }
-
-  // file:// 路径格式 → 本地文件，直接返回
-  if (bgSource?.uri && bgSource.uri.startsWith('file://')) {
-    console.log(`[Thumbnail] ${item.id}: 本地文件 (file://) ✅`);
-    return bgSource;
-  }
-
-  // 网络 URL 格式 → 直接使用
-  if (bgSource?.uri && bgSource.uri.startsWith('http')) {
-    console.log(`[Thumbnail] ${item.id}: 网络 URL → ${bgSource.uri}`);
-    return bgSource;
-  }
-
-  console.log(`[Thumbnail] ${item.id}: 无有效 Source → 占位块`);
-  return null;
-};
-
 // 【语义化 Icon 映射】
 const CATEGORY_ICONS: Record<string, string> = {
   'Oriental': '🏯',
