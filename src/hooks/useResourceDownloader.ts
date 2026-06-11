@@ -101,6 +101,7 @@ export function useResourceDownloader() {
       console.error('[useResourceDownloader] ❌ 后台下载失败:', e);
     } finally {
       setIsDownloading(false);
+      await AsyncStorage.removeItem(HAS_STARTED_KEY);
     }
   }, []);
 
