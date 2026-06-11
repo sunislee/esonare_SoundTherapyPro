@@ -540,41 +540,6 @@ export const HomeScreen: React.FC = () => {
   // 【流式就绪缓存】缓存 Key
   const CACHE_KEY = 'downloaded_scene_ids_cache';
   
-  // 【🔥 核心】页面加载时使用 ResourceStatusManager 初始化状态
-  // 【🔥 终极暴力修复v3】强制点亮所有场景 - 完全绕过扫描逻辑
-  // 原因：38个音频文件已确认存在，但扫描逻辑在 release 模式下可能有问题
-  // 方案：直接从 SCENES 常量提取所有 base scene ID，强制设为就绪
-  useEffect(() => {
-    const forceLightUpAllScenes = async () => {
-      try {
-        const { SCENES } = await import('../constants/scenes');
-        
-        // 提取所有 base scene 的 ID
-        const allBaseSceneIds = SCENES
-          .filter(scene => scene.isBaseScene)
-          .map(scene => scene.id);
-        
-        console.log(`[HomeScreen] 🔥 [终极暴力v3] 强制点亮 ${allBaseSceneIds.length} 个场景`);
-        
-        // 立即设置状态（不等待任何异步操作）
-        setDownloadedSceneIds(new Set(allBaseSceneIds));
-        setIsDataReady(true);
-        
-        // 异步更新缓存（不阻塞UI）
-        AsyncStorage.setItem(CACHE_KEY, JSON.stringify(allBaseSceneIds))
-          .catch(err => console.error('[HomeScreen] ⚠️ 缓存保存失败:', err));
-          
-      } catch (error) {
-        console.error('[HomeScreen] ❌ [终极暴力v3] 失败:', error);
-        // 即使失败也强制解锁 UI
-        setIsDataReady(true);
-      }
-    };
-    
-    // 立即执行（最高优先级）
-    forceLightUpAllScenes();
-  }, []);  // 只执行一次
-
   // 检查已下载的场景资源 - 带缓存优化（保留作为备用）
   // 【🔥 已禁用】此 useEffect 会覆盖 v3 终极暴力修复的状态，导致场景显示 "Queued"
   // 原因：v3 已经强制点亮所有场景，不需要再扫描文件系统
