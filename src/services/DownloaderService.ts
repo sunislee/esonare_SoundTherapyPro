@@ -203,8 +203,8 @@ class DownloaderService {
   }
 
   /**
-   * 【🔥🔥🔨 关键修复】使用 RNFS.downloadFile 直接流式下载
-   * 避免 fetch -> blob -> base64 的 JS 内存翻倍问题
+   * 【前端重构】使用 fetch + blob + RNFS.writeFile 替换 RNFS.downloadFile
+   * 避免原生层 Java Downloader.java 在 Release 包中的死锁问题
    */
   private async downloadResource(resource: AudioResource) {
     console.log(`[Downloader] 🔥🔥🔥 [downloadResource] 穿透测试 - 开始下载: ${resource.filename}`);
@@ -244,12 +244,12 @@ class DownloaderService {
       // ════════════════════════════════════════════════════════════
       // 🔥 物理证据日志 - 下载前（6行）
       // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥🔥🔥 [RNFS.downloadFile] ⚡ 物理请求即将发送！`);
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] URL: ${resource.remoteUrl}`);
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 目标路径: ${localPath}`);
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 进程 ID: [TypeScript层]`);
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 时间戳: ${Date.now()}`);
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 网络源: ghproxy.net`);
+      console.log(`[Downloader] 🔥🔥🔥 [fetch] ⚡ 物理请求即将发送！`);
+      console.log(`[Downloader] 🔥 [fetch] URL: ${resource.remoteUrl}`);
+      console.log(`[Downloader] 🔥 [fetch] 目标路径: ${localPath}`);
+      console.log(`[Downloader] 🔥 [fetch] 进程 ID: [TypeScript层]`);
+      console.log(`[Downloader] 🔥 [fetch] 时间戳: ${Date.now()}`);
+      console.log(`[Downloader] 🔥 [fetch] 网络源: ghproxy.net`);
       
       this.notify({
         resourceId: resource.id,
@@ -259,10 +259,49 @@ class DownloaderService {
       });
 
       // ════════════════════════════════════════════════════════════
-      // 🔥 使用 RNFS.downloadFile 直接流式下载（无 JS 内存拷贝）
+      // 🔥 第一阶段：使用 fetch 获取资源
       // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 启动流式下载...`);
+      console.log(`[Downloader] 🔥 [fetch] 开始获取资源...`);
+      const response = await fetch(resource.remoteUrl);
       
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      console.log(`[Downloader] 🔥 [fetch] 响应状态: ${response.status}`);
+      
+      // ════════════════════════════════════════════════════════════
+      // 🔥 第二阶段：转换为 blob
+      // ════════════════════════════════════════════════════════════
+      console.log(`[Downloader] 🔥 [fetch] 转换为 blob...`);
+      const blob = await response.blob();
+      
+      console.log(`[Downloader] 🔥 [fetch] blob 大小: ${blob.size} bytes`);
+      
+      // ════════════════════════════════════════════════════════════
+      // 🔥 第三阶段：转换为 base64
+      // ════════════════════════════════════════════════════════════
+      console.log(`[Downloader] 🔥 [fetch] 转换为 base64...`);
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          // 从 "data:audio/mpeg;base64," 中提取 base64 数据
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      
+      console.log(`[Downloader] 🔥 [fetch] base64 数据长度: ${base64Data.length}`);
+      
+      // ════════════════════════════════════════════════════════════
+      // 🔥 第四阶段：写入本地文件
+      // ════════════════════════════════════════════════════════════
+      console.log(`[Downloader] 🔥 [RNFS.writeFile] 写入本地文件: ${localPath}`);
+      
+      // 确保目录存在
       const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
       const dirExists = await RNFS.exists(dirPath);
       if (!dirExists) {
@@ -270,22 +309,15 @@ class DownloaderService {
         console.log(`[Downloader] 🔥 [RNFS] 已创建目录: ${dirPath}`);
       }
       
-      const downloadResult = await RNFS.downloadFile({
-        fromUrl: resource.remoteUrl,
-        toFile: localPath,
-        background: true,  // ✅ 允许后台下载
-        discretionary: false,
-        connectionTimeout: 8000,
-        readTimeout: 15000,
-      }).promise;
+      // 写入文件
+      await RNFS.writeFile(localPath, base64Data, 'base64');
       
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 状态码: ${downloadResult.statusCode}`);
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 接收字节: ${downloadResult.bytesWritten || 'N/A'}`);
+      console.log(`[Downloader] 🔥 [RNFS] 文件写入完成`);
       
       // ════════════════════════════════════════════════════════════
       // 🔥 物理证据日志 - 下载结果
       // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥 [RNFS.downloadFile] 下载完成`);
+      console.log(`[Downloader] 🔥 [RNFS] 下载结果接收`);
       
       if (await RNFS.exists(localPath)) {
         const stat = await RNFS.stat(localPath);
@@ -309,20 +341,18 @@ class DownloaderService {
     } catch (error: any) {
       console.error(`[Downloader] ❌ ${resource.filename} 下载失败:`, error?.message);
       
-      // 重试逻辑 - 使用独立 retryPool 而非直接 queue.push
-      const currentRetryCount = this.retryCount.get(resource.id) || 0;
-      if (currentRetryCount < this.maxRetries) {
-        this.retryCount.set(resource.id, currentRetryCount + 1);
-        console.log(`[Downloader] 🔄 ${resource.filename} 需要重试 (第 ${currentRetryCount + 1}/${this.maxRetries} 次)`);
-        // 【⚠️ 关键修复】不直接 push 到 downloadQueue，避免破坏优先级顺序
+      // 重试逻辑
+      if (this.retryCount.get(resource.id)! < this.maxRetries) {
+        this.retryCount.set(resource.id, this.retryCount.get(resource.id)! + 1);
+        this.downloadQueue.push(resource); // 重新加入队列
+        console.log(`[Downloader] 🔄 ${resource.filename} 加入重试队列 (第 ${this.retryCount.get(resource.id)!} 次)`);
       } else {
-        console.error(`[Downloader] ❌ ${resource.filename} 超过最大重试次数 (${this.maxRetries})，标记为 failed`);
         this.notify({
           resourceId: resource.id,
           filename: resource.filename,
           progress: 0,
           status: 'failed',
-          error: `超过最大重试次数(${this.maxRetries})`,
+          error: error?.message || 'Unknown error',
         });
       }
     } finally {
