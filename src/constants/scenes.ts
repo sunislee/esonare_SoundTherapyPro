@@ -2,6 +2,37 @@ import { Platform, ImageSourcePropType, Image } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSION, GITEE_URL, GITHUB_URL, getLocalPath as getLocalPathHelper } from './audioAssets';
 
+// 【背景图状态缓存】在应用启动时预加载所有文件存在性状态
+let backgroundAvailabilityCache: Record<string, boolean> = {};
+
+// 【辅助函数】异步检查并缓存背景图文件是否存在（仅在应用启动时调用一次）
+export const preloadBackgroundAvailability = async (): Promise<void> => {
+  console.log('[scenes] 🔄 预加载背景图可用性状态...');
+  
+  try {
+    // 检查东方禅意场景的背景图
+    for (const [sceneId, bgFilename] of Object.entries(ORIENTAL_BG_MAP)) {
+      const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
+      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
+    }
+    
+    // 检查西方教会场景的背景图
+    for (const [sceneId, bgFilename] of Object.entries(WESTERN_CHURCH_BG_MAP)) {
+      const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
+      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
+    }
+    
+    console.log('[scenes] ✅ 背景图可用性预加载完成，缓存了', Object.keys(backgroundAvailabilityCache).length, '个文件状态');
+  } catch (error) {
+    console.warn('[scenes] ⚠️ 预加载背景图状态失败:', error);
+  }
+};
+
+// 【辅助函数】检查背景图是否可用（同步查询缓存）
+const isBackgroundImageAvailable = (localPath: string): boolean => {
+  return backgroundAvailabilityCache[localPath] ?? false;
+};
+
 // 本地背景图存储目录（与 audioAssets.ts 中的 LOCAL_RESOURCE_PATH 一致）
 const LOCAL_BG_BASE = `${RNFS.DocumentDirectoryPath}/audio_resources`;
 
@@ -198,9 +229,13 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      // 【🔥🔥🔨 修复闪烁】使用缓存，确保相同 URI 返回相同引用
-      const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
-      return getCachedBackgroundSource(uri);
+      // 【🔥修复闪烁】检查缓存中文件是否存在状态
+      if (isBackgroundImageAvailable(localPath)) {
+        const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
+        return getCachedBackgroundSource(uri);
+      }
+      // 文件不存在，返回 fallback 背景图
+      return backgrounds['Oriental']?.source || null;
     }
   }
   
@@ -209,9 +244,13 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
     const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      // 【🔥🔥🔨 修复闪烁】使用缓存，确保相同 URI 返回相同引用
-      const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
-      return getCachedBackgroundSource(uri);
+      // 【🔥修复闪烁】检查缓存中文件是否存在状态
+      if (isBackgroundImageAvailable(localPath)) {
+        const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
+        return getCachedBackgroundSource(uri);
+      }
+      // 文件不存在，返回 fallback 背景图
+      return backgrounds['WesternChurch']?.source || null;
     }
   }
   
@@ -319,7 +358,7 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       id: item.id,
       title: item.title,
       audioUrl: `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${item.filename}`,
-      backgroundUrl: '',
+      backgroundUrl: `${PRIMARY_REMOTE_RESOURCE_BASE_URL}${item.filename}`,
       primaryColor: bg.color,
       audioSource: item.id,
       audioFile: null,
