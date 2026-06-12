@@ -633,6 +633,11 @@ const ImmersivePlayerNew: React.FC = () => {
       ? (getSceneBackground(scene.id, scene.category) || scene.backgroundSource)
       : scene.backgroundSource;
 
+    // 【新增】旧背景图处理（东方/西方场景需要动态获取）
+    const prevBgSource = prevScene && (prevScene.id.startsWith('oriental_') || prevScene.id.startsWith('western_church_'))
+      ? (getSceneBackground(prevScene.id, prevScene.category) || prevScene.backgroundSource)
+      : prevScene?.backgroundSource;
+
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#000' }]}>
         {/* 【双层背景】旧背景图 - 淡出 (1 → 0) */}
@@ -644,10 +649,10 @@ const ImmersivePlayerNew: React.FC = () => {
             ]}
             pointerEvents="none"
           >
-            {prevScene.backgroundSource ? (
-              <Animated.Image
-                key={prevScene.backgroundSource.uri || 'placeholder-prev'}
-                source={prevScene.backgroundSource}
+             {prevBgSource ? (
+               <Animated.Image
+                 key={prevBgSource.uri || 'placeholder-prev'}
+                 source={prevBgSource}
                 style={[
                   StyleSheet.absoluteFillObject,
                   { transform: [{ scale: bgScaleAnim }] }
