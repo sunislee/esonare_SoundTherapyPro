@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback, useSyncExternalStore } from 'react';
+
+// 【新增】导入 getSceneBackground 用于获取场景背景图
 import {
   Animated,
   StyleSheet,
@@ -99,6 +101,39 @@ const BreathDetailScreen: React.FC = () => {
   }, []);
   
   /**
+   * 生成低通滤波器回调（适用于森林组、禅意组等）
+   */
+  const createForestCallback = useCallback((sceneId: string) => {
+    const config = getSceneLFOConfig(sceneId);
+    const baseVolume = config.baseVolume || 0.75;
+    const filterRange = config.filterRange || 1000; // 截止频率范围
+    const period1 = config.randomPeriod1 || 5000;
+    const period2 = config.randomPeriod2 || 7000;
+    
+    return (lfoValue: number) => {
+      const audioService = AudioService.getInstance();
+      
+      // LFO 输出 0-1 映射到滤波器频率范围
+      // 从低频（沉闷）到高频（清晰）
+      const cutoffFreq = 200 + lfoValue * filterRange;
+      
+      // 随机音量波动
+      const now = Date.now();
+      const randomSeed = Math.sin(now / period1) * Math.cos(now / period2);
+      const volumeFluctuation = randomSeed * (config.volumeFluctuation || 0.03);
+      const finalVolume = baseVolume * (1 + volumeFluctuation);
+      
+      console.log(`[Forest-${sceneId}] Cutoff=${cutoffFreq.toFixed(0)}Hz, Volume=${finalVolume.toFixed(2)}`);
+      
+      // 设置低通滤波器截止频率
+      audioService.setExtraSoundFilter(sceneId, cutoffFreq);
+      
+      // 设置音量
+      audioService.setExtraSoundVolume(sceneId, finalVolume);
+    };
+  }, []);
+
+  /**
    * 生成空间平移回调（适用于舟上雨、书店、禅意组、脑波组等）
    */
   const createPanningCallback = useCallback((sceneId: string) => {
@@ -187,6 +222,9 @@ const BreathDetailScreen: React.FC = () => {
   
   // ==================== 配置化 LFO 管理 ====================
   // 根据场景配置自动启用对应的 LFO 效果
+  
+  // 【修复】定义 sceneId 变量
+  const sceneId = scene.id;
   
   // 获取当前场景配置
   const sceneConfig = useMemo(() => getSceneLFOConfig(sceneId), [sceneId]);
@@ -370,6 +408,20 @@ const BreathDetailScreen: React.FC = () => {
     };
   }, []);
 
+  // 【新增】初始化 LFO 的辅助函数
+  const initializeLFOForScene = useCallback(async (sceneId: string) => {
+    // 根据场景 ID 初始化对应的 LFO
+    if (sceneId === 'nature_deep_sea') {
+      startLFO();
+    } else if (sceneId === 'scene_boat_rain') {
+      audioService.enablePanningForScene(sceneId);
+      startPanning();
+    } else if (sceneId === 'scene_bookstore') {
+      audioService.enableBookstorePanning(sceneId);
+      startBookstore();
+    }
+  }, [startLFO, startPanning, startBookstore]);
+
   // 页面挂载时：预加载所有音频
   useEffect(() => {
     const audioService = AudioService.getInstance();
@@ -405,15 +457,12 @@ const BreathDetailScreen: React.FC = () => {
         if (existingSound && existingSound.isLoaded()) {
           
           // 隐藏下载 UI
-          setIsDownloading(false);
-          
-          // 立即播放（带渐入）
-          await audioService.playSceneWithFade(sceneId, 0.75, 300);
-          
-          // 然后启动 LFO
-          await initializeLFOForScene(sceneId);
-          
-          setIsLoading(false);
+           setIsDownloading(false);
+           
+           // 【修复】立即播放（带渐入）
+           await audioService.playSceneWithFade(scene.id, 0.75, 300);
+           
+           setIsLoading(false);
         } else {
           console.log('[BreathDetail] 📥 首次加载 Sound...');
           

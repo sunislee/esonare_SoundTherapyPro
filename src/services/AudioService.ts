@@ -3859,7 +3859,7 @@ class AudioService {
       if (scene && scene.filename) {
         // 场景资源：优先检查本地文件是否存在
         const { getLocalPath } = await import('../constants/audioAssets');
-        const RNFS = await import('react-native-fs');
+        const RNFS = await import('@dr.pogodin/react-native-fs');
         const localPath = getLocalPath(scene.category, scene.filename);
         const fileExists = await RNFS.exists(localPath.replace('file://', ''));
         if (fileExists) {

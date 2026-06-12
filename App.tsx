@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar, useColorScheme, ActivityIndicator, View, Text, Platform } from 'react-native';
+import { StatusBar, useColorScheme, ActivityIndicator, View, Text, Platform, DeviceEventEmitter } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -69,6 +69,7 @@ function App() {
            // 【新增】预加载背景图片文件状态，避免RNFS.exists()异步问题
            console.log('[App] 预加载背景图片文件状态...');
            await preloadBackgroundAvailability();
+           DeviceEventEmitter.emit('backgroundImagesReady');
           console.log('[App] ✅ 背景图片文件状态预加载完成');
         } catch (audioError: any) {
           console.error('[App] ❌ AudioService 初始化失败:', audioError?.message);

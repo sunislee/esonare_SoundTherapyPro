@@ -17,7 +17,7 @@ import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
+import { Scene, SCENES, SMALL_SCENE_IDS, getSceneBackground } from '../constants/scenes';
 import { useAudio } from '../context/AudioContext';
 import InteractiveButtons from '../components/InteractiveButtons';
 import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
@@ -628,6 +628,11 @@ const ImmersivePlayerNew: React.FC = () => {
   const renderScenePage = (scene: Scene, index: number) => {
     if (!scene) return <View key={`empty-${index}`} style={styles.page} />;
 
+    // 【⚡️ 重新获取背景图】确保东方/西方场景使用最新分类配置
+    const currentBgSource = (scene.id.startsWith('oriental_') || scene.id.startsWith('western_church_'))
+      ? (getSceneBackground(scene.id, scene.category) || scene.backgroundSource)
+      : scene.backgroundSource;
+
     return (
       <View key={scene.id} style={[styles.page, { backgroundColor: '#000' }]}>
         {/* 【双层背景】旧背景图 - 淡出 (1 → 0) */}
@@ -663,10 +668,10 @@ const ImmersivePlayerNew: React.FC = () => {
             { opacity: nextBgOpacityAnim, zIndex: 1 }
           ]}
         >
-          {scene.backgroundSource && !bgLoadTimeout ? (
+          {currentBgSource && !bgLoadTimeout ? (
             <Animated.Image
-              key={scene.backgroundSource.uri || 'placeholder'}
-              source={scene.backgroundSource}
+              key={currentBgSource.uri || 'placeholder'}
+              source={currentBgSource}
               style={[
                 StyleSheet.absoluteFillObject,
                 { transform: [{ scale: bgScaleAnim }] }

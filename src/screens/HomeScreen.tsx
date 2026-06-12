@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import AudioService from '../services/AudioService';
 import { RainDrop } from '../components/RainDrop';
-import { SCENES, Scene, SceneCategory } from '../constants/scenes';
+import { SCENES, Scene, SceneCategory, getSceneBackground } from '../constants/scenes';
 import { assetMap } from '../constants/assetMap';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -125,6 +125,17 @@ const SceneItem = React.memo(({
   const { t } = useTranslation();
 
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setRefreshKey(k => k + 1), 100);
+    const sub = DeviceEventEmitter.addListener('backgroundImagesReady', () => {
+      setRefreshKey(k => k + 1);
+    });
+    return () => {
+      clearTimeout(timer);
+      sub.remove();
+    };
+  }, []);
   
   // 【单例获取播放状态】
   const directState = useMemo(() => {
@@ -214,6 +225,12 @@ const SceneItem = React.memo(({
   // 【缩略图逻辑 - 修复版】优先使用 backgroundSource，避免空 assetMap 导致的缩略图丢失
   const getThumbnailSource = (sceneItem: any, ready: boolean): any => {
     const originalId = sceneItem.id;
+    
+    // 对于 oriental_ 和 western_church_ 开头的场景，重新获取最新的 backgroundSource
+    if (sceneItem.id.startsWith('oriental_') || sceneItem.id.startsWith('western_church_')) {
+      const freshBg = getSceneBackground(sceneItem.id, sceneItem.category);
+      if (freshBg) return freshBg;
+    }
     
     // 【🔥🔥🔨 关键修复】优先使用 scenes.ts 的 getSceneBackground() 返回的 backgroundSource
     if (sceneItem.backgroundSource) {
