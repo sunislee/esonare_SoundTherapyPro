@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer from 'react-native-track-player';
 import { NativeModules } from 'react-native';
 import { DownloadService } from './src/services/DownloadService';
+import { preloadBackgroundAvailability } from './src/constants/scenes';
 
 // 【v1.4.1 关键修复】获取当前应用版本号
 const APP_VERSION_CODE = NativeModules?.PackageInfo?.versionCode || 141;
@@ -65,9 +66,9 @@ function App() {
           await audioService.setupPlayer();
           console.log('[App] [3/3] ✅ AudioService 初始化完成');
           
-          // 【新增】预加载背景图片文件状态，避免RNFS.exists()异步问题
-          console.log('[App] 预加载背景图片文件状态...');
-          await audioService.preloadBackgroundAvailability();
+           // 【新增】预加载背景图片文件状态，避免RNFS.exists()异步问题
+           console.log('[App] 预加载背景图片文件状态...');
+           await preloadBackgroundAvailability();
           console.log('[App] ✅ 背景图片文件状态预加载完成');
         } catch (audioError: any) {
           console.error('[App] ❌ AudioService 初始化失败:', audioError?.message);
