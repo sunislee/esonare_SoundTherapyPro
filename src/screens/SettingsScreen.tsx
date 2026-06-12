@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import packageJson from '../../package.json';
 import {
   View,
@@ -54,14 +54,16 @@ const SettingsScreen: React.FC = () => {
   const [highQualityAudio, setHighQualityAudio] = useState(false);
   const [userName, setUserName] = useState('');
   const [editNameVisible, setEditNameVisible] = useState(false);
-  const [clearHistoryVisible, setClearHistoryVisible] = useState(false);
-  const [clearPresetsVisible, setClearPresetsVisible] = useState(false);
-  const [advancedDebugVisible, setAdvancedDebugVisible] = useState(false);
+   const [clearHistoryVisible, setClearHistoryVisible] = useState(false);
+   const [clearPresetsVisible, setClearPresetsVisible] = useState(false);
+   const [clearResourcesVisible, setClearResourcesVisible] = useState(false);
+   const [advancedDebugVisible, setAdvancedDebugVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [languageMode, setLanguageMode] = useState<'zh' | 'en' | 'ja' | 'system'>('system');
   const [isDeveloperMode, setIsDeveloperMode] = useState(false);
-  const [devClickCount, setDevClickCount] = useState(0);
-  const devClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const [devClickCount, setDevClickCount] = useState(0);
+   const [isRedownloading, setIsRedownloading] = useState(false);
+   const devClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -169,6 +171,15 @@ const SettingsScreen: React.FC = () => {
     } catch (e) {}
     setClearPresetsVisible(false);
   };
+
+  const handleClearResourcesConfirm = useCallback(async () => {
+    setIsRedownloading(true);
+    try {
+      setClearResourcesVisible(false);
+    } finally {
+      setIsRedownloading(false);
+    }
+  }, []);
 
   const sections: SettingsSection[] = useMemo(
     () => {
