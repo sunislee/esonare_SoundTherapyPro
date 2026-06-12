@@ -8,7 +8,8 @@
  * 4. 文件操作防护：isFullyReady=false 时所有 RNFS.exists 用 try-catch
  */
 
-import RNFS from 'react-native-fs';
+// @dr.pogodin/react-native-fs 使用具名导出，无默认导出
+import * as RNFS from '@dr.pogodin/react-native-fs';
 import { AUDIO_MANIFEST, getLocalPath as getAudioLocalPath } from '../constants/audioAssets';
 import { SCENES } from '../constants/scenes';
 import { DownloadService } from './DownloadService';

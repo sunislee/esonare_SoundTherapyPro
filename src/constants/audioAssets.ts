@@ -1,5 +1,6 @@
+// @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import { NativeModules, Platform } from 'react-native'; 
-import * as RNFS from 'react-native-fs'; 
+import * as RNFS from '@dr.pogodin/react-native-fs';
 
 const nativeChannel =
   Platform.OS === 'android' && NativeModules?.CrashReport?.getChannel

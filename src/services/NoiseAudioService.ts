@@ -10,7 +10,7 @@
  */
 
 import TrackPlayer, { RepeatMode, Track } from 'react-native-track-player';
-import RNFS from 'react-native-fs';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 import { Platform } from 'react-native';
 import { NOISE_CANCELLATION_AUDIO, getNoiseCancellationAudio } from '../constants/noiseCancellationAudio';
 
@@ -147,13 +147,13 @@ const downloadInBackground = async (url: string, localPath: string) => {
       readTimeout: 60000,
     });
     
-    ret.promise.then((result) => {
+    ret.promise.then((result: { statusCode: number }) => {
       if (result.statusCode === 200) {
         console.log('[NoiseAudio] ✅ 后台下载完成:', localPath);
       } else {
         console.error('[NoiseAudio] ❌ 后台下载失败:', result.statusCode);
       }
-    }).catch((error) => {
+    }).catch((error: any) => {
       console.error('[NoiseAudio] ❌ 后台下载异常:', error);
     });
     

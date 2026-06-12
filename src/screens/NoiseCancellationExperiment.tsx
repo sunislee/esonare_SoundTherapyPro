@@ -10,7 +10,7 @@ import {
   Animated,
   TouchableOpacity,
 } from 'react-native';
-import RNFS from 'react-native-fs';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MODAL_WIDTH = SCREEN_WIDTH * 0.92;

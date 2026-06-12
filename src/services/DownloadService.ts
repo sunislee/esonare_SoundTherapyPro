@@ -1,4 +1,5 @@
-import RNFS from 'react-native-fs';
+// @dr.pogodin/react-native-fs 使用具名导出，无默认导出
+import * as RNFS from '@dr.pogodin/react-native-fs';
 import {
   AUDIO_MANIFEST,
   IS_GOOGLE_PLAY_VERSION,
@@ -130,12 +131,16 @@ export const DownloadService = {
         console.log(`[App-Download] 🆕 [BUILD_QUEUE] 新文件待下载: ${manifestItem.filename} → ${localPath}`);
       }
 
+      // 白噪音强制最高优先级（秒下）
+      const isWhiteNoise = asset.id === 'interactive_white_noise';
+      const basePriority = isWhiteNoise ? 999 : PRIORITY_SCENES.indexOf(asset.id);
+      
       allFilesToDownload.push({ 
         asset, 
         manifestItem, 
         localPath, 
         expectedSize,
-        priority: PRIORITY_SCENES.indexOf(asset.id)  // 添加优先级字段
+        priority: basePriority
       });
       fileStatusMap.set(asset.id, { assetId: asset.id, expectedSize, maxConfirmedBytes: 0, status: 'pending' });
     }
@@ -227,7 +232,7 @@ export const DownloadService = {
               }).promise;
 
               console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 状态码: ${downloadResult.statusCode}`);
-              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 接收字节: ${downloadResult.bytesDownloaded || downloadResult.totalBytesWritten || 'N/A'}`);
+              console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 接收字节: ${downloadResult.bytesWritten || 'N/A'}`);
 
               if (downloadResult.statusCode === 200 || downloadResult.statusCode === 201) {
                 const stat = await RNFS.stat(tempPath);
@@ -616,7 +621,9 @@ export const DownloadService = {
             const stat = await RNFS.stat(localPath);
             if (stat.size > 0) return localPath;
           }
-        } catch (e) {}
+        } catch (e: any) {
+          console.error('[DownloadService] downloadAudio 失败:', e?.message || e);
+        }
 
         if (attempt < retries) await new Promise<void>(r => setTimeout(r, 1500));
       }

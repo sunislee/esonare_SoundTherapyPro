@@ -1,5 +1,6 @@
+// @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import { Platform, ImageSourcePropType, Image } from 'react-native';
-import * as RNFS from 'react-native-fs';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSION, GITEE_URL, GITHUB_URL, getLocalPath as getLocalPathHelper } from './audioAssets';
 
 // 【背景图状态缓存】在应用启动时预加载所有文件存在性状态

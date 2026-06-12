@@ -13,7 +13,7 @@ import Sound from 'react-native-sound';
 import { NativeModules } from 'react-native';
 
 import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from '../constants/audioAssets';
-import RNFS from 'react-native-fs';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 import { NotificationService } from './NotificationService';
 import { Scene, SCENES } from '../constants/scenes';
 import { EQManager } from './EQManager';
@@ -621,6 +621,13 @@ class AudioService {
 
   isReady(): boolean {
     return this._isReady;
+  }
+
+  /**
+   * 【新增】允许外部获取实际播放状态（用于 HomeScreen 的漫游状态控制）
+   */
+  getIsActuallyPlaying(): boolean {
+    return this.isActuallyPlaying;
   }
 
   getCurrentState(): string {
@@ -3973,6 +3980,41 @@ class AudioService {
   };
 
   // ... 其余 SleepTimer 等逻辑保持一致 ...
+
+  /**
+   * 【新增】预加载背景图片文件状态，避免RNFS.exists()异步问题
+   * 在应用启动时调用，将所有场景的背景图片存在性缓存到内存中
+   */
+  public async preloadBackgroundAvailability(): Promise<void> {
+    console.log('[AudioService] ====== 预加载背景图片文件状态开始 ======');
+    
+    // 【快速遍历】只检查 scenes.ts 中定义的基础场景，不处理动态组合场景
+    const scenesToCheck = this.getAllSceneIds();
+    
+    for (const sceneId of scenesToCheck) {
+      try {
+        // 【同步版本】直接调用 isBackgroundImageAvailableSync
+        const exists = this.isBackgroundImageAvailableSync(sceneId);
+        
+        // 【诊断】只输出非存在的情况，减少日志噪音
+        if (!exists) {
+          console.log(`[AudioService] ℹ️ 场景 ${sceneId} 无背景图（预期行为）`);
+        }
+      } catch (error: any) {
+        console.error(`[AudioService] ❌ 检查场景 ${sceneId} 背景图失败:`, error?.message);
+      }
+    }
+    
+    console.log('[AudioService] ✅ 预加载背景图片文件状态完成，缓存大小:', this.backgroundImageCache.size);
+  }
+
+  /**
+   * 【辅助】获取所有基础场景 ID
+   */
+  private getAllSceneIds(): string[] {
+    // 【核心】从 scenes.ts 的 SCENES 导出中提取 ID
+    return SCENES.map(scene => scene.id);
+  }
 }
 
 // 具名导出封装（保持原有调用方式）

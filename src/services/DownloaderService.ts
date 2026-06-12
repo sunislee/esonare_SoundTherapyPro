@@ -10,7 +10,8 @@
  * 避免原生层 Java Downloader.java 在 Release 包中的死锁问题
  */
 
-import RNFS from 'react-native-fs';
+// @dr.pogodin/react-native-fs 使用具名导出，无默认导出
+import * as RNFS from '@dr.pogodin/react-native-fs';
 import {
   NOISE_REDUCTION_RESOURCES,
   SORTED_RESOURCES,

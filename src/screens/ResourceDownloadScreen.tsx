@@ -9,7 +9,8 @@ import EngineControl from '../constants/EngineControl';
 import { PermissionService } from '../services/PermissionService';
 import { AUDIO_MANIFEST, getLocalPath } from '../constants/audioAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as RNFS from 'react-native-fs';
+// @dr.pogodin/react-native-fs 使用具名导出，无默认导出
+import * as RNFS from '@dr.pogodin/react-native-fs';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

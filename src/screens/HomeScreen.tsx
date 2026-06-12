@@ -454,7 +454,36 @@ export const HomeScreen: React.FC = () => {
     };
   }, []);
   
-  // 【🔥 根本性修复】直接从 AudioService 获取真实播放状态（绕过 Context 传播问题）
+  // 【🔥 状态版本计数器 - 已在 useState 中定义】
+
+  // 【🔥🔥🔥 新增】监听资源加载状态变化
+  const [resourceLoading, setResourceLoading] = useState<{ loading: boolean; message?: string }>({ 
+    loading: false, 
+    message: undefined 
+  });
+
+  useEffect(() => {
+    console.log('[HomeScreen] 📡 [addResourceLoadingListener] 注册监听器...');
+    
+    // ✅ 使用文件顶部已导入的 AudioService
+    const audioService = AudioService.getInstance() as any;
+    const unsubscribe = audioService.addResourceLoadingListener?.(({ loading, message }: { loading: boolean; message?: string }) => {
+      console.log(`[HomeScreen] ✅ [addResourceLoadingListener] 收到通知: loading=${loading}, message=${message}`);
+      setResourceLoading({ loading, message });
+      
+      // 资源加载状态变化时，强制刷新列表（递增版本号）
+      if (!loading) {
+        setStateVersion(v => v + 1);
+      }
+    }) || null;
+    
+    return () => {
+      console.log('[HomeScreen] 📡 [addResourceLoadingListener] 移除监听器');
+      unsubscribe?.();
+    };
+  }, []);
+
+  // 【🔥 根本性修复】直接从 AudioService 获取真实播放状态（绕过
   const [realIsPlaying, setRealIsPlaying] = useState<boolean | null>(null); // null=使用 Context
   const [realBaseSceneId, setRealBaseSceneId] = useState<string | null>(null); // null=使用 Context
   

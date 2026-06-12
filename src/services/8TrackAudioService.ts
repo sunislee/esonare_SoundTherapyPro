@@ -12,7 +12,7 @@
 import Sound from 'react-native-sound';
 import { lfoService, type LFOParams } from './LFOService';
 import { getLocalPath } from '../constants/audioAssets';
-import * as RNFS from 'react-native-fs';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 
 // 初始化音频类别
 Sound.setCategory('Playback');

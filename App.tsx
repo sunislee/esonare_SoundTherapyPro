@@ -64,6 +64,11 @@ function App() {
         try {
           await audioService.setupPlayer();
           console.log('[App] [3/3] ✅ AudioService 初始化完成');
+          
+          // 【新增】预加载背景图片文件状态，避免RNFS.exists()异步问题
+          console.log('[App] 预加载背景图片文件状态...');
+          await audioService.preloadBackgroundAvailability();
+          console.log('[App] ✅ 背景图片文件状态预加载完成');
         } catch (audioError: any) {
           console.error('[App] ❌ AudioService 初始化失败:', audioError?.message);
           // 尝试重新 setup
