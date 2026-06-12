@@ -75,15 +75,15 @@ function getDynamicHeight(insets: { top: number; bottom: number }): number {
   const totalHeight = height - insets.top - insets.bottom;
   
   if (totalHeight <= 680) {
-    return 200; // 小屏 (如 iPhone SE)
+    return 330; // 小屏 (如 iPhone SE)
   }
   if (totalHeight <= 750) {
-    return 230; // 中小屏
+    return 360; // 中小屏
   }
   if (totalHeight <= 850) {
-    return 260; // 标准屏
+    return 390; // 标准屏
   }
-  return 300; // 大屏/平板
+  return 430; // 大屏/平板
 }
 
 const { width } = Dimensions.get('window');
