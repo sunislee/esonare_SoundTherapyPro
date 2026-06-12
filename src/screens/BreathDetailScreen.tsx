@@ -424,7 +424,7 @@ const BreathDetailScreen: React.FC = () => {
           
           if (audioAsset) {
             const localPath = getLocalPath(audioAsset.category, audioAsset.filename);
-            const RNFS = await import('react-native-fs');
+            const RNFS = await import('@dr.pogodin/react-native-fs');
             const isDownloaded = await RNFS.exists(localPath);
             
             if (!isDownloaded) {

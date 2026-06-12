@@ -587,7 +587,7 @@ export const HomeScreen: React.FC = () => {
       try {
         console.log('[HomeScreen] ⚡ [暴力修复v2] 开始递归扫描 audio_resources...');
         
-        const RNFS = await import('react-native-fs');
+        const RNFS = await import('@dr.pogodin/react-native-fs');
         const audioDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
         
         let mp3Files: string[] = [];
@@ -665,7 +665,7 @@ export const HomeScreen: React.FC = () => {
     const checkDownloadedScenes = async () => {
       const { getLocalPath, AUDIO_MANIFEST } = await import('../constants/audioAssets');
       const { SCENES, getSceneBackground } = await import('../constants/scenes');
-      const RNFS = await import('react-native-fs');
+      const RNFS = await import('@dr.pogodin/react-native-fs');
       const readyIds = new Set<string>();
 
       for (const asset of AUDIO_MANIFEST) {
