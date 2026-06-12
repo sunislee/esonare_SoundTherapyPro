@@ -3378,7 +3378,7 @@ class AudioService {
     console.log(`[AudioService] 🧹 [强制测试] 开始清除普通场景音频...`);
     
     try {
-      const RNFS = await import('react-native-fs');
+      const RNFS = await import('@dr.pogodin/react-native-fs');
       const { AUDIO_MANIFEST, getLocalPath } = await import('../constants/audioAssets');
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       
@@ -3602,7 +3602,7 @@ class AudioService {
     const { getLocalPath } = await import('../constants/audioAssets');
     const localPath = getLocalPath(audioAsset.category, audioAsset.filename);
     
-    const RNFS = await import('react-native-fs');
+    const RNFS = await import('@dr.pogodin/react-native-fs');
     const isDownloaded = await RNFS.exists(localPath);
     
     // 【强制暴露】路径全链路检查
