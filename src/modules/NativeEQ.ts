@@ -52,7 +52,7 @@ export const NativeEQ = {
    */
   release: () => {
     // 均衡器实例的释放由原生端 Equalizer.release() 在 invalidate() 中处理
-    // 这里只记录日志，不调用不存在的 JS 方法
+    // 注意：AudioLevelModule.release() 方法不存在，已移除调用
     console.log('[NativeEQ] 均衡器资源释放（实际清理在 invalidate() 中）');
   },
 

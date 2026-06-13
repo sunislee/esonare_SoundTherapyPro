@@ -587,6 +587,17 @@ export const HomeScreen: React.FC = () => {
   // 【核心】使用后台下载 Hook（替代手动实现）
   const { downloadProgress: globalDownloadProgress, prioritizeScene } = useResourceDownloader();
   
+  // 【🔥 热启动自动下载】组件挂载后1秒自动触发所有基础场景的下载
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      SCENES.filter(s => s.isBaseScene).forEach(scene => {
+        console.log(`[HomeScreen] ⚡ [热启动下载] 自动触发: ${scene.id}`);
+        prioritizeScene(scene.id);
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [prioritizeScene]);
+  
   // 【流式就绪缓存】缓存 Key
   const CACHE_KEY = 'downloaded_scene_ids_cache';
   
