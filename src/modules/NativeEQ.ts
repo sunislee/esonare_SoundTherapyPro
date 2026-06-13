@@ -48,12 +48,12 @@ export const NativeEQ = {
 
   /**
    * 释放均衡器资源
+   * 注意：实际资源清理在 AudioLevelModule.invalidate() 中完成（模块销毁时自动触发）
    */
   release: () => {
-    if (AudioLevelModule) {
-      AudioLevelModule.release();
-      console.log('[NativeEQ] 均衡器已释放');
-    }
+    // 均衡器实例的释放由原生端 Equalizer.release() 在 invalidate() 中处理
+    // 这里只记录日志，不调用不存在的 JS 方法
+    console.log('[NativeEQ] 均衡器资源释放（实际清理在 invalidate() 中）');
   },
 
   /**
