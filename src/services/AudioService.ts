@@ -2111,6 +2111,17 @@ class AudioService {
     
     try {
       // 【🔁 Loop 实验】默认 Off，用户手动激活循环
+      // 【检测 Ended 状态】避免Ended后直接play()无效
+      try {
+        const currentState = await TrackPlayer.getPlaybackState();
+        if (currentState.state === State.Ended) {
+          console.log('[AudioService] [play] 检测到 Ended 状态，先 seekTo(0) 再播放');
+          await TrackPlayer.seekTo(0);
+        }
+      } catch (e) {
+        console.warn('[AudioService] [play] 检查播放状态失败:', e);
+      }
+
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
       console.log('[AudioService] [play] RepeatMode=Off (用户需手动激活循环)');
       
