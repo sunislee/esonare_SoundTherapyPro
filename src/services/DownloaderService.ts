@@ -145,13 +145,13 @@ class DownloaderService {
     return () => this.listeners.delete(callback);
   }
 
-  /**
-   * 通知状态更新
-   */
-  private notify(status: DownloadStatus) {
-    this.statusMap.set(status.resourceId, status);
-    this.listeners.forEach(listener => listener(status));
-  }
+   /**
+    * 通知状态更新
+    */
+   public notify(status: DownloadStatus) {
+     this.statusMap.set(status.resourceId, status);
+     this.listeners.forEach(listener => listener(status));
+   }
 
   /**
    * 初始化下载队列（按优先级排序）

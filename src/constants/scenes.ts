@@ -131,7 +131,7 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
     color: '#4a3728',
   },
   'Oriental': {
-    source: require('../assets/images/categories/category_nature.webp'),
+    source: require('../assets/images/categories/category_therapy.webp'),
     color: '#8b5e3c',
   },
 };

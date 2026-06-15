@@ -58,37 +58,29 @@ export function useResourceDownloader() {
     };
   }, []);
 
-  // 启动后台静默下载
-  const startBackgroundDownload = useCallback(async () => {
-    // 【修复】使用 AsyncStorage 检查是否已启动
-    const started = await AsyncStorage.getItem(HAS_STARTED_KEY);
-    if (started === 'true') {
-      console.log('[useResourceDownloader] 🛑 下载已启动，跳过重复启动');
-      return;
-    }
-    
-    // 标记为已启动
-    await AsyncStorage.setItem(HAS_STARTED_KEY, 'true');
-    hasStartedRef.current = true;
-    
-    try {
-      console.log('[useResourceDownloader] 🚀 启动后台静默下载...');
-      setIsDownloading(true);
+// 启动后台静默下载
+   const startBackgroundDownload = useCallback(async () => {
+     // 【修复】使用 hasStartedRef.current 防止重复启动
+     if (hasStartedRef.current) return;
+     hasStartedRef.current = true;
 
-      // 启动下载（由 ResourceStatusManager 内部处理）
-      const { DownloadService } = await import('../services/DownloadService');
-      
-      // 开始下载
-      const result = await DownloadService.silentBackgroundDownload();
-      console.log(`[useResourceDownloader] ✅ 后台下载完成: 成功 ${result.success} 个, 失败 ${result.failed} 个`);
+     try {
+       console.log('[useResourceDownloader] 🚀 启动后台静默下载...');
+       setIsDownloading(true);
 
-    } catch (e) {
-      console.error('[useResourceDownloader] ❌ 后台下载失败:', e);
-    } finally {
-      setIsDownloading(false);
-      await AsyncStorage.removeItem(HAS_STARTED_KEY);
-    }
-  }, []);
+       // 启动下载（由 ResourceStatusManager 内部处理）
+       const { DownloadService } = await import('../services/DownloadService');
+
+       // 开始下载
+       const result = await DownloadService.silentBackgroundDownload();
+       console.log(`[useResourceDownloader] ✅ 后台下载完成: 成功 ${result.success} 个, 失败 ${result.failed} 个`);
+
+     } catch (e) {
+       console.error('[useResourceDownloader] ❌ 后台下载失败:', e);
+     } finally {
+       setIsDownloading(false);
+     }
+   }, []);
 
   // 提升场景优先级（用户点击时触发）
   const prioritizeScene = useCallback(async (sceneId: string) => {
@@ -206,6 +198,16 @@ export function useResourceDownloader() {
           console.log(`[useResourceDownloader] 📊 [调试] downloadProgress 状态:`, Array.from(initialMap.entries()).map(([id, progress]) => ({ id, ...progress })));
         } else {
           console.log(`[useResourceDownloader] ⚠️ [调试] 缓存为空或未找到`);
+          // 缓存为空时，从 ResourceStatusManager 获取所有就绪场景
+          const { getAllSceneStatuses } = await import('../services/ResourceStatusManager');
+          const statuses = await getAllSceneStatuses();
+          const initialMap = new Map<string, SceneDownloadProgress>();
+          for (const s of statuses) {
+            if (s.status === 'ready') {
+              initialMap.set(s.sceneId, { progress: 100, status: 'ready', isPriority: false });
+            }
+          }
+          if (mounted) setDownloadProgress(initialMap);
         }
 
         // 延迟 2 秒启动后台下载

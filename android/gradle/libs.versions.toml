@@ -1,0 +1,7 @@
+[versions]
+androidGradlePlugin = "8.6.0"
+kotlin = "1.9.24"
+
+[libraries]
+android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }

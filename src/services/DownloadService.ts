@@ -1,5 +1,6 @@
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import * as RNFS from '@dr.pogodin/react-native-fs';
+import { DownloaderServiceInstance } from './DownloaderService';
 import {
   AUDIO_MANIFEST,
   IS_GOOGLE_PLAY_VERSION,
@@ -453,12 +454,14 @@ export const DownloadService = {
               begin: (res) => {
                 currentJobId = res.jobId;
               },
-              progress: (res) => {
-                if (res.bytesWritten > currentMaxBytes) {
-                  currentMaxBytes = res.bytesWritten;
-                  status.maxConfirmedBytes = currentMaxBytes;
-                }
-              }
+progress: (res) => {
+                 if (res.bytesWritten > currentMaxBytes) {
+                   currentMaxBytes = res.bytesWritten;
+                   status.maxConfirmedBytes = currentMaxBytes;
+                 }
+                 // 【关键修复】expectedSize 来自 downloadSingleFile 的参数 asset.expectedSize
+                 DownloaderServiceInstance.notify({ resourceId: asset.id, progress: Math.round(res.bytesWritten / asset.expectedSize * 100), status: 'downloading', filename: asset.filename });
+               }
             });
 
             const downloadResult = await downloadJob.promise;
@@ -480,8 +483,9 @@ export const DownloadService = {
                 if (await RNFS.exists(localPath)) {
                   const finalStat = await RNFS.stat(localPath);
                   if (finalStat.size > 0) {
-                    status.status = 'success';
-                    status.maxConfirmedBytes = Number(finalStat.size);
+status.status = 'success';
+DownloaderServiceInstance.notify({ resourceId: asset.id, progress: 100, status: 'completed', filename: asset.filename });
+status.maxConfirmedBytes = Number(finalStat.size);
                     console.log(`[App-Download] ✅ 完成: ${asset.filename} (实际大小: ${finalStat.size} bytes)`);
 
                     if (onFileDownloadedCallback) {
@@ -502,8 +506,9 @@ export const DownloadService = {
         }
       }
 
-      status.status = 'failed';
-      console.log(`[App-Download] ❌ 最终失败: ${asset.filename} (重试${MAX_RETRIES_PER_FILE}次后放弃)`);
+status.status = 'failed';
+DownloaderServiceInstance.notify({ resourceId: asset.id, progress: 0, status: 'failed', filename: asset.filename });
+console.log(`[App-Download] ❌ 最终失败: ${asset.filename} (重试${MAX_RETRIES_PER_FILE}次后放弃)`);
       return false;
     };
 
