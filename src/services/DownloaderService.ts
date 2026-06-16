@@ -100,12 +100,17 @@ class DownloaderService {
      // 【🔥🔥🔨 关键修复】背景图资源使用 audio_resources 目录（与 getSceneBackground 一致）
      if (resource.category && resource.category.startsWith('scene_backgrounds')) {
        const bgDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
-       
-       // 🔧 修正子目录提取逻辑：移除 "scene_backgrounds/" 后剩余的路径
-       const subDir = resource.category.replace(/^scene_backgrounds\//, '');
-       
-       // 构造完整路径：audio_resources/zen/filename.webp 或 audio_resources/filename.webp
-       const localPath = subDir && subDir !== resource.filename
+
+       // 🔧 子目录提取：category 格式为 "scene_backgrounds" 或 "scene_backgrounds/zen"
+       // - "scene_backgrounds"       → 无子目录，文件直接放在 audio_resources/
+       // - "scene_backgrounds/zen"    → 子目录 zen，放在 audio_resources/zen/
+       const hasSubPath = resource.category.includes('/');
+       const subDir = hasSubPath
+         ? resource.category.replace(/^scene_backgrounds\//, '')
+         : '';
+
+       // 构造完整路径：audio_resources/filename.webp 或 audio_resources/zen/filename.webp
+       const localPath = subDir
          ? `${bgDir}/${subDir}/${resource.filename}`
          : `${bgDir}/${resource.filename}`;
          
