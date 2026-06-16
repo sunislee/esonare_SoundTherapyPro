@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { checkSceneResourceStatus, getAllSceneStatuses, clearCache } from '../services/ResourceStatusManager';
+import { DeviceEventEmitter } from 'react-native';
+import { checkSceneResourceStatus, getAllSceneStatuses } from '../services/ResourceStatusManager';
 import { DownloaderServiceInstance } from '../services/DownloaderService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// 【关键】使用 AsyncStorage 存储下载启动状态，而非模块级变量
-// 模块级变量在 App 数据清空后仍保持，导致冷启动无法重新启动下载
-const HAS_STARTED_KEY = '@soundtherapy/download_has_started';
 
 export interface SceneDownloadProgress {
   progress: number;
@@ -34,6 +30,10 @@ export function useResourceDownloader() {
             status: 'ready',
             isPriority: prev.get(status.resourceId)?.isPriority || false,
           });
+          // 【关键修复】背景图下载完成后通知刷新缓存，确保缩略图正确
+          if (status.resourceId.startsWith('bg_')) {
+            DeviceEventEmitter.emit('backgroundImagesReady');
+          }
         } else if (status.status === 'failed') {
           newMap.set(status.resourceId, {
             progress: 0,
@@ -127,107 +127,59 @@ export function useResourceDownloader() {
     }
   }, []);
 
-  // 【冷启动检测】检查本地文件是否存在（使用 ResourceStatusManager）
-  const checkLocalFilesExist = useCallback(async (): Promise<boolean> => {
-    try {
-      console.log(`[useResourceDownloader] 🔍 [冷启动检测] 开始检查本地文件...`);
-      
-      // 获取所有场景状态
-      const statuses = await getAllSceneStatuses();
-      const readyCount = statuses.filter(s => s.status === 'ready').length;
-      const totalCount = statuses.length;
-      
-      console.log(`[useResourceDownloader] 🔍 [冷启动检测] 场景状态: ${readyCount}/${totalCount} 就绪`);
-      
-      // 如果有核心场景就绪，认为文件已存在
-      const hasCoreScene = statuses.some(s => 
-        ['nature_ocean', 'nature_forest', 'healing_zen_bowl'].includes(s.sceneId) && s.status === 'ready'
-      );
-      
-      return hasCoreScene || readyCount > 0;
-    } catch (e) {
-      console.error('[useResourceDownloader] ❌ [冷启动检测] 失败:', e);
-      return false;
-    }
-  }, []);
-
-  // 初始化：加载已缓存的下载状态 + 启动后台下载
+  // 【🔥🔥🔨 关键修复】组件 mount 时立即查询所有场景的本地状态
+  // 解决问题：App 启动时 UI 显示 0% Downloading，但文件已存在本地
   useEffect(() => {
     let mounted = true;
 
-    const init = async () => {
+    const initLocalState = async () => {
       try {
-        console.log(`[useResourceDownloader] 🐛 [调试] 开始初始化...`);
-        
-        // 【冷启动修复】检查本地文件是否存在
-        const localFilesExist = await checkLocalFilesExist();
-        
-        // 【核心】如果本地文件不存在，重置下载状态
-        if (!localFilesExist) {
-          console.log(`[useResourceDownloader] 🚨 [冷启动检测] 本地文件不存在，重置下载状态`);
-          await AsyncStorage.removeItem(HAS_STARTED_KEY);
-          hasStartedRef.current = false;
-        }
-        
-        // 【修复】使用与 HomeScreen 相同的缓存键
-        const cachedIds = await AsyncStorage.getItem('downloaded_scene_ids_cache');
-        console.log(`[useResourceDownloader] 🐛 [调试] 原始缓存数据: "${cachedIds}"`);
-        
-        if (cachedIds && mounted) {
-          const ids = JSON.parse(cachedIds);
-          console.log(`[useResourceDownloader] 🐛 [调试] 解析后的 IDs:`, ids);
-          
-          const initialMap = new Map<string, SceneDownloadProgress>();
-          let validIds = 0;
-          
-          for (const id of ids) {
-            // 使用 ResourceStatusManager 检查状态
-            const status = await checkSceneResourceStatus(id);
-            console.log(`[useResourceDownloader] 🐛 [调试] ${id}: status=${status.status}, progress=${status.progress}`);
-            
-            if (status.status === 'ready') {
-              initialMap.set(id, { progress: 100, status: 'ready', isPriority: false });
-              validIds++;
-            }
+        console.log(`[useResourceDownloader] 🚀 [INIT] 开始查询本地状态...`);
+
+        // 【核心修复】直接从 ResourceStatusManager 获取所有场景的实时状态
+        const statuses = await getAllSceneStatuses();
+        console.log(`[useResourceDownloader] 📊 [INIT] 获取到 ${statuses.length} 个场景状态`);
+
+        if (!mounted) return;
+
+        const initialMap = new Map<string, SceneDownloadProgress>();
+        let readyCount = 0;
+
+        for (const s of statuses) {
+          if (s.status === 'ready') {
+            initialMap.set(s.sceneId, { progress: 100, status: 'ready', isPriority: false });
+            readyCount++;
           }
-          
-          setDownloadProgress(initialMap);
-          console.log(`[useResourceDownloader] 📦 [调试] 有效场景: ${validIds}/${ids.length}`);
-          
-          // 立即打印当前 downloadProgress 状态
-          console.log(`[useResourceDownloader] 📊 [调试] downloadProgress 状态:`, Array.from(initialMap.entries()).map(([id, progress]) => ({ id, ...progress })));
-        } else {
-          console.log(`[useResourceDownloader] ⚠️ [调试] 缓存为空或未找到`);
-          // 缓存为空时，从 ResourceStatusManager 获取所有就绪场景
-          const { getAllSceneStatuses } = await import('../services/ResourceStatusManager');
-          const statuses = await getAllSceneStatuses();
-          const initialMap = new Map<string, SceneDownloadProgress>();
-          for (const s of statuses) {
-            if (s.status === 'ready') {
-              initialMap.set(s.sceneId, { progress: 100, status: 'ready', isPriority: false });
-            }
-          }
-          if (mounted) setDownloadProgress(initialMap);
         }
 
-        // 延迟 2 秒启动后台下载
-        if (mounted) {
+        console.log(`[useResourceDownloader] ✅ [INIT] 本地就绪场景: ${readyCount}/${statuses.length}`);
+
+        // 【关键】立即更新状态，不等 notify 事件
+        setDownloadProgress(initialMap);
+
+        // 如果有场景未就绪，启动后台下载
+        if (readyCount < statuses.length) {
+          console.log(`[useResourceDownloader] 📥 [INIT] ${statuses.length - readyCount} 个场景未就绪，准备下载`);
           setTimeout(() => {
-            console.log(`[useResourceDownloader] ⏱️ [调试] 2秒后启动后台下载...`);
             if (mounted) startBackgroundDownload();
-          }, 2000);
+          }, 500);  // 缩短延迟到 500ms
         }
 
       } catch (e) {
-        console.error('[useResourceDownloader] 初始化失败:', e);
-        if (mounted) startBackgroundDownload();
+        console.error('[useResourceDownloader] ❌ [INIT] 查询本地状态失败:', e);
+        // 失败时仍启动下载
+        if (mounted) {
+          setTimeout(() => {
+            if (mounted) startBackgroundDownload();
+          }, 500);
+        }
       }
     };
 
-    init();
+    initLocalState();
 
     return () => { mounted = false; };
-  }, [startBackgroundDownload, checkLocalFilesExist]);
+  }, [startBackgroundDownload]);
 
   return {
     downloadProgress,
