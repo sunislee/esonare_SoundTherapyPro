@@ -260,7 +260,7 @@ class DownloaderService {
       console.log(`[Downloader] 🔥 [fetch] 目标路径: ${localPath}`);
       console.log(`[Downloader] 🔥 [fetch] 进程 ID: [TypeScript层]`);
       console.log(`[Downloader] 🔥 [fetch] 时间戳: ${Date.now()}`);
-      console.log(`[Downloader] 🔥 [fetch] 网络源: ghproxy.net`);
+      console.log(`[Downloader] 🔥 [fetch] 网络源: jsDelivr CDN`);
       
       this.notify({
         resourceId: resource.id,
@@ -423,7 +423,7 @@ class DownloaderService {
     console.log(`[Downloader] 📋 [addSceneAudioTask] 添加任务: ${sceneId}`);
     const asset = AUDIO_MANIFEST.find(a => a.id === sceneId);
     if (asset) {
-      const GITHUB_BASE = 'https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main';
+      const GITHUB_BASE = 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main';
       const resource: AudioResource = {
         id: asset.id,
         filename: asset.filename,
