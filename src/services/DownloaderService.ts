@@ -19,7 +19,7 @@ import {
   SCENE_BACKGROUND_RESOURCES,
   type AudioResource,
 } from '../config/ResourceConfig';
-import { AUDIO_MANIFEST, getLocalPath as getAudioLocalPath } from '../constants/audioAssets';
+import { AUDIO_MANIFEST, getLocalPath as getAudioLocalPath, IS_GOOGLE_PLAY_VERSION } from '../constants/audioAssets';
 
 // 本地缓存目录
 const CACHE_DIR = `${RNFS.DocumentDirectoryPath}/noise_reduction_cache`;
@@ -423,7 +423,10 @@ class DownloaderService {
     console.log(`[Downloader] 📋 [addSceneAudioTask] 添加任务: ${sceneId}`);
     const asset = AUDIO_MANIFEST.find(a => a.id === sceneId);
     if (asset) {
-      const GITHUB_BASE = 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main';
+      // 【双源策略】国内用 Gitee，海外用 jsDelivr
+      const GITHUB_BASE = IS_GOOGLE_PLAY_VERSION
+        ? 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main'
+        : 'https://gitee.com/sunislee/sound-therapy-assets/raw/main';
       const resource: AudioResource = {
         id: asset.id,
         filename: asset.filename,
