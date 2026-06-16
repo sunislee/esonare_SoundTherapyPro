@@ -16,10 +16,26 @@ export function useResourceDownloader() {
 
   // 【🔥🔥🔥 关键修复】订阅 DownloaderService 的状态变化，解决状态不同步导致的死锁问题
   useEffect(() => {
-    console.log('[useResourceDownloader] 📡 订阅 DownloaderService 状态变化...');
-    
+    console.log('[useResourceDownloader] 📡 [SUBSCRIBE] 订阅 DownloaderService 状态变化...');
+    console.log(`[useResourceDownloader] 📡 [SUBSCRIBE] 时间: ${new Date().toISOString()}`);
+
     const unsubscribe = DownloaderServiceInstance.subscribe((status) => {
-      console.log(`[useResourceDownloader] 📊 [收到通知] ${status.resourceId}: ${status.status} (${status.progress}%)`);
+      // 【🔧 详细日志】收到通知的完整信息
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] ════════════════════════════`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] 收到通知!`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] resourceId: ${status.resourceId}`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] filename: ${status.filename}`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] status: ${status.status}`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] progress: ${status.progress}%`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] error: ${status.error || '无'}`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] 时间: ${new Date().toISOString()}`);
+      console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] ════════════════════════════`);
+      
+      // 【🔧 日志】调用 setDownloadProgress 前
+      const prevSize = downloadProgress.size;
+      const prevStatus = downloadProgress.get(status.resourceId);
+      console.log(`[useResourceDownloader] 🔄 [SET_STATE_BEFORE] 当前 Map 大小: ${prevSize}`);
+      console.log(`[useResourceDownloader] 🔄 [SET_STATE_BEFORE] ${status.resourceId} 旧状态:`, prevStatus || '不存在');
       
       setDownloadProgress(prev => {
         const newMap = new Map(prev);
@@ -48,12 +64,21 @@ export function useResourceDownloader() {
           });
         }
         
+        // 【🔧 日志】setDownloadProgress 回调内
+        const newSize = newMap.size;
+        const newStatus = newMap.get(status.resourceId);
+        console.log(`[useResourceDownloader] ✅ [SET_STATE_AFTER] 新 Map 大小: ${newSize}`);
+        console.log(`[useResourceDownloader] ✅ [SET_STATE_AFTER] ${status.resourceId} 新状态:`, newStatus);
+        
         return newMap;
       });
+      
+      // 【🔧 日志】确认 React 状态更新已触发
+      console.log(`[useResourceDownloader] ⚡ [STATE_UPDATE_TRIGGERED] ${status.resourceId} 状态更新请求已发送给 React`);
     });
 
     return () => {
-      console.log('[useResourceDownloader] 📡 取消订阅 DownloaderService');
+      console.log('[useResourceDownloader] 📡 [UNSUBSCRIBE] 取消订阅 DownloaderService');
       unsubscribe();
     };
   }, []);
