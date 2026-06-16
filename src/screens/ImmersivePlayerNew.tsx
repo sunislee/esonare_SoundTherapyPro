@@ -655,7 +655,7 @@ const ImmersivePlayerNew: React.FC = () => {
                  source={prevBgSource}
                 style={[
                   StyleSheet.absoluteFillObject,
-                  { transform: [{ scale: bgScaleAnim }] }
+                  { width: '100%', height: '100%', transform: [{ scale: bgScaleAnim }] }
                 ]}
                 fadeDuration={0}
                 resizeMode="cover"
@@ -679,7 +679,7 @@ const ImmersivePlayerNew: React.FC = () => {
               source={currentBgSource}
               style={[
                 StyleSheet.absoluteFillObject,
-                { transform: [{ scale: bgScaleAnim }] }
+                { width: '100%', height: '100%', transform: [{ scale: bgScaleAnim }] }
               ]}
               fadeDuration={0}
               resizeMode="cover"

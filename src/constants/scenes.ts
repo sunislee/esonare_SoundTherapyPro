@@ -6,24 +6,21 @@ import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSIO
 // 【背景图状态缓存】在应用启动时预加载所有文件存在性状态
 let backgroundAvailabilityCache: Record<string, boolean> = {};
 
-// 【辅助函数】异步检查并缓存背景图文件是否存在（仅在应用启动时调用一次）
+// 【辅助函数】异步检查并缓存背景图文件是否存在（应用启动 + 下载完成后调用）
 export const preloadBackgroundAvailability = async (): Promise<void> => {
-  console.log('[scenes] 🔄 预加载背景图可用性状态...');
-  
+  console.log('[scenes] 🔄 预加载/刷新 背景图可用性状态...');
+
   try {
     // 检查东方禅意场景的背景图
     for (const [sceneId, bgFilename] of Object.entries(ORIENTAL_BG_MAP)) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
       backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
     }
-    
-    // 检查西方教会场景的背景图
-    for (const [sceneId, bgFilename] of Object.entries(WESTERN_CHURCH_BG_MAP)) {
-      const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
-    }
-    
-    console.log('[scenes] ✅ 背景图可用性预加载完成，缓存了', Object.keys(backgroundAvailabilityCache).length, '个文件状态');
+
+    // 西方教会场景使用 require() 本地静态资源，始终可用，无需检查
+
+    const availableCount = Object.values(backgroundAvailabilityCache).filter(Boolean).length;
+    console.log(`[scenes] ✅ 背景图可用性刷新完成: ${availableCount}/${Object.keys(backgroundAvailabilityCache).length} 个文件可用`);
   } catch (error) {
     console.warn('[scenes] ⚠️ 预加载背景图状态失败:', error);
   }
@@ -31,7 +28,13 @@ export const preloadBackgroundAvailability = async (): Promise<void> => {
 
 // 【辅助函数】检查背景图是否可用（同步查询缓存）
 const isBackgroundImageAvailable = (localPath: string): boolean => {
-  return backgroundAvailabilityCache[localPath] ?? false;
+  // 优先使用缓存结果
+  if (localPath in backgroundAvailabilityCache) {
+    return backgroundAvailabilityCache[localPath];
+  }
+  // 缓存未命中：默认返回 false（保守策略，避免显示损坏的图片）
+  // 缓存会在 preloadBackgroundAvailability() 调用时刷新
+  return false;
 };
 
 // 本地背景图存储目录（与 audioAssets.ts 中的 LOCAL_RESOURCE_PATH 一致）
@@ -131,7 +134,7 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
     color: '#4a3728',
   },
   'Oriental': {
-    source: require('../assets/images/categories/category_therapy.webp'),
+    source: require('../assets/images/scenes/buddha_morning.webp'),
     color: '#8b5e3c',
   },
 };
@@ -186,13 +189,23 @@ export const SMALL_SCENE_IDS = [
   'interactive_white_noise',
 ];
 
-// 西方教会场景背景图本地路径映射
-const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
-  western_church_morning_bell: 'western_church_candlelight.webp',
-  western_church_gregorian: 'western_church_corridor.webp',
-  western_church_holy_waves: 'western_church_light_rays.webp',
-  western_church_urban_chant: 'western_church_sunlight_monastery.webp',
-  western_church_forest_echo: 'western_church_candlelight.webp',
+// 西方教会场景背景图 - 使用本地静态资源（require 编译时打包，无需下载）
+const WESTERN_CHURCH_BG_MAP: Record<string, { source: any }> = {
+  western_church_morning_bell: {
+    source: require('../assets/images/scenes/western_church_candlelight.webp'),
+  },
+  western_church_gregorian: {
+    source: require('../assets/images/scenes/western_church_corridor.webp'),
+  },
+  western_church_holy_waves: {
+    source: require('../assets/images/scenes/western_church_light_rays.webp'),
+  },
+  western_church_urban_chant: {
+    source: require('../assets/images/scenes/western_church_sunlight_monastery.webp'),
+  },
+  western_church_forest_echo: {
+    source: require('../assets/images/scenes/western_church_candlelight.webp'),
+  },
 };
 
 // 东方禅意场景背景图本地路径映射（只包含文件名，不包含 zen/ 前缀）
@@ -209,53 +222,31 @@ const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
   manual_starlit_wilderness: require('../assets/scenes/starlit_wilderness.webp'),
 };
 
-/**
- * 获取场景的背景资源
- * 
- * 资源来源优先级：
- * 1. 新增自然场景 → require() 静态资源（Release 兼容）
- * 2. 东方禅意/西方教会 → file:// 动态路径（需先下载）
- *    - 已下载 → 返回 { uri: 'file://...' }
- *    - 未下载 → 返回 null（触发 HomeScreen 占位块显示 🏯/⛪）
- * 3. 其他场景 → backgrounds[category] 的 require() 静态资源
- */
 export const getSceneBackground = (sceneId: string, category: SceneCategory) => {
-  // 新增自然场景：优先使用静态资源 fallback
   if (NEW_NATURE_BG_FALLBACK[sceneId]) {
     return NEW_NATURE_BG_FALLBACK[sceneId];
   }
 
-  // 东方禅意场景：使用动态路径（需下载后才能显示）
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      // 【🔥修复闪烁】检查缓存中文件是否存在状态
       if (isBackgroundImageAvailable(localPath)) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
         return getCachedBackgroundSource(uri);
       }
-      // 文件不存在，返回 fallback 背景图
-      return backgrounds['Oriental']?.source || null;
     }
+    return backgrounds['Oriental']?.source || backgrounds[category]?.source || null;
   }
   
-  // 西方教会场景：使用动态路径（需下载后才能显示）
   if (sceneId.startsWith('western_church_')) {
-    const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
-    if (bgFilename) {
-      const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      // 【🔥修复闪烁】检查缓存中文件是否存在状态
-      if (isBackgroundImageAvailable(localPath)) {
-        const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
-        return getCachedBackgroundSource(uri);
-      }
-      // 文件不存在，返回 fallback 背景图
-      return backgrounds['WesternChurch']?.source || null;
+    const bgEntry = WESTERN_CHURCH_BG_MAP[sceneId];
+    if (bgEntry) {
+      return bgEntry.source;
     }
+    return backgrounds['WesternChurch']?.source || backgrounds[category]?.source || null;
   }
   
-  // 其他场景：使用本地 require 静态资源
   const bg = backgrounds[category];
   return bg?.source || null;
 };
