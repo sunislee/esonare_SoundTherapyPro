@@ -12,7 +12,7 @@ export interface AudioResource {
   localPath?: string; // 运行时填充
 }
 
-// GitHub 仓库基础 URL
+// GitHub 仓库基础 URL（通过 ghproxy 代理加速）
 const GITHUB_BASE_URL = 'https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main';
 const NOISE_REDUCTION_PATH = 'noise reduction'; // GitHub 目录名带空格
 
@@ -259,28 +259,28 @@ export const SCENE_BACKGROUND_RESOURCES: AudioResource[] = [
     filename: 'western_church_candlelight.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_candlelight.webp',
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_candlelight.webp`,
   },
   {
     id: 'bg_western_church_sunlight_monastery',
     filename: 'western_church_sunlight_monastery.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_sunlight_monastery.webp',
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_sunlight_monastery.webp`,
   },
   {
     id: 'bg_western_church_light_rays',
     filename: 'western_church_light_rays.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_light_rays.webp',
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_light_rays.webp`,
   },
   {
     id: 'bg_western_church_corridor',
     filename: 'western_church_corridor.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_corridor.webp',
+    remoteUrl: `${GITHUB_BASE_URL}/western_church_corridor.webp`,
   },
   // 东方禅意场景背景图
   {
