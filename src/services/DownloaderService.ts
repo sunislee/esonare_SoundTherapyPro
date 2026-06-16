@@ -38,6 +38,8 @@ class DownloaderService {
   private downloadQueue: AudioResource[] = [];
   private isDownloading = false;
   private currentDownload: any = null;
+  /** 【🔧 防重入锁】确保同一时间只有一个 processQueue 在运行 */
+  private queueProcessingPromise: Promise<void> | null = null;
   private statusMap: Map<string, DownloadStatus> = new Map();
   private listeners: Set<(status: DownloadStatus) => void> = new Set();
   private retryCount: Map<string, number> = new Map();
@@ -95,23 +97,30 @@ class DownloaderService {
       throw new Error(`Resource ${resourceId} not found`);
     }
     
-    // 【🔥🔥🔨 关键修复】背景图资源使用 audio_resources 目录（与 getSceneBackground 一致）
-    if (resource.category && resource.category.startsWith('scene_backgrounds')) {
-      const bgDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
-      
-      // 提取子目录（如 "scene_backgrounds/zen" → "zen"）
-      const subDir = resource.category.replace('scene_backgrounds', '').replace(/^\//, '');
-      
-      // 构造完整路径：audio_resources/zen/filename.webp 或 audio_resources/filename.webp
-      const localPath = subDir 
-        ? `${bgDir}/${subDir}/${resource.filename}`
-        : `${bgDir}/${resource.filename}`;
-        
-      console.log(`[Downloader] 🖼️ [getLocalPath] 背景图路径: ${localPath}`);
-      return localPath;
+     // 【🔥🔥🔨 关键修复】背景图资源使用 audio_resources 目录（与 getSceneBackground 一致）
+     if (resource.category && resource.category.startsWith('scene_backgrounds')) {
+       const bgDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
+       
+       // 🔧 修正子目录提取逻辑：移除 "scene_backgrounds/" 后剩余的路径
+       const subDir = resource.category.replace(/^scene_backgrounds\//, '');
+       
+       // 构造完整路径：audio_resources/zen/filename.webp 或 audio_resources/filename.webp
+       const localPath = subDir && subDir !== resource.filename
+         ? `${bgDir}/${subDir}/${resource.filename}`
+         : `${bgDir}/${resource.filename}`;
+         
+       console.log(`[Downloader] 🖼️ [getLocalPath] 背景图路径: ${localPath} (category: ${resource.category}, subDir: ${subDir})`);
+       return localPath;
+     }
+    
+    // 【🔥🔥🔨 关键修复】音频等场景资源必须使用 audio_resources 目录（与 DownloadService.silentBackgroundDownload 保持一致）
+    // 原代码错误地使用 noise_reduction_cache，导致用户点击优先下载时文件存到错误路径，ResourceStatusManager 检查不到 → 卡 0%
+    const audioAsset = AUDIO_MANIFEST.find(a => a.id === resource.id);
+    if (audioAsset) {
+      return getAudioLocalPath(audioAsset.category, audioAsset.filename);
     }
     
-    // 其他资源（音频、降噪等）继续使用 noise_reduction_cache
+    // 其他资源（降噪等）继续使用 noise_reduction_cache
     return `${CACHE_DIR}/${resource.filename}`;
   }
 
@@ -162,36 +171,38 @@ class DownloaderService {
   }
 
   /**
-   * 【破锁】开始下载 - 移除并发检查，强制启动
+   * 【🔧 修复】开始下载 - 带防重入锁，确保同一时间只有一个队列在处理
    */
   async startDownload(): Promise<void> {
-    // 🔓 【完全破锁】移除 isDownloading 检查
-    // 原代码会因为 isDownloading 标志直接返回，导致无法启动下载
-    console.log('[Downloader] 🔥🔥🔥 [startDownload] 🔓 破锁启动 - 移除并发检查');
+    console.log('[Downloader] 🔥 [startDownload] 启动下载');
 
-    // this.isDownloading = true;  // 🔓 移除，避免阻塞后续调用
-    this.isDownloading = true;  // 仅用于记录状态，不作为检查依据
+    // 【防重入】如果队列正在处理中，直接返回（不重复启动）
+    if (this.queueProcessingPromise) {
+      console.log('[Downloader] ℹ️ [startDownload] 队列正在处理中，跳过重复调用');
+      return;
+    }
 
-    // 异步执行，不阻塞调用方
-    this.processQueue();
+    this.isDownloading = true;
+
+    // 启动队列处理并保存 Promise 引用
+    this.queueProcessingPromise = this.processQueue().finally(() => {
+      this.queueProcessingPromise = null;
+      this.isDownloading = false;
+    });
   }
 
   /**
-   * 【破锁】处理下载队列 - 移除所有状态检查
+   * 【🔧 修复】处理下载队列 - 顺序执行，每个任务完成后才处理下一个
    */
   private async processQueue() {
-    console.log(`[Downloader] 🔥🔥🔥 [processQueue] 🔓 破锁启动！队列任务数: ${this.downloadQueue.length}`);
-    
-    // 🔓 移除并发锁检查，允许直接进入队列处理
-    // 原代码的 isDownloading 检查会阻止后续任务启动
+    console.log(`[Downloader] 🔥 [processQueue] 开始处理队列，任务数: ${this.downloadQueue.length}`);
 
     while (this.downloadQueue.length > 0) {
       const resource = this.downloadQueue.shift();
       if (!resource) continue;
 
       console.log(`[Downloader] 🔥 [processQueue] 处理任务: ${resource.filename} | URL: ${resource.remoteUrl}`);
-      
-      // 🔓 移除状态检查，直接下载
+
       try {
         await this.downloadResource(resource);
       } catch (error) {
@@ -199,7 +210,6 @@ class DownloaderService {
       }
     }
 
-    // this.isDownloading = false;  // 🔓 移除状态重置
     console.log('[Downloader] ✅ [processQueue] 所有资源队列处理完成');
   }
 
@@ -486,28 +496,28 @@ class DownloaderService {
   }
 
   /**
-   * 【破锁】添加任务到队列 - 移除所有检查，强制启动
-   * 【🔥🔥🔨 关键修复】同时下载音频 + 背景图
+   * 【🔧 修复】添加任务到队列 - 通过 startDownload 安全启动（带防重入锁）
+   * 同时下载音频 + 背景图
    */
   addTaskToQueue(sceneId: string) {
-    console.log(`[Downloader] 🔥🔥🔥 [addTaskToQueue] 🔓 破锁启动: ${sceneId}`);
-    
+    console.log(`[Downloader] 🔥 [addTaskToQueue] 添加任务: ${sceneId}`);
+
     // 1. 优先尝试场景音频（高优先级，放到队列头部）
     this.addSceneAudioTask(sceneId);
-    
-    // 2. 【🆕 关键新增】同时添加背景图（低优先级，放到队列尾部）
-    this.addSceneBackgroundTask(sceneId);  // ✅ 确保背景图也被下载！
-    
+
+    // 2. 同时添加背景图（低优先级，放到队列尾部）
+    this.addSceneBackgroundTask(sceneId);
+
     // 如果是降噪音频或背景图
     const resource = RESOURCE_MAP[sceneId];
     if (resource && !this.downloadQueue.find(r => r.id === sceneId)) {
       this.downloadQueue.unshift(resource);
       console.log(`[Downloader] ✅ ${sceneId} 已加入队列头部 (降音/背景图)`);
     }
-    
-    // 🔓 穿透所有检查，强制启动 processQueue
-    console.log(`[Downloader] 🔥 [addTaskToQueue] 🔓 穿透锁，强制启动 processQueue...`);
-    this.processQueue();  // 直接调用，不检查任何状态
+
+    // 【🔧 修复】通过 startDownload 启动，带防重入锁，不会重复处理队列
+    console.log(`[Downloader] 🔥 [addTaskToQueue] 触发下载...`);
+    this.startDownload();
   }
 }
 
