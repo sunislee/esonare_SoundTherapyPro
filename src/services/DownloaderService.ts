@@ -231,13 +231,19 @@ class DownloaderService {
     console.log(`[Downloader] 🔥 [downloadResource] 本地路径: ${localPath}`);
     
     // 【🔥🔥🔨 关键修复】检查文件是否已存在，避免重复下载导致状态死循环
+    console.log(`[Downloader] 🔍 [FILE_CHECK] 开始检查文件是否存在...`);
     try {
       const fileExists = await RNFS.exists(localPath);
+      console.log(`[Downloader] 🔍 [FILE_CHECK] RNFS.exists 结果: ${fileExists}`);
+      
       if (fileExists) {
         const stat = await RNFS.stat(localPath);
+        console.log(`[Downloader] 🔍 [FILE_CHECK] 文件大小: ${stat.size} bytes`);
+        
         if (stat.size > 0) {
           console.log(`[Downloader] ✅ [downloadResource] 文件已存在: ${resource.filename} (${stat.size} bytes)`);
           console.log(`[Downloader] ✅ [downloadResource] 跳过重复下载，直接标记为 completed`);
+          console.log(`[Downloader] ⛔ [EARLY_RETURN] 提前退出，不执行 fetch`);
           
           this.notify({
             resourceId: resource.id,
@@ -247,10 +253,15 @@ class DownloaderService {
           });
           
           return;  // 🎯 直接返回，不重复下载
+        } else {
+          console.log(`[Downloader] ⚠️ [FILE_CHECK] 文件存在但大小为 0，需要重新下载`);
         }
+      } else {
+        console.log(`[Downloader] 🆕 [FILE_CHECK] 文件不存在，开始下载`);
       }
     } catch (e) {
       console.warn(`[Downloader] ⚠️ [downloadResource] 检查文件存在性失败:`, e);
+      console.log(`[Downloader] ➡️ [FILE_CHECK] 异常时继续下载流程`);
       // 继续下载，不影响主流程
     }
     
