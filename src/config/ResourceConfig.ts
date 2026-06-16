@@ -253,34 +253,34 @@ export const NOISE_REDUCTION_RESOURCES: AudioResource[] = [
 
 // 8 张场景背景图资源配置（西方教会 5 张 + 东方禅意 3 张）
 export const SCENE_BACKGROUND_RESOURCES: AudioResource[] = [
-  // 西方教会场景背景图
+  // 西方教会场景背景图（jsDelivr CDN）
   {
     id: 'bg_western_church_candlelight',
     filename: 'western_church_candlelight.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: `${GITHUB_BASE_URL}/western_church_candlelight.webp`,
+    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_candlelight.webp',
   },
   {
     id: 'bg_western_church_sunlight_monastery',
     filename: 'western_church_sunlight_monastery.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: `${GITHUB_BASE_URL}/western_church_sunlight_monastery.webp`,
+    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_sunlight_monastery.webp',
   },
   {
     id: 'bg_western_church_light_rays',
     filename: 'western_church_light_rays.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: `${GITHUB_BASE_URL}/western_church_light_rays.webp`,
+    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_light_rays.webp',
   },
   {
     id: 'bg_western_church_corridor',
     filename: 'western_church_corridor.webp',
     category: 'scene_backgrounds',
     priority: 1,
-    remoteUrl: `${GITHUB_BASE_URL}/western_church_corridor.webp`,
+    remoteUrl: 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/western_church_corridor.webp',
   },
   // 东方禅意场景背景图
   {

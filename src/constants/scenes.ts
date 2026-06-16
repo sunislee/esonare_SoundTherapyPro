@@ -17,7 +17,11 @@ export const preloadBackgroundAvailability = async (): Promise<void> => {
       backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
     }
 
-    // 西方教会场景使用 require() 本地静态资源，始终可用，无需检查
+    // 检查西方教会场景的背景图
+    for (const [sceneId, bgFilename] of Object.entries(WESTERN_CHURCH_BG_MAP)) {
+      const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
+      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
+    }
 
     const availableCount = Object.values(backgroundAvailabilityCache).filter(Boolean).length;
     console.log(`[scenes] ✅ 背景图可用性刷新完成: ${availableCount}/${Object.keys(backgroundAvailabilityCache).length} 个文件可用`);
@@ -189,23 +193,13 @@ export const SMALL_SCENE_IDS = [
   'interactive_white_noise',
 ];
 
-// 西方教会场景背景图 - 使用本地静态资源（require 编译时打包，无需下载）
-const WESTERN_CHURCH_BG_MAP: Record<string, { source: any }> = {
-  western_church_morning_bell: {
-    source: require('../assets/images/scenes/western_church_candlelight.webp'),
-  },
-  western_church_gregorian: {
-    source: require('../assets/images/scenes/western_church_corridor.webp'),
-  },
-  western_church_holy_waves: {
-    source: require('../assets/images/scenes/western_church_light_rays.webp'),
-  },
-  western_church_urban_chant: {
-    source: require('../assets/images/scenes/western_church_sunlight_monastery.webp'),
-  },
-  western_church_forest_echo: {
-    source: require('../assets/images/scenes/western_church_candlelight.webp'),
-  },
+// 西方教会场景背景图文件名映射（远程CDN下载到本地后使用，与东方禅意模式一致）
+const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
+  western_church_morning_bell: 'western_church_candlelight.webp',
+  western_church_gregorian: 'western_church_corridor.webp',
+  western_church_holy_waves: 'western_church_light_rays.webp',
+  western_church_urban_chant: 'western_church_sunlight_monastery.webp',
+  western_church_forest_echo: 'western_church_candlelight.webp',
 };
 
 // 东方禅意场景背景图本地路径映射（只包含文件名，不包含 zen/ 前缀）
@@ -240,9 +234,13 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
   }
   
   if (sceneId.startsWith('western_church_')) {
-    const bgEntry = WESTERN_CHURCH_BG_MAP[sceneId];
-    if (bgEntry) {
-      return bgEntry.source;
+    const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
+    if (bgFilename) {
+      const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
+      if (isBackgroundImageAvailable(localPath)) {
+        const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
+        return getCachedBackgroundSource(uri);
+      }
     }
     return backgrounds['WesternChurch']?.source || backgrounds[category]?.source || null;
   }
