@@ -164,6 +164,7 @@ class DownloaderService {
     */
    public notify(status: DownloadStatus) {
      this.statusMap.set(status.resourceId, status);
+     console.log(`[Downloader] 🔔 [notify] ${status.resourceId}: ${status.status} (${status.progress}%) [listeners=${this.listeners.size}]`);
      this.listeners.forEach(listener => listener(status));
    }
 
@@ -277,8 +278,22 @@ class DownloaderService {
       // ════════════════════════════════════════════════════════════
       // 🔥 第一阶段：使用 fetch 获取资源
       // ════════════════════════════════════════════════════════════
+      
+      // 【🔧 调试日志】fetch 请求前
+      console.log(`[Downloader] 🌐 [FETCH_BEFORE] 准备发起请求...`);
+      console.log(`[Downloader] 🌐 [FETCH_BEFORE] URL: ${resource.remoteUrl}`);
+      console.log(`[Downloader] 🌐 [FETCH_BEFORE] 时间: ${new Date().toISOString()}`);
+      console.log(`[Downloader] 🌐 [FETCH_BEFORE] 文件: ${resource.filename}`);
+      
       console.log(`[Downloader] 🔥 [fetch] 开始获取资源...`);
       const response = await fetch(resource.remoteUrl);
+      
+      // 【🔧 调试日志】fetch 请求后
+      console.log(`[Downloader] 🌐 [FETCH_AFTER] 收到响应！`);
+      console.log(`[Downloader] 🌐 [FETCH_AFTER] 状态码: ${response.status}`);
+      console.log(`[Downloader] 🌐 [FETCH_AFTER] OK: ${response.ok}`);
+      console.log(`[Downloader] 🌐 [FETCH_AFTER] URL: ${resource.remoteUrl}`);
+      console.log(`[Downloader] 🌐 [FETCH_AFTER] 时间: ${new Date().toISOString()}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
