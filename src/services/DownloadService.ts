@@ -1,5 +1,6 @@
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import * as RNFS from '@dr.pogodin/react-native-fs';
+import { DeviceEventEmitter } from 'react-native';
 import { DownloaderServiceInstance } from './DownloaderService';
 import {
   AUDIO_MANIFEST,
@@ -240,24 +241,33 @@ export const DownloadService = {
                 console.log(`[App-Download] 📊 [DOWNLOAD_RESULT] 临时文件大小: ${stat.size}`);
                 
                 if (stat.size >= expectedSize * 0.8) {
-                  console.log(`[App-Download] ✅ [DOWNLOAD_RESULT] 文件大小符合要求，移动到最终路径`);
-                  await RNFS.moveFile(tempPath, localPath);
-                  status.status = 'success';
-                  successCount++;
-                  
-                  // 【进度回调】通知 UI 更新
-                  if (onProgressCallback) {
-                    onProgressCallback(asset.id, 100);
+                console.log(`[App-Download] ✅ [DOWNLOAD_RESULT] 文件大小符合要求，移动到最终路径`);
+                await RNFS.moveFile(tempPath, localPath);
+                status.status = 'success';
+                successCount++;
+
+                // 【🔥🔥🔨 关键修复】通知 DownloaderService 更新状态，确保 UI 能收到 completed 通知
+                DownloaderServiceInstance.notify({
+                  resourceId: asset.id,
+                  filename: manifestItem.filename,
+                  progress: 100,
+                  status: 'completed',
+                });
+                console.log(`[App-Download] 📡 [DOWNLOADER_NOTIFY] 已通知 DownloaderService: ${asset.id} -> completed`);
+
+                // 【进度回调】通知 UI 更新
+                if (onProgressCallback) {
+                  onProgressCallback(asset.id, 100);
+                }
+                // 【完成回调】通知自动关闭弹窗
+                if (onCompleteCallback) {
+                  try {
+                    onCompleteCallback(asset.id);
+                  } catch (cbErr: any) {
+                    console.error(`[App-Download] ❌ [COMPLETION_CB_ERROR] 完成回调失败: ${cbErr.message}`);
                   }
-                  // 【完成回调】通知自动关闭弹窗
-                  if (onCompleteCallback) {
-                    try {
-                      onCompleteCallback(asset.id);
-                    } catch (cbErr: any) {
-                      console.error(`[App-Download] ❌ [COMPLETION_CB_ERROR] 完成回调失败: ${cbErr.message}`);
-                    }
-                  }
-                  console.log(`[App-Download] 📡 [PROGRESS_CALLBACK] 已通知 UI: ${asset.id} -> 100%`);
+                }
+                console.log(`[App-Download] 📡 [PROGRESS_CALLBACK] 已通知 UI: ${asset.id} -> 100%`);
                   
                   console.log(`[App-Download] ✅✅✅ [SILENT_COMPLETE] 静默完成: ${manifestItem.filename}`);
                   break;
@@ -293,6 +303,9 @@ export const DownloadService = {
     await Promise.all(workers);
 
     console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
+
+    // 【关键修复】通知 HomeScreen 刷新背景图缓存，确保东方/西方场景缩略图正确显示
+    DeviceEventEmitter.emit('backgroundImagesReady');
 
     if (failedCount === 0) {
       await Promise.resolve();
