@@ -18,13 +18,13 @@ export const GHPROXY_NET_URL = 'https://ghproxy.net/https://raw.githubuserconten
 export const MIRROR_GHPROXY_URL = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/';
 export const KK_GITHUB_URL = 'https://raw.kkgithub.com/';
 
-// 【jsDelivr CDN - 全球加速】
-export const JSDDELIVR_URL = 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main/';
+// 【kkgithub - GitHub 镜像，国内速度快】
+export const JSDDELIVR_URL = 'https://raw.kkgithub.com/sunislee/sound-therapy-assets/main/';
 export const STATICALLY_URL = 'https://cdn.statically.io/gh/sunislee/sound-therapy-assets/main/';
 
-// 【双源策略】国内用 Gitee（快），海外用 jsDelivr（稳）
-export const PRIMARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? JSDDELIVR_URL : GITEE_URL;
-export const SECONDARY_REMOTE_RESOURCE_BASE_URL = IS_GOOGLE_PLAY_VERSION ? STATICALLY_URL : JSDDELIVR_URL;
+// 统一使用 kkgithub 作为主源
+export const PRIMARY_REMOTE_RESOURCE_BASE_URL = JSDDELIVR_URL;
+export const SECONDARY_REMOTE_RESOURCE_BASE_URL = STATICALLY_URL;
 export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 
 export const LOCAL_RESOURCE_PATH = `${RNFS.DocumentDirectoryPath}/audio_resources`; 

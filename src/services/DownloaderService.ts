@@ -260,7 +260,7 @@ class DownloaderService {
       console.log(`[Downloader] 🔥 [fetch] 目标路径: ${localPath}`);
       console.log(`[Downloader] 🔥 [fetch] 进程 ID: [TypeScript层]`);
       console.log(`[Downloader] 🔥 [fetch] 时间戳: ${Date.now()}`);
-      console.log(`[Downloader] 🔥 [fetch] 网络源: jsDelivr CDN`);
+      console.log(`[Downloader] 🔥 [fetch] 网络源: kkgithub`);
       
       this.notify({
         resourceId: resource.id,
@@ -423,10 +423,8 @@ class DownloaderService {
     console.log(`[Downloader] 📋 [addSceneAudioTask] 添加任务: ${sceneId}`);
     const asset = AUDIO_MANIFEST.find(a => a.id === sceneId);
     if (asset) {
-      // 【双源策略】国内用 Gitee，海外用 jsDelivr
-      const GITHUB_BASE = IS_GOOGLE_PLAY_VERSION
-        ? 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main'
-        : 'https://gitee.com/sunislee/sound-therapy-assets/raw/main';
+      // kkgithub GitHub 镜像（国内速度快）
+      const GITHUB_BASE = 'https://raw.kkgithub.com/sunislee/sound-therapy-assets/main';
       const resource: AudioResource = {
         id: asset.id,
         filename: asset.filename,
