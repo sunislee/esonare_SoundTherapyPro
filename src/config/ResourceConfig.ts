@@ -12,8 +12,8 @@ export interface AudioResource {
   localPath?: string; // 运行时填充
 }
 
-// GitHub 仓库基础 URL（通过 ghproxy 代理加速）
-const GITHUB_BASE_URL = 'https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main';
+// jsDelivr CDN 基础 URL（全球加速，稳定可靠）
+const GITHUB_BASE_URL = 'https://cdn.jsdelivr.net/gh/sunislee/sound-therapy-assets@main';
 const NOISE_REDUCTION_PATH = 'noise reduction'; // GitHub 目录名带空格
 
 // 32 个降噪音频资源配置
