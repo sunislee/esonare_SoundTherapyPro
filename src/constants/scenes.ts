@@ -7,6 +7,20 @@ import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSIO
 let backgroundAvailabilityCache: Record<string, boolean> = {};
 
 // 【辅助函数】异步检查并缓存背景图文件是否存在（应用启动 + 下载完成后调用）
+// 📝 RNFS.exists() 会返回 true，但文件大小可能为 0（下载中断的临时文件），
+//    因此必须同时验证 stat.size > 1KB 来确保图片可用。
+const isBackgroundFileValid = async (localPath: string): Promise<boolean> => {
+  try {
+    const exists = await RNFS.exists(localPath);
+    if (!exists) return false;
+    const stat = await RNFS.stat(localPath);
+    // 1KB 阈值：排除下载中断产生的空文件或损坏文件
+    return (stat.size ?? 0) > 1024;
+  } catch {
+    return false;
+  }
+};
+
 export const preloadBackgroundAvailability = async (): Promise<void> => {
   console.log('[scenes] 🔄 预加载/刷新 背景图可用性状态...');
 
@@ -14,13 +28,13 @@ export const preloadBackgroundAvailability = async (): Promise<void> => {
     // 检查东方禅意场景的背景图
     for (const [sceneId, bgFilename] of Object.entries(ORIENTAL_BG_MAP)) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
+      backgroundAvailabilityCache[localPath] = await isBackgroundFileValid(localPath);
     }
 
     // 检查西方教会场景的背景图
     for (const [sceneId, bgFilename] of Object.entries(WESTERN_CHURCH_BG_MAP)) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
+      backgroundAvailabilityCache[localPath] = await isBackgroundFileValid(localPath);
     }
 
     const availableCount = Object.values(backgroundAvailabilityCache).filter(Boolean).length;

@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Audio Service - 音频播放引擎，管理本地与远程音轨的播放、定时切换、
+ *   音量淡入淡出、EQ/降噪/DRC 处理链以及下载进度分发。
+ *
+ * @architecture-constraint
+ * [架构约束] 经 2026 年 6 月全量依赖图谱分析（6247个节点，8578条边确认）：
+ * AudioService 与 DownloaderService 之间必须保持绝对的事件驱动解耦（如 addResourceLoadingListener/notifyListeners）。
+ * 严禁任何团队成员后续在重构或维护时引入两者的直接函数硬编码调用，以维护 codebase 架构的清洁度。
+ */
+
 // 【去 Expo 化】完全使用 react-native-track-player
 import { Platform, AppState, AppStateStatus, InteractionManager, DeviceEventEmitter } from 'react-native';
 
@@ -2176,15 +2186,40 @@ class AudioService {
     this.volumeListeners.forEach(l => l(volume));
   }
 
-  // --- 监听器管理 ---
-  addListener(l: () => void) {
-    this.listeners.add(l);
-    // 【关键修复】返回取消订阅函数，让 useSyncExternalStore 可以正确清理
-    return () => { this.listeners.delete(l); };
-  }
-  removeListener(l: () => void) { this.listeners.delete(l); }
-  
-  addLoadingListener(l: (state: { id: string | null; loading: boolean }) => void) {
+// --- 监听器管理 ---
+addListener(l: () => void) {
+  this.listeners.add(l);
+  // 【关键修复】返回取消订阅函数，让 useSyncExternalStore 可以正确清理
+  return () => { this.listeners.delete(l); };
+}
+removeListener(l: () => void) { this.listeners.delete(l); }
+
+/**
+ * 场景级状态变更监听（替代 DeviceEventEmitter）
+ *
+[Showing lines 1-37 of 52 total. Use start_line=38 to continue reading.]
+
+
+				# TODO LIST UPDATE REQUIRED - You MUST include the task_progress parameter in your NEXT tool call.
+
+**Current Progress: 4/4 items completed (100%)**
+
+- [x] 用 codebase-memory MCP 查询三个 bug 的已有记录和文件调用关系
+- [x] 结合 git diff/log 分析修复原因
+- [x] 分析 DownloaderService 事件广播链路问题
+- [x] 给出结论：真正修复 vs 偶然未复现 + 优化建议
+
+Note: This list was your last task_progress input. It may be outdated or inaccurate now. Check before proceeding — if the work is truly done, use attempt_completion to present results. Do NOT call it based on stale list state; verify first.
+
+ASSUMPTION: The numbers in this list (e.g., "2 of 3") are your best estimate, not verified facts. If you're uncertain about completion status, ASK the user before marking items complete.
+
+				
+
+**You have completed all tasks you set out to do. Do NOT re-run the full workflow.** Before using `attempt_completion`, verify the result is correct using whatever tools are appropriate for the task type — this may include running CLI commands (e.g., `ls`, `grep`, `pytest`) to check outputs, or manual inspection. Only use `attempt_completion` when you are confident the work is done correctly.
+
+				
+<system-reminder>
+The tool call you made did not produce any output yet. The system is waiting for it to complete — please keep monitoring until results come back. Do NOT re-issue the same call unless it failed.
     this.loadingListeners.add(l);
     return () => { this.loadingListeners.delete(l); };
   }

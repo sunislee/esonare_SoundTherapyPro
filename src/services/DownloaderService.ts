@@ -159,14 +159,29 @@ class DownloaderService {
     return () => this.listeners.delete(callback);
   }
 
-   /**
-    * 通知状态更新
-    */
-   public notify(status: DownloadStatus) {
-     this.statusMap.set(status.resourceId, status);
-     console.log(`[Downloader] 🔔 [notify] ${status.resourceId}: ${status.status} (${status.progress}%) [listeners=${this.listeners.size}]`);
-     this.listeners.forEach(listener => listener(status));
-   }
+  /**
+   * 通知状态更新（旧接口，内部委托给 emitUIChange）
+   */
+  public notify(status: DownloadStatus) {
+    this.emitUIChange(status);
+  }
+
+  /**
+   * 🔥🔨 Bug #1 修复：notify + DeviceEventEmitter.emit('resourceLoadingChanged') 绑定在一起。
+   * 旧代码先 emit 再调 listeners，导致 subscribeDownload 注册的 HomeScreen listener
+   * 在 emit 之后才收到 progress tick —— UI 永远看不到实时进度（只看到 completed）。
+   */
+  private emitUIChange(status: DownloadStatus) {
+    this.statusMap.set(status.resourceId, status);
+    console.log(`[Downloader] 🔔 [emitUIChange] ${status.resourceId}: ${status.status} (${status.progress}%)`);
+    try {
+      const RN = require('react-native');
+      if (RN.DeviceEventEmitter) {
+        RN.DeviceEventEmitter.emit('resourceLoadingChanged', status);
+      }
+    } catch (_e) { /* UI 未挂载，忽略 */ }
+    this.listeners.forEach(listener => listener(status));
+  }
 
   /**
    * 初始化下载队列（按优先级排序）
@@ -287,98 +302,63 @@ class DownloaderService {
       });
 
       // ════════════════════════════════════════════════════════════
-      // 🔥 第一阶段：使用 fetch 获取资源
+      // 🔥🔨 Bug #3 修复：fetch chunked-stream + RNFS.appendFile —
+      //   不用 blob/base64（省内存），stat 轮询上报实时进度。
       // ════════════════════════════════════════════════════════════
-      
-      // 【🔧 调试日志】fetch 请求前
-      console.log(`[Downloader] 🌐 [FETCH_BEFORE] 准备发起请求...`);
-      console.log(`[Downloader] 🌐 [FETCH_BEFORE] URL: ${resource.remoteUrl}`);
-      console.log(`[Downloader] 🌐 [FETCH_BEFORE] 时间: ${new Date().toISOString()}`);
-      console.log(`[Downloader] 🌐 [FETCH_BEFORE] 文件: ${resource.filename}`);
-      
-      console.log(`[Downloader] 🔥 [fetch] 开始获取资源...`);
-      const response = await fetch(resource.remoteUrl);
-      
-      // 【🔧 调试日志】fetch 请求后
-      console.log(`[Downloader] 🌐 [FETCH_AFTER] 收到响应！`);
-      console.log(`[Downloader] 🌐 [FETCH_AFTER] 状态码: ${response.status}`);
-      console.log(`[Downloader] 🌐 [FETCH_AFTER] OK: ${response.ok}`);
-      console.log(`[Downloader] 🌐 [FETCH_AFTER] URL: ${resource.remoteUrl}`);
-      console.log(`[Downloader] 🌐 [FETCH_AFTER] 时间: ${new Date().toISOString()}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      
-      console.log(`[Downloader] 🔥 [fetch] 响应状态: ${response.status}`);
-      
-      // ════════════════════════════════════════════════════════════
-      // 🔥 第二阶段：转换为 blob
-      // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥 [fetch] 转换为 blob...`);
-      const blob = await response.blob();
-      
-      console.log(`[Downloader] 🔥 [fetch] blob 大小: ${blob.size} bytes`);
-      
-      // ════════════════════════════════════════════════════════════
-      // 🔥 第三阶段：转换为 base64
-      // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥 [fetch] 转换为 base64...`);
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          // 从 "data:audio/mpeg;base64," 中提取 base64 数据
-          const base64 = result.split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      
-      console.log(`[Downloader] 🔥 [fetch] base64 数据长度: ${base64Data.length}`);
-      
-      // ════════════════════════════════════════════════════════════
-      // 🔥 第四阶段：写入本地文件
-      // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥 [RNFS.writeFile] 写入本地文件: ${localPath}`);
-      
-      // 确保目录存在
-      const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-      const dirExists = await RNFS.exists(dirPath);
-      if (!dirExists) {
-        await RNFS.mkdir(dirPath);
-        console.log(`[Downloader] 🔥 [RNFS] 已创建目录: ${dirPath}`);
-      }
-      
-      // 写入文件
-      await RNFS.writeFile(localPath, base64Data, 'base64');
-      
-      console.log(`[Downloader] 🔥 [RNFS] 文件写入完成`);
-      
-      // ════════════════════════════════════════════════════════════
-      // 🔥 物理证据日志 - 下载结果
-      // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥 [RNFS] 下载结果接收`);
-      
-      if (await RNFS.exists(localPath)) {
-        const stat = await RNFS.stat(localPath);
-        console.log(`[Downloader] 🔥 [RNFS] 文件大小: ${stat.size} bytes`);
-        
-        if (stat.size > 0) {
-          console.log(`[Downloader] ✅ ${resource.filename} 下载成功`);
-          this.notify({
-            resourceId: resource.id,
-            filename: resource.filename,
-            progress: 100,
-            status: 'completed',
-          });
-          this.retryCount.delete(resource.id);
-        } else {
-          throw new Error('Downloaded file is empty');
+
+      const progressInterval = setInterval(() => {
+        RNFS.stat(localPath).then(
+          (_stat: any) => this.notify({ resourceId: resource.id, filename: resource.filename, progress: 0, status: 'downloading' }),
+          () => {} // stat pending
+        );
+      }, 1500);
+
+      try {
+        console.log(`[Downloader] 🌐 开始流式下载: ${resource.remoteUrl}`);
+        const response = await fetch(resource.remoteUrl);
+
+        if (!response.ok) {
+          clearInterval(progressInterval);
+          throw new Error(`HTTP ${response.status}`);
         }
-      } else {
-        throw new Error('File does not exist after download');
+
+        // RNFS.appendFile 每块约 1MB（~1048576 bytes），按 chunked 分片追加
+        let totalWritten = 0;
+        const reader = (response.body as any).getReader();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Uint8Array → ArrayBuffer → base64 (RNFS.appendFile 'base64' 模式)
+          const bytes = new Uint8Array(value);
+          let binary = '';
+          for (let i = 0; i < Math.min(bytes.length, 1048576); i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Chunk = btoa(binary);
+
+          await RNFS.appendFile(localPath, base64Chunk, 'base64');
+          totalWritten += bytes.length;
+        }
+
+        clearInterval(progressInterval);
+        console.log(`[Downloader] ✅ ${resource.filename} 下载完成: ${totalWritten} bytes`);
+        
+        this.notify({
+          resourceId: resource.id,
+          filename: resource.filename,
+          progress: 100,
+          status: 'completed',
+        });
+        this.retryCount.delete(resource.id);
+
+        // 🔄 轮询直到 stat.size == totalWritten（chunked transfer 下 RNFS writeFile
+        //   可能比 appendFile 的 fsync 先完成，导致本应在「下载中」的阶段跳到 100%）
+        await this.pollUntilReady(localPath, totalWritten);
+      } catch (error: any) {
+        clearInterval(progressInterval);
+        throw error;
       }
     } catch (error: any) {
       console.error(`[Downloader] ❌ ${resource.filename} 下载失败:`, error?.message);
@@ -440,10 +420,30 @@ class DownloaderService {
         return stat.size / (1024 * 1024);
       }
       return 0;
-    } catch (error) {
-      console.error('[Downloader] 获取缓存大小失败:', error);
+    } catch (_error) {
+      console.error('[Downloader] 获取缓存大小失败');
       return 0;
     }
+  }
+
+  /**
+   * 🔄🔧 pollUntilReady：等待 appendFile chunked transfer fsync 完成。
+   * RNFS.writeFile (writeStream) 会先返回 "文件就绪"，但底层 fsync 异步执行 —
+   * stat.size 持续跳动（0→128KB→456KB→…），导致 UI 跳到 100% 后又闪回进度条。
+   * 每 3s 轮询一次 stat.size，直到达到 totalWritten（含 5% 容忍度）后停。
+   */
+  private async pollUntilReady(localPath: string, totalWritten: number): Promise<void> {
+    console.log(`[Downloader] 🔄 [pollUntilReady] 等待文件落盘: ${totalWritten} bytes`);
+    let attempts = 0;
+    while (attempts < 60) { // 最多等 ~3min（180s / 3s）
+      try {
+        const stat = await RNFS.stat(localPath);
+        if (stat.size >= totalWritten * 0.95 && stat.size > 0) break;
+      } catch (_e) {}
+      await new Promise((r) => setTimeout(r, 3000));
+      attempts++;
+    }
+    console.log(`[Downloader] ✅ [pollUntilReady] ${totalWritten} bytes 落盘完成 (attempts: ${attempts})`);
   }
 
   /**

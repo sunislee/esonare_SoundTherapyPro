@@ -19,7 +19,10 @@ import {
 const DOWNLOAD_CONNECTION_TIMEOUT = 8000;
 const DOWNLOAD_READ_TIMEOUT = 15000;
 const DOWNLOAD_STALL_TIMEOUT = 10000;
-const UI_UPDATE_INTERVAL_MS = 2000;
+const UI_UPDATE_INTERVAL_MS = 1500;
+const STAT_POLL_INTERVAL_MS = 2000;
+// RNFS.downloadFile promise 的 onProgress 回调在部分版本中存在 bug（不触发中间进度），
+// 因此通过 stat(tempPath).size 手动追踪下载进度。
 const MAX_RETRIES_PER_FILE = 5;
 const MAX_CONCURRENT_TASKS = 6;
 
@@ -436,8 +439,11 @@ export const DownloadService = {
 
         status.status = 'downloading';
 
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+
         for (const url of urls) {
           let currentJobId: number | undefined = undefined;
+          let currentMaxBytes = 0;
 
           const stopDownloadSafe = (jobId: number) => {
             try {
@@ -450,7 +456,23 @@ export const DownloadService = {
               try { await RNFS.unlink(tempPath); } catch (e) {}
             }
 
-            let currentMaxBytes = 0;
+            // 【🔥🔥🔨 关键修复】轮询临时文件大小，弥补 RNFS.downloadFile onProgress 回调缺失的 bug
+            const startPolling = async () => {
+              if (pollTimer) clearInterval(pollTimer);
+              pollTimer = setInterval(async () => {
+                try {
+                  const stat = await RNFS.stat(tempPath);
+                  currentMaxBytes = Math.max(currentMaxBytes, Number(stat.size));
+                  status.maxConfirmedBytes = currentMaxBytes;
+                  DownloaderServiceInstance.notify({
+                    resourceId: asset.id,
+                    progress: asset.expectedSize > 0 ? Math.round((currentMaxBytes / asset.expectedSize) * 100) : 0,
+                    status: 'downloading',
+                    filename: asset.filename,
+                  });
+                } catch { /* ignore poll errors */ }
+              }, STAT_POLL_INTERVAL_MS);
+            };
 
             // 【打印完整下载 URL】让用户看到到底是哪个 URL 在 404
             console.log(`[App-Download] 🔗 完整URL: ${url}`);
@@ -464,20 +486,18 @@ export const DownloadService = {
               background: false,
               discretionary: false,
               progressDivider: 5,
-              begin: (res) => {
+              begin: (res: any) => {
                 currentJobId = res.jobId;
+                // onBegin 时临时文件开始写入，启动轮询追踪进度
+                startPolling();
               },
-progress: (res) => {
-                 if (res.bytesWritten > currentMaxBytes) {
-                   currentMaxBytes = res.bytesWritten;
-                   status.maxConfirmedBytes = currentMaxBytes;
-                 }
-                 // 【关键修复】expectedSize 来自 downloadSingleFile 的参数 asset.expectedSize
-                 DownloaderServiceInstance.notify({ resourceId: asset.id, progress: Math.round(res.bytesWritten / asset.expectedSize * 100), status: 'downloading', filename: asset.filename });
-               }
+              progress: () => { /* onProgress callback is unreliable in RNFS v12.x — handled by pollTimer above */ },
             });
 
             const downloadResult = await downloadJob.promise;
+
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = null;
 
             if (downloadResult.statusCode !== 200 && downloadResult.statusCode !== 206) {
               if (await RNFS.exists(tempPath)) {
@@ -496,9 +516,9 @@ progress: (res) => {
                 if (await RNFS.exists(localPath)) {
                   const finalStat = await RNFS.stat(localPath);
                   if (finalStat.size > 0) {
-status.status = 'success';
-DownloaderServiceInstance.notify({ resourceId: asset.id, progress: 100, status: 'completed', filename: asset.filename });
-status.maxConfirmedBytes = Number(finalStat.size);
+                    status.status = 'success';
+                    DownloaderServiceInstance.notify({ resourceId: asset.id, progress: 100, status: 'completed', filename: asset.filename });
+                    status.maxConfirmedBytes = Number(finalStat.size);
                     console.log(`[App-Download] ✅ 完成: ${asset.filename} (实际大小: ${finalStat.size} bytes)`);
 
                     if (onFileDownloadedCallback) {
@@ -515,6 +535,9 @@ status.maxConfirmedBytes = Number(finalStat.size);
             if (await RNFS.exists(tempPath)) {
               try { await RNFS.unlink(tempPath); } catch (e) {}
             }
+          } finally {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = null;
           }
         }
       }
