@@ -217,32 +217,62 @@ const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
 };
 
 export const getSceneBackground = (sceneId: string, category: SceneCategory) => {
+  // 【🔧 调试日志】追踪缩略图加载流程
+  console.log(`[scenes] 🖼️ [getSceneBackground] 场景: ${sceneId}, 分类: ${category}`);
+  
   if (NEW_NATURE_BG_FALLBACK[sceneId]) {
+    console.log(`[scenes] 🖼️ [getSceneBackground] 使用 NEW_NATURE_BG_FALLBACK: ${sceneId}`);
     return NEW_NATURE_BG_FALLBACK[sceneId];
   }
 
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
+    console.log(`[scenes] 🖼️ [getSceneBackground] 东方禅意场景，从 ORIENTAL_BG_MAP 查找: ${sceneId} → ${bgFilename || '未找到'}`);
+    
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      if (isBackgroundImageAvailable(localPath)) {
+      const isAvailable = isBackgroundImageAvailable(localPath);
+      console.log(`[scenes] 🖼️ [getSceneBackground] 本地路径: ${localPath}, 可用性: ${isAvailable}`);
+      
+      if (isAvailable) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
+        console.log(`[scenes] 🖼️ [getSceneBackground] ✅ 返回本地图片: ${uri}`);
         return getCachedBackgroundSource(uri);
+      } else {
+        console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ 文件不可用，回退到 backgrounds['Oriental']`);
       }
+    } else {
+      console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ ORIENTAL_BG_MAP 中未找到，回退到 backgrounds['Oriental']`);
     }
-    return backgrounds['Oriental']?.source || backgrounds[category]?.source || null;
+    
+    const fallbackSource = backgrounds['Oriental']?.source || backgrounds[category]?.source;
+    console.log(`[scenes] 🖼️ [getSceneBackground] 回退图片: ${fallbackSource ? '存在' : '不存在'}`);
+    return fallbackSource || null;
   }
   
   if (sceneId.startsWith('western_church_')) {
     const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
+    console.log(`[scenes] 🖼️ [getSceneBackground] 西方教会场景，从 WESTERN_CHURCH_BG_MAP 查找: ${sceneId} → ${bgFilename || '未找到'}`);
+    
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      if (isBackgroundImageAvailable(localPath)) {
+      const isAvailable = isBackgroundImageAvailable(localPath);
+      console.log(`[scenes] 🖼️ [getSceneBackground] 本地路径: ${localPath}, 可用性: ${isAvailable}`);
+      
+      if (isAvailable) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
+        console.log(`[scenes] 🖼️ [getSceneBackground] ✅ 返回本地图片: ${uri}`);
         return getCachedBackgroundSource(uri);
+      } else {
+        console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ 文件不可用，回退到 backgrounds['WesternChurch']`);
       }
+    } else {
+      console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ WESTERN_CHURCH_BG_MAP 中未找到，回退到 backgrounds['WesternChurch']`);
     }
-    return backgrounds['WesternChurch']?.source || backgrounds[category]?.source || null;
+    
+    const fallbackSource = backgrounds['WesternChurch']?.source || backgrounds[category]?.source;
+    console.log(`[scenes] 🖼️ [getSceneBackground] 回退图片: ${fallbackSource ? '存在' : '不存在'}`);
+    return fallbackSource || null;
   }
   
   const bg = backgrounds[category];
