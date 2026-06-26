@@ -104,18 +104,83 @@ const SceneItem = React.memo(({
   const isReady = downloadStatus === 'ready' || downloadProgress >= 100;
   const isIdle = !isDownloading && !isReady;
   
-  // 【🔥🔥🔨 恢复自动下载 - 防止重复触发】
-  const autoDownloadTriggeredRef = useRef(false);  // 标记是否已触发过
+  // 【🔨 v10 修复】isResourceReady 必须同时检查 downloadedSceneIds 和实时下载进度
+  // 原因：checkDownloadedScenes() 只在启动时跑一次，背景图下载完成后不会重新检查
+  // 解决：downloadProgress 中有 ready 状态也算就绪
+  const _isResourceReady = isResourceReady || isReady;
+  
+  // 【🔥🔨 v10 修复】检查背景图是否实际存在，防止显示"Ready to Play"但背景图还是占位图
+  const [bgImageExists, setBgImageExists] = useState<boolean | null>(null);
+  
   useEffect(() => {
-    console.log(`[SceneItem] 📊 [下载状态] ${item.id}: progress=${downloadProgress}%, status=${downloadStatus}`);
+    let isMounted = true;
     
-    // 只在首次 idle 时触发一次，防止重复下载导致状态死循环
-    if (isIdle && onBoostPriority && !autoDownloadTriggeredRef.current) {
-      console.log(`[SceneItem] 🚀 [Auto-Download] 首次触发下载: ${item.id}`);
-      autoDownloadTriggeredRef.current = true;  // 标记已触发
-      onBoostPriority(item.id);
-    }
-  }, [isIdle, item.id, onBoostPriority]);  // 移除 downloadProgress 依赖，避免循环
+    const checkBgImage = async () => {
+      // 如果已经通过 downloadedSceneIds 确认就绪，不需要再检查
+      if (isResourceReady) {
+        if (isMounted) setBgImageExists(true);
+        return;
+      }
+      
+      // 如果下载未完成，不需要检查
+      if (!isReady) {
+        if (isMounted) setBgImageExists(false);
+        return;
+      }
+      
+      // 下载完成但 downloadedSceneIds 未更新，需要检查背景图文件是否存在
+      try {
+        const { getSceneBackground } = await import('../constants/scenes');
+        const RNFS = await import('@dr.pogodin/react-native-fs');
+        
+        const bgSource = getSceneBackground(item.id, item.category);
+        
+        if (!bgSource) {
+          if (isMounted) setBgImageExists(false);
+          return;
+        }
+        
+        // 静态资源（require() 格式）→ 直接通过
+        if (typeof bgSource === 'number') {
+          if (isMounted) setBgImageExists(true);
+          return;
+        }
+        
+        // file:// 或 http URL → 需要检查文件是否存在
+        if (bgSource.uri) {
+          let bgCleanPath: string;
+          
+          if (bgSource.uri.startsWith('file://')) {
+            bgCleanPath = bgSource.uri.replace('file://', '');
+          } else if (bgSource.uri.startsWith('http')) {
+            // 网络URL，暂时认为未就绪
+            if (isMounted) setBgImageExists(false);
+            return;
+          } else {
+            if (isMounted) setBgImageExists(false);
+            return;
+          }
+          
+          const exists = await RNFS.exists(bgCleanPath);
+          if (isMounted) setBgImageExists(exists);
+        } else {
+          if (isMounted) setBgImageExists(false);
+        }
+      } catch (error) {
+        console.warn(`[SceneItem] ⚠️ 检查背景图失败: ${item.id}`, error);
+        if (isMounted) setBgImageExists(false);
+      }
+    };
+    
+    checkBgImage();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [item.id, item.category, isResourceReady, isReady]);
+  
+  // 【🔥🔨 v10 修复】只有当背景图实际存在时才显示"Ready to Play"
+  const _isFullyReady = _isResourceReady && (bgImageExists !== false);
   
   const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
@@ -128,13 +193,7 @@ const SceneItem = React.memo(({
 
   useEffect(() => {
     const timer = setTimeout(() => setRefreshKey(k => k + 1), 100);
-    const sub = DeviceEventEmitter.addListener('backgroundImagesReady', () => {
-      setRefreshKey(k => k + 1);
-    });
-    return () => {
-      clearTimeout(timer);
-      sub.remove();
-    };
+    return () => { clearTimeout(timer); };
   }, []);
   
   // 【单例获取播放状态】
@@ -177,7 +236,7 @@ const SceneItem = React.memo(({
     
     triggerHaptic();
     
-    if (isReady) {
+    if (_isFullyReady) {
       // 【Ready】资源就绪 → 直接导航
       console.log(`[SceneItem] ✅ [handlePress] 资源就绪，导航到播放器: ${item.id}`);
       if (item.id.includes('breath')) navigation.navigate('BreathDetail', { sceneId: item.id });
@@ -222,17 +281,18 @@ const SceneItem = React.memo(({
   const highlightScale = highlightAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.05] });
   const highlightOpacity = highlightAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.6] });
   
-  // 【缩略图逻辑 - 修复版】优先使用 backgroundSource，避免空 assetMap 导致的缩略图丢失
+  // 【缩略图逻辑 - v10 修复版】直接信任 getSceneBackground() 的返回值
+  // getSceneBackground() 内部已处理：文件存在返回专属图，不存在返回分类兜底图
   const getThumbnailSource = (sceneItem: any, ready: boolean): any => {
     const originalId = sceneItem.id;
     
-    // 对于 oriental_ 和 western_church_ 开头的场景，重新获取最新的 backgroundSource
+    // 对于 oriental_ 和 western_church_ 开头的场景，使用 getSceneBackground() 获取最新图
     if (sceneItem.id.startsWith('oriental_') || sceneItem.id.startsWith('western_church_')) {
       const freshBg = getSceneBackground(sceneItem.id, sceneItem.category);
       if (freshBg) return freshBg;
     }
     
-    // 【🔥🔥🔨 关键修复】优先使用 scenes.ts 的 getSceneBackground() 返回的 backgroundSource
+    // 【关键修复】优先使用 scenes.ts 的 getSceneBackground() 返回的 backgroundSource
     if (sceneItem.backgroundSource) {
       const bgSource = sceneItem.backgroundSource;
       
@@ -334,7 +394,7 @@ const SceneItem = React.memo(({
               })()}
               
               {/* 【中间信息区 - 三态驱动】 */}
-              <View style={[styles.cardText, isResourceReady && styles.cardTextCentered]}>
+              <View style={[styles.cardText, _isFullyReady && styles.cardTextCentered]}>
                 <Text
                   style={[
                     styles.cardTitle,
@@ -351,7 +411,7 @@ const SceneItem = React.memo(({
                   <Text style={styles.cardStatusText} numberOfLines={1}>
                     {Math.round(downloadProgress)}% - Downloading
                   </Text>
-                ) : isResourceReady ? (
+                ) : _isResourceReady ? (
                   <Text style={styles.cardReadyText} numberOfLines={1}>
                     Ready to Play ✨
                   </Text>
@@ -495,9 +555,26 @@ export const HomeScreen: React.FC = () => {
     }) || null;
     
     return () => {
-      console.log('[HomeScreen] 📡 [addResourceLoadingListener] 移除监听器');
+      console.log('[HomeScreen]  [addResourceLoadingListener] 移除监听器');
       unsubscribe?.();
     };
+  }, []);
+
+  // 【🔥 v10 修复】在 HomeScreen 层级监听背景图下载完成，强制所有 SceneItem 重渲染
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('backgroundImagesReady', async () => {
+      try {
+        const { preloadBackgroundAvailability } = await import('../constants/scenes');
+        console.log('[HomeScreen] 🔄 [backgroundImagesReady] 刷新背景图缓存...');
+        await preloadBackgroundAvailability();
+        console.log('[HomeScreen] ✅ [backgroundImagesReady] 缓存刷新完成');
+      } catch (e) {
+        console.warn('[HomeScreen] ⚠️ [backgroundImagesReady] 缓存刷新失败:', e);
+      }
+      // 强制所有 SceneItem 重渲染，重新获取缩略图
+      setStateVersion(v => v + 1);
+    });
+    return () => { sub.remove(); };
   }, []);
 
   // 【🔥 根本性修复】直接从 AudioService 获取真实播放状态（绕过
@@ -793,7 +870,7 @@ export const HomeScreen: React.FC = () => {
           // 【🔥🔥🔨 关键修复】检查缓存版本号，如果低于 v9 则清除
           const CACHE_VERSION_KEY = 'downloadedSceneIds_version';
           const cachedVersion = await AsyncStorage.getItem(CACHE_VERSION_KEY);
-          const CURRENT_VERSION = 'v9';  // 当前版本号
+          const CURRENT_VERSION = 'v10';  // 当前版本号（v10：修复东方/西方缩略图显示逻辑）
           
           if (cachedVersion !== CURRENT_VERSION) {
             console.log(`[HomeScreen] 🗑️ [缓存清理] 旧版本缓存 (${cachedVersion || '无'}) 已失效，清除中...`);
@@ -1390,7 +1467,7 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
                     prioritizeScene(sceneId);
                   }}
                   stateVersion={stateVersion}  // 【关键】强制刷新
-                  lockedIds={lockedIds}  // 【🔥🔥🔥 v8 双向锁定集合】
+                  lockedIds={lockedIds}  // 【🔥🔥 v8 双向锁定集合】
                 />
               ))}
             </View>

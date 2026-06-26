@@ -20,7 +20,7 @@ export function useResourceDownloader() {
     console.log(`[useResourceDownloader] 📡 [SUBSCRIBE] 时间: ${new Date().toISOString()}`);
 
     const unsubscribe = DownloaderServiceInstance.subscribe((status) => {
-      // 【🔧 详细日志】收到通知的完整信息
+      // 【 详细日志】收到通知的完整信息
       console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] ════════════════════════════`);
       console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] 收到通知!`);
       console.log(`[useResourceDownloader] 📊 [NOTIFY_RECEIVED] resourceId: ${status.resourceId}`);
@@ -182,13 +182,13 @@ export function useResourceDownloader() {
         // 【关键】立即更新状态，不等 notify 事件
         setDownloadProgress(initialMap);
 
-        // 如果有场景未就绪，启动后台下载
-        if (readyCount < statuses.length) {
-          console.log(`[useResourceDownloader] 📥 [INIT] ${statuses.length - readyCount} 个场景未就绪，准备下载`);
-          setTimeout(() => {
-            if (mounted) startBackgroundDownload();
-          }, 500);  // 缩短延迟到 500ms
-        }
+        // 【🔥 v10 修复】始终启动后台下载，确保背景图也被下载
+        // 之前：只有音频未就绪时才启动下载，但 getAllSceneStatuses 只检查音频
+        // 结果：音频下载后报告"就绪"，背景图永远不下载
+        console.log(`[useResourceDownloader] 📥 [INIT] 启动后台下载（含背景图）`);
+        setTimeout(() => {
+          if (mounted) startBackgroundDownload();
+        }, 500);
 
       } catch (e) {
         console.error('[useResourceDownloader] ❌ [INIT] 查询本地状态失败:', e);

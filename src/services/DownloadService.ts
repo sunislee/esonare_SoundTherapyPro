@@ -15,6 +15,7 @@ import {
   MIRROR_GHPROXY_URL,
   KK_GITHUB_URL,
 } from '../constants/audioAssets';
+import { SCENE_BACKGROUND_RESOURCES } from '../config/ResourceConfig';
 
 const DOWNLOAD_CONNECTION_TIMEOUT = 8000;
 const DOWNLOAD_READ_TIMEOUT = 15000;
@@ -150,6 +151,49 @@ export const DownloadService = {
     console.log(`[App-Download] 📦 [BUILD_QUEUE] 完成！共 ${allFilesToDownload.length} 个文件待下载`);
 
     // ════════════════════════════════════════════════════════════
+    // 🔥 第一阶段补充：添加背景图到下载队列
+    // ════════════════════════════════════════════════════════════
+    console.log(`[App-Download] 🖼️ [BUILD_QUEUE] 遍历 SCENE_BACKGROUND_RESOURCES，共 ${SCENE_BACKGROUND_RESOURCES.length} 个背景图...`);
+    
+    for (const bgResource of SCENE_BACKGROUND_RESOURCES) {
+      // 构造本地路径：与 DownloaderService.getLocalPath 保持一致
+      const hasSubPath = bgResource.category.includes('/');
+      const subDir = hasSubPath ? bgResource.category.replace(/^scene_backgrounds\//, '') : '';
+      const bgLocalPath = subDir
+        ? `${RNFS.DocumentDirectoryPath}/audio_resources/${subDir}/${bgResource.filename}`
+        : `${RNFS.DocumentDirectoryPath}/audio_resources/${bgResource.filename}`;
+
+      // 检查本地文件是否存在
+      if (await RNFS.exists(bgLocalPath)) {
+        try {
+          const stat = await RNFS.stat(bgLocalPath);
+          if (stat.size > 0) {
+            console.log(`[App-Download] ✅ [BUILD_QUEUE] 跳过已下载背景图: ${bgResource.filename} (${stat.size} bytes)`);
+            continue;
+          }
+        } catch (e) {
+          console.error(`[App-Download] ❌ [BUILD_QUEUE] 检查背景图文件失败: ${bgLocalPath}`, e);
+        }
+      } else {
+        console.log(`[App-Download] 🆕 [BUILD_QUEUE] 新背景图待下载: ${bgResource.filename} → ${bgLocalPath}`);
+      }
+
+      // 背景图优先级设为 -1（低于核心场景，但高于其他）
+      allFilesToDownload.push({
+        asset: { id: bgResource.id, expectedSize: 0 },  // 背景图没有 expectedSize
+        manifestItem: { id: bgResource.id, filename: bgResource.filename, category: bgResource.category },
+        localPath: bgLocalPath,
+        expectedSize: 0,  // 不检查大小
+        priority: -1,
+        isBackgroundImage: true,
+        remoteUrl: bgResource.remoteUrl,
+      });
+      fileStatusMap.set(bgResource.id, { assetId: bgResource.id, expectedSize: 0, maxConfirmedBytes: 0, status: 'pending' });
+    }
+
+    console.log(`[App-Download] 📦 [BUILD_QUEUE] 补充完成！共 ${allFilesToDownload.length} 个文件待下载（含背景图）`);
+
+    // ════════════════════════════════════════════════════════════
     // 🔥 第二阶段：按优先级排序
     // ════════════════════════════════════════════════════════════
     const sortWithBoost = () => {
@@ -198,12 +242,16 @@ export const DownloadService = {
         }
         
         const idx = nextIndex++;
-        const { asset, manifestItem, localPath, expectedSize } = allFilesToDownload[idx];
-        const status = fileStatusMap.get(asset.id)!;
+        const { asset, manifestItem, localPath, expectedSize, isBackgroundImage, remoteUrl } = allFilesToDownload[idx];
+        const status = fileStatusMap.get(asset.id) || { assetId: asset.id, expectedSize: 0, maxConfirmedBytes: 0, status: 'pending' as const };
         const tempPath = `${localPath}.tmp`;
-        const urls = getDownloadUrls(manifestItem.filename);
+        
+        // 【🔥 v10 修复】背景图使用 remoteUrl，音频使用 getDownloadUrls
+        const urls = isBackgroundImage && remoteUrl 
+          ? [remoteUrl] 
+          : getDownloadUrls(manifestItem.filename);
 
-        console.log(`[App-Download] 🔥 [WORKER] 开始处理: ${manifestItem.filename}`);
+        console.log(`[App-Download] 🔥 [WORKER] 开始处理: ${manifestItem.filename}${isBackgroundImage ? ' [背景图]' : ''}`);
         console.log(`[App-Download] 📂 [WORKER] 本地路径: ${localPath}`);
         console.log(`[App-Download] 🌐 [WORKER] 可用 URLs: ${urls.length} 个源`);
         urls.forEach((url, i) => console.log(`[App-Download] 🌐 [WORKER] URL ${i + 1}: ${url.substring(0, 60)}...`));

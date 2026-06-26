@@ -14,31 +14,30 @@ export const preloadBackgroundAvailability = async (): Promise<void> => {
     // 检查东方禅意场景的背景图
     for (const [sceneId, bgFilename] of Object.entries(ORIENTAL_BG_MAP)) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
+      const exists = await RNFS.exists(localPath);
+      backgroundAvailabilityCache[sceneId] = exists;
+      console.log(`[scenes]   ${sceneId}: ${bgFilename} -> ${exists ? '✅' : '❌'} (path: ${localPath})`);
     }
 
     // 检查西方教会场景的背景图
     for (const [sceneId, bgFilename] of Object.entries(WESTERN_CHURCH_BG_MAP)) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      backgroundAvailabilityCache[localPath] = await RNFS.exists(localPath);
+      const exists = await RNFS.exists(localPath);
+      backgroundAvailabilityCache[sceneId] = exists;
+      console.log(`[scenes]   ${sceneId}: ${bgFilename} -> ${exists ? '✅' : '❌'} (path: ${localPath})`);
     }
 
     const availableCount = Object.values(backgroundAvailabilityCache).filter(Boolean).length;
-    console.log(`[scenes] ✅ 背景图可用性刷新完成: ${availableCount}/${Object.keys(backgroundAvailabilityCache).length} 个文件可用`);
+    const totalCount = Object.keys(backgroundAvailabilityCache).length;
+    console.log(`[scenes] ✅ 背景图可用性刷新完成: ${availableCount}/${totalCount} 个文件可用`);
   } catch (error) {
     console.warn('[scenes] ⚠️ 预加载背景图状态失败:', error);
   }
 };
 
-// 【辅助函数】检查背景图是否可用（同步查询缓存）
-const isBackgroundImageAvailable = (localPath: string): boolean => {
-  // 优先使用缓存结果
-  if (localPath in backgroundAvailabilityCache) {
-    return backgroundAvailabilityCache[localPath];
-  }
-  // 缓存未命中：默认返回 false（保守策略，避免显示损坏的图片）
-  // 缓存会在 preloadBackgroundAvailability() 调用时刷新
-  return false;
+// 【辅助函数】检查背景图是否可用（按 sceneId 查询缓存）
+const isBackgroundImageAvailable = (sceneId: string): boolean => {
+  return backgroundAvailabilityCache[sceneId] === true;
 };
 
 // 本地背景图存储目录（与 audioAssets.ts 中的 LOCAL_RESOURCE_PATH 一致）
@@ -209,7 +208,7 @@ const ORIENTAL_BG_MAP: Record<string, string> = {
   oriental_morning_buddha: 'buddha_morning.webp',
 };
 
-// 【🔥 Release 兼容】新增自然场景必须使用 require() 静态资源（因为这些图在 assets 目录中）
+// 【Release 兼容】新增自然场景必须使用 require() 静态资源（因为这些图在 assets 目录中）
 const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
   manual_morning_forest: require('../assets/scenes/morning_forest.webp'),
   manual_serene_lakeside: require('../assets/scenes/serene_lakeside.webp'),
@@ -217,62 +216,38 @@ const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
 };
 
 export const getSceneBackground = (sceneId: string, category: SceneCategory) => {
-  // 【🔧 调试日志】追踪缩略图加载流程
-  console.log(`[scenes] 🖼️ [getSceneBackground] 场景: ${sceneId}, 分类: ${category}`);
-  
   if (NEW_NATURE_BG_FALLBACK[sceneId]) {
-    console.log(`[scenes] 🖼️ [getSceneBackground] 使用 NEW_NATURE_BG_FALLBACK: ${sceneId}`);
     return NEW_NATURE_BG_FALLBACK[sceneId];
   }
 
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
-    console.log(`[scenes] 🖼️ [getSceneBackground] 东方禅意场景，从 ORIENTAL_BG_MAP 查找: ${sceneId} → ${bgFilename || '未找到'}`);
-    
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      const isAvailable = isBackgroundImageAvailable(localPath);
-      console.log(`[scenes] 🖼️ [getSceneBackground] 本地路径: ${localPath}, 可用性: ${isAvailable}`);
-      
-      if (isAvailable) {
+      // 【🔥 v10 修复】按 sceneId 查询缓存
+      if (isBackgroundImageAvailable(sceneId)) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
-        console.log(`[scenes] 🖼️ [getSceneBackground] ✅ 返回本地图片: ${uri}`);
         return getCachedBackgroundSource(uri);
-      } else {
-        console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ 文件不可用，回退到 backgrounds['Oriental']`);
       }
-    } else {
-      console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ ORIENTAL_BG_MAP 中未找到，回退到 backgrounds['Oriental']`);
+      // 文件不存在，返回 null 显示占位图（纯色块+图标）
+      return null;
     }
-    
-    const fallbackSource = backgrounds['Oriental']?.source || backgrounds[category]?.source;
-    console.log(`[scenes] 🖼️ [getSceneBackground] 回退图片: ${fallbackSource ? '存在' : '不存在'}`);
-    return fallbackSource || null;
+    return backgrounds['Oriental']?.source || backgrounds[category]?.source || null;
   }
   
   if (sceneId.startsWith('western_church_')) {
     const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
-    console.log(`[scenes] 🖼️ [getSceneBackground] 西方教会场景，从 WESTERN_CHURCH_BG_MAP 查找: ${sceneId} → ${bgFilename || '未找到'}`);
-    
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      const isAvailable = isBackgroundImageAvailable(localPath);
-      console.log(`[scenes] 🖼️ [getSceneBackground] 本地路径: ${localPath}, 可用性: ${isAvailable}`);
-      
-      if (isAvailable) {
+      // 【🔥 v10 修复】按 sceneId 查询缓存
+      if (isBackgroundImageAvailable(sceneId)) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
-        console.log(`[scenes] 🖼️ [getSceneBackground] ✅ 返回本地图片: ${uri}`);
         return getCachedBackgroundSource(uri);
-      } else {
-        console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ 文件不可用，回退到 backgrounds['WesternChurch']`);
       }
-    } else {
-      console.log(`[scenes] 🖼️ [getSceneBackground] ⚠️ WESTERN_CHURCH_BG_MAP 中未找到，回退到 backgrounds['WesternChurch']`);
+      // 文件不存在，返回 null 显示占位图（纯色块+图标）
+      return null;
     }
-    
-    const fallbackSource = backgrounds['WesternChurch']?.source || backgrounds[category]?.source;
-    console.log(`[scenes] 🖼️ [getSceneBackground] 回退图片: ${fallbackSource ? '存在' : '不存在'}`);
-    return fallbackSource || null;
+    return backgrounds['WesternChurch']?.source || backgrounds[category]?.source || null;
   }
   
   const bg = backgrounds[category];
@@ -327,7 +302,7 @@ const SCENE_ORDER: Record<string, number> = {
 
 export const SCENES: Scene[] = AUDIO_MANIFEST
   .filter((item) => {
-    // 【关键过滤】排除 8 轨音频文件和背景图资源
+    // 排除 8 轨音频文件和背景图资源
     return !item.id.startsWith('8track_') && !item.id.startsWith('bg_');
   })
   .map((item) => {
@@ -389,9 +364,31 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       isBaseScene: isBase,
       order: SCENE_ORDER[item.id] ?? 999,
     });
+
     return scene;
   })
   .sort((a, b) => a.order - b.order);
 
-console.log('[scenes] 场景已按 order 强制排序，共', SCENES.length, '个场景');
-console.log('[scenes] 场景顺序:', SCENES.map(s => s.id).join(', '));
+export const getSceneById = (id: string): Scene | undefined => {
+  return SCENES.find(s => s.id === id);
+};
+
+export const getScenesByCategory = (category: SceneCategory): Scene[] => {
+  return SCENES.filter(s => s.category === category);
+};
+
+export const getCategoryColor = (category: SceneCategory): string => {
+  return backgrounds[category]?.color || '#000000';
+};
+
+export const getCategoryIcon = (category: SceneCategory): string => {
+  switch (category) {
+    case 'Nature': return '';
+    case 'Healing': return '';
+    case 'Brainwave': return '';
+    case 'Life': return '';
+    case 'WesternChurch': return '';
+    case 'Oriental': return '🏯';
+    default: return '🎵';
+  }
+};
