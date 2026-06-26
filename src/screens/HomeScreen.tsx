@@ -114,21 +114,8 @@ const SceneItem = React.memo(({
   const isReady = downloadStatus === 'ready' || downloadProgress >= 100;
   const isIdle = !isDownloading && !isReady;
   
-  // 【🔥🔥🔨 恢复自动下载 - 防止重复触发】
-  const autoDownloadTriggeredRef = useRef(false);  // 标记是否已触发过
-  useEffect(() => {
-    console.log(`[SceneItem] 📊 [下载状态] ${item.id}: progress=${downloadProgress}%, status=${downloadStatus}`);
-    
-    // 只在首次 idle 时触发一次，防止重复下载导致状态死循环
-    if (isIdle && onBoostPriority && !autoDownloadTriggeredRef.current) {
-      console.log(`[SceneItem] 🚀 [Auto-Download] 首次触发下载: ${item.id}`);
-      autoDownloadTriggeredRef.current = true;  // 标记已触发
-      onBoostPriority(item.id);
-    }
-  }, [isIdle, item.id, onBoostPriority]);  // 移除 downloadProgress 依赖，避免循环
-  
-   const highlightAnim = useRef(new Animated.Value(0)).current;
-   const [isPressed, setIsPressed] = useState(false);
+  const highlightAnim = useRef(new Animated.Value(0)).current;
+  const [isPressed, setIsPressed] = useState(false);
    const [itemY, setItemY] = useState<number | null>(null);
    const [hasAnimated, setHasAnimated] = useState(false);
    const viewRef = useRef<View>(null);
