@@ -8,12 +8,10 @@ import {
   getLocalPath as getLocalPathHelper,
   GLOBAL_TOTAL_SIZE,
   ASSET_LIST,
-  JSDDELIVR_URL,
   STATICALLY_URL,
   GITHUB_URL,
   GHPROXY_NET_URL,
   MIRROR_GHPROXY_URL,
-  KK_GITHUB_URL,
 } from '../constants/audioAssets';
 
 const DOWNLOAD_CONNECTION_TIMEOUT = 8000;
@@ -60,8 +58,8 @@ const getDownloadUrls = (filename: string): string[] => {
   return [
     `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encoded}`,
     `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${encoded}`,
-    `${KK_GITHUB_URL}sunislee/sound-therapy-assets/main/${encoded}`,
-    `${JSDDELIVR_URL}${encoded}`,
+    `${STATICALLY_URL}${encoded}`,
+    `${GITHUB_URL}${encoded}`,
   ];
 };
 
@@ -305,7 +303,16 @@ export const DownloadService = {
     const workers = Array.from({ length: Math.min(MAX_CONCURRENT_TASKS, allFilesToDownload.length) }, () => downloadSingleFile());
     await Promise.all(workers);
 
-    console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
+    console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成：成功=${successCount}, 失败=${failedCount}`);
+
+    // 【关键修复】下载完成后刷新背景图缓存，确保东方/西方场景缩略图正确显示
+    try {
+      const { preloadBackgroundAvailability } = await import('../constants/scenes');
+      await preloadBackgroundAvailability();
+      console.log('[App-Download] ✅ [SILENT_COMPLETE] 背景图缓存已刷新');
+    } catch (e) {
+      console.error('[App-Download] ❌ [SILENT_COMPLETE] 刷新背景图缓存失败:', e);
+    }
 
     // 【关键修复】通知 HomeScreen 刷新背景图缓存，确保东方/西方场景缩略图正确显示
     DeviceEventEmitter.emit('backgroundImagesReady');

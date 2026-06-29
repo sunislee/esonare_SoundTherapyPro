@@ -157,6 +157,30 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
   },
 };
 
+// 【🔥 v1.4.3 修复】西方教会场景独立缩略图映射（Release 包使用 require() 静态资源）
+const WESTERN_CHURCH_THUMBNAIL_MAP: Record<string, any> = {
+  western_church_morning_bell: require('../assets/images/scenes/western_church_candlelight.webp'),
+  western_church_gregorian: require('../assets/images/scenes/western_church_corridor.webp'),
+  western_church_holy_waves: require('../assets/images/scenes/western_church_light_rays.webp'),
+  western_church_urban_chant: require('../assets/images/scenes/western_church_sunlight_monastery.webp'),
+  western_church_forest_echo: require('../assets/images/scenes/western_church_candlelight.webp'),
+};
+
+// 【 v1.4.4 修复】东方禅意场景独立缩略图映射（Release 包使用 require() 静态资源）
+// 每个场景使用不同的静态图作为 fallback，避免远程图未下载时全部显示同一张
+const ORIENTAL_THUMBNAIL_MAP: Record<string, any> = {
+  oriental_zen_monastery: require('../assets/images/categories/category_nature.webp'), // 自然风格占位
+  oriental_tibetan_bowl: require('../assets/images/categories/category_therapy.webp'), // 疗愈风格占位
+  oriental_morning_buddha: require('../assets/images/scenes/buddha_morning.webp'), // 晨光佛意
+};
+
+// 【🔥 v1.4.5 修复】东方禅意场景背景图下载路径修正
+// DownloadService 使用 manifest.filename='zen/xxx.webp'，getLocalPath 忽略 category
+// 实际下载路径: audio_resources/zen/xxx.webp（不是 scene_backgrounds/zen/）
+const getOrientalLocalPath = (bgFilename: string): string => {
+  return getLocalPathHelper('oriental', `zen/${bgFilename}`);
+};
+
 // 【背景图缓存】避免重复创建引用，防止 Image 组件闪烁
 const backgroundSourceCache: Record<string, any> = {};
 
@@ -208,6 +232,7 @@ export const SMALL_SCENE_IDS = [
 ];
 
 // 西方教会场景背景图文件名映射（远程CDN下载到本地后使用，与东方禅意模式一致）
+// 【🔥 v1.4.2 修复】每个场景必须使用独立的背景图片，不能重复！
 const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
   western_church_morning_bell: 'western_church_candlelight.webp',
   western_church_gregorian: 'western_church_corridor.webp',
@@ -220,6 +245,7 @@ const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
 const ORIENTAL_BG_MAP: Record<string, string> = {
   oriental_zen_monastery: 'bg_temple_lantern_gate.webp',
   oriental_tibetan_bowl: 'bg_temple_zen_lantern.webp',
+  // 【🔥 v1.4.2 修复】morning_buddha 使用独立的 buddha_morning.webp（与 zen/ 目录下的同名单元）
   oriental_morning_buddha: 'buddha_morning.webp',
 };
 
@@ -238,11 +264,17 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
     if (bgFilename) {
-      const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
+      // 【🔥 v1.4.5 修复】路径与 DownloadService 一致：audio_resources/zen/xxx.webp
+      // DownloadService 用 manifest.filename='zen/xxx.webp'，getLocalPath 忽略 category
+      const localPath = getLocalPathHelper('oriental', `zen/${bgFilename}`);
       if (isBackgroundImageAvailable(localPath)) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
         return getCachedBackgroundSource(uri);
       }
+    }
+    // 静态 fallback：每个场景用不同的图
+    if (ORIENTAL_THUMBNAIL_MAP[sceneId]) {
+      return ORIENTAL_THUMBNAIL_MAP[sceneId];
     }
     return backgrounds['Oriental']?.source || backgrounds[category]?.source || null;
   }
@@ -255,6 +287,10 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
         return getCachedBackgroundSource(uri);
       }
+    }
+    // 【🔥 v1.4.3 修复】使用独立缩略图映射，避免所有场景显示同一张图
+    if (WESTERN_CHURCH_THUMBNAIL_MAP[sceneId]) {
+      return WESTERN_CHURCH_THUMBNAIL_MAP[sceneId];
     }
     return backgrounds['WesternChurch']?.source || backgrounds[category]?.source || null;
   }

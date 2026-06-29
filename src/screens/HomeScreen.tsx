@@ -47,7 +47,7 @@ import { useBackHandler } from '../hooks/useBackHandler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { subscribeSceneDownloadChanged, getSceneDownloadState, tickScene } from '../utils/SceneDownloadStore';
 import { sceneRoamManager } from '../services/SceneRoamManager';
-import { checkSceneResourceStatus, getAllSceneStatuses } from '../services/ResourceStatusManager';
+import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } from '../services/ResourceStatusManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
@@ -142,7 +142,7 @@ const SceneItem = React.memo(({
   }, [stateVersion]);
   
   const finalPlaying = directState.success ? directState.isPlaying : isPlaying;
-  const finalSceneId = directState.success ? directState.sceneId : currentBaseSceneId;
+  const finalSceneId = directState.success ? directState.sceneId : (currentBaseSceneId ?? null);
   const isThisPlaying = finalPlaying && finalSceneId === item.id;
   
   // 【状态驱动 UI - 激活态判定】

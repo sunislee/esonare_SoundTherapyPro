@@ -24,8 +24,8 @@ import AudioService from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import DeviceEventEmitter from 'react-native/Libraries/Types/DeviceEventEmitter';
-import { useNavigation } from '@react-navigation/native';
+import { DeviceEventEmitter } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import ToastUtil from '../utils/ToastUtil';
@@ -255,38 +255,6 @@ export const ProfileScreen = () => {
 
   // 【🔥🔥🔨 关键修复】页面获得焦点时，检查是否正在下载并启动 subscribe
   useBackHandler(false, navigation);
-  const startRealBackgroundDownload = useCallback(() => {
-    console.log('[ProfileScreen] 🔥 [startRealBackgroundDownload] 启动后台静默下载...');
-
-    // DownloaderServiceInstance.startBackgroundDownload() 内部会 notifyCacheCleared() + subscribe()
-    DownloaderServiceInstance.startBackgroundDownload();
-
-    DeviceEventEmitter.emit('resourceLoadingChanged', { loading: true, message: t('profile.cache.clearing') });
-
-    const unsubscribe = subscribeDownload((status) => {
-      // 【🔧 关键修复】订阅回调时确保 stateVersion 递增（避免闭包过期导致 setStateVersion(v=>v+1) 失效）
-      setStateVersion(v => v + 1);
-
-      if (status.status === 'completed') {
-        console.log(`[ProfileScreen] ✅ [subscribe] ${status.resourceId} 下载完成`);
-      } else if (status.status === 'downloading' && status.progress > 0) {
-        console.log(`[ProfileScreen] 📊 [subscribe] ${status.resourceId}: ${status.progress}%`);
-      } else if (status.status === 'failed') {
-        console.warn('[ProfileScreen] ⚠️ [subscribe] 下载失败:', status.error);
-      }
-    });
-
-    // 【🔥🔥🔨 关键修复】监听资源加载完成事件（DeviceEventEmitter），触发 HomeScreen SceneItem remount + 缩略图刷新
-    const subscription = DeviceEventEmitter.addListener('backgroundImagesReady', () => {
-      console.log('[ProfileScreen] 📡 [subscribe] 背景图就绪 → 递增 stateVersion');
-      setStateVersion(v => v + 1);
-
-      // 【🔥🔥🔨 关键修复】通知 HomeScreen 刷新缩略图（直接调用 RNFS.stat 读取本地文件）
-      DeviceEventEmitter.emit('thumbnailRefreshRequested', { sceneId: 'all' });
-    });
-
-    console.log('[ProfileScreen] ✅ [subscribe] 实时进度监听已注册');
-  }, [t]);
 
   // 【🔥🔥🔨 关键修复】页面获得焦点时，检查是否正在下载并启动 subscribe
   useFocusEffect(
