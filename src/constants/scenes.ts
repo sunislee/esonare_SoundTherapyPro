@@ -25,9 +25,9 @@ export const preloadBackgroundAvailability = async (): Promise<void> => {
   console.log('[scenes] 🔄 预加载/刷新 背景图可用性状态...');
 
   try {
-    // 检查东方禅意场景的背景图
+    // 检查东方禅意场景的背景图（category 必须与 getSceneBackground 一致，确保缓存 key 匹配）
     for (const [sceneId, bgFilename] of Object.entries(ORIENTAL_BG_MAP)) {
-      const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
+      const localPath = getLocalPathHelper('oriental', `zen/${bgFilename}`);
       backgroundAvailabilityCache[localPath] = await isBackgroundFileValid(localPath);
     }
 
@@ -166,12 +166,11 @@ const WESTERN_CHURCH_THUMBNAIL_MAP: Record<string, any> = {
   western_church_forest_echo: require('../assets/images/scenes/western_church_candlelight.webp'),
 };
 
-// 【 v1.4.4 修复】东方禅意场景独立缩略图映射（Release 包使用 require() 静态资源）
-// 每个场景使用不同的静态图作为 fallback，避免远程图未下载时全部显示同一张
+// 【 v1.4.6 修复】东方禅意场景独立缩略图映射（使用不同类别图片作为占位，下载完成后显示正确图片）
 const ORIENTAL_THUMBNAIL_MAP: Record<string, any> = {
-  oriental_zen_monastery: require('../assets/images/categories/category_nature.webp'), // 自然风格占位
-  oriental_tibetan_bowl: require('../assets/images/categories/category_therapy.webp'), // 疗愈风格占位
-  oriental_morning_buddha: require('../assets/images/scenes/buddha_morning.webp'), // 晨光佛意
+  oriental_zen_monastery: require('../assets/images/categories/category_nature.webp'), // 森林图作为寺院占位
+  oriental_tibetan_bowl: require('../assets/images/categories/category_therapy.webp'), // 冥想图作为颂钵占位
+  oriental_morning_buddha: require('../assets/images/scenes/buddha_morning.webp'), // 晨钟佛音用原图
 };
 
 // 【🔥 v1.4.5 修复】东方禅意场景背景图下载路径修正

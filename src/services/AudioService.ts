@@ -27,6 +27,9 @@ import * as RNFS from '@dr.pogodin/react-native-fs';
 import { NotificationService } from './NotificationService';
 import { Scene, SCENES } from '../constants/scenes';
 import { EQManager } from './EQManager';
+// 【v1.4.2 Release 修复】静态 import NativeEQ，替代 releaseEqualizerResources 中的动态 require()
+// 动态 require('../modules/NativeEQ') 在 Hermes 混淆后可能导致方法名丢失或模块 undefined
+import { NativeEQ } from '../modules/NativeEQ';
 import { DownloaderServiceInstance, isDownloaded } from '../services/DownloaderService';
 
 // 【多语言支持 - 终极补丁】直接导入 JSON 文件，手动取值
@@ -612,7 +615,7 @@ class AudioService {
   private releaseEqualizerResources() {
     if (Platform.OS === 'android') {
       try {
-        const { NativeEQ } = require('../modules/NativeEQ');
+        // 【v1.4.2 Release 修复】使用静态 import 的 NativeEQ，避免混淆后方法丢失
         if (NativeEQ && typeof NativeEQ.release === 'function') {
           NativeEQ.release();
           console.log('[AudioService] ✅ 均衡器资源已释放');
@@ -762,10 +765,30 @@ class AudioService {
     await TrackPlayer.setRepeatMode(RepeatMode.Off);
     await TrackPlayer.setVolume(this.ambientVolume);
     await NotificationService.setup();
+
+    // 【🔥 v1.4.2 根因修复】TrackPlayer 初始化完成后，注册内部事件监听器
+    try {
+      this.setupListeners();
+      console.log('[AudioService] ✅ setupListeners() 已调用');
+    } catch (listenerErr) {
+      console.warn('[AudioService] ⚠️ setupListeners() 失败（不影响继续运行）:', listenerErr);
+    }
     
     // 【关键】设置 _isReady = true，确保 AudioContext 能检测到
     this._isReady = true;
     console.log('[AudioService] ✅ 初始化完成，isReady = true，均衡器将在首次播放时初始化');
+
+    // 【🔥 v1.4.2-coldstart-fix】冷启动后自动预加载背景图缓存，确保 backgroundImagesReady 事件能触发
+    // 否则 backgroundAvailabilityCache 永远为空 → getSceneBackground fallback 到默认死图
+    // 🔥 调用 scenes.ts 的有效实现（AudioService 中已有一个损坏的空壳 preloadBackgroundAvailability）
+    import('../constants/scenes').then(({ preloadBackgroundAvailability: preloadBg }) => {
+      return preloadBg();
+    }).then(() => {
+      DeviceEventEmitter.emit('backgroundImagesReady');
+      console.log('[AudioService] ✅ [preload] 背景图缓存就绪（scenes.ts），已 emit backgroundImagesReady');
+    }).catch(e => {
+      console.warn('[AudioService] ⚠️ preloadBackgroundAvailability 失败:', e);
+    });
   }
     
     /**
@@ -2250,7 +2273,10 @@ The tool call you made did not produce any output yet. The system is waiting for
     return () => { this.resourceLoadingListeners.delete(l); };
   }
 
-  private notifyListeners() {
+  /**
+   * 【🔥 v1.4.1】公开方法，供 PlaybackService 调用（播放状态同步）
+   */
+  public notifyListeners() {
     // 【严格100ms响应】记录开始时间
     const notifyStartTime = Date.now();
     

@@ -1,26 +1,32 @@
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
-Configuration on demand is an incubating feature.
-> Task :gradle-plugin:compileKotlin UP-TO-DATE
-> Task :gradle-plugin:compileJava NO-SOURCE
-> Task :gradle-plugin:pluginDescriptors UP-TO-DATE
-> Task :gradle-plugin:processResources UP-TO-DATE
-> Task :gradle-plugin:classes UP-TO-DATE
-> Task :gradle-plugin:jar UP-TO-DATE
-> Task :gradle-plugin:inspectClassesForKotlinIC UP-TO-DATE
-
-> Configure project :app
-WARNING: The option setting 'android.defaults.buildfeatures.buildconfig=true' is deprecated.
-The current default is 'false'.
-It will be removed in version 9.0 of the Android Gradle plugin.
-You can resolve this warning in Android Studio via `Refactor` > `Migrate BuildConfig to Gradle Build Files`
+> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
 
 > Configure project :react-native-reanimated
-Android gradle plugin: 8.2.1
-Gradle: 8.3
+Android gradle plugin: 8.11.0
+Gradle: 8.14.3
 
 > Configure project :react-native-video
-Kotlin version is correct: 1.8.10
+Kotlin version is correct: 1.9.24
 AndroidX version is correct: 1.9.3
 useExoplayerIMA: false
 useExoplayerSmoothStreaming: true
@@ -28,811 +34,1347 @@ useExoplayerDash: true
 useExoplayerHls: true
 useExoplayerRtsp: false
 buildFromSource: false
-Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
-WARNING: We recommend using a newer Android Gradle plugin to use compileSdk = 35
 
-This Android Gradle plugin (8.2.1) was tested up to compileSdk = 34.
+> Task :app:clean
+> Task :dr.pogodin_react-native-fs:clean
+> Task :react-native-async-storage_async-storage:clean
+> Task :react-native-community_blur:clean
+> Task :react-native-community_netinfo:clean
+> Task :react-native-community_slider:clean
+> Task :react-native-gesture-handler:clean
+> Task :react-native-haptic-feedback:clean
+> Task :react-native-image-picker:clean
+> Task :react-native-reanimated:cleanCmakeCache
+> Task :react-native-reanimated:externalNativeBuildCleanDebug
+> Task :react-native-reanimated:externalNativeBuildCleanRelease
+> Task :react-native-reanimated:clean
+> Task :react-native-safe-area-context:clean
 
-You are strongly encouraged to update your project to use a newer
-Android Gradle plugin that has been tested with compileSdk = 35.
+> Task :react-native-screens:externalNativeBuildCleanDebug
+Clean rnscreens-armeabi-v7a
+Clean rnscreens-arm64-v8a
+Clean rnscreens-x86
+Clean rnscreens-x86_64
 
-If you are already using the latest version of the Android Gradle plugin,
-you may need to wait until a newer version with support for compileSdk = 35 is available.
+> Task :react-native-screens:externalNativeBuildCleanRelease
+Clean rnscreens-armeabi-v7a
+Clean rnscreens-arm64-v8a
+Clean rnscreens-x86
+Clean rnscreens-x86_64
 
-To suppress this warning, add/update
-    android.suppressUnsupportedCompileSdk=35
-to this project's gradle.properties.
-
-> Task :react-native-image-picker:preBuild UP-TO-DATE
+> Task :react-native-screens:clean
+> Task :react-native-sound:clean
+> Task :react-native-svg:clean
+> Task :react-native-track-player:clean
+> Task :react-native-vector-icons:clean
+> Task :react-native-video:clean
+> Task :react-native-webview:clean
+> Task :app:generateAutolinkingPackageList
+> Task :app:generateCodegenSchemaFromJavaScript SKIPPED
+> Task :app:generateCodegenArtifactsFromSchema SKIPPED
+> Task :app:generateReactNativeEntryPoint
+> Task :dr.pogodin_react-native-fs:generateCodegenSchemaFromJavaScript
+> Task :dr.pogodin_react-native-fs:generateCodegenArtifactsFromSchema
+> Task :dr.pogodin_react-native-fs:preBuild
 > Task :react-native-async-storage_async-storage:preBuild UP-TO-DATE
 > Task :react-native-community_blur:preBuild UP-TO-DATE
-> Task :react-native-haptic-feedback:preBuild UP-TO-DATE
-> Task :lottie-react-native:preBuild UP-TO-DATE
-> Task :react-native-fs:preBuild UP-TO-DATE
-> Task :react-native-gesture-handler:preBuild UP-TO-DATE
-> Task :react-native-pager-view:preBuild UP-TO-DATE
-> Task :react-native-community_blur:preDebugBuild UP-TO-DATE
-> Task :react-native-fs:preDebugBuild UP-TO-DATE
-> Task :react-native-haptic-feedback:preDebugBuild UP-TO-DATE
-> Task :react-native-gesture-handler:preDebugBuild UP-TO-DATE
-> Task :react-native-image-picker:preDebugBuild UP-TO-DATE
-> Task :react-native-async-storage_async-storage:preDebugBuild UP-TO-DATE
-> Task :lottie-react-native:preDebugBuild UP-TO-DATE
-> Task :react-native-pager-view:preDebugBuild UP-TO-DATE
-> Task :react-native-fs:writeDebugAarMetadata
-> Task :lottie-react-native:writeDebugAarMetadata
-> Task :react-native-reanimated:assertLatestReactNativeWithNewArchitectureTask SKIPPED
-> Task :react-native-haptic-feedback:writeDebugAarMetadata
-> Task :react-native-async-storage_async-storage:writeDebugAarMetadata
-> Task :react-native-safe-area-context:preBuild UP-TO-DATE
-> Task :react-native-screens:preBuild UP-TO-DATE
-> Task :react-native-screens:preDebugBuild UP-TO-DATE
-> Task :react-native-reanimated:assertMinimalReactNativeVersionTask SKIPPED
-> Task :react-native-sound:preBuild UP-TO-DATE
-> Task :react-native-safe-area-context:preDebugBuild UP-TO-DATE
-> Task :react-native-sound:preDebugBuild UP-TO-DATE
-> Task :react-native-pager-view:writeDebugAarMetadata
-> Task :react-native-svg:preBuild UP-TO-DATE
-> Task :react-native-svg:preDebugBuild UP-TO-DATE
-> Task :react-native-sound:writeDebugAarMetadata
-> Task :react-native-track-player:preBuild UP-TO-DATE
-> Task :react-native-track-player:preDebugBuild UP-TO-DATE
-> Task :react-native-community_blur:writeDebugAarMetadata
-> Task :react-native-vector-icons:preBuild UP-TO-DATE
-> Task :react-native-vector-icons:preDebugBuild UP-TO-DATE
-> Task :react-native-image-picker:writeDebugAarMetadata
-> Task :react-native-video:preBuild UP-TO-DATE
-> Task :react-native-video:preDebugBuild UP-TO-DATE
-> Task :react-native-track-player:writeDebugAarMetadata
-> Task :lottie-react-native:generateDebugResValues FROM-CACHE
-> Task :lottie-react-native:generateDebugResources UP-TO-DATE
-> Task :react-native-safe-area-context:writeDebugAarMetadata
-> Task :react-native-gesture-handler:writeDebugAarMetadata
-> Task :react-native-video:writeDebugAarMetadata
-> Task :react-native-svg:writeDebugAarMetadata
-> Task :react-native-async-storage_async-storage:generateDebugResValues FROM-CACHE
-> Task :react-native-vector-icons:writeDebugAarMetadata
-> Task :react-native-async-storage_async-storage:generateDebugResources UP-TO-DATE
-> Task :react-native-community_blur:generateDebugResValues FROM-CACHE
-> Task :react-native-screens:writeDebugAarMetadata
-> Task :react-native-community_blur:generateDebugResources UP-TO-DATE
-> Task :react-native-gesture-handler:generateDebugResValues FROM-CACHE
-> Task :react-native-gesture-handler:generateDebugResources UP-TO-DATE
-> Task :react-native-fs:generateDebugResValues FROM-CACHE
-> Task :react-native-haptic-feedback:generateDebugResValues FROM-CACHE
-> Task :react-native-fs:generateDebugResources UP-TO-DATE
-> Task :react-native-haptic-feedback:generateDebugResources UP-TO-DATE
-> Task :react-native-haptic-feedback:packageDebugResources FROM-CACHE
-> Task :react-native-async-storage_async-storage:packageDebugResources FROM-CACHE
-> Task :react-native-gesture-handler:packageDebugResources FROM-CACHE
-> Task :react-native-fs:packageDebugResources FROM-CACHE
-> Task :react-native-community_blur:packageDebugResources FROM-CACHE
-> Task :react-native-pager-view:generateDebugResValues FROM-CACHE
-> Task :react-native-image-picker:generateDebugResValues FROM-CACHE
-> Task :react-native-image-picker:generateDebugResources UP-TO-DATE
-> Task :react-native-pager-view:generateDebugResources UP-TO-DATE
-> Task :react-native-safe-area-context:generateDebugResValues FROM-CACHE
-> Task :react-native-sound:generateDebugResValues FROM-CACHE
-> Task :react-native-screens:generateDebugResValues FROM-CACHE
-> Task :react-native-safe-area-context:generateDebugResources UP-TO-DATE
-> Task :react-native-screens:generateDebugResources UP-TO-DATE
-> Task :react-native-sound:generateDebugResources UP-TO-DATE
-> Task :react-native-image-picker:packageDebugResources FROM-CACHE
-> Task :react-native-pager-view:packageDebugResources FROM-CACHE
-> Task :react-native-sound:packageDebugResources FROM-CACHE
-> Task :react-native-svg:generateDebugResValues FROM-CACHE
-> Task :react-native-safe-area-context:packageDebugResources FROM-CACHE
-> Task :react-native-svg:generateDebugResources UP-TO-DATE
-> Task :react-native-vector-icons:generateDebugResValues FROM-CACHE
-> Task :react-native-vector-icons:generateDebugResources UP-TO-DATE
-> Task :react-native-track-player:generateDebugResValues FROM-CACHE
-> Task :react-native-track-player:generateDebugResources UP-TO-DATE
-> Task :react-native-reanimated:prepareHeadersForPrefab
-> Task :react-native-reanimated:preBuild
-> Task :react-native-reanimated:preDebugBuild
-> Task :react-native-video:generateDebugResValues FROM-CACHE
-> Task :react-native-video:generateDebugResources UP-TO-DATE
-> Task :react-native-screens:packageDebugResources FROM-CACHE
-> Task :react-native-async-storage_async-storage:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-reanimated:writeDebugAarMetadata
-> Task :react-native-vector-icons:packageDebugResources FROM-CACHE
-> Task :react-native-svg:packageDebugResources FROM-CACHE
-> Task :react-native-reanimated:generateDebugResValues FROM-CACHE
-> Task :react-native-reanimated:generateDebugResources UP-TO-DATE
-> Task :react-native-community_blur:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-fs:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-video:packageDebugResources FROM-CACHE
-> Task :react-native-track-player:packageDebugResources FROM-CACHE
-> Task :react-native-community_blur:processDebugManifest FROM-CACHE
-> Task :react-native-async-storage_async-storage:processDebugManifest FROM-CACHE
-> Task :react-native-fs:processDebugManifest FROM-CACHE
-> Task :react-native-gesture-handler:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-haptic-feedback:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-image-picker:extractDeepLinksDebug FROM-CACHE
+> Task :react-native-community_netinfo:preBuild UP-TO-DATE
 > Task :react-native-community_slider:generateCodegenSchemaFromJavaScript
-> Task :react-native-safe-area-context:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-pager-view:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-gesture-handler:processDebugManifest FROM-CACHE
-> Task :react-native-haptic-feedback:processDebugManifest FROM-CACHE
-> Task :react-native-image-picker:processDebugManifest FROM-CACHE
-> Task :react-native-safe-area-context:processDebugManifest FROM-CACHE
-> Task :react-native-reanimated:packageDebugResources FROM-CACHE
-> Task :react-native-sound:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-pager-view:processDebugManifest FROM-CACHE
-> Task :react-native-screens:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-svg:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-track-player:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-reanimated:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-vector-icons:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-screens:processDebugManifest FROM-CACHE
-> Task :react-native-svg:processDebugManifest FROM-CACHE
-> Task :react-native-sound:processDebugManifest FROM-CACHE
-> Task :react-native-video:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-async-storage_async-storage:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-community_blur:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-track-player:processDebugManifest FROM-CACHE
-> Task :react-native-fs:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-vector-icons:processDebugManifest FROM-CACHE
-> Task :react-native-video:processDebugManifest FROM-CACHE
-> Task :react-native-reanimated:processDebugManifest FROM-CACHE
-> Task :react-native-async-storage_async-storage:parseDebugLocalResources FROM-CACHE
-> Task :react-native-fs:parseDebugLocalResources FROM-CACHE
-> Task :react-native-gesture-handler:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-haptic-feedback:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-image-picker:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-gesture-handler:parseDebugLocalResources FROM-CACHE
-> Task :react-native-fs:generateDebugRFile FROM-CACHE
-> Task :react-native-haptic-feedback:parseDebugLocalResources FROM-CACHE
-> Task :react-native-image-picker:parseDebugLocalResources FROM-CACHE
-> Task :react-native-async-storage_async-storage:generateDebugRFile FROM-CACHE
-> Task :react-native-community_blur:parseDebugLocalResources FROM-CACHE
-> Task :react-native-pager-view:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-gesture-handler:generateDebugRFile FROM-CACHE
-> Task :react-native-reanimated:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-safe-area-context:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-haptic-feedback:generateDebugRFile FROM-CACHE
-> Task :react-native-reanimated:parseDebugLocalResources FROM-CACHE
-> Task :react-native-pager-view:parseDebugLocalResources FROM-CACHE
-> Task :react-native-safe-area-context:parseDebugLocalResources FROM-CACHE
-> Task :react-native-community_blur:generateDebugRFile FROM-CACHE
-> Task :react-native-image-picker:generateDebugRFile FROM-CACHE
-> Task :react-native-sound:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-pager-view:generateDebugRFile FROM-CACHE
-> Task :react-native-safe-area-context:generateDebugRFile FROM-CACHE
-> Task :react-native-reanimated:generateDebugRFile FROM-CACHE
-> Task :react-native-sound:parseDebugLocalResources FROM-CACHE
-> Task :react-native-svg:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-vector-icons:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-sound:generateDebugRFile FROM-CACHE
-> Task :react-native-track-player:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-svg:parseDebugLocalResources FROM-CACHE
-> Task :react-native-track-player:parseDebugLocalResources FROM-CACHE
-> Task :react-native-vector-icons:parseDebugLocalResources FROM-CACHE
-> Task :react-native-async-storage_async-storage:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-video:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-async-storage_async-storage:javaPreCompileDebug FROM-CACHE
-> Task :react-native-svg:generateDebugRFile FROM-CACHE
-> Task :react-native-track-player:generateDebugRFile FROM-CACHE
-> Task :react-native-screens:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-vector-icons:generateDebugRFile FROM-CACHE
-> Task :react-native-video:parseDebugLocalResources FROM-CACHE
-> Task :react-native-community_blur:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-screens:parseDebugLocalResources FROM-CACHE
-> Task :react-native-fs:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-community_blur:javaPreCompileDebug FROM-CACHE
-> Task :react-native-gesture-handler:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-fs:javaPreCompileDebug FROM-CACHE
-> Task :react-native-reanimated:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-screens:generateDebugRFile FROM-CACHE
-> Task :react-native-reanimated:javaPreCompileDebug FROM-CACHE
-> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
-> Task :react-native-video:generateDebugRFile FROM-CACHE
-> Task :react-native-haptic-feedback:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-gesture-handler:javaPreCompileDebug FROM-CACHE
-> Task :react-native-haptic-feedback:javaPreCompileDebug FROM-CACHE
-> Task :react-native-image-picker:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-image-picker:javaPreCompileDebug FROM-CACHE
-> Task :lottie-react-native:packageDebugResources
-> Task :lottie-react-native:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-community_blur:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-async-storage_async-storage:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-fs:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-image-picker:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-haptic-feedback:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-reanimated:compileDebugJavaWithJavac FROM-CACHE
-> Task :lottie-react-native:compileDebugLibraryResources FROM-CACHE
-> Task :lottie-react-native:parseDebugLocalResources FROM-CACHE
-> Task :react-native-community_blur:bundleLibCompileToJarDebug
-> Task :react-native-fs:bundleLibCompileToJarDebug
-> Task :react-native-image-picker:bundleLibCompileToJarDebug
-> Task :react-native-haptic-feedback:bundleLibCompileToJarDebug
-> Task :react-native-async-storage_async-storage:bundleLibCompileToJarDebug
-> Task :react-native-pager-view:generateDebugBuildConfig FROM-CACHE
-> Task :lottie-react-native:generateDebugBuildConfig
-> Task :react-native-screens:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-safe-area-context:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-sound:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-reanimated:bundleLibCompileToJarDebug
-> Task :lottie-react-native:javaPreCompileDebug FROM-CACHE
 > Task :react-native-community_slider:generateCodegenArtifactsFromSchema
 > Task :react-native-community_slider:preBuild
-> Task :react-native-community_slider:preDebugBuild
-> Task :react-native-svg:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-community_slider:writeDebugAarMetadata
-> Task :react-native-community_slider:generateDebugResValues FROM-CACHE
-> Task :react-native-community_slider:generateDebugResources UP-TO-DATE
-> Task :react-native-svg:javaPreCompileDebug FROM-CACHE
-> Task :react-native-community_slider:packageDebugResources FROM-CACHE
-> Task :react-native-community_slider:extractDeepLinksDebug FROM-CACHE
-> Task :react-native-pager-view:compileDebugKotlin FROM-CACHE
-> Task :react-native-community_slider:processDebugManifest FROM-CACHE
-> Task :react-native-community_slider:compileDebugLibraryResources FROM-CACHE
-> Task :react-native-safe-area-context:compileDebugKotlin FROM-CACHE
-> Task :react-native-community_slider:parseDebugLocalResources FROM-CACHE
-> Task :react-native-safe-area-context:javaPreCompileDebug FROM-CACHE
-> Task :react-native-community_slider:generateDebugRFile FROM-CACHE
-> Task :react-native-sound:compileDebugKotlin FROM-CACHE
-> Task :react-native-gesture-handler:compileDebugKotlin FROM-CACHE
-
-> Task :lottie-react-native:processDebugManifest
-package="com.airbnb.android.react.lottie" found in source AndroidManifest.xml: /Users/sunislee/trae_inter/test-solo/esonare_SoundTherapyPro/node_modules/lottie-react-native/android/src/main/AndroidManifest.xml.
-Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
-Recommendation: remove package="com.airbnb.android.react.lottie" from the source AndroidManifest.xml: /Users/sunislee/trae_inter/test-solo/esonare_SoundTherapyPro/node_modules/lottie-react-native/android/src/main/AndroidManifest.xml.
-
-> Task :react-native-pager-view:javaPreCompileDebug FROM-CACHE
-> Task :react-native-community_slider:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-sound:javaPreCompileDebug FROM-CACHE
-> Task :react-native-community_slider:javaPreCompileDebug FROM-CACHE
-> Task :react-native-safe-area-context:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-pager-view:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-safe-area-context:bundleLibCompileToJarDebug
-> Task :react-native-sound:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-gesture-handler:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-track-player:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-pager-view:bundleLibCompileToJarDebug
-> Task :react-native-community_slider:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-vector-icons:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-sound:bundleLibCompileToJarDebug
-> Task :react-native-community_slider:bundleLibCompileToJarDebug
-> Task :react-native-vector-icons:javaPreCompileDebug FROM-CACHE
-> Task :react-native-gesture-handler:bundleLibCompileToJarDebug
-> Task :react-native-video:generateDebugBuildConfig FROM-CACHE
-> Task :lottie-react-native:mergeDebugShaders FROM-CACHE
-> Task :react-native-async-storage_async-storage:mergeDebugShaders FROM-CACHE
-> Task :lottie-react-native:compileDebugShaders NO-SOURCE
-> Task :lottie-react-native:generateDebugAssets UP-TO-DATE
-> Task :react-native-async-storage_async-storage:compileDebugShaders NO-SOURCE
-> Task :react-native-async-storage_async-storage:generateDebugAssets UP-TO-DATE
-> Task :react-native-svg:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-async-storage_async-storage:packageDebugAssets FROM-CACHE
-> Task :lottie-react-native:packageDebugAssets FROM-CACHE
-> Task :react-native-screens:compileDebugKotlin FROM-CACHE
-> Task :react-native-community_blur:mergeDebugShaders FROM-CACHE
-> Task :react-native-community_blur:compileDebugShaders NO-SOURCE
-> Task :react-native-community_blur:generateDebugAssets UP-TO-DATE
-> Task :react-native-screens:javaPreCompileDebug FROM-CACHE
-> Task :react-native-community_slider:mergeDebugShaders FROM-CACHE
-> Task :react-native-vector-icons:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-community_slider:compileDebugShaders NO-SOURCE
-> Task :react-native-community_slider:generateDebugAssets UP-TO-DATE
-> Task :react-native-community_blur:packageDebugAssets FROM-CACHE
-> Task :react-native-community_slider:packageDebugAssets FROM-CACHE
-> Task :react-native-fs:mergeDebugShaders FROM-CACHE
-> Task :react-native-vector-icons:bundleLibCompileToJarDebug
-> Task :react-native-fs:compileDebugShaders NO-SOURCE
-> Task :react-native-fs:generateDebugAssets UP-TO-DATE
-> Task :react-native-gesture-handler:mergeDebugShaders FROM-CACHE
-> Task :react-native-haptic-feedback:mergeDebugShaders FROM-CACHE
-> Task :react-native-haptic-feedback:compileDebugShaders NO-SOURCE
-> Task :react-native-haptic-feedback:generateDebugAssets UP-TO-DATE
-> Task :react-native-gesture-handler:compileDebugShaders NO-SOURCE
-> Task :react-native-gesture-handler:generateDebugAssets UP-TO-DATE
-> Task :react-native-fs:packageDebugAssets FROM-CACHE
-> Task :react-native-screens:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-haptic-feedback:packageDebugAssets FROM-CACHE
-> Task :react-native-image-picker:mergeDebugShaders FROM-CACHE
-> Task :react-native-gesture-handler:packageDebugAssets FROM-CACHE
-> Task :react-native-image-picker:compileDebugShaders NO-SOURCE
-> Task :react-native-image-picker:generateDebugAssets UP-TO-DATE
-> Task :react-native-pager-view:mergeDebugShaders FROM-CACHE
-> Task :react-native-reanimated:mergeDebugShaders FROM-CACHE
-> Task :react-native-pager-view:compileDebugShaders NO-SOURCE
-> Task :react-native-pager-view:generateDebugAssets UP-TO-DATE
-> Task :react-native-image-picker:packageDebugAssets FROM-CACHE
-> Task :react-native-pager-view:packageDebugAssets FROM-CACHE
-> Task :react-native-reanimated:compileDebugShaders NO-SOURCE
-> Task :react-native-screens:mergeDebugShaders FROM-CACHE
-> Task :react-native-screens:compileDebugShaders NO-SOURCE
-> Task :react-native-screens:generateDebugAssets UP-TO-DATE
-> Task :react-native-screens:packageDebugAssets FROM-CACHE
-> Task :react-native-reanimated:generateDebugAssets UP-TO-DATE
-> Task :react-native-screens:bundleLibCompileToJarDebug
-> Task :react-native-svg:bundleLibCompileToJarDebug
-> Task :react-native-vector-icons:mergeDebugShaders FROM-CACHE
-> Task :react-native-vector-icons:compileDebugShaders NO-SOURCE
-> Task :react-native-vector-icons:generateDebugAssets UP-TO-DATE
-> Task :react-native-sound:mergeDebugShaders FROM-CACHE
-> Task :react-native-reanimated:packageDebugAssets FROM-CACHE
-> Task :react-native-sound:compileDebugShaders NO-SOURCE
-> Task :react-native-sound:generateDebugAssets UP-TO-DATE
-> Task :react-native-vector-icons:packageDebugAssets FROM-CACHE
-> Task :react-native-sound:packageDebugAssets FROM-CACHE
-> Task :react-native-svg:mergeDebugShaders FROM-CACHE
-> Task :react-native-safe-area-context:mergeDebugShaders FROM-CACHE
-> Task :react-native-svg:compileDebugShaders NO-SOURCE
-> Task :react-native-svg:generateDebugAssets UP-TO-DATE
-> Task :react-native-community_blur:bundleLibRuntimeToJarDebug
-> Task :react-native-safe-area-context:compileDebugShaders NO-SOURCE
-> Task :react-native-safe-area-context:generateDebugAssets UP-TO-DATE
-> Task :react-native-community_slider:bundleLibRuntimeToJarDebug
-> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarDebug
-> Task :react-native-fs:bundleLibRuntimeToJarDebug
-> Task :react-native-track-player:compileDebugKotlin FROM-CACHE
-> Task :lottie-react-native:generateDebugRFile
-> Task :react-native-safe-area-context:packageDebugAssets FROM-CACHE
-> Task :react-native-svg:packageDebugAssets FROM-CACHE
-> Task :react-native-haptic-feedback:bundleLibRuntimeToJarDebug
-> Task :react-native-image-picker:bundleLibRuntimeToJarDebug
-> Task :react-native-gesture-handler:bundleLibRuntimeToJarDebug
-> Task :react-native-reanimated:bundleLibRuntimeToJarDebug
-> Task :react-native-pager-view:bundleLibRuntimeToJarDebug
-> Task :react-native-safe-area-context:bundleLibRuntimeToJarDebug
-> Task :react-native-sound:bundleLibRuntimeToJarDebug
-> Task :react-native-vector-icons:bundleLibRuntimeToJarDebug
-> Task :react-native-async-storage_async-storage:processDebugJavaRes NO-SOURCE
-> Task :react-native-fs:processDebugJavaRes NO-SOURCE
-> Task :react-native-community_slider:processDebugJavaRes NO-SOURCE
-> Task :react-native-screens:bundleLibRuntimeToJarDebug
-> Task :react-native-haptic-feedback:processDebugJavaRes NO-SOURCE
-> Task :react-native-svg:bundleLibRuntimeToJarDebug
-> Task :react-native-community_blur:processDebugJavaRes NO-SOURCE
-> Task :react-native-image-picker:processDebugJavaRes NO-SOURCE
-> Task :react-native-reanimated:processDebugJavaRes NO-SOURCE
-> Task :react-native-gesture-handler:processDebugJavaRes
-> Task :react-native-svg:processDebugJavaRes NO-SOURCE
-> Task :react-native-pager-view:processDebugJavaRes
-> Task :react-native-vector-icons:processDebugJavaRes NO-SOURCE
-> Task :react-native-sound:processDebugJavaRes
-> Task :react-native-async-storage_async-storage:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-screens:processDebugJavaRes
-> Task :react-native-async-storage_async-storage:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-community_slider:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-fs:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-community_slider:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-community_blur:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-fs:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-community_blur:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-video:compileDebugKotlin FROM-CACHE
-> Task :react-native-community_slider:copyDebugJniLibsProjectOnly
-> Task :react-native-community_blur:copyDebugJniLibsProjectOnly
-> Task :react-native-video:javaPreCompileDebug FROM-CACHE
-> Task :react-native-async-storage_async-storage:copyDebugJniLibsProjectOnly
-> Task :react-native-gesture-handler:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-haptic-feedback:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-gesture-handler:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-haptic-feedback:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-fs:copyDebugJniLibsProjectOnly
-> Task :react-native-track-player:javaPreCompileDebug FROM-CACHE
-> Task :react-native-image-picker:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-image-picker:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-haptic-feedback:copyDebugJniLibsProjectOnly
-> Task :react-native-gesture-handler:copyDebugJniLibsProjectOnly
-> Task :react-native-safe-area-context:processDebugJavaRes
-> Task :react-native-safe-area-context:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-pager-view:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-safe-area-context:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-pager-view:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-pager-view:copyDebugJniLibsProjectOnly
-> Task :react-native-safe-area-context:copyDebugJniLibsProjectOnly
-> Task :react-native-screens:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-svg:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-sound:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-screens:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-svg:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-sound:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-svg:copyDebugJniLibsProjectOnly
-> Task :react-native-video:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-image-picker:copyDebugJniLibsProjectOnly
-> Task :react-native-screens:copyDebugJniLibsProjectOnly
-> Task :react-native-vector-icons:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-vector-icons:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-track-player:compileDebugJavaWithJavac FROM-CACHE
-> Task :react-native-video:mergeDebugShaders FROM-CACHE
-> Task :react-native-video:compileDebugShaders NO-SOURCE
-> Task :react-native-video:generateDebugAssets UP-TO-DATE
-> Task :react-native-vector-icons:copyDebugJniLibsProjectOnly
-> Task :react-native-community_blur:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-video:packageDebugAssets FROM-CACHE
-> Task :react-native-community_blur:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-async-storage_async-storage:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-video:bundleLibCompileToJarDebug
-> Task :react-native-track-player:bundleLibCompileToJarDebug
-> Task :react-native-video:bundleLibRuntimeToJarDebug
-> Task :react-native-video:processDebugJavaRes
-> Task :react-native-track-player:mergeDebugShaders FROM-CACHE
-> Task :react-native-video:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-video:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-track-player:compileDebugShaders NO-SOURCE
-> Task :react-native-track-player:generateDebugAssets UP-TO-DATE
-> Task :react-native-track-player:packageDebugAssets FROM-CACHE
-> Task :react-native-video:copyDebugJniLibsProjectOnly
-> Task :react-native-track-player:processDebugJavaRes
-> Task :react-native-track-player:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-track-player:mergeDebugNativeLibs NO-SOURCE
-> Task :react-native-async-storage_async-storage:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-track-player:copyDebugJniLibsProjectOnly
-> Task :react-native-sound:copyDebugJniLibsProjectOnly
-> Task :react-native-community_slider:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-community_slider:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-track-player:bundleLibRuntimeToJarDebug
-> Task :lottie-react-native:mergeDebugJniLibFolders FROM-CACHE
-> Task :lottie-react-native:mergeDebugNativeLibs NO-SOURCE
-> Task :lottie-react-native:copyDebugJniLibsProjectOnly
-> Task :lottie-react-native:stripDebugDebugSymbols NO-SOURCE
-> Task :lottie-react-native:copyDebugJniLibsProjectAndLocalJars
-> Task :lottie-react-native:extractDeepLinksForAarDebug FROM-CACHE
-> Task :lottie-react-native:prepareDebugArtProfile
-> Task :lottie-react-native:prepareLintJarForPublish
-> Task :react-native-fs:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-gesture-handler:stripDebugDebugSymbols NO-SOURCE
-> Task :app:generateCodegenSchemaFromJavaScript SKIPPED
-> Task :react-native-gesture-handler:copyDebugJniLibsProjectAndLocalJars
-> Task :app:generateCodegenArtifactsFromSchema SKIPPED
-> Task :react-native-fs:copyDebugJniLibsProjectAndLocalJars
-> Task :app:generatePackageList
+> Task :react-native-gesture-handler:preBuild UP-TO-DATE
+> Task :react-native-haptic-feedback:preBuild UP-TO-DATE
+> Task :react-native-image-picker:preBuild UP-TO-DATE
+> Task :react-native-reanimated:assertMinimalReactNativeVersionTask SKIPPED
+> Task :react-native-reanimated:prepareReanimatedHeadersForPrefabs
+> Task :react-native-reanimated:prepareWorkletsHeadersForPrefabs
+> Task :react-native-reanimated:preBuild
+> Task :react-native-safe-area-context:preBuild UP-TO-DATE
+> Task :react-native-screens:preBuild UP-TO-DATE
+> Task :react-native-sound:preBuild UP-TO-DATE
+> Task :react-native-svg:preBuild UP-TO-DATE
+> Task :react-native-track-player:preBuild UP-TO-DATE
+> Task :react-native-vector-icons:preBuild UP-TO-DATE
+> Task :react-native-video:preBuild UP-TO-DATE
+> Task :react-native-webview:preBuild UP-TO-DATE
 > Task :app:preBuild
-> Task :app:preDebugBuild
-> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :app:generateDebugBuildConfig FROM-CACHE
-> Task :react-native-haptic-feedback:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-haptic-feedback:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-image-picker:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-image-picker:copyDebugJniLibsProjectAndLocalJars
-> Task :app:checkDebugAarMetadata
-> Task :app:generateDebugResValues FROM-CACHE
-> Task :app:mapDebugSourceSetPaths
-> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:preReleaseBuild
+> Task :app:mergeReleaseJniLibFolders
+> Task :dr.pogodin_react-native-fs:preReleaseBuild
+> Task :dr.pogodin_react-native-fs:mergeReleaseJniLibFolders
+> Task :dr.pogodin_react-native-fs:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-async-storage_async-storage:preReleaseBuild UP-TO-DATE
+> Task :dr.pogodin_react-native-fs:copyReleaseJniLibsProjectOnly
+> Task :react-native-async-storage_async-storage:mergeReleaseJniLibFolders
+> Task :react-native-async-storage_async-storage:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_blur:preReleaseBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_blur:mergeReleaseJniLibFolders
+> Task :react-native-community_blur:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_netinfo:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_blur:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_netinfo:mergeReleaseJniLibFolders
+> Task :react-native-community_netinfo:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_slider:preReleaseBuild
+> Task :react-native-community_netinfo:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_slider:mergeReleaseJniLibFolders
+> Task :react-native-community_slider:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-gesture-handler:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_slider:copyReleaseJniLibsProjectOnly
+> Task :react-native-gesture-handler:mergeReleaseJniLibFolders
+> Task :react-native-gesture-handler:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-haptic-feedback:preReleaseBuild UP-TO-DATE
+> Task :react-native-gesture-handler:copyReleaseJniLibsProjectOnly
+> Task :react-native-haptic-feedback:mergeReleaseJniLibFolders
+> Task :react-native-haptic-feedback:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-image-picker:preReleaseBuild UP-TO-DATE
+> Task :react-native-haptic-feedback:copyReleaseJniLibsProjectOnly
+> Task :react-native-image-picker:mergeReleaseJniLibFolders
+> Task :react-native-image-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-reanimated:preReleaseBuild
+> Task :react-native-image-picker:copyReleaseJniLibsProjectOnly
 
-> Task :lottie-react-native:compileDebugKotlin
-e: java.nio.file.FileSystemException: /Users/sunislee/Library/Application Support/kotlin/daemon/kotlin-daemon-client-tsmarker2501626498568960518.tmp: Operation not permitted
-Failed to compile with Kotlin daemon: java.lang.RuntimeException: Could not connect to Kotlin compile daemon
-	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.compileWithDaemon(GradleKotlinCompilerWork.kt:192)
-	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.compileWithDaemonOrFallbackImpl(GradleKotlinCompilerWork.kt:150)
-	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.run(GradleKotlinCompilerWork.kt:123)
-	at org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction.execute(GradleCompilerRunnerWithWorkers.kt:74)
-	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
-	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
-	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:170)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:187)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:120)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:162)
-	at org.gradle.internal.Factories$1.create(Factories.java:31)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:264)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:128)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:157)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:126)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
-	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
-	at java.base/java.lang.Thread.run(Thread.java:840)
-Using fallback strategy: Compile without Kotlin daemon
-Try ./gradlew --stop if this issue persists.
+> Task :react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]
+[CXX5304] This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+[CXX5304] This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
 
-> Task :react-native-reanimated:configureCMakeDebug[arm64-v8a]
-[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
-[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
-[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
-[CXX5304] package.xml parsing problem. 意外的元素 (uri:"", local:"abis")。所需元素为<{}vendor>,<{}codename>,<{}base-extension>,<{}abi>,<{}api-level>,<{}extension-level>,<{}tag>
+> Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a][reanimated,worklets]
+> Task :react-native-reanimated:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-reanimated:buildCMakeRelWithDebInfo[armeabi-v7a][reanimated,worklets]
+> Task :react-native-reanimated:configureCMakeRelWithDebInfo[x86]
+> Task :react-native-reanimated:buildCMakeRelWithDebInfo[x86][reanimated,worklets]
+> Task :react-native-reanimated:configureCMakeRelWithDebInfo[x86_64]
+> Task :react-native-reanimated:buildCMakeRelWithDebInfo[x86_64][reanimated,worklets]
+> Task :react-native-reanimated:packageNdkLibs NO-SOURCE
+> Task :react-native-reanimated:mergeReleaseJniLibFolders
+> Task :react-native-safe-area-context:preReleaseBuild UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseJniLibFolders
+> Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-screens:preReleaseBuild UP-TO-DATE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
+> Task :react-native-screens:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-reanimated:mergeReleaseNativeLibs
+> Task :react-native-screens:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-screens:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-reanimated:copyReleaseJniLibsProjectOnly
+> Task :react-native-screens:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-screens:configureCMakeRelWithDebInfo[x86]
+> Task :react-native-screens:buildCMakeRelWithDebInfo[x86]
+> Task :react-native-screens:configureCMakeRelWithDebInfo[x86_64]
+> Task :react-native-screens:buildCMakeRelWithDebInfo[x86_64]
+> Task :react-native-screens:mergeReleaseJniLibFolders
+> Task :react-native-sound:preReleaseBuild UP-TO-DATE
+> Task :react-native-sound:mergeReleaseJniLibFolders
+> Task :react-native-sound:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-sound:copyReleaseJniLibsProjectOnly
+> Task :react-native-svg:preReleaseBuild UP-TO-DATE
+> Task :react-native-screens:mergeReleaseNativeLibs
+> Task :react-native-svg:mergeReleaseJniLibFolders
+> Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-track-player:preReleaseBuild UP-TO-DATE
+> Task :react-native-svg:copyReleaseJniLibsProjectOnly
+> Task :react-native-track-player:mergeReleaseJniLibFolders
+> Task :react-native-screens:copyReleaseJniLibsProjectOnly
+> Task :react-native-track-player:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-vector-icons:preReleaseBuild UP-TO-DATE
+> Task :react-native-track-player:copyReleaseJniLibsProjectOnly
+> Task :react-native-vector-icons:mergeReleaseJniLibFolders
+> Task :react-native-vector-icons:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-video:preReleaseBuild UP-TO-DATE
+> Task :react-native-vector-icons:copyReleaseJniLibsProjectOnly
+> Task :react-native-video:mergeReleaseJniLibFolders
+> Task :react-native-video:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-webview:preReleaseBuild UP-TO-DATE
+> Task :react-native-video:copyReleaseJniLibsProjectOnly
+> Task :react-native-webview:mergeReleaseJniLibFolders
+> Task :react-native-webview:mergeReleaseNativeLibs NO-SOURCE
+> Task :dr.pogodin_react-native-fs:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-webview:copyReleaseJniLibsProjectOnly
+> Task :dr.pogodin_react-native-fs:generateReleaseBuildConfig
+> Task :dr.pogodin_react-native-fs:generateReleaseResValues
+> Task :dr.pogodin_react-native-fs:generateReleaseResources
+> Task :dr.pogodin_react-native-fs:packageReleaseResources
+> Task :react-native-gesture-handler:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :dr.pogodin_react-native-fs:javaPreCompileRelease
+> Task :react-native-gesture-handler:generateReleaseBuildConfig
+> Task :react-native-gesture-handler:generateReleaseResValues
+> Task :react-native-gesture-handler:generateReleaseResources
+> Task :react-native-gesture-handler:packageReleaseResources
+> Task :react-native-reanimated:generateReleaseBuildConfig
+> Task :react-native-reanimated:generateReleaseResValues
+> Task :dr.pogodin_react-native-fs:parseReleaseLocalResources
+> Task :react-native-gesture-handler:parseReleaseLocalResources
+> Task :react-native-reanimated:generateReleaseResources
+> Task :react-native-reanimated:packageReleaseResources
+> Task :react-native-reanimated:javaPreCompileRelease
+> Task :react-native-svg:generateReleaseBuildConfig
+> Task :react-native-reanimated:parseReleaseLocalResources
+> Task :react-native-svg:generateReleaseResValues
+> Task :react-native-svg:generateReleaseResources
+> Task :react-native-reanimated:generateReleaseRFile
+> Task :react-native-gesture-handler:generateReleaseRFile
+> Task :dr.pogodin_react-native-fs:generateReleaseRFile
+> Task :react-native-svg:packageReleaseResources
+> Task :app:mergeReleaseNativeLibs
+> Task :app:stripReleaseDebugSymbols
 
-> Task :app:mergeDebugResources
-> Task :app:packageDebugResources FROM-CACHE
-> Task :app:parseDebugLocalResources FROM-CACHE
-> Task :app:createDebugCompatibleScreenManifests
-> Task :app:extractDeepLinksDebug FROM-CACHE
-> Task :app:processDebugMainManifest
-> Task :app:processDebugManifest FROM-CACHE
-> Task :app:processDebugManifestForPackage FROM-CACHE
-> Task :app:processDebugResources
-> Task :app:javaPreCompileDebug FROM-CACHE
-> Task :app:mergeDebugShaders FROM-CACHE
-> Task :app:compileDebugShaders NO-SOURCE
-> Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets FROM-CACHE
-> Task :app:compressDebugAssets FROM-CACHE
-> Task :app:desugarDebugFileDependencies
-> Task :app:checkDebugDuplicateClasses
+> Task :react-native-reanimated:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: 某些输入文件使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
 
-> Task :lottie-react-native:compileDebugKotlin
-/Users/sunislee/trae_inter/test-solo/esonare_SoundTherapyPro/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewPropertyManager.kt:20:38: warning: 'ReactFontManager' is deprecated. Deprecated in Java
-import com.facebook.react.views.text.ReactFontManager
-                                     ^
-/Users/sunislee/trae_inter/test-solo/esonare_SoundTherapyPro/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewPropertyManager.kt:71:24: warning: 'ReactFontManager' is deprecated. Deprecated in Java
-                return ReactFontManager.getInstance()
-                       ^
-/Users/sunislee/trae_inter/test-solo/esonare_SoundTherapyPro/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewPropertyManager.kt:85:24: warning: 'ReactFontManager' is deprecated. Deprecated in Java
-                return ReactFontManager.getInstance()
-                       ^
+> Task :react-native-svg:parseReleaseLocalResources
+> Task :react-native-svg:javaPreCompileRelease
+> Task :react-native-gesture-handler:javaPreCompileRelease
+> Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-svg:generateReleaseRFile
+> Task :react-native-safe-area-context:generateReleaseBuildConfig
+> Task :react-native-reanimated:bundleLibCompileToJarRelease
+> Task :app:extractReleaseNativeSymbolTables
 
-> Task :react-native-reanimated:buildCMakeDebug[arm64-v8a]
-> Task :react-native-reanimated:mergeDebugJniLibFolders FROM-CACHE
-> Task :react-native-reanimated:mergeDebugNativeLibs
-> Task :react-native-reanimated:copyDebugJniLibsProjectOnly
-> Task :react-native-pager-view:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-pager-view:copyDebugJniLibsProjectAndLocalJars
-> Task :lottie-react-native:compileDebugJavaWithJavac
-> Task :lottie-react-native:bundleLibCompileToJarDebug
-> Task :lottie-react-native:bundleLibRuntimeToJarDebug
-> Task :lottie-react-native:processDebugJavaRes
-> Task :app:mergeExtDexDebug
+> Task :react-native-svg:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: 某些输入文件使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
 
-> Task :app:compileDebugKotlin
-e: java.nio.file.FileSystemException: /Users/sunislee/Library/Application Support/kotlin/daemon/kotlin-daemon-client-tsmarker5029588247785662698.tmp: Operation not permitted
-Failed to compile with Kotlin daemon: java.lang.RuntimeException: Could not connect to Kotlin compile daemon
-	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.compileWithDaemon(GradleKotlinCompilerWork.kt:192)
-	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.compileWithDaemonOrFallbackImpl(GradleKotlinCompilerWork.kt:150)
-	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.run(GradleKotlinCompilerWork.kt:123)
-	at org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction.execute(GradleCompilerRunnerWithWorkers.kt:74)
-	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
-	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
-	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:170)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:187)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:120)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:162)
-	at org.gradle.internal.Factories$1.create(Factories.java:31)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:264)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:128)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:133)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:157)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:126)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
-	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
-	at java.base/java.lang.Thread.run(Thread.java:840)
-Using fallback strategy: Compile without Kotlin daemon
-Try ./gradlew --stop if this issue persists.
+> Task :react-native-safe-area-context:generateReleaseResValues
+> Task :react-native-safe-area-context:generateReleaseResources
+> Task :react-native-safe-area-context:packageReleaseResources
+> Task :react-native-svg:bundleLibCompileToJarRelease
+> Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-safe-area-context:parseReleaseLocalResources
+> Task :react-native-safe-area-context:javaPreCompileRelease
+> Task :react-native-screens:generateReleaseBuildConfig
+> Task :react-native-screens:generateReleaseResValues
+> Task :react-native-safe-area-context:generateReleaseRFile
+> Task :react-native-screens:generateReleaseResources
+> Task :app:mergeReleaseNativeDebugMetadata
+> Task :react-native-screens:packageReleaseResources
+> Task :react-native-sound:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-screens:javaPreCompileRelease
+> Task :react-native-sound:generateReleaseBuildConfig
+> Task :react-native-sound:generateReleaseResValues
+> Task :react-native-sound:generateReleaseResources
+> Task :react-native-sound:packageReleaseResources
+> Task :react-native-screens:parseReleaseLocalResources
+> Task :react-native-sound:parseReleaseLocalResources
+> Task :react-native-sound:javaPreCompileRelease
+> Task :react-native-track-player:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-sound:generateReleaseRFile
+> Task :react-native-screens:generateReleaseRFile
+> Task :react-native-track-player:generateReleaseBuildConfig
+> Task :react-native-track-player:generateReleaseResValues
+> Task :react-native-track-player:generateReleaseResources
+> Task :react-native-track-player:packageReleaseResources
+> Task :react-native-video:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-track-player:javaPreCompileRelease
+> Task :react-native-track-player:parseReleaseLocalResources
+> Task :react-native-video:generateReleaseBuildConfig
+> Task :react-native-video:generateReleaseResValues
+> Task :react-native-track-player:generateReleaseRFile
+> Task :react-native-video:generateReleaseResources
+> Task :react-native-video:packageReleaseResources
+> Task :react-native-webview:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-video:javaPreCompileRelease
+> Task :react-native-video:parseReleaseLocalResources
+> Task :react-native-webview:generateReleaseBuildConfig
+> Task :react-native-webview:generateReleaseResValues
+> Task :react-native-video:generateReleaseRFile
+> Task :react-native-webview:generateReleaseResources
+> Task :react-native-webview:packageReleaseResources
+> Task :react-native-webview:javaPreCompileRelease
+> Task :react-native-webview:parseReleaseLocalResources
+> Task :react-native-async-storage_async-storage:generateReleaseBuildConfig
+> Task :react-native-async-storage_async-storage:generateReleaseResValues
+> Task :react-native-webview:generateReleaseRFile
+> Task :react-native-async-storage_async-storage:generateReleaseResources
+> Task :react-native-async-storage_async-storage:packageReleaseResources
+> Task :react-native-async-storage_async-storage:parseReleaseLocalResources
+> Task :react-native-async-storage_async-storage:javaPreCompileRelease
+> Task :react-native-community_blur:generateReleaseBuildConfig
+> Task :react-native-community_blur:generateReleaseResValues
+> Task :react-native-async-storage_async-storage:generateReleaseRFile
+> Task :react-native-community_blur:generateReleaseResources
 
-> Task :app:compileDebugJavaWithJavac
-> Task :react-native-pager-view:extractDebugAnnotations
-> Task :react-native-image-picker:extractDebugAnnotations
-> Task :react-native-pager-view:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-image-picker:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-pager-view:mergeDebugGeneratedProguardFiles
-> Task :react-native-image-picker:mergeDebugGeneratedProguardFiles
-> Task :react-native-pager-view:mergeDebugConsumerProguardFiles
-> Task :react-native-pager-view:prepareDebugArtProfile
-> Task :react-native-image-picker:mergeDebugConsumerProguardFiles
-> Task :react-native-fs:extractDebugAnnotations
-> Task :react-native-community_blur:extractDebugAnnotations
-> Task :lottie-react-native:extractDebugAnnotations
-> Task :react-native-haptic-feedback:extractDebugAnnotations
-> Task :react-native-image-picker:prepareDebugArtProfile
-> Task :react-native-fs:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-community_blur:extractDeepLinksForAarDebug FROM-CACHE
-> Task :lottie-react-native:mergeDebugGeneratedProguardFiles
-> Task :react-native-haptic-feedback:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-async-storage_async-storage:extractDebugAnnotations
-> Task :react-native-community_slider:extractDebugAnnotations
-> Task :react-native-gesture-handler:extractDebugAnnotations
-> Task :react-native-fs:mergeDebugGeneratedProguardFiles
-> Task :react-native-community_blur:mergeDebugGeneratedProguardFiles
-> Task :lottie-react-native:mergeDebugConsumerProguardFiles
-> Task :react-native-community_blur:mergeDebugConsumerProguardFiles
-> Task :react-native-async-storage_async-storage:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-gesture-handler:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-community_slider:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-haptic-feedback:mergeDebugGeneratedProguardFiles
-> Task :react-native-fs:mergeDebugConsumerProguardFiles
-> Task :react-native-community_slider:mergeDebugGeneratedProguardFiles
-> Task :react-native-community_blur:prepareDebugArtProfile
-> Task :react-native-haptic-feedback:mergeDebugConsumerProguardFiles
-> Task :react-native-gesture-handler:mergeDebugGeneratedProguardFiles
-> Task :react-native-async-storage_async-storage:mergeDebugGeneratedProguardFiles
-> Task :react-native-community_slider:mergeDebugConsumerProguardFiles
-> Task :react-native-fs:prepareDebugArtProfile
-> Task :react-native-image-picker:prepareLintJarForPublish
-> Task :react-native-community_blur:prepareLintJarForPublish
-> Task :react-native-haptic-feedback:prepareDebugArtProfile
-> Task :react-native-pager-view:prepareLintJarForPublish
-> Task :react-native-gesture-handler:mergeDebugConsumerProguardFiles
-> Task :react-native-async-storage_async-storage:mergeDebugConsumerProguardFiles
-> Task :react-native-community_slider:prepareDebugArtProfile
-> Task :react-native-gesture-handler:prepareDebugArtProfile
-> Task :react-native-haptic-feedback:prepareLintJarForPublish
-> Task :react-native-async-storage_async-storage:prepareDebugArtProfile
-> Task :react-native-community_slider:prepareLintJarForPublish
-> Task :react-native-gesture-handler:prepareLintJarForPublish
-> Task :react-native-fs:prepareLintJarForPublish
-> Task :react-native-image-picker:mergeDebugJavaResource
-> Task :react-native-fs:mergeDebugJavaResource
-> Task :lottie-react-native:mergeDebugJavaResource
-> Task :react-native-community_slider:mergeDebugJavaResource
-> Task :react-native-community_blur:mergeDebugJavaResource
-> Task :react-native-haptic-feedback:mergeDebugJavaResource
-> Task :react-native-pager-view:mergeDebugJavaResource
-> Task :react-native-gesture-handler:mergeDebugJavaResource
-> Task :react-native-community_blur:syncDebugLibJars
-> Task :react-native-async-storage_async-storage:prepareLintJarForPublish
-> Task :react-native-haptic-feedback:syncDebugLibJars
-> Task :lottie-react-native:syncDebugLibJars
-> Task :react-native-image-picker:syncDebugLibJars
-> Task :react-native-fs:syncDebugLibJars
-> Task :react-native-community_slider:syncDebugLibJars
-> Task :react-native-community_slider:bundleDebugAar
-> Task :react-native-fs:bundleDebugAar
-> Task :lottie-react-native:bundleDebugAar
-> Task :react-native-image-picker:bundleDebugAar
-> Task :lottie-react-native:assembleDebug
-> Task :react-native-image-picker:assembleDebug
-> Task :react-native-fs:assembleDebug
-> Task :react-native-pager-view:syncDebugLibJars
-> Task :react-native-community_slider:assembleDebug
-> Task :react-native-safe-area-context:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-haptic-feedback:bundleDebugAar
-> Task :react-native-haptic-feedback:assembleDebug
-> Task :react-native-sound:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-svg:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-screens:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-community_blur:bundleDebugAar
-> Task :react-native-community_blur:assembleDebug
-> Task :react-native-track-player:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-async-storage_async-storage:mergeDebugJavaResource
-> Task :react-native-sound:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-svg:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-screens:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-pager-view:bundleDebugAar
-> Task :react-native-pager-view:assembleDebug
-> Task :react-native-async-storage_async-storage:syncDebugLibJars
-> Task :react-native-sound:extractDebugAnnotations
-> Task :react-native-sound:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-gesture-handler:syncDebugLibJars
-> Task :react-native-svg:extractDebugAnnotations
-> Task :react-native-sound:mergeDebugGeneratedProguardFiles
-> Task :react-native-sound:mergeDebugConsumerProguardFiles
-> Task :react-native-sound:prepareDebugArtProfile
-> Task :react-native-async-storage_async-storage:bundleDebugAar
-> Task :react-native-async-storage_async-storage:assembleDebug
-> Task :react-native-safe-area-context:extractDebugAnnotations
-> Task :react-native-safe-area-context:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-sound:prepareLintJarForPublish
-> Task :react-native-track-player:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-svg:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-reanimated:extractDebugAnnotations
-> Task :react-native-vector-icons:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-reanimated:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-svg:mergeDebugGeneratedProguardFiles
-> Task :react-native-reanimated:mergeDebugGeneratedProguardFiles
-> Task :react-native-screens:extractDebugAnnotations
-> Task :react-native-gesture-handler:bundleDebugAar
-> Task :react-native-gesture-handler:assembleDebug
-> Task :react-native-svg:mergeDebugConsumerProguardFiles
-> Task :react-native-safe-area-context:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-sound:mergeDebugJavaResource
-> Task :react-native-video:stripDebugDebugSymbols NO-SOURCE
-> Task :react-native-svg:prepareDebugArtProfile
-> Task :react-native-vector-icons:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-video:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-safe-area-context:mergeDebugGeneratedProguardFiles
-> Task :react-native-svg:prepareLintJarForPublish
-> Task :react-native-safe-area-context:mergeDebugConsumerProguardFiles
-> Task :react-native-safe-area-context:prepareDebugArtProfile
-> Task :react-native-screens:extractDeepLinksForAarDebug UP-TO-DATE
-> Task :react-native-sound:syncDebugLibJars
-> Task :react-native-svg:mergeDebugJavaResource
-> Task :react-native-vector-icons:extractDebugAnnotations
-> Task :react-native-screens:mergeDebugGeneratedProguardFiles
-> Task :react-native-reanimated:mergeDebugConsumerProguardFiles
-> Task :react-native-vector-icons:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-track-player:extractDebugAnnotations
-> Task :react-native-vector-icons:mergeDebugGeneratedProguardFiles
-> Task :react-native-sound:bundleDebugAar
-> Task :react-native-screens:mergeDebugConsumerProguardFiles
-> Task :react-native-sound:assembleDebug
-> Task :react-native-safe-area-context:prepareLintJarForPublish
-> Task :react-native-screens:prepareDebugArtProfile UP-TO-DATE
-> Task :react-native-track-player:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-vector-icons:mergeDebugConsumerProguardFiles
+> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac
+/Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-async-storage/async-storage/android/src/main/java/com/reactnativecommunity/asyncstorage/AsyncStorageModule.java:84: 警告: [removal] NativeModule 中的 onCatalystInstanceDestroy() 已过时, 且标记为待删除
+  public void onCatalystInstanceDestroy() {
+              ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-async-storage/async-storage/android/src/javaPackage/java/com/reactnativecommunity/asyncstorage/AsyncStoragePackage.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+1 个警告
+
+> Task :react-native-community_blur:packageReleaseResources
+> Task :react-native-community_blur:javaPreCompileRelease
+> Task :react-native-community_netinfo:generateReleaseBuildConfig
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToDirRelease
+> Task :react-native-community_blur:parseReleaseLocalResources
+> Task :react-native-community_netinfo:generateReleaseResValues
+> Task :react-native-community_netinfo:generateReleaseResources
+> Task :react-native-community_blur:generateReleaseRFile
+> Task :react-native-community_netinfo:packageReleaseResources
+
+> Task :react-native-community_blur:compileReleaseJavaWithJavac
+注: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/blur/android/src/main/java/com/reactnativecommunity/blurview/BlurViewPackage.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-community_blur:bundleLibRuntimeToDirRelease
+> Task :react-native-community_netinfo:javaPreCompileRelease
+> Task :react-native-community_netinfo:parseReleaseLocalResources
+> Task :react-native-community_slider:generateReleaseBuildConfig
+> Task :react-native-community_slider:generateReleaseResValues
+> Task :react-native-community_netinfo:generateReleaseRFile
+> Task :react-native-community_slider:generateReleaseResources
+
+> Task :react-native-community_netinfo:compileReleaseJavaWithJavac
+/Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/netinfo/android/src/oldarch/com/reactnativecommunity/netinfo/NetInfoModule.java:35: 警告: [removal] NativeModule 中的 onCatalystInstanceDestroy() 已过时, 且标记为待删除
+    public void onCatalystInstanceDestroy() {
+                ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+1 个警告
+
+> Task :react-native-community_slider:packageReleaseResources
+> Task :react-native-community_netinfo:bundleLibRuntimeToDirRelease
+> Task :react-native-community_slider:javaPreCompileRelease
+> Task :react-native-community_slider:parseReleaseLocalResources
+> Task :react-native-community_slider:generateReleaseRFile
+> Task :react-native-haptic-feedback:generateReleaseBuildConfig
+
+> Task :react-native-community_slider:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-haptic-feedback:generateReleaseResValues
+> Task :react-native-haptic-feedback:generateReleaseResources
+> Task :react-native-haptic-feedback:packageReleaseResources
+> Task :react-native-community_slider:bundleLibRuntimeToDirRelease
+> Task :react-native-haptic-feedback:javaPreCompileRelease
+> Task :react-native-haptic-feedback:parseReleaseLocalResources
+> Task :react-native-image-picker:generateReleaseBuildConfig
+> Task :react-native-image-picker:generateReleaseResValues
+> Task :react-native-haptic-feedback:generateReleaseRFile
+> Task :react-native-image-picker:generateReleaseResources
+
+> Task :react-native-haptic-feedback:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-image-picker:packageReleaseResources
+> Task :react-native-haptic-feedback:bundleLibRuntimeToDirRelease
+> Task :react-native-image-picker:javaPreCompileRelease
+> Task :react-native-image-picker:parseReleaseLocalResources
+> Task :react-native-image-picker:generateReleaseRFile
+> Task :react-native-vector-icons:generateReleaseBuildConfig
+> Task :react-native-reanimated:bundleLibRuntimeToDirRelease
+> Task :react-native-svg:bundleLibRuntimeToDirRelease
+
+> Task :react-native-image-picker:compileReleaseJavaWithJavac
+注: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerPackage.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-vector-icons:generateReleaseResValues
+> Task :react-native-vector-icons:generateReleaseResources
+> Task :react-native-image-picker:bundleLibRuntimeToDirRelease
+> Task :react-native-vector-icons:packageReleaseResources
+> Task :react-native-vector-icons:parseReleaseLocalResources
+> Task :react-native-vector-icons:javaPreCompileRelease
+> Task :react-native-vector-icons:generateReleaseRFile
+> Task :app:checkReleaseDuplicateClasses
+
+> Task :react-native-vector-icons:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-vector-icons:bundleLibRuntimeToDirRelease
+> Task :app:buildKotlinToolingMetadata
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateReleaseBuildConfig
+> Task :react-native-async-storage_async-storage:writeReleaseAarMetadata
+> Task :dr.pogodin_react-native-fs:writeReleaseAarMetadata
+> Task :react-native-community_blur:writeReleaseAarMetadata
+> Task :react-native-community_netinfo:writeReleaseAarMetadata
+> Task :react-native-community_slider:writeReleaseAarMetadata
+> Task :react-native-gesture-handler:writeReleaseAarMetadata
+> Task :react-native-haptic-feedback:writeReleaseAarMetadata
+> Task :react-native-image-picker:writeReleaseAarMetadata
+> Task :react-native-reanimated:writeReleaseAarMetadata
+> Task :react-native-screens:writeReleaseAarMetadata
+> Task :react-native-sound:writeReleaseAarMetadata
+> Task :react-native-svg:writeReleaseAarMetadata
+> Task :react-native-safe-area-context:writeReleaseAarMetadata
+> Task :react-native-track-player:writeReleaseAarMetadata
+> Task :react-native-vector-icons:writeReleaseAarMetadata
+> Task :react-native-video:writeReleaseAarMetadata
+> Task :react-native-webview:writeReleaseAarMetadata
+> Task :app:checkReleaseAarMetadata
+
+> Task :app:createBundleReleaseJsAndAssets
+
+                        ▒▒▓▓▓▓▒▒
+                     ▒▓▓▓▒▒░░▒▒▓▓▓▒
+                  ▒▓▓▓▓░░░▒▒▒▒░░░▓▓▓▓▒
+                 ▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓
+                 ▓▓░░░░░▒▓▓▓▓▓▓▒░░░░░▓▓
+                 ▓▓░░▓▓▒░░░▒▒░░░▒▓▒░░▓▓
+                 ▓▓░░▓▓▓▓▓▒▒▒▒▓▓▓▓▒░░▓▓
+                 ▓▓░░▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░▓▓
+                 ▓▓▒░░▒▒▓▓▓▓▓▓▓▓▒░░░▒▓▓
+                  ▒▓▓▓▒░░░▒▓▓▒░░░▒▓▓▓▒
+                     ▒▓▓▓▒░░░░▒▓▓▓▒
+                        ▒▒▓▓▓▓▒▒
+
+
+ WARN  the transform cache was reset.
+                Welcome to Metro v0.83.5
+              Fast - Scalable - Integrated
+
+
+
+> Task :react-native-sound:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:12:8 'class BridgeReactContext : ReactApplicationContext' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:67:16 'fun setAudioStreamType(p0: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:139:19 'fun setAudioStreamType(p0: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:175:19 'fun setAudioStreamType(p0: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:205:20 'fun requestAudioFocus(p0: AudioManager.OnAudioFocusChangeListener!, p1: Int, p2: Int): Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:272:32 Identity equality for arguments of types 'Double' and 'Double?' can be unstable because of implicit boxing.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:274:20 'fun abandonAudioFocus(p0: AudioManager.OnAudioFocusChangeListener!): Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:296:34 Identity equality for arguments of types 'Double' and 'Double?' can be unstable because of implicit boxing.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:298:22 'fun abandonAudioFocus(p0: AudioManager.OnAudioFocusChangeListener!): Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt:385:20 'var isSpeakerphoneOn: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/SoundPackage.kt:3:8 'class TurboReactPackage : BaseReactPackage' is deprecated. Use BaseReactPackage instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/SoundPackage.kt:10:22 'class TurboReactPackage : BaseReactPackage' is deprecated. Use BaseReactPackage instead.
+
+> Task :react-native-webview:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:22:8 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:82:18 'var allowFileAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:83:18 'var allowUniversalAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:124:21 'fun allowScanningByMediaScanner(): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:161:36 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:300:14 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:350:34 Condition is always 'true'.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:369:38 'var allowUniversalAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:430:51 Unchecked cast of 'Any?' to 'HashMap<String, String>'.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:486:23 'var savePassword: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:487:23 'var saveFormData: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:557:23 'var allowFileAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:602:52 'static field FORCE_DARK_ON: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:602:89 'static field FORCE_DARK_OFF: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:603:35 'static fun setForceDark(p0: @NonNull() WebSettings, p1: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:612:35 'static fun setForceDarkStrategy(p0: @NonNull() WebSettings, p1: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:614:39 'static field DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:658:65 Unchecked cast of 'ArrayList<Any?>' to 'List<Map<String, String>>'.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:679:23 'var saveFormData: Boolean' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/SubResourceErrorEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/SubResourceErrorEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/SubResourceErrorEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/SubResourceErrorEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/SubResourceErrorEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:10:75 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:21:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:21:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:22:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:12:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:23:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:23:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:24:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:10:89 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:27:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:27:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:28:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
+
+> Task :react-native-safe-area-context:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/paper/java/com/th3rdwave/safeareacontext/InsetsChangeEvent.kt:19:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+
+> Task :dr.pogodin_react-native-fs:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Downloader.kt:3:8 'class AsyncTask<Params : Any!, Progress : Any!, Result : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Downloader.kt:17:20 'constructor<Params : Any!, Progress : Any!, Result : Any!>(): AsyncTask<Params, Progress, Result>' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Downloader.kt:17:20 'class AsyncTask<Params : Any!, Progress : Any!, Result : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Downloader.kt:110:33 'fun publishProgress(vararg p0: LongArray?): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Downloader.kt:113:29 'fun publishProgress(vararg p0: LongArray?): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Downloader.kt:120:37 'fun publishProgress(vararg p0: LongArray?): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Downloader.kt:163:15 'fun onProgressUpdate(vararg p0: LongArray?): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:8:8 'class AsyncTask<Params : Any!, Progress : Any!, Result : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:137:11 'fun execute(vararg p0: String?): AsyncTask<String?, Void?, Exception?>!' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:285:24 'fun execute(vararg p0: DownloadParams?): AsyncTask<DownloadParams?, LongArray?, DownloadResult!>!' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:437:19 'fun execute(vararg p0: String?): AsyncTask<String?, Void?, Exception?>!' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:503:31 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Array<(out) File!>?'.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:753:22 'fun execute(vararg p0: UploadParams?): AsyncTask<UploadParams?, IntArray?, UploadResult!>!' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:807:45 'constructor<Params : Any!, Progress : Any!, Result : Any!>(): AsyncTask<Params, Progress, Result>' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:807:45 'class AsyncTask<Params : Any!, Progress : Any!, Result : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/ReactNativeFsModule.kt:869:27 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Array<(out) File!>?'.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Uploader.kt:3:8 'class AsyncTask<Params : Any!, Progress : Any!, Result : Any!> : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Uploader.kt:19:18 'constructor<Params : Any!, Progress : Any!, Result : Any!>(): AsyncTask<Params, Progress, Result>' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@dr.pogodin/react-native-fs/android/src/main/java/com/drpogodin/reactnativefs/Uploader.kt:19:18 'class AsyncTask<Params : Any!, Progress : Any!, Result : Any!> : Any' is deprecated. Deprecated in Java.
+
+> Task :react-native-track-player:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/TrackPlayer.kt:15:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:4:8 'class MediaMetadata : Any, Bundleable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:5:8 'class Metadata : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:6:8 'class VorbisComment : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:7:8 'class IcyHeaders : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:8:8 'class IcyInfo : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:9:8 'class ChapterFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:10:8 'class TextInformationFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:11:8 'class UrlLinkFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:12:8 'class MdtaMetadataEntry : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:17:36 'class Metadata : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:25:28 'class ChapterFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:28:28 'class TextInformationFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:33:62 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:37:66 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:41:63 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:45:69 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:49:62 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:56:63 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:61:28 'class UrlLinkFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:70:28 'class IcyHeaders : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:98:28 'class IcyInfo : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:117:28 'class VorbisComment : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:153:28 'class MdtaMetadataEntry : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/MetadataAdapter.kt:193:41 'class MediaMetadata : Any, Bundleable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:3:8 'class Metadata : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:4:8 'class VorbisComment : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:5:8 'class IcyHeaders : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:6:8 'class IcyInfo : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:7:8 'class TextInformationFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:8:8 'class UrlLinkFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:9:8 'class MdtaMetadataEntry : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:25:39 'class Metadata : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:37:24 'class TextInformationFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:41:47 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:45:47 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:49:48 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:53:46 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:57:47 'field value: String' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:62:24 'class UrlLinkFrame : Id3Frame' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:81:31 'class Metadata : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:84:24 'class IcyHeaders : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:87:24 'class IcyInfo : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:112:41 'class Metadata : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:124:30 'class VorbisComment : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:160:37 'class Metadata : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/PlaybackMetadata.kt:171:30 'class MdtaMetadataEntry : Any, Metadata.Entry' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/Track.kt:9:8 'class RawResourceDataSource : BaseDataSource' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/model/Track.kt:40:13 'class RawResourceDataSource : BaseDataSource' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:8:8 'class LocalBroadcastManager : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:19:8 'class DefaultLoadControl : Any, LoadControl' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:20:8 'interface Player : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:156:34 'interface Player : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:157:36 'interface Player : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:158:36 'interface Player : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt:232:9 'class LocalBroadcastManager : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt:176:13 'var stoppingAppPausesPlayback: Boolean' is deprecated. This will be removed soon.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt:177:17 'var stoppingAppPausesPlayback: Boolean' is deprecated. This will be removed soon.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:16:19 'fun get(p0: String!): Any?' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:24:51 'fun getInstance(): ResourceDrawableIdHelper' is deprecated. Use .instance instead, this API is for backward compat.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:45:19 'fun get(p0: String!): Any?' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:61:47 'fun getInstance(): ResourceDrawableIdHelper' is deprecated. Use .instance instead, this API is for backward compat.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:71:47 'fun getInstance(): ResourceDrawableIdHelper' is deprecated. Use .instance instead, this API is for backward compat.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:105:21 'fun get(p0: String!): Any?' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:112:21 'fun get(p0: String!): Any?' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/utils/BundleUtils.kt:119:21 'fun get(p0: String!): Any?' is deprecated. Deprecated in Java.
+
+> Task :react-native-video:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/DRMManager.kt:21:18 'static field SDK_INT: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/DataSourceUtil.kt:64:23 'constructor(reactContext: ReactContext): ForwardingCookieHandler' is deprecated. Use the default constructor.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt:49:9 'fun setUseArtwork(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:38:48 'constructor(): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:41:10 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:45:49 'constructor(): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/VideoPlaybackService.kt:48:10 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/react/ReactVideoPackage.kt:14:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/react/VideoManagerModule.kt:23:106 'val DEFAULT: Int' is deprecated. UIManagerType.DEFAULT will be deleted in the next release of React Native. Use [LEGACY] instead.
+
+> Task :react-native-gesture-handler:compileReleaseKotlin
+
+> Task :react-native-screens:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:62:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'name'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:63:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'reactContext'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:76:17 'constructor(name: String, className: String, canOverrideExistingModule: Boolean, needsEagerInit: Boolean, hasConstants: Boolean, isCxxModule: Boolean, isTurboModule: Boolean): ReactModuleInfo' is deprecated. This constructor is deprecated and will be removed in the future. Use ReactModuleInfo(String, String, boolean, boolean, boolean, boolean)].
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:56:77 Unchecked cast of '(CoordinatorLayout.Behavior<View!>?..CoordinatorLayout.Behavior<*>?)' to 'BottomSheetBehavior<Screen>'.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:222:31 'var targetElevation: Float' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:225:13 'fun setHasOptionsMenu(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:404:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:411:22 'fun onPrepareOptionsMenu(p0: Menu): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:414:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:419:22 'fun onCreateOptionsMenu(p0: Menu, p1: MenuInflater): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:441:22 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:48:42 'fun replaceSystemWindowInsets(p0: Int, p1: Int, p2: Int, p3: Int): @NonNull() WindowInsetsCompat' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:49:39 'val systemWindowInsetLeft: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:51:39 'val systemWindowInsetRight: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:52:39 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:7:8 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:25:13 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:32:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'left'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:33:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'top'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:34:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'right'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:35:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'bottom'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:71:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:72:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:79:46 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:83:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:84:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:95:34 The corresponding parameter in the supertype 'RootView' is named 't'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:64:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:65:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:69:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:70:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/TabsHostViewManager.kt:37:9 The corresponding parameter in the supertype 'TabsHostViewManager' is named 'view'. This may cause problems when calling this function with named arguments.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt:153:45 'fun consumeDisplayCutout(): @NonNull() WindowInsetsCompat' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt:201:31 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+
+> Task :app:createBundleReleaseJsAndAssets
+LOG:Writing bundle output to: /Users/lishang/Documents/esonare_SoundTherapyPro/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle
+LOG:Writing sourcemap output to: /Users/lishang/Documents/esonare_SoundTherapyPro/android/app/build/intermediates/sourcemaps/react/release/index.android.bundle.packager.map
+LOG:Done writing bundle output
+LOG:Done writing sourcemap output
+Copying 20 asset files
+Done copying assets
+
+> Task :dr.pogodin_react-native-fs:compileReleaseJavaWithJavac
+> Task :dr.pogodin_react-native-fs:bundleLibRuntimeToDirRelease
+
+> Task :react-native-gesture-handler:compileReleaseJavaWithJavac
+注: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-gesture-handler/android/paper/src/main/java/com/swmansion/gesturehandler/NativeRNGestureHandlerModuleSpec.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-gesture-handler:bundleLibRuntimeToDirRelease
+
+> Task :react-native-safe-area-context:compileReleaseJavaWithJavac
+注: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/paper/java/com/th3rdwave/safeareacontext/NativeSafeAreaContextSpec.java使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :react-native-safe-area-context:bundleLibRuntimeToDirRelease
+> Task :react-native-screens:compileReleaseJavaWithJavac
+> Task :react-native-sound:compileReleaseJavaWithJavac
+> Task :react-native-sound:bundleLibRuntimeToDirRelease
+> Task :react-native-screens:bundleLibRuntimeToDirRelease
+> Task :react-native-track-player:compileReleaseJavaWithJavac
+> Task :react-native-track-player:bundleLibRuntimeToDirRelease
+
+> Task :react-native-video:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+
+> Task :react-native-video:bundleLibRuntimeToDirRelease
+
+> Task :react-native-webview:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :app:generateReleaseResValues
+> Task :react-native-webview:bundleLibRuntimeToDirRelease
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:generateReleaseResources
+> Task :app:packageReleaseResources
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksRelease
+> Task :app:parseReleaseLocalResources
+> Task :dr.pogodin_react-native-fs:extractDeepLinksRelease
+> Task :react-native-async-storage_async-storage:extractDeepLinksRelease
+> Task :react-native-community_blur:extractDeepLinksRelease
+> Task :react-native-community_netinfo:extractDeepLinksRelease
+> Task :react-native-community_slider:extractDeepLinksRelease
+> Task :react-native-gesture-handler:extractDeepLinksRelease
+> Task :react-native-haptic-feedback:extractDeepLinksRelease
+
+> Task :react-native-community_slider:processReleaseManifest
+package="com.reactnativecommunity.slider" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/slider/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.slider" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/slider/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-gesture-handler:processReleaseManifest
+
+> Task :react-native-community_netinfo:processReleaseManifest
+package="com.reactnativecommunity.netinfo" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/netinfo/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.netinfo" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/netinfo/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-community_blur:processReleaseManifest
+package="com.reactnativecommunity.blurview" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/blur/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.blurview" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-community/blur/android/src/main/AndroidManifest.xml.
+
+> Task :dr.pogodin_react-native-fs:processReleaseManifest
+
+> Task :react-native-async-storage_async-storage:processReleaseManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-image-picker:extractDeepLinksRelease
+
+> Task :react-native-haptic-feedback:processReleaseManifest
+package="com.mkuczera" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-haptic-feedback/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.mkuczera" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-haptic-feedback/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-reanimated:extractDeepLinksRelease
+
+> Task :react-native-image-picker:processReleaseManifest
+package="com.imagepicker" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-image-picker/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.imagepicker" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-image-picker/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-safe-area-context:extractDeepLinksRelease
+> Task :react-native-reanimated:processReleaseManifest
+> Task :react-native-screens:extractDeepLinksRelease
+
+> Task :react-native-safe-area-context:processReleaseManifest
+package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-sound:extractDeepLinksRelease
+> Task :react-native-screens:processReleaseManifest
+> Task :react-native-svg:extractDeepLinksRelease
+> Task :react-native-sound:processReleaseManifest
+> Task :react-native-track-player:extractDeepLinksRelease
+> Task :react-native-svg:processReleaseManifest
+> Task :react-native-vector-icons:extractDeepLinksRelease
+
+> Task :react-native-track-player:processReleaseManifest
+package="com.doublesymmetry.trackplayer" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.doublesymmetry.trackplayer" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-track-player/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-video:extractDeepLinksRelease
+
+> Task :react-native-vector-icons:processReleaseManifest
+package="com.oblador.vectoricons" found in source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-vector-icons/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.oblador.vectoricons" from the source AndroidManifest.xml: /Users/lishang/Documents/esonare_SoundTherapyPro/node_modules/react-native-vector-icons/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-webview:extractDeepLinksRelease
+> Task :react-native-video:processReleaseManifest
+> Task :react-native-webview:processReleaseManifest
+> Task :dr.pogodin_react-native-fs:compileReleaseLibraryResources
+> Task :app:mergeReleaseResources
+
+> Task :app:processReleaseMainManifest
+/Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/AndroidManifest.xml:32:8-40 Warning:
+	android:extractNativeLibs should not be specified in this source AndroidManifest.xml file. See https://d.android.com/guide/topics/manifest/application-element#extractNativeLibs for more information.
+The AGP Upgrade Assistant can remove the attribute from the AndroidManifest.xml file and update the build file accordingly. See https://d.android.com/studio/build/agp-upgrade-assistant for more information.
+/Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/AndroidManifest.xml:21:5-71 Warning:
+	Element uses-permission#android.permission.RECORD_AUDIO at AndroidManifest.xml:21:5-71 duplicated with element declared at AndroidManifest.xml:6:5-71
+
+> Task :app:processReleaseManifest
+> Task :react-native-async-storage_async-storage:compileReleaseLibraryResources
+> Task :react-native-community_blur:compileReleaseLibraryResources
+> Task :react-native-community_netinfo:compileReleaseLibraryResources
+> Task :react-native-community_slider:compileReleaseLibraryResources
+> Task :react-native-gesture-handler:compileReleaseLibraryResources
+> Task :react-native-haptic-feedback:compileReleaseLibraryResources
+> Task :react-native-image-picker:compileReleaseLibraryResources
+> Task :react-native-reanimated:compileReleaseLibraryResources
+> Task :react-native-safe-area-context:compileReleaseLibraryResources
+> Task :react-native-sound:compileReleaseLibraryResources
+> Task :react-native-svg:compileReleaseLibraryResources
+> Task :react-native-screens:compileReleaseLibraryResources
+> Task :react-native-track-player:compileReleaseLibraryResources
+> Task :react-native-vector-icons:compileReleaseLibraryResources
+> Task :react-native-webview:compileReleaseLibraryResources
+> Task :react-native-video:compileReleaseLibraryResources
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
+> Task :react-native-community_blur:bundleLibCompileToJarRelease
+> Task :dr.pogodin_react-native-fs:bundleLibCompileToJarRelease
+> Task :react-native-community_netinfo:bundleLibCompileToJarRelease
+> Task :react-native-community_slider:bundleLibCompileToJarRelease
+> Task :react-native-haptic-feedback:bundleLibCompileToJarRelease
+> Task :react-native-image-picker:bundleLibCompileToJarRelease
+> Task :app:processReleaseManifestForPackage
+> Task :react-native-safe-area-context:bundleLibCompileToJarRelease
+> Task :react-native-sound:bundleLibCompileToJarRelease
+> Task :react-native-gesture-handler:bundleLibCompileToJarRelease
+> Task :react-native-screens:bundleLibCompileToJarRelease
+> Task :react-native-vector-icons:bundleLibCompileToJarRelease
+> Task :app:javaPreCompileRelease
+> Task :app:desugarReleaseFileDependencies
+> Task :react-native-track-player:bundleLibCompileToJarRelease
+> Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :react-native-webview:bundleLibCompileToJarRelease
+> Task :react-native-video:bundleLibCompileToJarRelease
+> Task :dr.pogodin_react-native-fs:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_blur:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_netinfo:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_slider:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-gesture-handler:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-haptic-feedback:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-image-picker:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-reanimated:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-safe-area-context:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-screens:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-sound:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-svg:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-track-player:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-vector-icons:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-video:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-webview:prepareReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseArtProfile
+> Task :dr.pogodin_react-native-fs:bundleLibRuntimeToJarRelease
+> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
+> Task :react-native-sound:bundleLibRuntimeToJarRelease
+> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease
+> Task :react-native-track-player:bundleLibRuntimeToJarRelease
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease
+> Task :react-native-webview:bundleLibRuntimeToJarRelease
+> Task :react-native-community_blur:bundleLibRuntimeToJarRelease
+> Task :react-native-community_netinfo:bundleLibRuntimeToJarRelease
+> Task :react-native-video:bundleLibRuntimeToJarRelease
+> Task :react-native-community_slider:bundleLibRuntimeToJarRelease
+> Task :react-native-haptic-feedback:bundleLibRuntimeToJarRelease
+> Task :react-native-image-picker:bundleLibRuntimeToJarRelease
+> Task :react-native-screens:bundleLibRuntimeToJarRelease
+> Task :react-native-reanimated:bundleLibRuntimeToJarRelease
+> Task :react-native-svg:bundleLibRuntimeToJarRelease
+> Task :react-native-vector-icons:bundleLibRuntimeToJarRelease
+> Task :app:mergeReleaseShaders
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:copyReactNativeVectorIconFonts
+> Task :app:generateReleaseAssets
+> Task :dr.pogodin_react-native-fs:mergeReleaseShaders
+> Task :dr.pogodin_react-native-fs:compileReleaseShaders NO-SOURCE
+> Task :dr.pogodin_react-native-fs:generateReleaseAssets UP-TO-DATE
+> Task :dr.pogodin_react-native-fs:mergeReleaseAssets
+> Task :react-native-async-storage_async-storage:mergeReleaseShaders
+> Task :react-native-async-storage_async-storage:compileReleaseShaders NO-SOURCE
+> Task :react-native-async-storage_async-storage:generateReleaseAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseAssets
+> Task :react-native-community_blur:mergeReleaseShaders
+> Task :react-native-community_blur:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_blur:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_blur:mergeReleaseAssets
+> Task :react-native-community_netinfo:mergeReleaseShaders
+> Task :react-native-community_netinfo:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_netinfo:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseAssets
+> Task :react-native-community_slider:mergeReleaseShaders
+> Task :react-native-community_slider:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_slider:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_slider:mergeReleaseAssets
+> Task :react-native-gesture-handler:mergeReleaseShaders
+> Task :react-native-gesture-handler:compileReleaseShaders NO-SOURCE
+> Task :react-native-gesture-handler:generateReleaseAssets UP-TO-DATE
+> Task :react-native-gesture-handler:mergeReleaseAssets
+> Task :react-native-haptic-feedback:mergeReleaseShaders
+> Task :react-native-haptic-feedback:compileReleaseShaders NO-SOURCE
+> Task :react-native-haptic-feedback:generateReleaseAssets UP-TO-DATE
+> Task :react-native-haptic-feedback:mergeReleaseAssets
+> Task :react-native-image-picker:mergeReleaseShaders
+> Task :react-native-image-picker:compileReleaseShaders NO-SOURCE
+> Task :react-native-image-picker:generateReleaseAssets UP-TO-DATE
+> Task :react-native-image-picker:mergeReleaseAssets
+> Task :react-native-reanimated:mergeReleaseShaders
+> Task :react-native-reanimated:compileReleaseShaders NO-SOURCE
+> Task :react-native-reanimated:generateReleaseAssets UP-TO-DATE
+> Task :react-native-reanimated:mergeReleaseAssets
+> Task :react-native-safe-area-context:mergeReleaseShaders
+> Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
+> Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseAssets
+> Task :react-native-screens:mergeReleaseShaders
+> Task :react-native-screens:compileReleaseShaders NO-SOURCE
+> Task :react-native-screens:generateReleaseAssets UP-TO-DATE
+> Task :react-native-screens:mergeReleaseAssets
+> Task :react-native-sound:mergeReleaseShaders
+> Task :react-native-sound:compileReleaseShaders NO-SOURCE
+> Task :react-native-sound:generateReleaseAssets UP-TO-DATE
+> Task :react-native-sound:mergeReleaseAssets
+> Task :react-native-svg:mergeReleaseShaders
+> Task :react-native-svg:compileReleaseShaders NO-SOURCE
+> Task :react-native-svg:generateReleaseAssets UP-TO-DATE
+> Task :react-native-svg:mergeReleaseAssets
+> Task :react-native-track-player:mergeReleaseShaders
+> Task :react-native-track-player:compileReleaseShaders NO-SOURCE
+> Task :react-native-track-player:generateReleaseAssets UP-TO-DATE
+> Task :react-native-track-player:mergeReleaseAssets
+> Task :react-native-vector-icons:mergeReleaseShaders
+> Task :react-native-vector-icons:compileReleaseShaders NO-SOURCE
+> Task :react-native-vector-icons:generateReleaseAssets UP-TO-DATE
+> Task :react-native-vector-icons:mergeReleaseAssets
+> Task :react-native-video:mergeReleaseShaders
+> Task :react-native-video:compileReleaseShaders NO-SOURCE
+> Task :react-native-video:generateReleaseAssets UP-TO-DATE
+> Task :react-native-video:mergeReleaseAssets
+> Task :react-native-webview:mergeReleaseShaders
+> Task :react-native-webview:compileReleaseShaders NO-SOURCE
+> Task :react-native-webview:generateReleaseAssets UP-TO-DATE
+> Task :react-native-webview:mergeReleaseAssets
+> Task :app:mergeReleaseAssets
+> Task :app:compressReleaseAssets
+> Task :app:extractReleaseVersionControlInfo
+> Task :app:extractProguardFiles
+> Task :dr.pogodin_react-native-fs:processReleaseJavaRes
+> Task :dr.pogodin_react-native-fs:createFullJarRelease
+> Task :dr.pogodin_react-native-fs:extractProguardFiles
+> Task :dr.pogodin_react-native-fs:generateReleaseLintModel
+> Task :dr.pogodin_react-native-fs:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
+> Task :react-native-async-storage_async-storage:createFullJarRelease
+> Task :react-native-async-storage_async-storage:extractProguardFiles
+> Task :react-native-async-storage_async-storage:generateReleaseLintModel
+> Task :react-native-async-storage_async-storage:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-community_blur:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_blur:createFullJarRelease
+> Task :react-native-community_blur:extractProguardFiles
+> Task :react-native-community_blur:generateReleaseLintModel
+> Task :react-native-community_blur:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-community_netinfo:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_netinfo:createFullJarRelease
+> Task :react-native-community_netinfo:extractProguardFiles
+> Task :app:processReleaseResources
+> Task :react-native-community_netinfo:generateReleaseLintModel
+> Task :react-native-community_netinfo:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-community_slider:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_slider:createFullJarRelease
+> Task :react-native-community_slider:extractProguardFiles
+> Task :react-native-community_slider:generateReleaseLintModel
+> Task :react-native-community_slider:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-gesture-handler:processReleaseJavaRes
+> Task :react-native-gesture-handler:createFullJarRelease
+> Task :react-native-gesture-handler:extractProguardFiles
+> Task :react-native-reanimated:processReleaseJavaRes NO-SOURCE
+> Task :react-native-reanimated:createFullJarRelease
+> Task :react-native-reanimated:extractProguardFiles
+> Task :react-native-reanimated:generateReleaseLintModel
+> Task :react-native-reanimated:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-svg:processReleaseJavaRes NO-SOURCE
+> Task :react-native-svg:createFullJarRelease
+> Task :react-native-svg:extractProguardFiles
+> Task :react-native-svg:generateReleaseLintModel
+> Task :react-native-svg:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-gesture-handler:generateReleaseLintModel
+> Task :react-native-gesture-handler:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-haptic-feedback:processReleaseJavaRes NO-SOURCE
+> Task :react-native-haptic-feedback:createFullJarRelease
+> Task :react-native-haptic-feedback:extractProguardFiles
+> Task :react-native-haptic-feedback:generateReleaseLintModel
+> Task :react-native-haptic-feedback:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-image-picker:processReleaseJavaRes NO-SOURCE
+> Task :react-native-image-picker:createFullJarRelease
+> Task :react-native-image-picker:extractProguardFiles
+> Task :react-native-image-picker:generateReleaseLintModel
+> Task :react-native-image-picker:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-safe-area-context:processReleaseJavaRes
+> Task :react-native-safe-area-context:createFullJarRelease
+> Task :react-native-safe-area-context:extractProguardFiles
+> Task :react-native-safe-area-context:generateReleaseLintModel
+> Task :react-native-safe-area-context:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-screens:processReleaseJavaRes
+> Task :react-native-screens:createFullJarRelease
+> Task :react-native-screens:extractProguardFiles
+> Task :react-native-screens:generateReleaseLintModel
 > Task :react-native-screens:prepareLintJarForPublish UP-TO-DATE
-> Task :react-native-vector-icons:prepareDebugArtProfile
-> Task :react-native-track-player:mergeDebugGeneratedProguardFiles
-> Task :react-native-safe-area-context:mergeDebugJavaResource
-> Task :react-native-vector-icons:prepareLintJarForPublish
-> Task :react-native-screens:mergeDebugJavaResource
-> Task :react-native-track-player:mergeDebugConsumerProguardFiles
-> Task :react-native-track-player:prepareDebugArtProfile
-> Task :react-native-vector-icons:mergeDebugJavaResource
-> Task :react-native-track-player:prepareLintJarForPublish
-> Task :react-native-video:extractDebugAnnotations
-> Task :react-native-track-player:mergeDebugJavaResource
-> Task :react-native-video:extractDeepLinksForAarDebug FROM-CACHE
-> Task :react-native-video:mergeDebugGeneratedProguardFiles
-> Task :react-native-vector-icons:syncDebugLibJars
-> Task :react-native-video:mergeDebugConsumerProguardFiles
-> Task :react-native-video:prepareDebugArtProfile
-> Task :react-native-video:prepareLintJarForPublish
-> Task :react-native-vector-icons:bundleDebugAar
-> Task :react-native-safe-area-context:syncDebugLibJars
-> Task :react-native-video:mergeDebugJavaResource
-> Task :react-native-vector-icons:assembleDebug
-> Task :react-native-reanimated:stripDebugDebugSymbols
-> Task :react-native-screens:syncDebugLibJars
-> Task :react-native-safe-area-context:bundleDebugAar
-> Task :react-native-safe-area-context:assembleDebug
-> Task :react-native-screens:bundleDebugAar
-> Task :react-native-screens:assembleDebug
-> Task :react-native-track-player:syncDebugLibJars
-> Task :react-native-track-player:bundleDebugAar
-> Task :react-native-track-player:assembleDebug
-> Task :react-native-video:syncDebugLibJars
-> Task :react-native-video:bundleDebugAar
-> Task :react-native-video:assembleDebug
-> Task :app:dexBuilderDebug
-> Task :react-native-reanimated:externalNativeBuildDebug
-> Task :react-native-reanimated:generateJsonModelDebug
-> Task :react-native-reanimated:prefabDebugConfigurePackage
-> Task :app:processDebugJavaRes
-> Task :react-native-svg:syncDebugLibJars
-> Task :react-native-svg:bundleDebugAar
-> Task :react-native-svg:assembleDebug
-> Task :app:mergeDebugGlobalSynthetics
-> Task :react-native-reanimated:copyDebugJniLibsProjectAndLocalJars
-> Task :react-native-reanimated:prefabDebugPackage
-> Task :react-native-reanimated:prepareDebugArtProfile
-> Task :react-native-reanimated:prepareLintJarForPublish
-> Task :react-native-reanimated:mergeDebugJavaResource
-> Task :react-native-reanimated:syncDebugLibJars
-> Task :app:mergeDebugJniLibFolders FROM-CACHE
-> Task :app:validateSigningDebug
-> Task :app:writeDebugAppMetadata
-> Task :app:writeDebugSigningConfigVersions
-> Task :app:mergeProjectDexDebug
-> Task :app:mergeLibDexDebug
-> Task :app:mergeDebugJavaResource
-> Task :react-native-reanimated:bundleDebugAar
-> Task :react-native-reanimated:assembleDebug
-> Task :app:mergeDebugNativeLibs
-> Task :app:stripDebugDebugSymbols
-> Task :app:packageDebug
-> Task :app:createDebugApkListingFileRedirect
-> Task :app:assembleDebug
+> Task :react-native-sound:processReleaseJavaRes
+> Task :react-native-sound:createFullJarRelease
+> Task :react-native-sound:extractProguardFiles
+> Task :react-native-sound:generateReleaseLintModel
+> Task :react-native-sound:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-track-player:processReleaseJavaRes
+> Task :react-native-track-player:createFullJarRelease
+> Task :react-native-track-player:extractProguardFiles
+> Task :react-native-track-player:generateReleaseLintModel
+> Task :react-native-track-player:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-vector-icons:processReleaseJavaRes NO-SOURCE
+> Task :react-native-vector-icons:createFullJarRelease
+> Task :react-native-vector-icons:extractProguardFiles
+> Task :react-native-vector-icons:generateReleaseLintModel
+> Task :react-native-vector-icons:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-video:processReleaseJavaRes
+> Task :react-native-video:createFullJarRelease
+> Task :react-native-video:extractProguardFiles
+> Task :react-native-video:generateReleaseLintModel
+> Task :react-native-video:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-webview:processReleaseJavaRes
+> Task :react-native-webview:createFullJarRelease
+> Task :react-native-webview:extractProguardFiles
+> Task :react-native-webview:generateReleaseLintModel
+> Task :react-native-webview:prepareLintJarForPublish UP-TO-DATE
+> Task :dr.pogodin_react-native-fs:stripReleaseDebugSymbols NO-SOURCE
+> Task :dr.pogodin_react-native-fs:copyReleaseJniLibsProjectAndLocalJars
+> Task :dr.pogodin_react-native-fs:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :dr.pogodin_react-native-fs:extractReleaseAnnotations
+> Task :dr.pogodin_react-native-fs:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :dr.pogodin_react-native-fs:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-gesture-handler:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-gesture-handler:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-gesture-handler:extractReleaseAnnotations
+> Task :react-native-gesture-handler:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-safe-area-context:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-safe-area-context:extractReleaseAnnotations
+> Task :react-native-safe-area-context:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-screens:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-screens:extractReleaseAnnotations
+> Task :react-native-screens:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-screens:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-sound:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-screens:mergeReleaseJavaResource
+> Task :react-native-sound:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-safe-area-context:mergeReleaseJavaResource
+> Task :react-native-gesture-handler:mergeReleaseJavaResource
+> Task :dr.pogodin_react-native-fs:mergeReleaseJavaResource
+> Task :react-native-screens:stripReleaseDebugSymbols
+> Task :react-native-screens:syncReleaseLibJars
+> Task :dr.pogodin_react-native-fs:syncReleaseLibJars
+> Task :dr.pogodin_react-native-fs:bundleReleaseLocalLintAar
 
-BUILD SUCCESSFUL in 45s
-527 actionable tasks: 268 executed, 251 from cache, 8 up-to-date
+> Task :app:compileReleaseKotlin
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/java/com/anonymous/soundtherapyapp/AudioLevelPackage.kt:13:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/java/com/anonymous/soundtherapyapp/CrashReportPackage.kt:9:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/java/com/anonymous/soundtherapyapp/MainApplication.kt:8:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/java/com/anonymous/soundtherapyapp/MainApplication.kt:15:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/java/com/anonymous/soundtherapyapp/MainApplication.kt:15:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///Users/lishang/Documents/esonare_SoundTherapyPro/android/app/src/main/java/com/anonymous/soundtherapyapp/MultiTrackMixerPackage.kt:9:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+
+> Task :react-native-gesture-handler:syncReleaseLibJars
+
+> Task :app:compileReleaseJavaWithJavac
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+
+> Task :app:dexBuilderRelease
+> Task :app:mergeReleaseGlobalSynthetics
+> Task :app:generateReleaseLintVitalReportModel
+> Task :react-native-gesture-handler:bundleReleaseLocalLintAar
+> Task :react-native-safe-area-context:syncReleaseLibJars
+> Task :react-native-safe-area-context:bundleReleaseLocalLintAar
+> Task :react-native-sound:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-screens:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-sound:extractReleaseAnnotations
+> Task :react-native-screens:bundleReleaseLocalLintAar
+> Task :react-native-sound:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-sound:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-track-player:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-track-player:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-sound:mergeReleaseJavaResource
+> Task :react-native-track-player:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-sound:syncReleaseLibJars
+> Task :react-native-sound:bundleReleaseLocalLintAar
+> Task :react-native-track-player:extractReleaseAnnotations
+> Task :react-native-track-player:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-track-player:mergeReleaseConsumerProguardFiles
+> Task :react-native-video:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-video:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-video:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-track-player:mergeReleaseJavaResource
+> Task :react-native-video:extractReleaseAnnotations
+> Task :react-native-track-player:syncReleaseLibJars
+> Task :react-native-track-player:bundleReleaseLocalLintAar
+> Task :react-native-video:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-video:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-webview:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-webview:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-webview:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-video:mergeReleaseJavaResource
+> Task :react-native-webview:extractReleaseAnnotations
+> Task :react-native-video:syncReleaseLibJars
+> Task :react-native-video:bundleReleaseLocalLintAar
+> Task :react-native-webview:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-webview:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-webview:mergeReleaseJavaResource
+> Task :react-native-async-storage_async-storage:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-webview:syncReleaseLibJars
+> Task :react-native-webview:bundleReleaseLocalLintAar
+> Task :react-native-async-storage_async-storage:extractReleaseAnnotations
+> Task :react-native-async-storage_async-storage:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_blur:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-async-storage_async-storage:mergeReleaseJavaResource
+> Task :react-native-community_blur:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-community_blur:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:syncReleaseLibJars
+> Task :react-native-async-storage_async-storage:bundleReleaseLocalLintAar
+> Task :react-native-community_blur:extractReleaseAnnotations
+> Task :react-native-community_blur:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_blur:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_netinfo:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-community_blur:mergeReleaseJavaResource
+> Task :react-native-community_netinfo:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-community_netinfo:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-community_blur:syncReleaseLibJars
+> Task :react-native-community_blur:bundleReleaseLocalLintAar
+> Task :react-native-community_netinfo:extractReleaseAnnotations
+> Task :react-native-community_netinfo:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_slider:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-community_netinfo:mergeReleaseJavaResource
+> Task :react-native-community_slider:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-community_slider:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-community_netinfo:syncReleaseLibJars
+> Task :react-native-community_netinfo:bundleReleaseLocalLintAar
+> Task :react-native-community_slider:extractReleaseAnnotations
+> Task :react-native-community_slider:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_slider:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-haptic-feedback:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-community_slider:mergeReleaseJavaResource
+> Task :react-native-haptic-feedback:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-community_slider:syncReleaseLibJars
+> Task :react-native-community_slider:bundleReleaseLocalLintAar
+> Task :react-native-haptic-feedback:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-haptic-feedback:extractReleaseAnnotations
+> Task :react-native-haptic-feedback:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-haptic-feedback:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-image-picker:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-haptic-feedback:mergeReleaseJavaResource
+> Task :react-native-image-picker:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-image-picker:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-haptic-feedback:syncReleaseLibJars
+> Task :react-native-haptic-feedback:bundleReleaseLocalLintAar
+> Task :react-native-image-picker:extractReleaseAnnotations
+> Task :react-native-image-picker:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-image-picker:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-image-picker:mergeReleaseJavaResource
+> Task :react-native-reanimated:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-image-picker:syncReleaseLibJars
+> Task :react-native-image-picker:bundleReleaseLocalLintAar
+> Task :react-native-reanimated:extractReleaseAnnotations
+> Task :react-native-reanimated:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-reanimated:mergeReleaseConsumerProguardFiles
+> Task :react-native-reanimated:stripReleaseDebugSymbols
+> Task :react-native-reanimated:externalNativeBuildRelease
+> Task :react-native-reanimated:generateJsonModelRelease
+> Task :react-native-reanimated:prefabReleaseConfigurePackage UP-TO-DATE
+> Task :react-native-reanimated:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-reanimated:prefabReleasePackage
+> Task :react-native-svg:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-reanimated:mergeReleaseJavaResource
+> Task :react-native-svg:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-reanimated:syncReleaseLibJars
+> Task :react-native-reanimated:bundleReleaseLocalLintAar
+> Task :react-native-svg:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-svg:extractReleaseAnnotations
+> Task :react-native-svg:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-svg:mergeReleaseConsumerProguardFiles
+> Task :react-native-vector-icons:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-vector-icons:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-svg:mergeReleaseJavaResource
+> Task :react-native-vector-icons:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-svg:syncReleaseLibJars
+> Task :react-native-svg:bundleReleaseLocalLintAar
+> Task :react-native-vector-icons:extractReleaseAnnotations
+> Task :react-native-vector-icons:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-vector-icons:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-vector-icons:mergeReleaseJavaResource
+> Task :react-native-vector-icons:syncReleaseLibJars
+> Task :react-native-vector-icons:bundleReleaseLocalLintAar
+> Task :dr.pogodin_react-native-fs:writeReleaseLintModelMetadata
+> Task :react-native-async-storage_async-storage:writeReleaseLintModelMetadata
+> Task :react-native-community_blur:writeReleaseLintModelMetadata
+> Task :react-native-community_netinfo:writeReleaseLintModelMetadata
+> Task :react-native-community_slider:writeReleaseLintModelMetadata
+> Task :react-native-reanimated:writeReleaseLintModelMetadata
+> Task :react-native-svg:writeReleaseLintModelMetadata
+> Task :react-native-gesture-handler:writeReleaseLintModelMetadata
+> Task :react-native-haptic-feedback:writeReleaseLintModelMetadata
+> Task :react-native-image-picker:writeReleaseLintModelMetadata
+> Task :react-native-safe-area-context:writeReleaseLintModelMetadata
+> Task :react-native-screens:writeReleaseLintModelMetadata
+> Task :react-native-sound:writeReleaseLintModelMetadata
+> Task :react-native-track-player:writeReleaseLintModelMetadata
+> Task :react-native-vector-icons:writeReleaseLintModelMetadata
+> Task :react-native-video:writeReleaseLintModelMetadata
+> Task :react-native-webview:writeReleaseLintModelMetadata
+> Task :dr.pogodin_react-native-fs:generateReleaseLintVitalModel
+> Task :react-native-async-storage_async-storage:generateReleaseLintVitalModel
+> Task :react-native-community_blur:generateReleaseLintVitalModel
+> Task :react-native-community_netinfo:generateReleaseLintVitalModel
+> Task :react-native-community_slider:generateReleaseLintVitalModel
+> Task :react-native-gesture-handler:generateReleaseLintVitalModel
+> Task :react-native-haptic-feedback:generateReleaseLintVitalModel
+> Task :react-native-image-picker:generateReleaseLintVitalModel
+> Task :react-native-reanimated:generateReleaseLintVitalModel
+> Task :react-native-safe-area-context:generateReleaseLintVitalModel
+> Task :react-native-screens:generateReleaseLintVitalModel
+> Task :react-native-sound:generateReleaseLintVitalModel
+> Task :react-native-svg:generateReleaseLintVitalModel
+> Task :react-native-track-player:generateReleaseLintVitalModel
+> Task :react-native-vector-icons:generateReleaseLintVitalModel
+> Task :react-native-video:generateReleaseLintVitalModel
+> Task :react-native-webview:generateReleaseLintVitalModel
+> Task :app:processReleaseJavaRes
+> Task :app:mergeExtDexRelease
+> Task :app:mergeReleaseJavaResource
+> Task :app:collectReleaseDependencies
+> Task :app:sdkReleaseDependencyData
+> Task :app:validateSigningRelease
+> Task :app:writeReleaseAppMetadata
+> Task :app:writeReleaseSigningConfigVersions
+> Task :dr.pogodin_react-native-fs:bundleReleaseAar
+> Task :dr.pogodin_react-native-fs:mapReleaseSourceSetPaths
+> Task :dr.pogodin_react-native-fs:mergeReleaseResources
+> Task :react-native-async-storage_async-storage:bundleReleaseAar
+> Task :react-native-async-storage_async-storage:mapReleaseSourceSetPaths
+> Task :dr.pogodin_react-native-fs:verifyReleaseResources
+> Task :react-native-async-storage_async-storage:mergeReleaseResources
+> Task :dr.pogodin_react-native-fs:assembleRelease
+> Task :react-native-community_blur:bundleReleaseAar
+> Task :react-native-community_blur:mapReleaseSourceSetPaths
+> Task :react-native-async-storage_async-storage:verifyReleaseResources
+> Task :react-native-community_blur:mergeReleaseResources
+> Task :react-native-async-storage_async-storage:assembleRelease
+> Task :react-native-community_netinfo:bundleReleaseAar
+> Task :react-native-community_netinfo:mapReleaseSourceSetPaths
+> Task :react-native-community_blur:lintVitalAnalyzeRelease
+> Task :app:mergeDexRelease
+> Task :react-native-community_blur:verifyReleaseResources
+> Task :react-native-community_netinfo:mergeReleaseResources
+> Task :react-native-community_blur:assembleRelease
+> Task :react-native-community_slider:bundleReleaseAar
+> Task :react-native-community_slider:mapReleaseSourceSetPaths
+> Task :app:compileReleaseArtProfile
+> Task :react-native-community_netinfo:verifyReleaseResources
+> Task :react-native-community_slider:mergeReleaseResources
+> Task :react-native-community_netinfo:assembleRelease
+> Task :react-native-gesture-handler:bundleReleaseAar
+> Task :react-native-gesture-handler:mapReleaseSourceSetPaths
+> Task :react-native-community_slider:verifyReleaseResources
+> Task :react-native-gesture-handler:mergeReleaseResources
+> Task :react-native-community_slider:assembleRelease
+> Task :react-native-haptic-feedback:bundleReleaseAar
+> Task :react-native-haptic-feedback:mapReleaseSourceSetPaths
+> Task :react-native-gesture-handler:verifyReleaseResources
+> Task :react-native-haptic-feedback:mergeReleaseResources
+> Task :react-native-gesture-handler:assembleRelease
+> Task :react-native-image-picker:bundleReleaseAar
+> Task :react-native-image-picker:mapReleaseSourceSetPaths
+> Task :react-native-haptic-feedback:verifyReleaseResources
+> Task :react-native-image-picker:mergeReleaseResources
+> Task :react-native-haptic-feedback:assembleRelease
+> Task :react-native-image-picker:verifyReleaseResources
+> Task :react-native-reanimated:bundleReleaseAar
+> Task :react-native-image-picker:assembleRelease
+> Task :react-native-reanimated:mapReleaseSourceSetPaths
+> Task :react-native-reanimated:mergeReleaseResources
+> Task :react-native-safe-area-context:bundleReleaseAar
+> Task :react-native-safe-area-context:mapReleaseSourceSetPaths
+> Task :react-native-reanimated:verifyReleaseResources
+> Task :react-native-safe-area-context:mergeReleaseResources
+> Task :react-native-reanimated:assembleRelease
+> Task :react-native-screens:bundleReleaseAar
+> Task :react-native-screens:mapReleaseSourceSetPaths
+> Task :react-native-safe-area-context:verifyReleaseResources
+> Task :react-native-screens:mergeReleaseResources
+> Task :react-native-safe-area-context:assembleRelease
+> Task :react-native-sound:bundleReleaseAar
+> Task :react-native-sound:mapReleaseSourceSetPaths
+> Task :react-native-async-storage_async-storage:lintVitalAnalyzeRelease
+> Task :react-native-sound:mergeReleaseResources
+> Task :react-native-svg:bundleReleaseAar
+> Task :react-native-svg:mapReleaseSourceSetPaths
+> Task :react-native-screens:verifyReleaseResources
+> Task :react-native-sound:verifyReleaseResources
+> Task :react-native-svg:mergeReleaseResources
+> Task :react-native-screens:assembleRelease
+> Task :react-native-sound:assembleRelease
+> Task :react-native-track-player:bundleReleaseAar
+> Task :react-native-track-player:mapReleaseSourceSetPaths
+> Task :react-native-svg:verifyReleaseResources
+> Task :react-native-track-player:mergeReleaseResources
+> Task :react-native-svg:assembleRelease
+> Task :react-native-vector-icons:bundleReleaseAar
+> Task :react-native-vector-icons:mapReleaseSourceSetPaths
+> Task :react-native-community_netinfo:lintVitalAnalyzeRelease
+> Task :react-native-vector-icons:mergeReleaseResources
+> Task :react-native-video:bundleReleaseAar
+> Task :react-native-video:mapReleaseSourceSetPaths
+> Task :react-native-track-player:verifyReleaseResources
+> Task :react-native-vector-icons:verifyReleaseResources
+> Task :react-native-video:mergeReleaseResources
+> Task :react-native-track-player:assembleRelease
+> Task :react-native-vector-icons:assembleRelease
+> Task :react-native-webview:bundleReleaseAar
+> Task :react-native-webview:mapReleaseSourceSetPaths
+> Task :dr.pogodin_react-native-fs:lintVitalAnalyzeRelease
+> Task :react-native-video:verifyReleaseResources
+> Task :react-native-webview:mergeReleaseResources
+> Task :react-native-video:assembleRelease
+> Task :app:optimizeReleaseResources
+> Task :react-native-webview:verifyReleaseResources
+> Task :react-native-webview:assembleRelease
+> Task :react-native-community_slider:lintVitalAnalyzeRelease
+> Task :react-native-image-picker:lintVitalAnalyzeRelease
+> Task :react-native-reanimated:lintVitalAnalyzeRelease
+> Task :react-native-gesture-handler:lintVitalAnalyzeRelease
+> Task :react-native-haptic-feedback:lintVitalAnalyzeRelease
+> Task :react-native-screens:lintVitalAnalyzeRelease
+> Task :react-native-svg:lintVitalAnalyzeRelease
+> Task :react-native-safe-area-context:lintVitalAnalyzeRelease
+> Task :react-native-sound:lintVitalAnalyzeRelease
+> Task :react-native-video:lintVitalAnalyzeRelease
+> Task :react-native-vector-icons:lintVitalAnalyzeRelease
+> Task :react-native-track-player:lintVitalAnalyzeRelease
+> Task :react-native-webview:lintVitalAnalyzeRelease
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+
+> Task :app:packageRelease
+PackagingOptions.jniLibs.useLegacyPackaging should be set to true because android:extractNativeLibs is set to "true" in AndroidManifest.xml.
+
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
+
+[Incubating] Problems report is available at: file:///Users/lishang/Documents/esonare_SoundTherapyPro/android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 2m 4s
+796 actionable tasks: 702 executed, 94 up-to-date

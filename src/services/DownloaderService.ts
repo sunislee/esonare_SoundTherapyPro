@@ -292,7 +292,7 @@ class DownloaderService {
       console.log(`[Downloader] 🔥 [fetch] 目标路径: ${localPath}`);
       console.log(`[Downloader] 🔥 [fetch] 进程 ID: [TypeScript层]`);
       console.log(`[Downloader] 🔥 [fetch] 时间戳: ${Date.now()}`);
-      console.log(`[Downloader] 🔥 [fetch] 网络源: kkgithub`);
+      console.log(`[Downloader] 🔥 [fetch] 网络源: ghproxy`);
       
       this.notify({
         resourceId: resource.id,
@@ -323,8 +323,9 @@ class DownloaderService {
         }
 
         // RNFS.appendFile 每块约 1MB（~1048576 bytes），按 chunked 分片追加
+        if (!response.body) throw new Error('Response body is null');
         let totalWritten = 0;
-        const reader = (response.body as any).getReader();
+        const reader = response.body.getReader();
 
         while (true) {
           const { done, value } = await reader.read();
@@ -454,8 +455,8 @@ class DownloaderService {
     console.log(`[Downloader] 📋 [addSceneAudioTask] 添加任务: ${sceneId}`);
     const asset = AUDIO_MANIFEST.find(a => a.id === sceneId);
     if (asset) {
-      // kkgithub GitHub 镜像（国内速度快）
-      const GITHUB_BASE = 'https://raw.kkgithub.com/sunislee/sound-therapy-assets/main';
+      // ghproxy.net 代理源（kkgithub 国内已不可用，改用 ghproxy）
+      const GITHUB_BASE = 'https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main';
       const resource: AudioResource = {
         id: asset.id,
         filename: asset.filename,

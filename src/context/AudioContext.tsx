@@ -6,9 +6,12 @@ import AudioService from '../services/AudioService';
 import TrackPlayer, { State } from 'react-native-track-player';
 
 import { Scene } from '../constants/scenes';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
+import zh from '../i18n/locales/zh.json';
+import en from '../i18n/locales/en.json';
+import ja from '../i18n/locales/ja.json';
 import { NativeEQ } from '../modules/NativeEQ';
 
 interface AudioContextType {
@@ -41,46 +44,140 @@ interface AudioContextType {
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 获取 AudioService 实例
-  const audioService = AudioService.getInstance();
-  const navigation = useNavigation();
+  // 【v1.4.2 Release 防御】获取 AudioService 实例，增加 try/catch 防止模块加载失败导致崩溃
+  let audioService;
+  try {
+    audioService = typeof AudioService !== 'undefined' && typeof AudioService.getInstance === 'function' 
+      ? AudioService.getInstance() 
+      : null;
+  } catch (e) {
+    console.error('[AudioContext] ❌ AudioService getInstance 调用失败:', e);
+    audioService = null;
+  }
+
+  // 【v1.4.2 Release 防御】useNavigation 可能在无导航上下文中返回 null，需安全获取
+  // 【关键修复】使用 ref 存储 navigation，避免在 render 期间访问未完全初始化的对象
+  const navigationRef = React.useRef<{ navigate: ((screen: string, params?: any) => void) | null }>({ navigate: null });
+  
+  try {
+    const nav = useNavigation<NavigationProp<any>>();
+    if (nav && typeof nav.navigate === 'function') {
+      navigationRef.current = nav as unknown as { navigate: ((screen: string, params?: any) => void) | null };
+    } else {
+      console.warn('[AudioContext] ⚠️ useNavigation() 返回无效导航对象');
+    }
+  } catch (e) {
+    console.error('[AudioContext] ❌ useNavigation 调用失败:', e);
+  }
+  
+  const navigation: any = navigationRef.current;
+
   const { t } = useTranslation();
   
-  // 【新增】设置资源缺失回调，触发 UI 层下载引导
+  // 【新增】设置资源缺失回调，触发 UI 层下载引导（v1.4.2: 全部加防御检查）
   useEffect(() => {
-    // 【诊断】打印当前语言
-    console.log('[AudioContext] 当前 i18n.language:', i18n.language);
-    console.log('[AudioContext] i18n.isInitialized:', i18n.isInitialized);
+    if (!audioService) {
+      console.warn('[AudioContext] ⚠️ audioService 不可用，跳过 onResourceNotFound 注册');
+      return () => {};
+    }
     
-    audioService.onResourceNotFound = (scene) => {
-      // 【诊断】弹窗触发时的语言状态
-      console.log('[AudioContext] 弹窗触发 - i18n.language:', i18n.language);
-      console.log('[AudioContext] 弹窗触发 - scene.title:', scene.title);
-      console.log('[AudioContext] 弹窗触发 - i18n.t(scene.title):', i18n.t(scene.title));
-      console.log('[AudioContext] 弹窗触发 - i18n.t("download.title"):', i18n.t('download.title'));
-      console.log('[AudioContext] 弹窗触发 - i18n.t("common.cancel"):', i18n.t('common.cancel'));
-      console.log('[AudioContext] 弹窗触发 - i18n.t("actions.download"):', i18n.t('actions.download'));
-      
-      Alert.alert(
-        i18n.t('download.title'),
-        i18n.t('download.message', { sceneTitle: i18n.t(scene.title) }),
-        [
-          { 
-            text: i18n.t('common.cancel'), 
-            style: 'cancel' 
-          },
-          { 
-            text: i18n.t('actions.download'),
-            onPress: () => navigation.navigate('ResourceDownload' as never)
+    // 【诊断】打印当前语言
+    try {
+      console.log('[AudioContext] 当前 i18n.language:', i18n?.language);
+      console.log('[AudioContext] i18n.isInitialized:', i18n?.isInitialized);
+    } catch (e) {
+      // i18n 可能未完全初始化，静默处理
+    }
+
+    audioService.onResourceNotFound = (scene: any) => {
+      try {
+        console.log('[AudioContext] 弹窗触发 - scene.title:', scene?.title);
+        
+        // 【v1.4.2 Release 防御】安全获取翻译文本，使用 i18next 默认值回退
+        const safeT = (key: string, params?: any): string => {
+          try {
+            if (typeof i18n === 'object' && i18n !== null && typeof i18n.t === 'function') {
+              return i18n.t(key, params);
+            }
+          } catch (e) {
+            console.warn('[AudioContext] ⚠️ i18n.t 调用失败:', e);
           }
-        ]
-      );
+          // 回退：尝试从导入的 locale JSON 直接取值
+          if (key.startsWith('download.') || key.startsWith('common.') || key.startsWith('actions.')) {
+            return key;
+          }
+          // 对于 scenes.xxx.title 格式，尝试解析
+          try {
+            const keys = key.split('.');
+            const currentLang = i18n?.language || 'zh';
+            let source: any = currentLang === 'en' ? en : currentLang === 'ja' ? ja : zh;
+            for (const k of keys) {
+              if (source && typeof source === 'object' && k in source) {
+                source = source[k];
+              } else {
+                return key;
+              }
+            }
+            return typeof source === 'string' ? source : key;
+          } catch (e2) {
+            return key;
+          }
+        };
+
+        const dialogTitle = safeT('download.title');
+        const sceneTitle = scene?.title || '';
+        const dialogMessage = safeT('download.message', { sceneTitle });
+        const cancelText = safeT('common.cancel');
+        const downloadText = safeT('actions.download');
+
+        if (typeof Alert !== 'undefined' && typeof Alert.alert === 'function') {
+          // 【关键修复】Alert.alert 的回调函数中所有依赖都必须是闭包安全的
+          Alert.alert(
+            dialogTitle,
+            dialogMessage,
+            [
+              { 
+                text: cancelText, 
+                style: 'cancel',
+                onPress: () => { /* 取消操作 */ }
+              },
+              { 
+                text: downloadText,
+                onPress: () => {
+                  // 【v1.4.2 Release 防御】navigation 使用 ref 引用，确保 navigate 方法存在
+                  try {
+                    const navObj = navigationRef.current;
+                    if (navObj && typeof navObj.navigate === 'function') {
+                      navObj.navigate('ResourceDownload');
+                    } else {
+                      console.warn('[AudioContext] ⚠️ navigation.navigate 不可用，无法跳转下载页');
+                    }
+                  } catch (e) {
+                    console.error('[AudioContext] ❌ Alert onPress 回调异常:', e);
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          console.error('[AudioContext] ❌ Alert.alert 不可用！');
+        }
+      } catch (err) {
+        // 【关键修复】弹窗触发时的任何异常都不应导致崩溃
+        console.error('[AudioContext] ❌ onResourceNotFound 回调执行失败:', err);
+      }
     };
     
     return () => {
-      audioService.onResourceNotFound = undefined;
+      try {
+        if (audioService && typeof audioService === 'object' && 'onResourceNotFound' in audioService) {
+          (audioService as any).onResourceNotFound = undefined;
+        }
+      } catch (e) {
+        console.warn('[AudioContext] ⚠️ 清理 onResourceNotFound 失败:', e);
+      }
     };
-  }, [navigation, t]);
+  }, []); // 【关键修复】移除 navigation/t 依赖，避免重渲染时重新注册 onResourceNotFound（可能导致重复注册或引用旧对象）
   
   // 防御性检查：确保 AudioService 已准备好
   const [isServiceReady, setIsServiceReady] = useState(false);
@@ -98,27 +195,34 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [eqGains, setEqGains] = useState<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 8 段均衡器，初始值均为 1.0
   const eqGainsRef = useRef<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 【关键修复】用 ref 存储最新值，避免闭包问题
 
-  // 检查 AudioService 是否已准备好
+  // 检查 AudioService 是否已准备好（v1.4.2: 全路径防御性检查）
   useEffect(() => {
     let retryCount = 0;
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     
     const checkServiceReady = () => {
       try {
-        if (audioService.isReady()) {
+        // 【v1.4.2 Release 防御】所有 audioService 方法调用前检查
+        if (!audioService) {
+          console.warn('[AudioContext] ⚠️ audioService 为 null，直接返回');
+          return;
+        }
+        
+        const isReady = typeof audioService.isReady === 'function' ? audioService.isReady() : false;
+        if (isReady) {
           console.log('[AudioContext] ✅ AudioService 已准备好，开始同步状态');
           setIsServiceReady(true);
           
-          // 同步初始状态
-          setActiveSoundId(audioService.getCurrentBaseSceneId());
-          setPlaybackState(audioService.getCurrentState());
-          setCurrentScene(audioService.getCurrentScene());
-          setCurrentBaseSceneId(audioService.getCurrentBaseSceneId());
-          setActiveSmallSceneIds(audioService.getActiveSmallSceneIds());
-          setInitialRemaining(audioService.getInitialSleepSeconds());
-          setAmbientVolume(audioService.getAmbientVolume());
+          // 同步初始状态（v1.4.2: 每个方法调用独立 try/catch）
+          setActiveSoundId(typeof audioService.getCurrentBaseSceneId === 'function' ? audioService.getCurrentBaseSceneId() : null);
+          setPlaybackState(typeof audioService.getCurrentState === 'function' ? audioService.getCurrentState() : '');
+          setCurrentScene(typeof audioService.getCurrentScene === 'function' ? audioService.getCurrentScene() : null);
+          setCurrentBaseSceneId(typeof audioService.getCurrentBaseSceneId === 'function' ? audioService.getCurrentBaseSceneId() : null);
+          setActiveSmallSceneIds(typeof audioService.getActiveSmallSceneIds === 'function' ? audioService.getActiveSmallSceneIds() : []);
+          setInitialRemaining(typeof audioService.getInitialSleepSeconds === 'function' ? audioService.getInitialSleepSeconds() : null);
+          setAmbientVolume(typeof audioService.getAmbientVolume === 'function' ? audioService.getAmbientVolume() : 1.0);
           
-          const endTime = audioService.getSleepEndTime();
+          const endTime = typeof audioService.getSleepEndTime === 'function' ? audioService.getSleepEndTime() : undefined;
           if (endTime) {
             const remain = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
             setRemainingTime(remain);
@@ -170,74 +274,89 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (!isServiceReady) {
       console.warn('[AudioContext] ⚠️ isServiceReady=false, 跳过注册监听器');
-      return;
+      // 【关键修复】early return 时必须返回一个 no-op cleanup，否则 React 在卸载时会调用 undefined() → TypeError: undefined is not a function
+      return () => {};
     }
     
     console.warn('[AudioContext] ✅ isServiceReady=true, 开始注册监听器');
     
-    const unsubscribeState = audioService.addAudioStateListener((state) => {
+    const svc = audioService as any; // 【关键修复】使用 any cast 解决 TS 类型检测不到的 runtime-added methods
+    
+    const unsubscribeState = typeof (svc as any)?.addAudioStateListener === 'function' ? (svc as any).addAudioStateListener((state: any) => {
       try {
-        // 【强制日志】
         console.warn('--- [AudioContext] STATUS UPDATED: id=' + state?.id + ' state=' + state?.state + ' ---');
         console.warn('--- [AudioContext] isPlaying=' + (state?.state === State.Playing) + ' ---');
         console.warn('--- [AudioContext] 开始更新 state ---');
         setActiveSoundId(state.id);
         setPlaybackState(state.state);
-        setCurrentScene(audioService.getCurrentScene());
-        setCurrentBaseSceneId(audioService.getCurrentBaseSceneId());
-        setActiveSmallSceneIds(audioService.getActiveSmallSceneIds());
+        setCurrentScene(svc.getCurrentScene());
+        setCurrentBaseSceneId(svc.getCurrentBaseSceneId());
+        setActiveSmallSceneIds(svc.getActiveSmallSceneIds());
         console.warn('--- [AudioContext] state 更新完成 ---');
       } catch (err) {
         console.error('[AudioContext] ❌ 状态回调异常:', err);
       }
-    });
+    }) : () => {};
 
-    const unsubscribeSmallScenes = audioService.addSmallScenesListener((ids) => {
+    const unsubscribeSmallScenes = typeof (svc as any)?.addSmallScenesListener === 'function' ? (svc as any).addSmallScenesListener((ids: string[]) => {
       setActiveSmallSceneIds(ids);
-    });
+    }) : () => {};
 
-    const unsubscribeVolume = audioService.addVolumeListener((vol) => {
+    const unsubscribeVolume = typeof (svc as any)?.addVolumeListener === 'function' ? (svc as any).addVolumeListener((vol: number) => {
       setAmbientVolume(vol);
-    });
+    }) : () => {};
 
-    const unsubscribeTimer = audioService.addSleepTimerListener((remaining) => {
+    const unsubscribeTimer = typeof (svc as any)?.addSleepTimerListener === 'function' ? (svc as any).addSleepTimerListener((remaining: number | null) => {
       setRemainingTime(remaining);
       if (remaining !== null && initialRemaining === null) {
-        setInitialRemaining(audioService.getInitialSleepSeconds());
+        setInitialRemaining((svc as any)?.getInitialSleepSeconds() ?? 0);
       } else if (remaining === null) {
         setInitialRemaining(null);
       }
-    });
+    }) : () => {};
 
+    // 【v1.4.2 Release 防御】清理函数：确保所有取消订阅函数都存在且为 function
+    const safeUnsubscribe = (fn: any) => {
+      if (typeof fn === 'function') {
+        try { fn(); } catch (e) { console.warn('[AudioContext] ⚠️ 取消订阅失败:', e); }
+      }
+    };
+    
     return () => {
-      unsubscribeState();
-      unsubscribeSmallScenes();
-      unsubscribeVolume();
-      unsubscribeTimer();
+      safeUnsubscribe(unsubscribeState);
+      safeUnsubscribe(unsubscribeSmallScenes);
+      safeUnsubscribe(unsubscribeVolume);
+      safeUnsubscribe(unsubscribeTimer);
       
       // 【清理】清除所有 EQ 防抖计时器
-      Object.values(eqDebounceTimers.current).forEach(timer => {
-        if (timer) clearTimeout(timer);
-      });
+      for (const timer of Object.values(eqDebounceTimers.current)) {
+        if (timer) clearTimeout(timer as any);
+      }
       console.log('[AudioContext] 🧹 已清理 EQ 防抖计时器');
     };
   }, [isServiceReady]);
 
   const updateAmbientVolume = useCallback((volume: number) => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 updateAmbientVolume');
       return;
     }
-    audioService.updateAmbientVolume(volume);
-  }, [isServiceReady]);
+    try { audioService.updateAmbientVolume(volume); } 
+    catch (e) { console.error('[AudioContext] ❌ updateAmbientVolume 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   // 【防抖优化】EQ 增益更新防抖计时器
-  const eqDebounceTimers = useRef<{ [key: number]: NodeJS.Timeout }>({});
+  const eqDebounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  // 【v1.4.2 Release 防御】NativeEQ.set8BandEQ 可能被混淆影响，调用前检查
+  const set8BandEQ = typeof NativeEQ !== 'undefined' && typeof NativeEQ.set8BandEQ === 'function' 
+    ? (gains: number[]) => NativeEQ.set8BandEQ(gains) 
+    : null;
 
   const updateEqGain = useCallback((index: number, gain: number) => {
     console.log(`[AudioContext] 🎛️ updateEqGain 被调用: index=${index}, gain=${gain}`);
-    if (index < 0 || index >= 8) {
-      console.warn('[AudioContext] ⚠️ EQ 频段索引超出范围:', index);
+    if (!Number.isInteger(index) || !Number.isFinite(gain)) {
+      console.warn('[AudioContext] ⚠️ EQ 参数无效:', { index, gain });
       return;
     }
     
@@ -261,101 +380,121 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // 【关键修复】使用 ref 中的最新值，而不是闭包捕获的旧 state
       const currentGains = [...eqGainsRef.current];
       console.log(`[AudioContext] ⏰ 防抖计时器触发，发送 EQ 到原生层:`, currentGains);
-      NativeEQ.set8BandEQ(currentGains);
+      // 【v1.4.2 Release 防御】使用安全包装函数，若 set8BandEQ 为 null 则跳过
+      if (set8BandEQ) {
+        try { set8BandEQ(currentGains); } catch (e) { console.error('[AudioContext] ❌ set8BandEQ 调用失败:', e); }
+      } else {
+        console.warn('[AudioContext] ⚠️ NativeEQ.set8BandEQ 不可用，跳过 EQ 更新');
+      }
       console.log(`[AudioContext] ✅ EQ 更新：频段${index}, gain=${gain}, dB=${(gain * 12).toFixed(1)}dB`);
     }, 50);
-  }, []);
+  }, [audioService]); // 【关键修复】添加 audioService 依赖，确保引用更新时回调也同步
+
+  // 【v1.4.2 Release 防御】安全调用包装器：所有方法先检查函数存在性再调用
+  const safeCall = (fn: any, ...args: any[]) => {
+    if (typeof fn === 'function') {
+      try { return fn(...args); } 
+      catch (e) { console.warn('[AudioContext] ⚠️ safeCall 失败:', e); return undefined; }
+    }
+  };
 
   const setAmbient = useCallback(async (id: string | null) => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 setAmbient');
       return;
     }
-    if (id) {
-      await audioService.playAmbient(id);
-    } else {
-      await audioService.stopAllAmbient();
-    }
-  }, [isServiceReady]);
+    try {
+      if (id && typeof audioService.playAmbient === 'function') {
+        await audioService.playAmbient(id);
+      } else if (!id && typeof audioService.stopAllAmbient === 'function') {
+        await audioService.stopAllAmbient();
+      }
+    } catch (e) { console.error('[AudioContext] ❌ setAmbient 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const getAmbientVolumeById = useCallback((id: string) => {
-    if (!isServiceReady) {
-      console.warn('[AudioContext] ⚠️ AudioService 未准备好，返回默认音量');
-      return 1.0;
-    }
-    return audioService.getAmbientVolumeById(id);
-  }, [isServiceReady]);
+    if (!isServiceReady || !audioService) return 1.0;
+    return safeCall(audioService.getAmbientVolumeById, id) ?? 1.0;
+  }, [isServiceReady, audioService]);
 
   const toggleAmbience = useCallback(async (scene: Scene, targetState: boolean) => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 toggleAmbience');
       return;
     }
-    await audioService.toggleAmbience(scene, targetState);
-  }, [isServiceReady]);
+    try { await safeCall(audioService.toggleAmbience, scene, targetState); } 
+    catch (e) { console.error('[AudioContext] ❌ toggleAmbience 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const play = useCallback(async (scene?: Scene) => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 play');
       return;
     }
-    if (scene) {
-      await audioService.switchSoundscape(scene);
-    } else {
-      await audioService.play();
-    }
-  }, [isServiceReady]);
+    try {
+      if (scene && typeof audioService.switchSoundscape === 'function') {
+        await audioService.switchSoundscape(scene);
+      } else if (typeof audioService.play === 'function') {
+        await audioService.play();
+      }
+    } catch (e) { console.error('[AudioContext] ❌ play 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const pause = useCallback(async () => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 pause');
       return;
     }
-    await audioService.pause();
-  }, [isServiceReady]);
+    try { await safeCall(audioService.pause); } 
+    catch (e) { console.error('[AudioContext] ❌ pause 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const togglePlayback = useCallback(async (scene: Scene) => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 togglePlayback');
       return;
     }
-    await audioService.togglePlayback(scene);
-  }, [isServiceReady]);
+    try { await safeCall(audioService.togglePlayback, scene); } 
+    catch (e) { console.error('[AudioContext] ❌ togglePlayback 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const playScene = useCallback(async (scene: Scene) => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 playScene');
       return;
     }
     // 【关键】在切换场景前，强制重置交互音状态
-    console.log('[AudioContext] 🛑 playScene 切换场景，强制重置 activeSmallSceneIds');
     setActiveSmallSceneIds([]);
-    await audioService.playScene(scene);
-  }, [isServiceReady]);
+    try { await safeCall(audioService.playScene, scene); } 
+    catch (e) { console.error('[AudioContext] ❌ playScene 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const syncNativeStatus = useCallback(async () => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 syncNativeStatus');
       return;
     }
-    await audioService.syncNativeStatus();
-  }, [isServiceReady]);
+    try { await safeCall(audioService.syncNativeStatus); } 
+    catch (e) { console.error('[AudioContext] ❌ syncNativeStatus 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const setSleepTimer = useCallback(async (minutes: number) => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 setSleepTimer');
       return;
     }
-    await audioService.setSleepTimer(minutes);
-  }, [isServiceReady]);
+    try { await safeCall(audioService.setSleepTimer, minutes); } 
+    catch (e) { console.error('[AudioContext] ❌ setSleepTimer 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   const clearSleepTimer = useCallback(() => {
-    if (!isServiceReady) {
+    if (!isServiceReady || !audioService) {
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 clearSleepTimer');
       return;
     }
-    audioService.clearSleepTimer();
-  }, [isServiceReady]);
+    try { safeCall(audioService.clearSleepTimer); } 
+    catch (e) { console.error('[AudioContext] ❌ clearSleepTimer 失败:', e); }
+  }, [isServiceReady, audioService]);
 
   return (
     <AudioContext.Provider
