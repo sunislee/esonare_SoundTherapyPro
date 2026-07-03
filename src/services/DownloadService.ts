@@ -8,19 +8,20 @@ import {
   getLocalPath as getLocalPathHelper,
   GLOBAL_TOTAL_SIZE,
   ASSET_LIST,
-  JSDDELIVR_URL,
   STATICALLY_URL,
   GITHUB_URL,
   GHPROXY_NET_URL,
   MIRROR_GHPROXY_URL,
-  KK_GITHUB_URL,
 } from '../constants/audioAssets';
 import { SCENE_BACKGROUND_RESOURCES } from '../config/ResourceConfig';
 
 const DOWNLOAD_CONNECTION_TIMEOUT = 8000;
 const DOWNLOAD_READ_TIMEOUT = 15000;
 const DOWNLOAD_STALL_TIMEOUT = 10000;
-const UI_UPDATE_INTERVAL_MS = 2000;
+const UI_UPDATE_INTERVAL_MS = 1500;
+const STAT_POLL_INTERVAL_MS = 2000;
+// RNFS.downloadFile promise 的 onProgress 回调在部分版本中存在 bug（不触发中间进度），
+// 因此通过 stat(tempPath).size 手动追踪下载进度。
 const MAX_RETRIES_PER_FILE = 5;
 const MAX_CONCURRENT_TASKS = 6;
 
@@ -58,8 +59,8 @@ const getDownloadUrls = (filename: string): string[] => {
   return [
     `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encoded}`,
     `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${encoded}`,
-    `${KK_GITHUB_URL}sunislee/sound-therapy-assets/main/${encoded}`,
-    `${JSDDELIVR_URL}${encoded}`,
+    `${STATICALLY_URL}${encoded}`,
+    `${GITHUB_URL}${encoded}`,
   ];
 };
 
@@ -82,9 +83,15 @@ export const DownloadService = {
   },
 
   async silentBackgroundDownload(): Promise<{success: number; failed: number}> {
+    console.error('[DEBUG-DL] 🔥🔥🔥 函数被调用！PRIORITY_SCENES长度:', [
+      'nature_ocean', 'nature_forest', 'nature_deep_sea', 'nature_misty_forest',
+      'healing_zen_bowl', 'oriental_zen_monastery', 'life_rain_boat', 'brainwave_alpha',
+      'interactive_white_noise', 'interactive_wind_chime', 'interactive_breath',
+      'interactive_apple', 'interactive_match'
+    ].length);
     console.log(`[App-Download] 🚨🚨🚨 [SILENT_DOWNLOAD_START] 启动后台静默下载... 🚨🚨🚨`);
     
-    // 【优化】定义核心场景优先级（首页推荐的前 8 个场景）
+    // 【优化】定义核心场景优先级（首页推荐的前 8 个场景 + interactive 交互音频）
     const PRIORITY_SCENES = [
       'nature_ocean',        // 海洋
       'nature_forest',       // 森林
@@ -94,6 +101,12 @@ export const DownloadService = {
       'oriental_zen_monastery', // 东方禅意·寺院
       'life_rain_boat',      // 雨天小船
       'brainwave_alpha',     // α脑波
+      // ==================== interactive 交互音频（确保首页加载时自动下载）====================
+      'interactive_white_noise',  // 白噪音
+      'interactive_wind_chime',   // 风铃
+      'interactive_breath',       // 呼吸
+      'interactive_apple',        // 苹果脆响
+      'interactive_match',        // 火柴点燃
     ];
     
     const CONST_TOTAL_SIZE = GLOBAL_TOTAL_SIZE > 0 ? GLOBAL_TOTAL_SIZE : ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
@@ -350,7 +363,16 @@ export const DownloadService = {
     const workers = Array.from({ length: Math.min(MAX_CONCURRENT_TASKS, allFilesToDownload.length) }, () => downloadSingleFile());
     await Promise.all(workers);
 
-    console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成: 成功=${successCount}, 失败=${failedCount}`);
+    console.log(`[App-Download] 📊 [SILENT_COMPLETE] 静默下载完成：成功=${successCount}, 失败=${failedCount}`);
+
+    // 【关键修复】下载完成后刷新背景图缓存，确保东方/西方场景缩略图正确显示
+    try {
+      const { preloadBackgroundAvailability } = await import('../constants/scenes');
+      await preloadBackgroundAvailability();
+      console.log('[App-Download] ✅ [SILENT_COMPLETE] 背景图缓存已刷新');
+    } catch (e) {
+      console.error('[App-Download] ❌ [SILENT_COMPLETE] 刷新背景图缓存失败:', e);
+    }
 
     // 【关键修复】通知 HomeScreen 刷新背景图缓存，确保东方/西方场景缩略图正确显示
     DeviceEventEmitter.emit('backgroundImagesReady');
@@ -484,8 +506,11 @@ export const DownloadService = {
 
         status.status = 'downloading';
 
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+
         for (const url of urls) {
           let currentJobId: number | undefined = undefined;
+          let currentMaxBytes = 0;
 
           const stopDownloadSafe = (jobId: number) => {
             try {
@@ -498,7 +523,23 @@ export const DownloadService = {
               try { await RNFS.unlink(tempPath); } catch (e) {}
             }
 
-            let currentMaxBytes = 0;
+            // 【🔥🔥🔨 关键修复】轮询临时文件大小，弥补 RNFS.downloadFile onProgress 回调缺失的 bug
+            const startPolling = async () => {
+              if (pollTimer) clearInterval(pollTimer);
+              pollTimer = setInterval(async () => {
+                try {
+                  const stat = await RNFS.stat(tempPath);
+                  currentMaxBytes = Math.max(currentMaxBytes, Number(stat.size));
+                  status.maxConfirmedBytes = currentMaxBytes;
+                  DownloaderServiceInstance.notify({
+                    resourceId: asset.id,
+                    progress: asset.expectedSize > 0 ? Math.round((currentMaxBytes / asset.expectedSize) * 100) : 0,
+                    status: 'downloading',
+                    filename: asset.filename,
+                  });
+                } catch { /* ignore poll errors */ }
+              }, STAT_POLL_INTERVAL_MS);
+            };
 
             // 【打印完整下载 URL】让用户看到到底是哪个 URL 在 404
             console.log(`[App-Download] 🔗 完整URL: ${url}`);
@@ -512,20 +553,18 @@ export const DownloadService = {
               background: false,
               discretionary: false,
               progressDivider: 5,
-              begin: (res) => {
+              begin: (res: any) => {
                 currentJobId = res.jobId;
+                // onBegin 时临时文件开始写入，启动轮询追踪进度
+                startPolling();
               },
-progress: (res) => {
-                 if (res.bytesWritten > currentMaxBytes) {
-                   currentMaxBytes = res.bytesWritten;
-                   status.maxConfirmedBytes = currentMaxBytes;
-                 }
-                 // 【关键修复】expectedSize 来自 downloadSingleFile 的参数 asset.expectedSize
-                 DownloaderServiceInstance.notify({ resourceId: asset.id, progress: Math.round(res.bytesWritten / asset.expectedSize * 100), status: 'downloading', filename: asset.filename });
-               }
+              progress: () => { /* onProgress callback is unreliable in RNFS v12.x — handled by pollTimer above */ },
             });
 
             const downloadResult = await downloadJob.promise;
+
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = null;
 
             if (downloadResult.statusCode !== 200 && downloadResult.statusCode !== 206) {
               if (await RNFS.exists(tempPath)) {
@@ -544,9 +583,9 @@ progress: (res) => {
                 if (await RNFS.exists(localPath)) {
                   const finalStat = await RNFS.stat(localPath);
                   if (finalStat.size > 0) {
-status.status = 'success';
-DownloaderServiceInstance.notify({ resourceId: asset.id, progress: 100, status: 'completed', filename: asset.filename });
-status.maxConfirmedBytes = Number(finalStat.size);
+                    status.status = 'success';
+                    DownloaderServiceInstance.notify({ resourceId: asset.id, progress: 100, status: 'completed', filename: asset.filename });
+                    status.maxConfirmedBytes = Number(finalStat.size);
                     console.log(`[App-Download] ✅ 完成: ${asset.filename} (实际大小: ${finalStat.size} bytes)`);
 
                     if (onFileDownloadedCallback) {
@@ -563,6 +602,9 @@ status.maxConfirmedBytes = Number(finalStat.size);
             if (await RNFS.exists(tempPath)) {
               try { await RNFS.unlink(tempPath); } catch (e) {}
             }
+          } finally {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = null;
           }
         }
       }

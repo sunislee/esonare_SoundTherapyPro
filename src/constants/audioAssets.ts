@@ -16,15 +16,11 @@ export const GHPROXY_URL = 'https://ghproxy.net/';
 // 【国内最稳 GitHub Proxy 加速源】2025年最新可用
 export const GHPROXY_NET_URL = 'https://ghproxy.net/https://raw.githubusercontent.com/';
 export const MIRROR_GHPROXY_URL = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/';
-export const KK_GITHUB_URL = 'https://raw.kkgithub.com/';
-
-// 【kkgithub - GitHub 镜像，国内速度快】
-export const JSDDELIVR_URL = 'https://raw.kkgithub.com/sunislee/sound-therapy-assets/main/';
 export const STATICALLY_URL = 'https://cdn.statically.io/gh/sunislee/sound-therapy-assets/main/';
 
-// 统一使用 kkgithub 作为主源
-export const PRIMARY_REMOTE_RESOURCE_BASE_URL = JSDDELIVR_URL;
-export const SECONDARY_REMOTE_RESOURCE_BASE_URL = STATICALLY_URL;
+// 优先使用 ghproxy（kkgithub 国内已不可用）
+export const PRIMARY_REMOTE_RESOURCE_BASE_URL = GHPROXY_NET_URL + 'sunislee/sound-therapy-assets/main/';
+export const SECONDARY_REMOTE_RESOURCE_BASE_URL = MIRROR_GHPROXY_URL + 'sunislee/sound-therapy-assets/main/';
 export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 
 export const LOCAL_RESOURCE_PATH = `${RNFS.DocumentDirectoryPath}/audio_resources`; 
@@ -242,11 +238,14 @@ export const ASSET_LIST = [
   { id: 'bg_zen_guzheng_zen', expectedSize: 55704 },
   { id: 'bg_zen_buddha_morning', expectedSize: 84908 },
 
-  // 西方教会场景背景图（4张，根目录，第5张复用candlelight）
+  // 西方教会场景背景图（4张，根目录）
   { id: 'bg_western_church_candlelight', expectedSize: 150974 },
   { id: 'bg_western_church_corridor', expectedSize: 205402 },
   { id: 'bg_western_church_light_rays', expectedSize: 135480 },
   { id: 'bg_western_church_sunlight_monastery', expectedSize: 223932 },
+
+  // 西方教会场景背景图（第5张复用 candlelight）
+  // bg_western_church_forest_echo 复用 candlelight.webp，已在 AUDIO_MANIFEST 中定义，无需额外条目
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）
@@ -257,14 +256,15 @@ export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string)
   // 海外渠道：jsDelivr 主源 → Statically 备源 → GitHub 官方
   if (isGooglePlay) {
     return [
-      `${JSDDELIVR_URL}${filename}`,              // jsDelivr 全球 CDN（主源）
+      `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${filename}`,
+      `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${filename}`,
       `${STATICALLY_URL}${filename}`,             // Statically 全球 CDN（备源）
-      `${GITHUB_URL}${filename}`,                 // GitHub 官方直连
     ];
   }
-  // 国内渠道：Gitee 主源
+  // 国内渠道：ghproxy.net + mirror.ghproxy.com
   return [
-    `${GITEE_URL}${filename}`,
+    `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${filename}`,
+    `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${filename}`,
   ];
 };
 

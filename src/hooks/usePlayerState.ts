@@ -5,6 +5,9 @@ import { State } from 'react-native-track-player';
 /**
  * 播放器状态 Hook，实时订阅全局播放器状态
  * 禁止使用本地 useState 管理播放状态，必须通过此 Hook 获取实时状态
+ * 
+ * 【v1.4.2 Release 防御】Hermes Release 编译后 AudioService.getInstance() 返回的对象
+ * 其 runtime-added methods（如 addAudioStateListener）可能 undefined，需全路径检查。
  */
 export const usePlayerState = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -12,23 +15,52 @@ export const usePlayerState = () => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
 
   useEffect(() => {
-    // 获取 AudioService 实例
-    const audioService = AudioService.getInstance();
+    // 【关键修复】获取 AudioService 实例，增加 try/catch 防止模块加载失败导致崩溃
+    let audioService: any = null;
+    try {
+      const svc = typeof (AudioService as any) !== 'undefined' && typeof (AudioService as any).getInstance === 'function' 
+        ? (AudioService as any).getInstance() 
+        : null;
+      
+      if (!svc || typeof svc.isReady !== 'function') {
+        console.warn('[usePlayerState] ⚠️ AudioService 不可用');
+        return () => {}; // 立即返回空 cleanup
+      }
+      
+      audioService = svc as any;
+    } catch (e) {
+      console.error('[usePlayerState] ❌ AudioService getInstance 调用失败:', e);
+      return () => {};
+    }
+
+    // 【关键修复】订阅全局音频状态变化 — 全路径防御性检查
+    let unsubscribe = (() => {}) as () => void;
     
-    // 订阅全局音频状态变化
-    const unsubscribe = audioService.addAudioStateListener((state) => {
-      setIsPlaying(state.state === State.Playing || state.state === State.Buffering);
-      setCurrentState(state.state);
-      setCurrentTrackId(state.id);
-    });
+    try {
+      if (typeof audioService.addAudioStateListener === 'function') {
+        unsubscribe = audioService.addAudioStateListener((state: any) => {
+          try {
+            setIsPlaying(state?.state === State.Playing || state?.state === State.Buffering);
+            setCurrentState(state?.state ?? State.None);
+            setCurrentTrackId(state?.id ?? null);
+          } catch (err) {
+            console.error('[usePlayerState] ❌ 状态回调异常:', err);
+          }
+        });
+      } else {
+        console.warn('[usePlayerState] ⚠️ addAudioStateListener 不可用');
+      }
+    } catch (e) {
+      console.error('[usePlayerState] ❌ 订阅失败:', e);
+    }
 
     // 初始同步：获取当前状态
     const syncInitialState = () => {
       try {
-        // 1. 尝试从 AudioService 获取即时状态
-        const currentIsPlaying = audioService.isPlaying();
-        const currentStateStr = audioService.getCurrentState();
-        const currentScene = audioService.getCurrentScene();
+        // 【防御】所有方法调用前检查函数存在性
+        const safeGetIsPlaying = typeof audioService.isPlaying === 'function' ? audioService.isPlaying() : false;
+        const currentStateStr = typeof audioService.getCurrentState === 'function' ? audioService.getCurrentState() : '';
+        const currentScene = typeof audioService.getCurrentScene === 'function' ? audioService.getCurrentScene() : null;
         
         // 2. 将字符串状态转换为 State 枚举
         let currentStateEnum: State = State.None;
@@ -39,19 +71,23 @@ export const usePlayerState = () => {
         }
         
         // 3. 如果 Service 状态有效，立即更新本地 state
-        setIsPlaying(currentIsPlaying);
+        setIsPlaying(safeGetIsPlaying);
         setCurrentState(currentStateEnum);
         setCurrentTrackId(currentScene?.id || null);
         
-        console.log(`[usePlayerState] Immediate sync: isPlaying=${currentIsPlaying}, id=${currentScene?.id}`);
+        console.log(`[usePlayerState] Immediate sync: isPlaying=${safeGetIsPlaying}, id=${currentScene?.id}`);
 
-        // 4. 异步检查作为兜底
-        audioService.getRealIsPlaying().then(realIsPlaying => {
-          if (realIsPlaying !== currentIsPlaying) {
-            console.log(`[usePlayerState] Async sync corrected isPlaying to ${realIsPlaying}`);
-            setIsPlaying(realIsPlaying);
-          }
-        });
+        // 4. 异步检查作为兜底 — 防御 getRealIsPlaying 不存在的情况
+        if (typeof audioService.getRealIsPlaying === 'function') {
+          audioService.getRealIsPlaying().then((realIsPlaying: boolean) => {
+            if (realIsPlaying !== safeGetIsPlaying) {
+              console.log(`[usePlayerState] Async sync corrected isPlaying to ${realIsPlaying}`);
+              setIsPlaying(realIsPlaying);
+            }
+          }).catch((err: any) => {
+            console.warn('[usePlayerState] ⚠️ getRealIsPlaying 失败:', err?.message || err);
+          });
+        }
       } catch (error) {
         console.error('[usePlayerState] Initial Sync Error:', error);
       }
@@ -60,26 +96,39 @@ export const usePlayerState = () => {
     syncInitialState();
 
     return () => {
-      unsubscribe();
+      try { unsubscribe(); } catch (e) { /* noop */ }
     };
   }, []);
+
+  // 【v1.4.2 Release 防御】返回的安全方法包装器 — 所有方法先检查函数存在性再调用
+  const safeGetSvc = () => {
+    try {
+      if (typeof (AudioService as any) !== 'undefined' && typeof (AudioService as any).getInstance === 'function') {
+        return (AudioService as any).getInstance();
+      }
+    } catch (e) { /* noop */ }
+    return null;
+  };
 
   return {
     isPlaying,
     currentState,
     currentTrackId,
-    // 提供直接操作全局播放器的方法
+    // 提供直接操作全局播放器的方法（全路径防御）
     pause: async () => {
-      const audioService = AudioService.getInstance();
-      await audioService.pause();
+      const svc = safeGetSvc();
+      if (svc && typeof svc.pause === 'function') { await svc.pause(); }
+      else console.warn('[usePlayerState] ⚠️ AudioService.pause 不可用');
     },
     play: async () => {
-      const audioService = AudioService.getInstance();
-      await audioService.play();
+      const svc = safeGetSvc();
+      if (svc && typeof svc.play === 'function') { await svc.play(); }
+      else console.warn('[usePlayerState] ⚠️ AudioService.play 不可用');
     },
     getRealIsPlaying: () => {
-      const audioService = AudioService.getInstance();
-      return audioService.getRealIsPlaying();
+      const svc = safeGetSvc();
+      if (svc && typeof svc.getRealIsPlaying === 'function') return svc.getRealIsPlaying();
+      return Promise.resolve(false);
     }
   };
 };

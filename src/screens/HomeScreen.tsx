@@ -16,6 +16,16 @@ import {
   DeviceEventEmitter,
   ScrollView,
 } from 'react-native';
+
+// 【🔥 v3】useSyncExternalStore — 订阅 DeviceEventEmitter，只在真实事件发生时触发重渲染
+function useDeviceEventSubscription(eventType: string) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(eventType, () => setTick(v => v + 1));
+    return () => sub.remove();
+  }, [eventType]);
+  return tick;
+}
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import AudioService from '../services/AudioService';
@@ -35,9 +45,9 @@ import { useTranslation } from 'react-i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useBackHandler } from '../hooks/useBackHandler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useResourceDownloader } from '../hooks/useResourceDownloader';
+import { subscribeSceneDownloadChanged, getSceneDownloadState, tickScene } from '../utils/SceneDownloadStore';
 import { sceneRoamManager } from '../services/SceneRoamManager';
-import { checkSceneResourceStatus, getAllSceneStatuses } from '../services/ResourceStatusManager';
+import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } from '../services/ResourceStatusManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
@@ -104,97 +114,17 @@ const SceneItem = React.memo(({
   const isReady = downloadStatus === 'ready' || downloadProgress >= 100;
   const isIdle = !isDownloading && !isReady;
   
-  // 【🔨 v10 修复】isResourceReady 必须同时检查 downloadedSceneIds 和实时下载进度
-  // 原因：checkDownloadedScenes() 只在启动时跑一次，背景图下载完成后不会重新检查
-  // 解决：downloadProgress 中有 ready 状态也算就绪
-  const _isResourceReady = isResourceReady || isReady;
-  
-  // 【🔥🔨 v10 修复】检查背景图是否实际存在，防止显示"Ready to Play"但背景图还是占位图
-  const [bgImageExists, setBgImageExists] = useState<boolean | null>(null);
-  
-  useEffect(() => {
-    let isMounted = true;
-    
-    const checkBgImage = async () => {
-      // 如果已经通过 downloadedSceneIds 确认就绪，不需要再检查
-      if (isResourceReady) {
-        if (isMounted) setBgImageExists(true);
-        return;
-      }
-      
-      // 如果下载未完成，不需要检查
-      if (!isReady) {
-        if (isMounted) setBgImageExists(false);
-        return;
-      }
-      
-      // 下载完成但 downloadedSceneIds 未更新，需要检查背景图文件是否存在
-      try {
-        const { getSceneBackground } = await import('../constants/scenes');
-        const RNFS = await import('@dr.pogodin/react-native-fs');
-        
-        const bgSource = getSceneBackground(item.id, item.category);
-        
-        if (!bgSource) {
-          if (isMounted) setBgImageExists(false);
-          return;
-        }
-        
-        // 静态资源（require() 格式）→ 直接通过
-        if (typeof bgSource === 'number') {
-          if (isMounted) setBgImageExists(true);
-          return;
-        }
-        
-        // file:// 或 http URL → 需要检查文件是否存在
-        if (bgSource.uri) {
-          let bgCleanPath: string;
-          
-          if (bgSource.uri.startsWith('file://')) {
-            bgCleanPath = bgSource.uri.replace('file://', '');
-          } else if (bgSource.uri.startsWith('http')) {
-            // 网络URL，暂时认为未就绪
-            if (isMounted) setBgImageExists(false);
-            return;
-          } else {
-            if (isMounted) setBgImageExists(false);
-            return;
-          }
-          
-          const exists = await RNFS.exists(bgCleanPath);
-          if (isMounted) setBgImageExists(exists);
-        } else {
-          if (isMounted) setBgImageExists(false);
-        }
-      } catch (error) {
-        console.warn(`[SceneItem] ⚠️ 检查背景图失败: ${item.id}`, error);
-        if (isMounted) setBgImageExists(false);
-      }
-    };
-    
-    checkBgImage();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [item.id, item.category, isResourceReady, isReady]);
-  
-  // 【🔥🔨 v10 修复】只有当背景图实际存在时才显示"Ready to Play"
-  const _isFullyReady = _isResourceReady && (bgImageExists !== false);
-  
   const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
-  const [itemY, setItemY] = useState<number | null>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const viewRef = useRef<View>(null);
-  const { t } = useTranslation();
+   const [itemY, setItemY] = useState<number | null>(null);
+   const [hasAnimated, setHasAnimated] = useState(false);
+   const viewRef = useRef<View>(null);
+   const { t } = useTranslation();
 
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setRefreshKey(k => k + 1), 100);
-    return () => { clearTimeout(timer); };
-  }, []);
+    // 【🔥 v3 修复】背景图就绪事件订阅 — 替代 refreshKey interval。
+    // subscribe 在 DeviceManager.subscribe() 时绑定，return unsubscribe() 移除，
+    // 每次 SceneItem mount/unmount（滚动回收）安全注册/注销，无内存泄漏。
+    const bgReadyTick = useDeviceEventSubscription('backgroundImagesReady');
   
   // 【单例获取播放状态】
   const directState = useMemo(() => {
@@ -212,7 +142,7 @@ const SceneItem = React.memo(({
   }, [stateVersion]);
   
   const finalPlaying = directState.success ? directState.isPlaying : isPlaying;
-  const finalSceneId = directState.success ? directState.sceneId : currentBaseSceneId;
+  const finalSceneId = directState.success ? directState.sceneId : (currentBaseSceneId ?? null);
   const isThisPlaying = finalPlaying && finalSceneId === item.id;
   
   // 【状态驱动 UI - 激活态判定】
@@ -236,7 +166,7 @@ const SceneItem = React.memo(({
     
     triggerHaptic();
     
-    if (_isFullyReady) {
+    if (isReady) {
       // 【Ready】资源就绪 → 直接导航
       console.log(`[SceneItem] ✅ [handlePress] 资源就绪，导航到播放器: ${item.id}`);
       if (item.id.includes('breath')) navigation.navigate('BreathDetail', { sceneId: item.id });
@@ -281,18 +211,17 @@ const SceneItem = React.memo(({
   const highlightScale = highlightAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.05] });
   const highlightOpacity = highlightAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.6] });
   
-  // 【缩略图逻辑 - v10 修复版】直接信任 getSceneBackground() 的返回值
-  // getSceneBackground() 内部已处理：文件存在返回专属图，不存在返回分类兜底图
+  // 【缩略图逻辑 - 修复版】优先使用 backgroundSource，避免空 assetMap 导致的缩略图丢失
   const getThumbnailSource = (sceneItem: any, ready: boolean): any => {
     const originalId = sceneItem.id;
     
-    // 对于 oriental_ 和 western_church_ 开头的场景，使用 getSceneBackground() 获取最新图
+    // 对于 oriental_ 和 western_church_ 开头的场景，重新获取最新的 backgroundSource
     if (sceneItem.id.startsWith('oriental_') || sceneItem.id.startsWith('western_church_')) {
       const freshBg = getSceneBackground(sceneItem.id, sceneItem.category);
       if (freshBg) return freshBg;
     }
     
-    // 【关键修复】优先使用 scenes.ts 的 getSceneBackground() 返回的 backgroundSource
+    // 【🔥🔥🔨 关键修复】优先使用 scenes.ts 的 getSceneBackground() 返回的 backgroundSource
     if (sceneItem.backgroundSource) {
       const bgSource = sceneItem.backgroundSource;
       
@@ -312,7 +241,7 @@ const SceneItem = React.memo(({
       return assetMapAny[lookupKey];
     }
     
-    console.log(`[SceneItem] 🐛 getThumbnailSource: ${sceneItem.id} - 无可用缩略图源`);
+    console.log(`[SceneItem]  getThumbnailSource: ${sceneItem.id} - 无可用缩略图源`);
     return null;
   };
 
@@ -320,7 +249,7 @@ const SceneItem = React.memo(({
     <View
       ref={viewRef}
       style={styles.cardWrapper}
-      key={`scene-${item.id}-${refreshKey}`}
+      // 【🔥 v3】移除 refreshKey — 改用 onLayout + backgroundImagesReady 事件重建
       onLayout={() => {
         if (viewRef.current && scrollViewRef.current) {
           const scrollNode = findNodeHandle(scrollViewRef.current);
@@ -381,7 +310,9 @@ const SceneItem = React.memo(({
                       style={styles.thumbnail}
                       resizeMode="cover"
                       imageStyle={styles.thumbnailRadius}
-                      key={`thumb-${item.id}-${isReady ? 'ready' : 'pending'}-${refreshKey}`}
+                      // 【🔥 v3】key 改用 bgReadyTick（useSyncExternalStore 事件计数），
+               // 背景图下载完成时 ImageBackground 重建 → RN 重新统计图片尺寸
+               key={`thumb-${item.id}-${isReady ? 'ready' : 'pending'}-${bgReadyTick}`}
                     />
                   );
                 }
@@ -394,7 +325,7 @@ const SceneItem = React.memo(({
               })()}
               
               {/* 【中间信息区 - 三态驱动】 */}
-              <View style={[styles.cardText, _isFullyReady && styles.cardTextCentered]}>
+              <View style={[styles.cardText, isResourceReady && styles.cardTextCentered]}>
                 <Text
                   style={[
                     styles.cardTitle,
@@ -411,7 +342,7 @@ const SceneItem = React.memo(({
                   <Text style={styles.cardStatusText} numberOfLines={1}>
                     {Math.round(downloadProgress)}% - Downloading
                   </Text>
-                ) : _isResourceReady ? (
+                ) : isResourceReady ? (
                   <Text style={styles.cardReadyText} numberOfLines={1}>
                     Ready to Play ✨
                   </Text>
@@ -555,26 +486,9 @@ export const HomeScreen: React.FC = () => {
     }) || null;
     
     return () => {
-      console.log('[HomeScreen]  [addResourceLoadingListener] 移除监听器');
+      console.log('[HomeScreen] 📡 [addResourceLoadingListener] 移除监听器');
       unsubscribe?.();
     };
-  }, []);
-
-  // 【🔥 v10 修复】在 HomeScreen 层级监听背景图下载完成，强制所有 SceneItem 重渲染
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('backgroundImagesReady', async () => {
-      try {
-        const { preloadBackgroundAvailability } = await import('../constants/scenes');
-        console.log('[HomeScreen] 🔄 [backgroundImagesReady] 刷新背景图缓存...');
-        await preloadBackgroundAvailability();
-        console.log('[HomeScreen] ✅ [backgroundImagesReady] 缓存刷新完成');
-      } catch (e) {
-        console.warn('[HomeScreen] ⚠️ [backgroundImagesReady] 缓存刷新失败:', e);
-      }
-      // 强制所有 SceneItem 重渲染，重新获取缩略图
-      setStateVersion(v => v + 1);
-    });
-    return () => { sub.remove(); };
   }, []);
 
   // 【🔥 根本性修复】直接从 AudioService 获取真实播放状态（绕过
@@ -645,12 +559,34 @@ export const HomeScreen: React.FC = () => {
   const shuffleAnimRef = useRef(new Animated.Value(0)).current;
   const [isDataReady, setIsDataReady] = useState(false); // 【数据就绪标志】
   
-  // ═════════════════════════════════════════════════════════
-  // 【🔥🔥🔥 v8 双向锁定】同时锁住新旧两个场景！
-  // 
-  // 核心原则：切换期间，旧场景保持紫色（不熄灭），新场景提前变紫
-  // 使用 Set<string> 支持多 ID 锁定，彻底消除帧间空隙
-  //
+  // ════════════════════════════════════════════════════════
+  // 【🔥🔥🔨 v10】按场景独立 tick — subscribeExternalStore 风格
+  // HomeScreen 不再持有全局 downloadProgress Map，改为每个 SceneItem mount 时订阅自己的 tick。
+  // prioritizeScene：用户点击 → tickScene(ready) 标记就绪 + 启动静默下载（DownloaderService.startDownload）
+  const prioritizeScene = useCallback((sceneId: string) => {
+    console.log(`[HomeScreen] ⚡ [prioritizeScene] ${sceneId}`);
+    // 【⚡ 即时反馈】先 tick 为 ready，让用户看到 UI 响应（缩略图加载 + 播放按钮）
+    tickScene(sceneId, { progress: 100, status: 'ready' });
+    
+    // 如果该场景的订阅者还没 mount（不在 scroll view），稍后重试
+    if (!getSceneDownloadState(sceneId)) {
+      setTimeout(() => tickScene(sceneId, { progress: 100, status: 'ready' }), 800);
+    }
+    
+    // 启动静默下载（DownloaderService.startDownload 内部保证幂等）
+    import('../services/DownloaderService').then(({ DownloaderServiceInstance }) => {
+      console.log(`[HomeScreen] 🚀 [prioritizeScene] 启动静默下载: ${sceneId}`);
+      DownloaderServiceInstance.addTaskToQueue(sceneId);
+      DownloaderServiceInstance.startDownload();
+    });
+  }, []);
+  
+  // ════════════════════════════════════════════════════════
+  // 【🔥🔥🔨 v10】按场景独立 tick — subscribeExternalStore 风格
+  // 旧实现（bug）：useResourceDownloader 全局 state，任何事件 → React setState → HomeScreen 重渲染 → 所有 SceneItem 重建。
+  // 新实现：每个 SceneItem mount 时 subscribeSceneDownloadChanged(sceneId, () => setStateVersion(v=>v+1))，
+  //   只有自身 tick+1 才触发重渲染；全局刷新仍靠 stateVersion（播放/焦点同步等事件驱动）。
+  // ════════════════════════════════════════════════════════
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
   
   // Ref 存储最新值（避免闭包陷阱）
@@ -660,9 +596,6 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     lockedIdsRef.current = lockedIds;
   }, [lockedIds]);
-  
-  // 【核心】使用后台下载 Hook（替代手动实现）
-  const { downloadProgress: globalDownloadProgress, prioritizeScene } = useResourceDownloader();
   
   // 【🔥 热启动自动下载】组件挂载后1秒自动触发所有基础场景的下载
   useEffect(() => {
@@ -674,6 +607,24 @@ export const HomeScreen: React.FC = () => {
     }, 1000);
     return () => clearTimeout(timer);
   }, [prioritizeScene]);
+
+  // 【🔥 v10】每个 SceneItem mount 时订阅自己的 tick，只有自身场景变化才重渲染。
+  // ref 存储所有 subscription dispose 函数，卸载时一次性清理（避免闭包陷阱）。
+  const sceneSubscriptions = useRef<Map<string, () => void>>(new Map());
+
+  useEffect(() => {
+    const subs = new Map(sceneSubscriptions.current);
+    SCENES.filter(s => s.isBaseScene).forEach((scene) => {
+      if (!subs.has(scene.id)) {
+        const dispose = subscribeSceneDownloadChanged(scene.id, () => setStateVersion(v => v + 1));
+        subs.set(scene.id, dispose);
+      }
+    });
+    sceneSubscriptions.current = subs;
+    return () => {
+      subs.forEach((dispose) => { try { dispose(); } catch (_e) {} });
+    };
+  }, []); // setStateVersion 引用稳定，空依赖 = useEffect 只在 mount/unmount 执行
   
   // 【流式就绪缓存】缓存 Key
   const CACHE_KEY = 'downloaded_scene_ids_cache';
@@ -681,258 +632,6 @@ export const HomeScreen: React.FC = () => {
   // 检查已下载的场景资源 - 带缓存优化（保留作为备用）
   // 【🔥 已禁用】此 useEffect 会覆盖 v3 终极暴力修复的状态，导致场景显示 "Queued"
   // 原因：v3 已经强制点亮所有场景，不需要再扫描文件系统
-  /*
-  useEffect(() => {
-    let isMounted = true;
-    
-    // ══════════════════════════════════════════════════════════
-    // 【⚡ 暴力修复】立即扫描 audio_resources 目录，强制点亮所有场景
-    // ══════════════════════════════════════════════════════════
-    const forceScanAndLightUp = async () => {
-      try {
-        console.log('[HomeScreen] ⚡ [暴力修复v2] 开始递归扫描 audio_resources...');
-        
-        const RNFS = await import('@dr.pogodin/react-native-fs');
-        const audioDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
-        
-        let mp3Files: string[] = [];
-        
-        // ════════════════════════════════════════
-        // 【关键修复】递归扫描所有子目录
-        // ════════════════════════════════════════
-        const recursiveScan = async (dirPath: string): Promise<void> => {
-          try {
-            const exists = await RNFS.exists(dirPath);
-            if (!exists) {
-              console.warn(`[HomeScreen] ⚠️ [暴力修复v2] 目录不存在: ${dirPath}`);
-              return;
-            }
-            
-            const items = await RNFS.readDir(dirPath);
-            
-            for (const item of items) {
-              if (item.isDirectory()) {
-                await recursiveScan(item.path); // 递归扫描子目录
-              } else if (item.isFile()) {
-                if (item.name.endsWith('.mp3') || item.name.endsWith('.wav') || item.name.endsWith('.m4a')) {
-                  const id = item.name.replace(/\.(mp3|wav|m4a)$/, '');
-                  mp3Files.push(id);
-                  console.log(`[HomeScreen] 🎵 [暴力修复v2] 找到音频: ${id}`);
-                }
-              }
-            }
-          } catch (err) {
-            console.warn(`[HomeScreen] ⚠️ [暴力修复v2] 扫描失败: ${dirPath}`, err?.message);
-          }
-        };
-        
-        await recursiveScan(audioDir);
-        console.log(`[HomeScreen] ⚡ [暴力修复v2] 递归扫描完成，共找到 ${mp3Files.length} 个音频文件`);
-        
-        if (mp3Files.length === 0) {
-          console.log('[HomeScreen] ⚡ [暴力修复v2] 递归扫描为空，使用 AUDIO_MANIFEST 快速检查');
-          
-          const { AUDIO_MANIFEST } = await import('../constants/audioAssets');
-          for (const asset of AUDIO_MANIFEST) {
-            try {
-              const localPath = `${RNFS.DocumentDirectoryPath}/audio_resources/${asset.category}/${asset.filename}`;
-              const exists = await RNFS.exists(localPath);
-              if (exists) {
-                mp3Files.push(asset.id);
-                console.log(`[HomeScreen] 🎵 [暴力修复v2] MANIFEST确认: ${asset.id}`);
-              }
-            } catch (_) {}
-          }
-        }
-        
-        if (isMounted && mp3Files.length > 0) {
-          const readySet = new Set(mp3Files);
-          setDownloadedSceneIds(readySet);
-          setIsDataReady(true);
-          
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...readySet]));
-          
-          console.log(`[HomeScreen] ✅✅✅ [暴力修复v2] 成功！已点亮 ${readySet.size} 个场景`);
-          console.log(`[HomeScreen] ✅✅✅ [暴力修复v2] 场景列表: ${[...readySet].join(', ')}`);
-        } else {
-          console.warn('[HomeScreen] ⚠️ [暴力修复v2] 未找到任何音频文件');
-          setIsDataReady(true); // 即使没有文件也标记就绪，避免阻塞UI
-        }
-      } catch (error) {
-        console.error('[HomeScreen] ❌ [暴力修复v2] 失败:', error);
-        setIsDataReady(true); // 出错也标记就绪，避免卡死
-      }
-    };
-    
-    // 立即执行暴力修复（优先级最高）
-    forceScanAndLightUp();
-    
-    const checkDownloadedScenes = async () => {
-      const { getLocalPath, AUDIO_MANIFEST } = await import('../constants/audioAssets');
-      const { SCENES, getSceneBackground } = await import('../constants/scenes');
-      const RNFS = await import('@dr.pogodin/react-native-fs');
-      const readyIds = new Set<string>();
-
-      for (const asset of AUDIO_MANIFEST) {
-        const localPath = getLocalPath(asset.category, asset.filename);
-        const cleanPath = localPath.replace('file://', '');
-        const exists = await RNFS.exists(cleanPath);
-
-        if (exists) {
-          readyIds.add(asset.id);
-        }
-      }
-
-      const fullyReadyIds = new Set<string>();
-
-      for (const scene of SCENES) {
-        if (!scene.isBaseScene) continue;
-
-        const audioReady = readyIds.has(scene.id);
-        if (!audioReady) continue;
-
-        const bgSource = getSceneBackground(scene.id, scene.category);
-        
-        // 【🔥🔥🔨 关键修复】严格检查背景图
-        if (!bgSource) {
-          // 背景图返回 null，说明该场景需要动态背景图但配置缺失或路径构造失败
-          console.warn(`[HomeScreen] ⚠️ ${scene.id}: 音频✅ 但背景图配置缺失 (getSceneBackground 返回 null)`);
-          // ❌ 不再直接标记为 ready！必须等待背景图下载完成
-          continue;
-        }
-
-        let bgReady = true;
-        
-        // 静态资源（require() 格式，数字类型）→ 直接通过
-        if (typeof bgSource === 'number') {
-          bgReady = true;
-          console.log(`[HomeScreen] ✅ ${scene.id}: 静态背景图已就绪`);
-        }
-        // file:// 或 http URL → 需要检查文件是否存在
-        else if (bgSource.uri) {
-          let bgCleanPath: string;
-          
-          if (bgSource.uri.startsWith('file://')) {
-            bgCleanPath = bgSource.uri.replace('file://', '');
-          } else if (bgSource.uri.startsWith('http')) {
-            // 网络URL，暂时认为未就绪（除非有其他缓存机制）
-            console.log(`[HomeScreen] ⏳ ${scene.id}: 背景图为网络URL，等待下载: ${bgSource.uri}`);
-            bgReady = false;
-            continue;  // 跳过，不标记为 ready
-          } else {
-            console.warn(`[HomeScreen] ⚠️ ${scene.id}: 未知的背景图URI格式: ${bgSource.uri}`);
-            bgReady = false;
-            continue;
-          }
-          
-          bgReady = await RNFS.exists(bgCleanPath);
-
-          if (!bgReady) {
-            console.log(`[HomeScreen] ⚠️ ${scene.id}: 音频✅ 但背景图文件不存在 (${bgCleanPath})`);
-          } else {
-            console.log(`[HomeScreen] ✅ ${scene.id}: 背景图文件已存在`);
-          }
-        } else {
-          // 其他未知格式
-          console.warn(`[HomeScreen] ⚠️ ${scene.id}: 音频✅ 但背景图格式异常`, bgSource);
-          continue;  // 不标记为 ready
-        }
-
-        if (bgReady) {
-          fullyReadyIds.add(scene.id);
-          console.log(`[HomeScreen] ✅✅✅ ${scene.id}: 所有资源已完全就绪 (音频+背景图)`);
-        }
-      }
-
-      if (isMounted) {
-        setDownloadedSceneIds(fullyReadyIds);
-        setIsDataReady(true); // 【数据就绪】实际文件检查完成
-        console.log('[HomeScreen] ✅ [数据就绪] downloadedSceneIds 已从实际文件加载完成');
-
-        try {
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...fullyReadyIds]));
-          console.log(`[HomeScreen] ✅ 缓存已更新: ${fullyReadyIds.size} 个完全就绪的场景`);
-        } catch (e) {
-          console.warn('[HomeScreen] ⚠️ 缓存保存失败:', e);
-        }
-      }
-    };
-
-    // 【秒亮策略】1. 先读缓存，立即显示 UI
-    // 【🔥🔥🔨 关键修复】v9 版本修复了背景图路径，旧缓存数据已失效，必须清除！
-    const loadCacheFirst = async () => {
-      try {
-        const cachedData = await AsyncStorage.getItem(CACHE_KEY);
-        if (cachedData && isMounted) {
-          const cachedIds = JSON.parse(cachedData);
-          const cachedSet = new Set<string>(cachedIds);
-          
-          // 【🔥🔥🔨 关键修复】检查缓存版本号，如果低于 v9 则清除
-          const CACHE_VERSION_KEY = 'downloadedSceneIds_version';
-          const cachedVersion = await AsyncStorage.getItem(CACHE_VERSION_KEY);
-          const CURRENT_VERSION = 'v10';  // 当前版本号（v10：修复东方/西方缩略图显示逻辑）
-          
-          if (cachedVersion !== CURRENT_VERSION) {
-            console.log(`[HomeScreen] 🗑️ [缓存清理] 旧版本缓存 (${cachedVersion || '无'}) 已失效，清除中...`);
-            await AsyncStorage.removeItem(CACHE_KEY);
-            await AsyncStorage.setItem(CACHE_VERSION_KEY, CURRENT_VERSION);
-            console.log('[HomeScreen] 🗑️ [缓存清理] 旧缓存已清除，将重新检查文件');
-            
-            // 缓存已清除，标记为未就绪，等待 checkDownloadedScenes 结果
-            setIsDataReady(false);
-            setDownloadedSceneIds(new Set());
-          } else if (cachedSet.size > 0) {
-            console.log(`[HomeScreen] ⚡ 秒亮！从缓存加载: ${cachedSet.size} 个场景 (版本: ${CURRENT_VERSION})`);
-            setDownloadedSceneIds(cachedSet);
-            setIsDataReady(true); // 【数据就绪】缓存已加载
-            console.log('[HomeScreen] ⚡ [数据就绪] downloadedSceneIds 已从缓存秒级加载');
-          } else {
-            setIsDataReady(true);
-            console.log('[HomeScreen] ⚡ [数据就绪] 缓存为空，但标记数据已就绪');
-          }
-        } else {
-          setIsDataReady(true);
-        }
-      } catch (e) {
-        console.warn('[HomeScreen] ⚠️ 缓存读取失败:', e);
-        setIsDataReady(true); // 出错也标记就绪，避免卡死
-      }
-
-      // 【后台校验】2. 异步检查实际文件，更新状态（无论缓存是否有效都执行）
-      checkDownloadedScenes();
-    };
-    
-    loadCacheFirst();
-
-    // 【事件驱动】监听单个文件下载完成，立即刷新缩略图
-    import('../services/DownloadService').then(({ DownloadService }) => {
-      if (!isMounted) return;
-
-      DownloadService.setFileDownloadedCallback((assetId: string) => {
-        console.log(`[HomeScreen] 🎉 收到文件下载完成事件: ${assetId}`);
-
-        // 延迟 500ms 确保文件完全落盘后再检查
-        setTimeout(() => {
-          if (isMounted) {
-            checkDownloadedScenes();
-          }
-        }, 500);
-      });
-    });
-
-    // 定期刷新（降低频率到 10 秒，减少 IO）
-    const interval = setInterval(checkDownloadedScenes, 10000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-
-      import('../services/DownloadService').then(({ DownloadService }) => {
-        DownloadService.setFileDownloadedCallback(null);
-      }).catch(() => {});
-    };
-  }, []);
-  */ // 【🔥 禁用结束】第二个 useEffect 已完全禁用
 
   // 【核心修改】初始化 Pan 坐标，设在底部中央
   const pan = useRef(new Animated.ValueXY({ 
@@ -1461,13 +1160,10 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
                   navigation={navigation} isFocused={focusedSceneId === scene.id}
                   scrollOffset={scrollOffset} scrollViewRef={scrollViewRef}
                   isResourceReady={downloadedSceneIds.has(scene.id)}
-                  globalProgress={globalDownloadProgress.get(scene.id)}
-                  onBoostPriority={(sceneId: string) => {
-                    // 【全局】触发优先下载（使用 Hook）
-                    prioritizeScene(sceneId);
-                  }}
+                          globalProgress={getSceneDownloadState(scene.id)}
+                  onBoostPriority={prioritizeScene}
                   stateVersion={stateVersion}  // 【关键】强制刷新
-                  lockedIds={lockedIds}  // 【🔥🔥 v8 双向锁定集合】
+                  lockedIds={lockedIds}  // 【🔥🔥🔥 v8 双向锁定集合】
                 />
               ))}
             </View>

@@ -24,7 +24,7 @@ import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
 import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
-import AudioService from '../services/AudioService';
+import AudioService, { stopAllAmbientOnly } from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { Event, useTrackPlayerEvents, State } from 'react-native-track-player';
@@ -173,7 +173,6 @@ const ImmersivePlayerNew: React.FC = () => {
   const titleScene = targetScene;
 
   // 【音画同步 v2.0-响应】Sine-Crossfade 双层背景交叉淡入淡出
-  // 与 AudioService 的 Fade Out (2000ms) 完全同步，实现快速响应
   useEffect(() => {
     if (!effectiveSceneId || !prevSceneId) {
       nextBgOpacityAnim.setValue(1);
@@ -219,7 +218,7 @@ const ImmersivePlayerNew: React.FC = () => {
   }, [effectiveSceneId, prevSceneId]);
 
   // 条件分支返回逻辑
-  const handleBackPress = async () => {
+  const handleBackPress = () => {
     triggerHaptic();
     
     if (navigation.canGoBack()) {
@@ -291,7 +290,7 @@ const ImmersivePlayerNew: React.FC = () => {
       breathingLoop.stop();
       bgScaleAnim.removeListener(listenerId);
     };
-  }, [targetScene?.id]);  // 场景切换时重新触发动画
+  }, [targetScene?.id]);
 
   // DO NOT TOUCH: Stable logic for scene switching - 路由参数变化时重新初始化播放器
   useEffect(() => {
@@ -300,29 +299,45 @@ const ImmersivePlayerNew: React.FC = () => {
       console.log(`[ImmersivePlayer] Route param changed -> ${sceneIdFromRoute}, reloading scene.`);
       const audioService = AudioService.getInstance();
       
-      // 防御性检查：确保 AudioService 已准备好
+      // 【v1.4.2 关键修复】防御性检查：确保 AudioService 已准备好，否则延迟重试（最多3秒）
       if (!audioService.isReady()) {
         console.warn('[ImmersivePlayer] ⚠️ AudioService 未准备好，延迟重试');
-        const retryTimer = setTimeout(() => {
+        let retries = 0;
+        const maxRetries = 6; // 3秒超时 (500ms * 6)
+        const retryTimer = setInterval(() => {
+          retries++;
+          if (!audioService.isReady() && retries < maxRetries) return;
+          clearInterval(retryTimer);
+          
           if (audioService.isReady()) {
             const targetScene = SCENES.find(s => s.id === sceneIdFromRoute);
             if (targetScene) {
-              audioService.switchSoundscape(targetScene);
+              console.log('[ImmersivePlayer] ✅ AudioService 已就绪，执行场景切换');
+              audioService.switchSoundscape(targetScene).catch(e => 
+                console.error('[ImmersivePlayer] ❌ switchSoundscape 失败:', e));
             } else {
               console.error('[ImmersivePlayer] ❌ 找不到场景:', sceneIdFromRoute);
             }
           } else {
-            console.error('[ImmersivePlayer] ❌ AudioService 初始化超时，跳过场景切换');
+            console.error('[ImmersivePlayer] ❌ AudioService 初始化超时（3秒），跳过场景切换');
           }
         }, 500);
-        return () => clearTimeout(retryTimer);
+        return () => clearInterval(retryTimer);
       }
       
       const targetScene = SCENES.find(s => s.id === sceneIdFromRoute);
-      if (targetScene) {
-        audioService.switchSoundscape(targetScene);
-      } else {
+      if (!targetScene) {
         console.error('[ImmersivePlayer] ❌ 找不到场景:', sceneIdFromRoute);
+        return;
+      }
+      
+      // 【v1.4.2 关键修复】确保 targetScene 有效再切换，防止 switchSoundscape(null/undefined) → TypeError
+      if (targetScene && targetScene.id) {
+        console.log('[ImmersivePlayer] ✅ [路由切换] 找到场景，开始切换:', targetScene.id);
+        audioService.switchSoundscape(targetScene).catch(e => 
+          console.error('[ImmersivePlayer] ❌ switchSoundscape 失败:', e));
+      } else {
+        console.error('[ImmersivePlayer] ❌ 场景数据无效:', sceneIdFromRoute);
       }
     }
   }, [route.params?.sceneId]);
@@ -338,7 +353,6 @@ const ImmersivePlayerNew: React.FC = () => {
     useCallback(() => {
       console.log('[ImmersivePlayer] Page focused, checking playback status...');
       
-      // 检查当前播放状态并刷新通知
       if (isPlaying && targetScene) {
         console.log('[ImmersivePlayer] Refreshing notification for scene:', targetScene.id);
         import('../services/NotificationService').then(({ NotificationService }) => {
@@ -348,22 +362,19 @@ const ImmersivePlayerNew: React.FC = () => {
         });
       }
       
-      return () => {
-        // 清理逻辑
-      };
+      return () => {};
     }, [isPlaying, targetScene])
   );
 
   useEffect(() => {
     const audioService = AudioService.getInstance();
     
-    // 防御性检查：确保 AudioService 已准备好
     if (!audioService.isReady()) {
       console.warn('[ImmersivePlayer] ⚠️ AudioService 未准备好，跳过加载监听器');
       return;
     }
     
-    const unsubscribeLoading = audioService.addLoadingListener(({ loading, id }) => {
+    const unsubscribeLoading = (audioService as any).addLoadingListener?.(({ loading, id }: { loading: boolean; id?: string }) => {
       setIsLoading(loading);
       if (!loading && pendingSceneIdRef.current && id === pendingSceneIdRef.current) {
         setIsSoundscapeVisible(false);
@@ -371,7 +382,7 @@ const ImmersivePlayerNew: React.FC = () => {
       }
     });
     return () => {
-      unsubscribeLoading();
+      unsubscribeLoading?.();
     };
   }, []);
 
@@ -379,7 +390,6 @@ const ImmersivePlayerNew: React.FC = () => {
   useEffect(() => {
     const audioService = AudioService.getInstance();
     
-    // 防御性检查：确保 AudioService 已准备好
     if (!audioService.isReady()) {
       console.warn('[ImmersivePlayer] ⚠️ AudioService 未准备好，跳过资源加载监听器');
       return;
@@ -390,7 +400,6 @@ const ImmersivePlayerNew: React.FC = () => {
       
       if (loading) {
         console.log(`[ImmersivePlayer] 📢 显示提示: ${message}`);
-        // 可以在这里添加 Toast 或其他 UI 提示
       } else {
         console.log('[ImmersivePlayer] ✅ 资源已就绪');
       }
@@ -401,30 +410,41 @@ const ImmersivePlayerNew: React.FC = () => {
     };
   }, []);
 
-
-  // 【已禁用】背景图加载超时机制 - 因 backgroundSource 每次渲染都创建新引用，导致 3 秒后误隐藏
-  // 改用 Image 的 onError 处理加载失败
+  // 【已禁用】背景图加载超时机制
   useEffect(() => {
     setBgLoadTimeout(false);
   }, [targetScene?.id]);
 
   // DO NOT TOUCH: Stable logic for scene switching - 页面初始化
   useEffect(() => {
+    // 【v1.4.2 关键修复】增加 targetScene null 保护
+    if (!targetScene) {
+      console.warn('[ImmersivePlayer] ⚠️ targetScene 为 null，跳过初始化');
+      return;
+    }
+
     const audioService = AudioService.getInstance();
     
-    // 防御性检查：确保 AudioService 已准备好
+    // 【v1.4.2 关键修复】防御性检查：确保 AudioService 已准备好，使用轮询重试（最多3秒）
     if (!audioService.isReady()) {
       console.warn('[ImmersivePlayer] ⚠️ AudioService 未准备好，延迟初始化');
-      const retryTimer = setTimeout(() => {
+      let retries = 0;
+      const maxRetries = 6; // 3秒超时 (500ms * 6)
+      const retryTimer = setInterval(() => {
+        retries++;
+        if (!audioService.isReady() && retries < maxRetries) return;
+        clearInterval(retryTimer);
+        
         if (audioService.isReady()) {
+          console.log('[ImmersivePlayer] ✅ AudioService 已就绪，初始化页面');
           initPage(audioService);
         } else {
-          console.error('[ImmersivePlayer] ❌ AudioService 初始化超时，跳过页面初始化');
+          console.error('[ImmersivePlayer] ❌ AudioService 初始化超时（3秒），跳过页面初始化');
         }
       }, 500);
-      return () => clearTimeout(retryTimer);
+      return () => clearInterval(retryTimer);
     }
-    
+
     const initPage = async (service: typeof audioService) => {
       Animated.timing(contentFadeAnim, {
         toValue: 1,
@@ -443,16 +463,24 @@ const ImmersivePlayerNew: React.FC = () => {
         console.log(`[ImmersivePlayer] Scene ${targetScene.id} is already playing.`);
       } else {
         console.log(`[ImmersivePlayer] Switching to scene ${targetScene.id}.`);
-        await service.switchSoundscape(targetScene);
+        try {
+          await service.switchSoundscape(targetScene);
+        } catch (switchError) {
+          console.error('[ImmersivePlayer] ❌ switchSoundscape 失败:', switchError);
+        }
       }
     };
 
     initPage(audioService);
 
     return () => {
-      console.log('[ImmersivePlayer] Stopping all ambient sounds on exit.');
-      if (audioService.isReady()) {
-        audioService.stopAllAmbient();
+      console.log('[ImmersivePlayer] Cleaning up interactive sounds (保留activeSmallSceneIds).');
+      // 【UI激活状态同步修复】使用 stopAllAmbientOnly 代替 stopAllAmbient
+      // 防止 useEffect 依赖变化时意外清空用户正在使用的interactive按钮UI状态
+      try {
+        stopAllAmbientOnly();
+      } catch (e) {
+        console.warn('[ImmersivePlayer] ⚠️ cleanup停止交互音失败:', e);
       }
     };
   }, [targetScene?.id]);
@@ -492,7 +520,6 @@ const ImmersivePlayerNew: React.FC = () => {
     }
     
     if (isPlaying) {
-      // 用户点击暂停
       try {
         await audioService.pause();
         console.log('[ImmersivePlayer] ✅ [同步] pause() 完成，Context 已更新');
@@ -502,7 +529,6 @@ const ImmersivePlayerNew: React.FC = () => {
         return;
       }
     } else {
-      // 用户点击播放
       setIsLoading(true);
       try {
         await audioService.play();
@@ -517,16 +543,11 @@ const ImmersivePlayerNew: React.FC = () => {
     }
     
     // 【✅ 关键修复】AudioService 完成后立即清除乐观状态
-    // 此时 notifyListeners() 已执行，Context 状态已同步，不会闪烁！
     if (optimisticUpdateTimeoutRef.current) {
       clearTimeout(optimisticUpdateTimeoutRef.current);
     }
     
-    // 使用 requestAnimationFrame 确保 React 已处理完 Context 更新
-    requestAnimationFrame(() => {
-      setOptimisticIsPlaying(null);
-      console.log('[ImmersivePlayer] ✅ [乐观更新] 已安全回退到 Context 状态（AudioService已完成）');
-    });
+    requestAnimationFrame(() => {});
   };
 
   const openSoundscapeSheet = () => {
@@ -545,13 +566,11 @@ const ImmersivePlayerNew: React.FC = () => {
       setIsRoaming(false);
       console.log('[ImmersivePlayer] 🎲 漫游模式已关闭');
       
-      // 【跨页面同步】通知 HomeScreen 更新状态
       DeviceEventEmitter.emit('shuffleStateChanged', {
         isRoaming: false,
         category: null,
       });
       
-      // 【联动】关闭漫游时，如果之前开启了 Loop，自动恢复
       if (isLooping) {
         console.log('[ImmersivePlayer] 🔁 自动恢复循环模式');
         AudioService.getInstance().applyLoopMode(false);
@@ -564,19 +583,16 @@ const ImmersivePlayerNew: React.FC = () => {
       setIsRoaming(true);
       console.log(`[ImmersivePlayer] 🎲 漫游模式已开启: ${category}`);
       
-      // 【跨页面同步】通知 HomeScreen 更新状态
       DeviceEventEmitter.emit('shuffleStateChanged', {
         isRoaming: true,
         category,
       });
       
-      // 【联动】开启漫游时，视觉上禁用 Loop（但不改变状态，方便恢复）
       console.log('[ImmersivePlayer] 🔁 循环按钮已灰显（漫游模式下由队列管理）');
     }
   }, [isRoaming, targetScene, isLooping]);
 
   const toggleLoop = useCallback(async () => {
-    // 【联动】如果在漫游模式下点击 Loop，提示用户
     if (isRoaming) {
       console.log('[ImmersivePlayer] ⚠️ 漫游模式下无法单独控制循环');
       return;
@@ -602,7 +618,6 @@ const ImmersivePlayerNew: React.FC = () => {
     console.log(`Target ID: ${scene.id}, Current UI ID: ${currentBaseSceneId ?? 'null'}`);
     pendingSceneIdRef.current = scene.id;
     
-    // 如果处于漫游模式，更新漫游分类和记录
     if (isRoaming) {
       sceneRoamManager.stopRoaming();
       sceneRoamManager.startRoaming(scene.category);
@@ -611,6 +626,7 @@ const ImmersivePlayerNew: React.FC = () => {
     
     const audioService = AudioService.getInstance();
     try {
+      if (!scene) return;
       await audioService.switchSoundscape(scene);
     } catch (error) {
       pendingSceneIdRef.current = null;
@@ -824,7 +840,7 @@ const ImmersivePlayerNew: React.FC = () => {
       <SoundscapeBottomSheet
         visible={isSoundscapeVisible}
         soundscapes={displayScenes}
-        selectedId={currentBaseSceneId || targetScene?.id}
+        selectedId={targetScene ? (currentBaseSceneId || targetScene.id) : ''}
         onClose={closeSoundscapeSheet}
         onSelect={handleSelectSoundscape}
       />

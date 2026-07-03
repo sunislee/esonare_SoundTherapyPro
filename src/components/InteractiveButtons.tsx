@@ -16,6 +16,7 @@ const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
   globalAmbientScenes,
   activeSmallSceneIds,
 }) => {
+  console.log('[InteractiveButtons] 🔄 Rendered, activeSmallSceneIds:', activeSmallSceneIds);
   const { toggleAmbience } = useAudio();
   const insets = useSafeAreaInsets();
   const triggerHaptic = useCallback(() => {
@@ -37,9 +38,19 @@ const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
     }));
   }, [globalAmbientScenes, activeSmallSceneIds]);
   
+  console.log('[InteractiveButtons] buttonLayouts:', buttonLayouts.map(b => ({ id: b.ambient.id, isActive: b.isActive })));
+  
   const handlePress = useCallback(async (ambient: Scene, targetState: boolean) => {
     triggerHaptic();
     console.log('[InteractiveButtons] Toggle ambience:', ambient.id, 'isActive:', targetState);
+
+    // 点击时先确保资源已下载（复用HomeScreen的prioritizeScene逻辑）
+    import('../services/DownloaderService').then(({ DownloaderServiceInstance }) => {
+      console.log(`[InteractiveButtons] 🚀 [handlePress] 触发下载: ${ambient.id}, targetState: ${targetState}`);
+      DownloaderServiceInstance.addTaskToQueue(ambient.id);
+      DownloaderServiceInstance.startDownload();
+    });
+
     await toggleAmbience(ambient, targetState);
   }, [triggerHaptic, toggleAmbience]);
   

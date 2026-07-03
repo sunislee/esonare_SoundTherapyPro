@@ -14,6 +14,8 @@ import { AUDIO_MANIFEST, getLocalPath as getAudioLocalPath } from '../constants/
 import { SCENES } from '../constants/scenes';
 import { DownloadService } from './DownloadService';
 import { DownloaderServiceInstance } from './DownloaderService';
+import { tickScene, clearAllScenes as storeClearAll } from '../utils/SceneDownloadStore';
+import { DeviceEventEmitter } from 'react-native';
 
 // 【类型定义】DownloaderServiceInstance 的方法类型
 interface DownloaderServiceStatus {
@@ -156,7 +158,6 @@ export async function checkSceneResourceStatus(sceneId: string): Promise<{
     if (isFullyReady) {
       status = 'ready';
     } else {
-      // 检查是否正在下载
       const allStatus = DownloaderServiceInstance?.getAllStatus?.() as DownloaderServiceStatus[];
       const globalStatus = allStatus?.find(s => s.resourceId === sceneId);
       if (globalStatus && globalStatus.status === 'downloading') {
@@ -165,10 +166,13 @@ export async function checkSceneResourceStatus(sceneId: string): Promise<{
         status = 'waiting';
       }
     }
-    
+
+    tickScene(sceneId, { progress, status });
+
     return { isFullyReady, progress, status };
   } catch (error) {
     console.error(`[ResourceStatus] ❌ 检查失败: ${sceneId}`, error);
+    tickScene(sceneId, { progress: 0, status: 'error' });
     return { isFullyReady: false, progress: 0, status: 'error' };
   }
 }
@@ -214,9 +218,10 @@ export async function initializeResources(): Promise<void> {
       DownloadService.setProgressCallback((sceneId: string, progress: number) => {
         console.log(`[ResourceStatus] 📊 [下载回调] ${sceneId}: ${progress}%`);
         
-        // 清除对应缓存
+        // 清除对应缓存 + tick SceneItem（让缩略图进度实时更新）
         audioStatusCache.delete(sceneId);
         imageStatusCache.delete(sceneId);
+        tickScene(sceneId, { progress: Math.min(progress + 10, 100), status: 'downloading' });
       });
       
       // 启动静默下载
@@ -260,8 +265,21 @@ export function clearCache(sceneId?: string): void {
 }
 
 /**
- * 【全局状态获取】获取所有场景的资源状态
+ * 【旧 UI】保留 DeviceEventEmitter（ProfileScreen 等老组件仍依赖）
+ * 新代码优先使用 SceneDownloadStore，不再 emit 该事件。
  */
+export function notifySceneDownloadProgress(sceneId: string, progress: number): void {
+  try {
+    DeviceEventEmitter.emit('resourceLoadingChanged', { resourceId: sceneId, progress });
+  } catch (_e) {} // UI 未挂载时忽略
+}
+
+// ────────────────────────────────────────────
+// 【旧 UI】保留 DeviceEventEmitter（ProfileScreen / HomeScreen 老代码仍依赖）
+// 新代码优先使用 SceneDownloadStore，不再 emit 该事件。
+// ────────────────────────────────────────────
+
+/** 【全局状态获取】获取所有场景的资源状态 */
 export async function getAllSceneStatuses(): Promise<SceneResourceStatus[]> {
   const scenes = SCENES.filter(s => s.isBaseScene);
   const statuses: SceneResourceStatus[] = [];

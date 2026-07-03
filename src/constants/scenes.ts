@@ -7,37 +7,52 @@ import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSIO
 let backgroundAvailabilityCache: Record<string, boolean> = {};
 
 // 【辅助函数】异步检查并缓存背景图文件是否存在（应用启动 + 下载完成后调用）
+// 📝 RNFS.exists() 会返回 true，但文件大小可能为 0（下载中断的临时文件），
+//    因此必须同时验证 stat.size > 1KB 来确保图片可用。
+const isBackgroundFileValid = async (localPath: string): Promise<boolean> => {
+  try {
+    const exists = await RNFS.exists(localPath);
+    if (!exists) return false;
+    const stat = await RNFS.stat(localPath);
+    // 1KB 阈值：排除下载中断产生的空文件或损坏文件
+    return (stat.size ?? 0) > 1024;
+  } catch {
+    return false;
+  }
+};
+
 export const preloadBackgroundAvailability = async (): Promise<void> => {
   console.log('[scenes] 🔄 预加载/刷新 背景图可用性状态...');
 
   try {
-    // 检查东方禅意场景的背景图
+    // 检查东方禅意场景的背景图（category 必须与 getSceneBackground 一致，确保缓存 key 匹配）
     for (const [sceneId, bgFilename] of Object.entries(ORIENTAL_BG_MAP)) {
-      const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      const exists = await RNFS.exists(localPath);
-      backgroundAvailabilityCache[sceneId] = exists;
-      console.log(`[scenes]   ${sceneId}: ${bgFilename} -> ${exists ? '✅' : '❌'} (path: ${localPath})`);
+      const localPath = getLocalPathHelper('oriental', `zen/${bgFilename}`);
+      backgroundAvailabilityCache[localPath] = await isBackgroundFileValid(localPath);
     }
 
     // 检查西方教会场景的背景图
     for (const [sceneId, bgFilename] of Object.entries(WESTERN_CHURCH_BG_MAP)) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      const exists = await RNFS.exists(localPath);
-      backgroundAvailabilityCache[sceneId] = exists;
-      console.log(`[scenes]   ${sceneId}: ${bgFilename} -> ${exists ? '✅' : '❌'} (path: ${localPath})`);
+      backgroundAvailabilityCache[localPath] = await isBackgroundFileValid(localPath);
     }
 
     const availableCount = Object.values(backgroundAvailabilityCache).filter(Boolean).length;
-    const totalCount = Object.keys(backgroundAvailabilityCache).length;
-    console.log(`[scenes] ✅ 背景图可用性刷新完成: ${availableCount}/${totalCount} 个文件可用`);
+    console.log(`[scenes] ✅ 背景图可用性刷新完成: ${availableCount}/${Object.keys(backgroundAvailabilityCache).length} 个文件可用`);
   } catch (error) {
     console.warn('[scenes] ⚠️ 预加载背景图状态失败:', error);
   }
 };
 
-// 【辅助函数】检查背景图是否可用（按 sceneId 查询缓存）
-const isBackgroundImageAvailable = (sceneId: string): boolean => {
-  return backgroundAvailabilityCache[sceneId] === true;
+// 【辅助函数】检查背景图是否可用（同步查询缓存）
+const isBackgroundImageAvailable = (localPath: string): boolean => {
+  // 优先使用缓存结果
+  if (localPath in backgroundAvailabilityCache) {
+    return backgroundAvailabilityCache[localPath];
+  }
+  // 缓存未命中：默认返回 false（保守策略，避免显示损坏的图片）
+  // 缓存会在 preloadBackgroundAvailability() 调用时刷新
+  return false;
 };
 
 // 本地背景图存储目录（与 audioAssets.ts 中的 LOCAL_RESOURCE_PATH 一致）
@@ -142,6 +157,29 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
   },
 };
 
+// 【🔥 v1.4.3 修复】西方教会场景独立缩略图映射（Release 包使用 require() 静态资源）
+const WESTERN_CHURCH_THUMBNAIL_MAP: Record<string, any> = {
+  western_church_morning_bell: require('../assets/images/scenes/western_church_candlelight.webp'),
+  western_church_gregorian: require('../assets/images/scenes/western_church_corridor.webp'),
+  western_church_holy_waves: require('../assets/images/scenes/western_church_light_rays.webp'),
+  western_church_urban_chant: require('../assets/images/scenes/western_church_sunlight_monastery.webp'),
+  western_church_forest_echo: require('../assets/images/scenes/western_church_candlelight.webp'),
+};
+
+// 【 v1.4.6 修复】东方禅意场景独立缩略图映射（使用不同类别图片作为占位，下载完成后显示正确图片）
+const ORIENTAL_THUMBNAIL_MAP: Record<string, any> = {
+  oriental_zen_monastery: require('../assets/images/categories/category_nature.webp'), // 森林图作为寺院占位
+  oriental_tibetan_bowl: require('../assets/images/categories/category_therapy.webp'), // 冥想图作为颂钵占位
+  oriental_morning_buddha: require('../assets/images/scenes/buddha_morning.webp'), // 晨钟佛音用原图
+};
+
+// 【🔥 v1.4.5 修复】东方禅意场景背景图下载路径修正
+// DownloadService 使用 manifest.filename='zen/xxx.webp'，getLocalPath 忽略 category
+// 实际下载路径: audio_resources/zen/xxx.webp（不是 scene_backgrounds/zen/）
+const getOrientalLocalPath = (bgFilename: string): string => {
+  return getLocalPathHelper('oriental', `zen/${bgFilename}`);
+};
+
 // 【背景图缓存】避免重复创建引用，防止 Image 组件闪烁
 const backgroundSourceCache: Record<string, any> = {};
 
@@ -193,6 +231,7 @@ export const SMALL_SCENE_IDS = [
 ];
 
 // 西方教会场景背景图文件名映射（远程CDN下载到本地后使用，与东方禅意模式一致）
+// 【🔥 v1.4.2 修复】每个场景必须使用独立的背景图片，不能重复！
 const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
   western_church_morning_bell: 'western_church_candlelight.webp',
   western_church_gregorian: 'western_church_corridor.webp',
@@ -205,10 +244,11 @@ const WESTERN_CHURCH_BG_MAP: Record<string, string> = {
 const ORIENTAL_BG_MAP: Record<string, string> = {
   oriental_zen_monastery: 'bg_temple_lantern_gate.webp',
   oriental_tibetan_bowl: 'bg_temple_zen_lantern.webp',
+  // 【🔥 v1.4.2 修复】morning_buddha 使用独立的 buddha_morning.webp（与 zen/ 目录下的同名单元）
   oriental_morning_buddha: 'buddha_morning.webp',
 };
 
-// 【Release 兼容】新增自然场景必须使用 require() 静态资源（因为这些图在 assets 目录中）
+// 【🔥 Release 兼容】新增自然场景必须使用 require() 静态资源（因为这些图在 assets 目录中）
 const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
   manual_morning_forest: require('../assets/scenes/morning_forest.webp'),
   manual_serene_lakeside: require('../assets/scenes/serene_lakeside.webp'),
@@ -223,14 +263,17 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
   if (sceneId.startsWith('oriental_')) {
     const bgFilename = ORIENTAL_BG_MAP[sceneId];
     if (bgFilename) {
-      const localPath = getLocalPathHelper('scene_backgrounds', `zen/${bgFilename}`);
-      // 【🔥 v10 修复】按 sceneId 查询缓存
-      if (isBackgroundImageAvailable(sceneId)) {
+      // 【🔥 v1.4.5 修复】路径与 DownloadService 一致：audio_resources/zen/xxx.webp
+      // DownloadService 用 manifest.filename='zen/xxx.webp'，getLocalPath 忽略 category
+      const localPath = getLocalPathHelper('oriental', `zen/${bgFilename}`);
+      if (isBackgroundImageAvailable(localPath)) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
         return getCachedBackgroundSource(uri);
       }
-      // 文件不存在，返回 null 显示占位图（纯色块+图标）
-      return null;
+    }
+    // 静态 fallback：每个场景用不同的图
+    if (ORIENTAL_THUMBNAIL_MAP[sceneId]) {
+      return ORIENTAL_THUMBNAIL_MAP[sceneId];
     }
     return backgrounds['Oriental']?.source || backgrounds[category]?.source || null;
   }
@@ -239,13 +282,14 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
     const bgFilename = WESTERN_CHURCH_BG_MAP[sceneId];
     if (bgFilename) {
       const localPath = getLocalPathHelper('scene_backgrounds', bgFilename);
-      // 【🔥 v10 修复】按 sceneId 查询缓存
-      if (isBackgroundImageAvailable(sceneId)) {
+      if (isBackgroundImageAvailable(localPath)) {
         const uri = localPath.startsWith('file://') ? localPath : `file://${localPath}`;
         return getCachedBackgroundSource(uri);
       }
-      // 文件不存在，返回 null 显示占位图（纯色块+图标）
-      return null;
+    }
+    // 【🔥 v1.4.3 修复】使用独立缩略图映射，避免所有场景显示同一张图
+    if (WESTERN_CHURCH_THUMBNAIL_MAP[sceneId]) {
+      return WESTERN_CHURCH_THUMBNAIL_MAP[sceneId];
     }
     return backgrounds['WesternChurch']?.source || backgrounds[category]?.source || null;
   }
@@ -302,7 +346,7 @@ const SCENE_ORDER: Record<string, number> = {
 
 export const SCENES: Scene[] = AUDIO_MANIFEST
   .filter((item) => {
-    // 排除 8 轨音频文件和背景图资源
+    // 【关键过滤】排除 8 轨音频文件和背景图资源
     return !item.id.startsWith('8track_') && !item.id.startsWith('bg_');
   })
   .map((item) => {
@@ -364,31 +408,9 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       isBaseScene: isBase,
       order: SCENE_ORDER[item.id] ?? 999,
     });
-
     return scene;
   })
   .sort((a, b) => a.order - b.order);
 
-export const getSceneById = (id: string): Scene | undefined => {
-  return SCENES.find(s => s.id === id);
-};
-
-export const getScenesByCategory = (category: SceneCategory): Scene[] => {
-  return SCENES.filter(s => s.category === category);
-};
-
-export const getCategoryColor = (category: SceneCategory): string => {
-  return backgrounds[category]?.color || '#000000';
-};
-
-export const getCategoryIcon = (category: SceneCategory): string => {
-  switch (category) {
-    case 'Nature': return '';
-    case 'Healing': return '';
-    case 'Brainwave': return '';
-    case 'Life': return '';
-    case 'WesternChurch': return '';
-    case 'Oriental': return '🏯';
-    default: return '🎵';
-  }
-};
+console.log('[scenes] 场景已按 order 强制排序，共', SCENES.length, '个场景');
+console.log('[scenes] 场景顺序:', SCENES.map(s => s.id).join(', '));

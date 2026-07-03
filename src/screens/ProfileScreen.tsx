@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,10 +24,12 @@ import AudioService from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { useNavigation } from '@react-navigation/native';
+import { DeviceEventEmitter } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import ToastUtil from '../utils/ToastUtil';
+import { subscribeDownload, DownloaderServiceInstance } from '../services/DownloaderService';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 import { useBackHandler } from '../hooks/useBackHandler';
 
@@ -54,7 +56,11 @@ export const ProfileScreen = () => {
   const [isTimerVisible, setIsTimerVisible] = useState(false);
   const [stats, setStats] = useState({ count: 0, duration: '0h' });
   const [savedPresets, setSavedPresets] = useState<any[]>([]);
-  const [isProUser, setIsProUser] = useState(false); 
+  const [isProUser, setIsProUser] = useState(false);
+  
+  // 【🔥 关键修复】监听 HomeScreen 的 resourceLoading 通知，实现下载进度实时刷新 + SceneItem remount
+  const [resourceLoading, setResourceLoading] = useState<{ loading: boolean; message?: string }>({ loading: false, message: undefined });
+  const [, setStateVersion] = useState(0);
   const [backgroundImage, setBackgroundImage] = useState<string>(''); 
   const [selectedBackgroundIndex, setSelectedBackgroundIndex] = useState<number>(0); 
   const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false); 
@@ -133,7 +139,7 @@ export const ProfileScreen = () => {
         style: 'destructive',
         onPress: async () => {
           try {
-            const updated = savedPresets.filter(p => p.id !== id);
+            const updated = savedPresets.filter((p: any) => p.id !== id);
             setSavedPresets(updated);
             await AsyncStorage.setItem('@mixer_presets', JSON.stringify(updated));
             ToastUtil.success(t('actions.deleted'));
@@ -196,6 +202,83 @@ export const ProfileScreen = () => {
     }
   };
 
+  // 【🔥🔧 关键修复 v3】实际启动下载 + subscribe() / notifyCacheCleared() + DeviceEventEmitter → HomeScreen remount
+  const startRealBackgroundDownload = useCallback(() => {
+    console.log('[ProfileScreen] 🔥 [startRealBackgroundDownload] 启动后台静默下载...');
+
+    // DownloaderServiceInstance.startBackgroundDownload() 内部会 notifyCacheCleared() + subscribe()
+    DownloaderServiceInstance.startBackgroundDownload();
+
+    DeviceEventEmitter.emit('resourceLoadingChanged', { loading: true, message: t('profile.cache.clearing') });
+
+    let pendingCount = 0;
+
+    const unsubscribe = subscribeDownload((status) => {
+      // 【🔧 Fix A】每次 notify（onProgress / completed / failed）都 emit 'resourceLoadingChanged'，让 HomeScreen useEffect 捕获 → setStateVersion remount SceneItem
+      setStateVersion(v => v + 1);
+      DeviceEventEmitter.emit('resourceLoadingChanged', { resourceId: status.resourceId, loading: false });
+
+      if (status.resourceId.startsWith('bg_') || status.filename.endsWith('.webp')) {
+        DeviceEventEmitter.emit('backgroundImagesReady');
+      }
+
+      if (status.status === 'downloading') {
+        pendingCount += 1;
+      } else if (status.status === 'completed' || status.status === 'failed') {
+        pendingCount = Math.max(0, pendingCount - 1);
+        // 【🔥 Fix A 核心】最后一个任务完成 → emit loading: false，HomeScreen 卸载 loading overlay + remount SceneItem
+        if (pendingCount <= 0) {
+          DeviceEventEmitter.emit('resourceLoadingChanged', { resourceId: '__all__', loading: false });
+        }
+      }
+
+      if (status.status === 'completed') {
+        console.log(`[ProfileScreen] ✅ [subscribe] ${status.resourceId} 下载完成`);
+      } else if (status.status === 'downloading' && status.progress > 0) {
+        console.log(`[ProfileScreen] 📊 [subscribe] ${status.resourceId}: ${status.progress}%`);
+      } else if (status.status === 'failed') {
+        console.warn('[ProfileScreen] ⚠️ [subscribe] 下载失败:', status.error);
+      }
+    });
+
+    // 【🔥🔥🔨 关键修复】监听资源加载完成事件（DeviceEventEmitter），触发 HomeScreen SceneItem remount + 缩略图刷新
+    const subscription = DeviceEventEmitter.addListener('backgroundImagesReady', () => {
+      console.log('[ProfileScreen] 📡 [subscribe] 背景图就绪 → 递增 stateVersion');
+      setStateVersion(v => v + 1);
+
+      // 【🔥🔥🔨 关键修复】通知 HomeScreen 刷新缩略图（直接调用 RNFS.stat 读取本地文件）
+      DeviceEventEmitter.emit('thumbnailRefreshRequested', { sceneId: 'all' });
+    });
+
+    console.log('[ProfileScreen] ✅ [subscribe] 实时进度监听已注册');
+  }, [t]);
+
+  // 【🔥🔥🔨 关键修复】页面获得焦点时，检查是否正在下载并启动 subscribe
+  useBackHandler(false, navigation);
+
+  // 【🔥🔥🔨 关键修复】页面获得焦点时，检查是否正在下载并启动 subscribe
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[ProfileScreen] 🎯 [useFocusEffect] 页面获得焦点');
+
+      const loadingStates = ['downloading', 'ready'];
+      for (const status of Object.values(downloads)) {
+        if (status.status === 'downloading') {
+          console.log(`[ProfileScreen] 🔄 [useFocusEffect] ${id} 正在下载中，启动实时进度监听`);
+          startRealBackgroundDownload();
+          return; // 找到一个正在下载的即可退出
+        }
+      }
+
+      for (const status of Object.values(downloads)) {
+        if (status.status === 'ready') {
+          console.log(`[ProfileScreen] ✅ [useFocusEffect] ${id} 已就绪`);
+          return;
+        }
+      }
+    }, [downloads, startRealBackgroundDownload])
+  );
+
   const handleOpenRename = () => {
     setNewName(userName);
     setIsNameModalVisible(true);
@@ -252,15 +335,34 @@ export const ProfileScreen = () => {
     triggerHaptic('impactMedium');
     Alert.alert(t('profile.modals.clearCacheTitle'), t('profile.modals.clearCacheMsg'), [
       { text: t('profile.modals.cancel'), style: "cancel" },
-      { 
-        text: t('profile.modals.confirmClear'), 
-        onPress: async () => {
-          await AsyncStorage.removeItem('RESOURCE_READY'); // 使用简化后的 key
-          Alert.alert(t('profile.modals.clearCacheTitle'), t('profile.modals.clearCacheSuccess'));
-          // @ts-ignore
-          navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
+        { 
+          text: t('profile.modals.confirmClear'), 
+          onPress: async () => {
+            const RESOURCE_READY_KEY = 'RESOURCE_READY';
+            
+            try {
+              // 【🔧 关键修复 v2】使用 DownloadService.silentBackgroundDownload（按清单逐文件下载，而非 DownloaderService 批量串行）
+              // 原因：DownloaderService.processQueue() 顺序执行 RNFS.downloadFile，当队列中有大量已完成/失败资源时，
+              //      每个都要等待超时才能跳过，导致 UI 长时间显示 "Downloading 0%"。
+              //      DownloadService.silentBackgroundDownload 使用 RNFS.downloadFile + onProgress 原生回调，进度实时可见。
+              const { DownloadService } = await import('../services/DownloadService');
+              console.log('[ProfileScreen] 📥 [清除缓存] 启动资源下载...');
+              DownloadService.silentBackgroundDownload().catch((e) => {
+                console.warn('[ProfileScreen] ⚠️ [清除缓存] 后台下载启动失败:', e);
+              });
+
+              // 【🔥🔧 关键修复 v3】实际启动 DownloaderService 实时进度监听 + subscribe() → HomeScreen remount
+              startRealBackgroundDownload();
+            } catch (e) {
+              console.error('[ProfileScreen] ❌ [清除缓存] 下载触发失败:', e);
+            }
+            
+            await AsyncStorage.removeItem(RESOURCE_READY_KEY);
+            Alert.alert(t('profile.modals.clearCacheTitle'), t('profile.modals.clearCacheSuccess'));
+            // @ts-ignore
+            navigation.reset({ index: 0, routes: [{ name: 'Landing' }] });
+          }
         }
-      }
     ]);
   };
 

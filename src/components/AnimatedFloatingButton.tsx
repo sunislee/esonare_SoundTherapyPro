@@ -34,9 +34,6 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const buttonPressed = useRef(false);
-  
-  // 【平滑过渡】使用 ref 存储当前颜色值，避免 isActive 变化时重渲染组件
-  const currentColor = useRef(isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)');
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -47,15 +44,6 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
       tension: 40,
     }).start();
   }, []);
-
-  // 【平滑过渡】isActive 变化时，仅更新颜色 ref（不触发组件重渲染）
-  useEffect(() => {
-    // 使用 requestAnimationFrame 确保颜色更新在下一帧进行
-    const timeoutId = requestAnimationFrame(() => {
-      currentColor.current = isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)';
-    });
-    return () => cancelAnimationFrame(timeoutId);
-  }, [isActive]);
 
   useEffect(() => {
     if (isActive) {
@@ -127,7 +115,7 @@ const AnimatedFloatingButton: React.FC<AnimatedFloatingButtonProps> = ({
         <Ionicons
           name={getIconName(ambient.id)}
           size={28}
-          color={currentColor.current}
+          color={isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)'}
         />
       </Pressable>
       <View style={{ height: 15 }} />

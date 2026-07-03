@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Platform,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
@@ -15,9 +16,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList } from '../navigation/MainNavigator';
+import { Scene, getSceneBackground } from '../constants/scenes';
+import { useAudio } from '../context/AudioContext';
 import AudioService from '../services/AudioService';
-import { State } from 'react-native-track-player';
-import { Scene } from '../constants/scenes';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 const { width } = Dimensions.get('window');
@@ -29,10 +30,23 @@ const MiniPlayer = () => {
   const [currentScene, setCurrentScene] = useState<Scene | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
+  // 【🔥 v1.4.2-coldstart 修复】监听 backgroundImagesReady 事件，缓存就绪后强制重渲染
+  const bgReadyTick = useRef(0).current;
+  const [, setBgTick] = useState(0);
+  
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('backgroundImagesReady', () => {
+      console.log('[MiniPlayer] 📡 backgroundImagesReady → 刷新背景图');
+      setBgTick(v => v + 1);
+    });
+    return () => sub.remove();
+  }, []);
+  
   // Use navigation state to hide MiniPlayer on ImmersivePlayerScreen and BreathDetailScreen
   const isPlayerScreen = useNavigationState((state) => {
-    if (!state) return false;
+    if (!state || !state.routes || state.index == null) return false;
     const currentRoute = state.routes[state.index];
+    if (!currentRoute) return false;
     return currentRoute.name === 'ImmersivePlayer' || 
            currentRoute.name === 'BreathDetail' ||
            currentRoute.name === 'NoiseCancellationRoom';
@@ -40,8 +54,9 @@ const MiniPlayer = () => {
 
   // 【新增】检查是否在首页（有降噪按钮的页面）
   const isHomeScreen = useNavigationState((state) => {
-    if (!state) return false;
+    if (!state || !state.routes || state.index == null) return false;
     const currentRoute = state.routes[state.index];
+    if (!currentRoute) return false;
     return currentRoute.name === 'MainTabs';
   });
 
@@ -56,26 +71,14 @@ const MiniPlayer = () => {
     });
   };
 
+  // 【v1.4.2 Release 修复】使用 useAudio hook + 静态 import 的 AudioService
+  // 替代之前有混淆风险的动态 require()，避免 Release 包 TypeError
+  const { activeSoundId, playbackState, currentScene: ctxCurrentScene } = useAudio();
+
   useEffect(() => {
-    const audioService = AudioService.getInstance();
-    const sub = audioService.addAudioStateListener(({ state }) => {
-      const playing = state === State.Playing || state === State.Buffering;
-      setIsPlaying(playing);
-      
-      const scene = audioService.getCurrentScene();
-      setCurrentScene(scene);
-    });
-
-    const scene = audioService.getCurrentScene();
-    if (scene) {
-      setCurrentScene(scene);
-      setIsPlaying(audioService.getCurrentState() === State.Playing);
-    }
-
-    return () => {
-      sub();
-    };
-  }, []);
+    setCurrentScene(ctxCurrentScene);
+    setIsPlaying(playbackState === 'playing');
+  }, [ctxCurrentScene, playbackState]);
 
   useEffect(() => {
     // 【优化】只在首页隐藏 MiniPlayer（避免遮挡降噪按钮），其他页面正常显示
@@ -94,30 +97,32 @@ const MiniPlayer = () => {
     e.stopPropagation();
     triggerHaptic();
     const targetState = isPlaying ? 'pause' : 'play';
-    const audioService = AudioService.getInstance();
     
     try {
       if (targetState === 'pause') {
-        await audioService.pause();
+        await handlePause();
       } else {
-        // 【关键修复】如果未初始化，先触发初始化
-        if (!audioService.isReady()) {
-          console.log('[MiniPlayer] ⏳ AudioService 未准备好，触发初始化...');
-          await audioService.setupPlayer();
-          let waitCount = 0;
-          while (!audioService.isReady() && waitCount < 20) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            waitCount++;
-          }
-          if (!audioService.isReady()) {
-            console.warn('[MiniPlayer] ⚠️ 初始化超时');
-            return;
-          }
-        }
-        await audioService.play();
+        await handlePlay();
       }
     } catch (error) {
       console.error('MiniPlayer toggle failed:', error);
+    }
+  };
+
+  // 【v1.4.2 Release 修复】静态 import AudioService，消除混淆后 .default undefined 问题
+  const handlePlay = async () => {
+    try {
+      await AudioService.getInstance().play();
+    } catch (e) {
+      console.error('[MiniPlayer] play failed:', e);
+    }
+  };
+
+  const handlePause = async () => {
+    try {
+      await AudioService.getInstance().pause();
+    } catch (e) {
+      console.error('[MiniPlayer] pause failed:', e);
     }
   };
 
@@ -227,16 +232,26 @@ const MiniPlayer = () => {
 
         {/* Expanded View */}
         <Animated.View style={[styles.expandedView, { opacity: contentOpacity }]}>
-          {currentScene.backgroundSource ? (
-            <Image 
-              key={currentScene.id}
-              source={currentScene.backgroundSource} 
-              style={styles.thumbnail}
-              fadeDuration={0}
-            />
-          ) : (
-            <View style={[styles.thumbnail, { backgroundColor: currentScene.primaryColor }]} />
-          )}
+          {(() => {
+            // 【🔥 v1.4.2-coldstart 修复】用 bgReadyTick 驱动重渲染，冷启动后缓存就绪时图片自动切换
+            const resolvedBgSource = (currentScene.id.startsWith('oriental_') || currentScene.id.startsWith('western_church_'))
+              ? (getSceneBackground(currentScene.id, currentScene.category) || currentScene.backgroundSource)
+              : currentScene.backgroundSource;
+
+            if (resolvedBgSource) {
+              return (
+                <Image 
+                  key={`${currentScene.id}-bg-${bgReadyTick}`}
+                  source={resolvedBgSource} 
+                  style={styles.thumbnail}
+                  fadeDuration={0}
+                />
+              );
+            }
+            return (
+              <View style={[styles.thumbnail, { backgroundColor: currentScene.primaryColor }]} />
+            );
+          })()}
           
           <View style={styles.textContainer}>
             <Text style={styles.title} numberOfLines={1}>

@@ -1,5 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { StatusBar, useColorScheme, ActivityIndicator, View, Text, Platform, DeviceEventEmitter } from 'react-native';
+import React, { Component, type ErrorInfo, useState, useEffect } from 'react';
+import { StatusBar, useColorScheme, ActivityIndicator, View, Text, Platform, DeviceEventEmitter, StyleSheet, TouchableOpacity } from 'react-native';
+
+// 【v1.4.2 Release 防御】全局 ErrorBoundary — 捕获所有组件渲染/挂载期同步错误
+// Hermes Runtime Sync Error 不会经过 ExceptionsManagerModule.reportException，
+// 而是直接 kill 进程。ErrorBoundary 是唯一能拦截这种错误的 React 机制。
+interface GlobalErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class GlobalErrorBoundary extends Component<{ children: React.ReactNode }, GlobalErrorBoundaryState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): GlobalErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[GlobalErrorBoundary] Caught React error:', error);
+    console.error('[GlobalErrorBoundary] Component stack:', errorInfo.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>⚠️ 应用异常</Text>
+          <Text style={styles.errorMessage}>页面加载出错，点击重试继续</Text>
+          <TouchableOpacity onPress={() => {
+            this.setState({ hasError: false, error: null });
+          }} style={styles.retryButton}>
+            <Text style={styles.retryText}>重试</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const styles = StyleSheet.create({
+  errorContainer: { flex: 1, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
+  errorTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, color: '#333' },
+  errorMessage: { fontSize: 16, color: '#666', paddingHorizontal: 32, textAlign: 'center', marginBottom: 24 },
+  retryButton: { backgroundColor: '#6C5DD3', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 8 },
+  retryText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+});
+
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -12,6 +62,96 @@ import TrackPlayer from 'react-native-track-player';
 import { NativeModules } from 'react-native';
 import { DownloadService } from './src/services/DownloadService';
 import { preloadBackgroundAvailability } from './src/constants/scenes';
+
+// 【🔥 v1.4.7 修复】自动下载场景背景图片（使用 RNFS.downloadFile，与 DownloadService 一致）
+// 之前用 fetch + btoa + appendFile 处理二进制图片会损坏文件
+async function autoDownloadSceneBackgrounds() {
+  try {
+    console.log('[App] 🖼️ [autoDownload] 检查并下载场景背景图片...');
+
+    const RNFS = await import('@dr.pogodin/react-native-fs');
+    const bgDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
+    await RNFS.mkdir(bgDir);
+
+    // 2) 下载西方教会背景图（4张独立图片，使用 ghproxy.net 加速源）
+    // 【v1.4.7 修复】ghproxy.net 有缓存 bug，不同 URL 可能返回同一缓存文件，必须加 ?v=N 参数绕过
+    const westernBgMap: Record<string, string> = {
+      'western_church_candlelight.webp': `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/western_church_candlelight.webp?v=1`,
+      'western_church_corridor.webp': `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/western_church_corridor.webp?v=2`,
+      'western_church_light_rays.webp': `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/western_church_light_rays.webp?v=3`,
+      'western_church_sunlight_monastery.webp': `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/western_church_sunlight_monastery.webp?v=4`,
+    };
+
+    // 3) 下载东方禅意背景图（3张，下载到 zen/ 子目录，使用 ghproxy.net 加速源）
+    const zenSubDir = `${bgDir}/zen`;
+    await RNFS.mkdir(zenSubDir);
+    const zenBgMap: Record<string, string> = {
+      'zen/bg_temple_lantern_gate.webp': `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/zen/bg_temple_lantern_gate.webp?v=1`,
+      'zen/bg_temple_zen_lantern.webp': `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/zen/bg_temple_zen_lantern.webp?v=2`,
+      'zen/buddha_morning.webp': `https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/zen/buddha_morning.webp?v=3`,
+    };
+
+    const allFiles = { ...westernBgMap, ...zenBgMap };
+    let downloadedCount = 0;
+
+    for (const [filename, url] of Object.entries(allFiles)) {
+      const localPath = `${bgDir}/${filename}`;
+      const tempPath = `${localPath}.tmp`;
+      try {
+        // 检查是否已存在且有效（>1KB）
+        const exists = await RNFS.exists(localPath);
+        if (exists) {
+          const stat = await RNFS.stat(localPath);
+          if ((stat.size ?? 0) > 1024) {
+            console.log(`[App] 🖼️ [autoDownload] ✅ 已存在: ${filename} (${stat.size} bytes)`);
+            downloadedCount++;
+            continue;
+          } else {
+            // 文件太小，可能是损坏的，删除后重新下载
+            console.log(`[App] ️ [autoDownload] ⚠️ 文件太小，删除: ${filename} (${stat.size} bytes)`);
+            await RNFS.unlink(localPath);
+          }
+        }
+
+        // 使用 RNFS.downloadFile（与 DownloadService 一致，可靠处理二进制文件）
+        console.log(`[App] 🖼️ [autoDownload] ⬇️ 下载中: ${filename}`);
+        const result = await RNFS.downloadFile({
+          fromUrl: url,
+          toFile: tempPath,
+          connectionTimeout: 10000,
+          readTimeout: 15000,
+        }).promise;
+
+        if (result.statusCode === 200 || result.statusCode === 201) {
+          const stat = await RNFS.stat(tempPath);
+          if (stat.size > 1024) {
+            await RNFS.moveFile(tempPath, localPath);
+            console.log(`[App] 🖼️ [autoDownload] ✅ 完成: ${filename} (${stat.size} bytes)`);
+            downloadedCount++;
+          } else {
+            console.warn(`[App] 🖼️ [autoDownload] ⚠️ 文件太小: ${filename} (${stat.size} bytes)`);
+            try { await RNFS.unlink(tempPath); } catch {}
+          }
+        } else {
+          console.warn(`[App] 🖼️ [autoDownload]  HTTP ${result.statusCode}: ${filename}`);
+          try { await RNFS.unlink(tempPath); } catch {}
+        }
+      } catch (err: any) {
+        console.warn(`[App] 🖼️ [autoDownload] ⚠️ 下载失败: ${filename}`, err?.message || String(err));
+        try { await RNFS.unlink(tempPath); } catch {}
+      }
+    }
+
+    console.log(`[App] 🖼️ [autoDownload] 完成: ${downloadedCount}/${Object.keys(allFiles).length} 个背景图片就绪`);
+
+    // 4) 刷新缓存状态 + 通知 UI 刷新缩略图
+    await preloadBackgroundAvailability();
+    DeviceEventEmitter.emit('backgroundImagesReady');
+    console.log('[App] 🖼️ [autoDownload] ✅ 背景图预加载完成，UI 将自动刷新缩略图');
+  } catch (err: any) {
+    console.error('[App] ️ [autoDownload] ❌ 后台下载失败:', err?.message || String(err));
+  }
+}
 
 // 【v1.4.1 关键修复】获取当前应用版本号
 const APP_VERSION_CODE = NativeModules?.PackageInfo?.versionCode || 141;
@@ -66,11 +206,9 @@ function App() {
           await audioService.setupPlayer();
           console.log('[App] [3/3] ✅ AudioService 初始化完成');
           
-           // 【新增】预加载背景图片文件状态，避免RNFS.exists()异步问题
-           console.log('[App] 预加载背景图片文件状态...');
-           await preloadBackgroundAvailability();
-           DeviceEventEmitter.emit('backgroundImagesReady');
-          console.log('[App] ✅ 背景图片文件状态预加载完成');
+        // 【🔥 v1.4.2 新增】后台自动下载场景背景图片，确保缩略图正确显示
+        console.log('[App] 🖼️ [autoDownload] 启动后台背景图片下载...');
+        autoDownloadSceneBackgrounds(); // async, does not block UI
         } catch (audioError: any) {
           console.error('[App] ❌ AudioService 初始化失败:', audioError?.message);
           // 尝试重新 setup
@@ -84,12 +222,8 @@ function App() {
         console.log(`[App] ⏱️ 应用初始化总耗时：${initTime}ms`);
         console.log('[App] ====== 应用初始化完成 ======');
         
-        // 设置 isAudioReady 为 true，显示主界面
+        // 设置 isAudioReady 为 true，显示主界面（后台图片下载不阻塞 UI）
         setIsAudioReady(true);
-        
-        // 【关键修复】移除 App.tsx 中的后台下载逻辑
-        // 下载任务统一由 ResourceDownloadScreen 负责，避免双重下载和进度冲突
-        console.log('[App] 下载任务由 ResourceDownloadScreen 统一管理');
       } catch (error: any) {
         console.error('[App] ❌ 初始化失败:', error);
         console.error('[App] ❌ 错误信息:', error?.message);
@@ -101,74 +235,6 @@ function App() {
 
     initApp();
   }, []);
-
-  // 【已禁用】自动播放逻辑：用户要求打开 App 时世界是安静的
-  // useEffect(() => {
-  //   if (!isAudioReady) return;
-  //   
-  //   let hasAutoPlayed = false; // 【播放状态锁】确保只自动播放一次
-  //   
-  //   const checkDownloadStatus = async () => {
-  //     // 【严格判定】如果已经自动播放过，直接返回
-  //     if (hasAutoPlayed) {
-  //       return;
-  //     }
-  //     
-  //     try {
-  //       const downloaded = await AsyncStorage.getItem('resourcesDownloaded');
-  //       console.log('[App] 检查 resourcesDownloaded:', downloaded);
-  //       
-  //       if (downloaded === 'true') {
-  //         console.log('[App] --- [触发下载后自动播放逻辑] ---');
-  //         console.log('[App] 检测到资源已下载，准备触发默认场景播放');
-  //         
-  //         // 【播放状态锁】标记已自动播放
-  //         hasAutoPlayed = true;
-  //         
-  //         // 延迟 1 秒确保页面跳转完成
-  //         setTimeout(async () => {
-  //           try {
-  //             const audioService = AudioService.getInstance();
-  //             
-  //             // 【关键检查】如果已经在播放，跳过
-  //             const isPlaying = await audioService.getRealIsPlaying();
-  //             console.log('[App] 自动播放前状态检查:', isPlaying ? 'playing' : 'stopped');
-  //             
-  //             if (isPlaying) {
-  //               console.log('[App] ⚠️ 已经在播放，跳过自动播放');
-  //               return;
-  //             }
-  //             
-  //             // 【默认场景】深海呼吸（如果存在）
-  //             const defaultScene = {
-  //               id: 'nature_deep_sea',
-  //               filename: 'base/deep_ocean_abyss.m4a',
-  //               category: 'base',
-  //               title: '深海呼吸'
-  //             };
-  //             
-  //             console.log('[App] 调用 playScene:', defaultScene.id);
-  //             await audioService.playScene(defaultScene as any);
-  //             console.log('[App] ✅ 自动播放已触发（仅此一次）');
-  //           } catch (e: any) {
-  //             console.error('[App] ❌ 自动播放失败:', e?.message);
-  //           }
-  //         }, 1000);
-  //       }
-  //     } catch (e) {
-  //       console.error('[App] 检查下载状态失败:', e);
-  //     }
-  //   };
-  //   
-  //   // 立即检查一次，不再轮询
-  //   checkDownloadStatus();
-  //   
-  //   // 清理函数
-  //   return () => {
-  //     console.log('[App] 清理自动播放检查器');
-  //     hasAutoPlayed = true; // 防止清理后还在执行
-  //   };
-  // }, [isAudioReady]);
 
   if (!isAudioReady) {
     return (
@@ -191,16 +257,18 @@ function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <AudioProvider>
-            <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
-            <MainNavigator />
-          </AudioProvider>
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <GlobalErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <AudioProvider>
+              <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+              <MainNavigator />
+            </AudioProvider>
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </GlobalErrorBoundary>
   );
 }
 
