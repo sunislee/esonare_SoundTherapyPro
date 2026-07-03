@@ -90,7 +90,7 @@ class SFXPlayer {
           sound.setNumberOfLoops(-1);
           console.log('[SFXPlayer] 🔄 设置循环播放:', soundId);
 
-          // 播放音效
+           // 播放音效
           sound.play((success) => {
             if (success) {
               console.log('[SFXPlayer] ✅ 播放完成:', soundId);
@@ -100,7 +100,7 @@ class SFXPlayer {
 
             // 播放完成后释放资源
             this.cleanup(sound, soundId);
-          });
+           });
 
           // 保存实例到 activeSounds
           this.activeSounds.set(soundId, sound);
@@ -108,7 +108,7 @@ class SFXPlayer {
           resolve();
         });
 
-        // 【关键】设置音量为 1.0
+        // 【关键】设置音量为 1.0（在回调外调用，sound 对象可能未就绪）
         sound.setVolume(1.0);
       } catch (error) {
         console.error('[SFXPlayer] ❌ 播放异常:', error);

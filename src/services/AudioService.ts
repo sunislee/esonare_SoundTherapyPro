@@ -230,16 +230,28 @@ class AudioService {
   private isWesternChurchLFOEnabled: boolean = false;
   private westernChurchBaseVolume: number = 1.0;
 
+  // 【诊断】实例ID，用于确认是否存在多个实例
+  private readonly instanceId: string;
+  
   private constructor() {
-    AppState.addEventListener('change', this.handleAppStateChange);
-    // 【生命周期管理】注册销毁钩子
-    if (Platform.OS === 'android') {
-      // 使用 AppState 的 change 事件检测应用退出
-      this.handleAppStateChange = this.handleAppStateChange.bind(this);
+    this.instanceId = `AudioService#${Math.random().toString(36).substring(2, 10)}`;
+    console.error(`[${this.instanceId}] CONSTRUCTOR START`);
+    try {
+      AppState.addEventListener('change', this.handleAppStateChange);
+      // 【生命周期管理】注册销毁钩子
+      if (Platform.OS === 'android') {
+        // 使用 AppState 的 change 事件检测应用退出
+        this.handleAppStateChange = this.handleAppStateChange.bind(this);
+      }
+      
+      // 【v1.4.1 关键修复】清理旧版本的持久化播放状态
+      console.error('[AudioService] CONSTRUCTOR calling cleanupLegacyPlaybackState...');
+      const cleanupPromise = this.cleanupLegacyPlaybackState();
+      console.error('[AudioService] CONSTRUCTOR cleanupLegacyPlaybackState returned, promise =', cleanupPromise);
+    } catch (e) {
+      console.error('[AudioService] CONSTRUCTOR ERROR:', e);
     }
-    
-    // 【v1.4.1 关键修复】清理旧版本的持久化播放状态
-    this.cleanupLegacyPlaybackState();
+    console.error('[AudioService] CONSTRUCTOR END, _isReady =', this._isReady);
   }
   
   /**
@@ -278,7 +290,10 @@ class AudioService {
 
   static getInstance(): AudioService {
     if (!AudioService.instance) {
+      console.error('[getInstance] Creating new instance...');
       AudioService.instance = new AudioService();
+    } else {
+      console.error(`[getInstance] Returning existing instance: ${(AudioService.instance as any).instanceId}`);
     }
     return AudioService.instance;
   }
@@ -2399,6 +2414,12 @@ The tool call you made did not produce any output yet. The system is waiting for
   private notifySmallScenes() {
     const ids = Array.from(this.activeSmallScenes);
     console.log('[AudioService] 📡 notifySmallScenes 通知监听器:', ids);
+    
+    // 【R8 修复】同时触发静态回调，确保外部订阅者也能收到通知
+    for (const cb of _smallScenesCallbacks) {
+      try { cb(ids); } catch (e) { console.error('[AudioService] smallScenes callback error:', e); }
+    }
+    
     this.smallScenesListeners.forEach(l => l(ids));
   }
 
@@ -2556,28 +2577,68 @@ The tool call you made did not produce any output yet. The system is waiting for
   }
 
   async toggleAmbience(scene: Scene, targetState: boolean): Promise<void> {
-    if (!this._isReady) {
-      console.warn('[AudioService] ⚠️ 初始化未完成，跳过 toggleAmbience');
-      return;
+    // 【Hermes Release 修复】用公开方法 this.isReady() 代替 (this as any)._isReady
+    // Hermes + R8 混淆了私有属性 _isReady，导致返回 undefined
+    if (!this.isReady()) {
+      console.log('[AudioService] [toggleAmbience] isReady=false，尝试触发初始化...');
+      try {
+        await this.setupPlayer();
+      } catch (e: any) {
+        console.error('[AudioService] [toggleAmbience] setupPlayer 失败:', e?.message);
+      }
+      if (!this.isReady()) {
+        console.warn('[AudioService] [toggleAmbience] 初始化仍未完成，跳过');
+        return;
+      }
     }
     
-    __DEV__ && console.log('--- [切换交互音] ---', scene.id, 'targetState:', targetState);
+    console.log('[AudioService] [toggleAmbience] isReady=true，开始播放:', scene.id);
     
     try {
       if (targetState) {
-        // 播放交互音
+        console.log('[AudioService] 🔍 [toggleAmbience] 调用 playAmbient:', scene.id);
         await this.playAmbient(scene.id);
       } else {
-        // 停止单个交互音
         const soundId = `small_${scene.id}`;
         this.sfxPlayer.stop(soundId);
-        __DEV__ && console.log('[AudioService] ✅ 交互音已停止:', scene.id);
+        console.log('[AudioService] ✅ 交互音已停止:', scene.id);
         
         this.activeSmallScenes.delete(scene.id);
         this.notifySmallScenes();
       }
     } catch (error: any) {
       console.error('[AudioService] ❌ toggleAmbience 失败:', error);
+      console.error('[AudioService] ❌ 错误消息:', error?.message);
+      console.error('[AudioService] ❌ 错误堆栈:', error?.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * 【UI激活状态同步修复】只停止交互音SFX，不清空activeSmallScenes集合。
+   *
+   * 用途：ImmersivePlayer组件卸载cleanup时调用，防止useEffect依赖变化
+   * 意外清空用户正在使用的interactive按钮UI状态。
+   *
+   * 与 stopAllAmbient() 的区别：
+   * - stopAllAmbient(): 停止SFX + 清空activeSmallScenes + notifySmallScenes（全量重置）
+   * - stopAllAmbientOnly(): 仅停止SFX播放，保留activeSmallScenes集合和UI状态
+   */
+  async stopAllAmbientOnly(): Promise<void> {
+    if (!this._isReady) {
+      console.warn('[AudioService] ⚠️ 初始化未完成，跳过 stopAllAmbientOnly');
+      return;
+    }
+
+    __DEV__ && console.log('[AudioService] 🛑 停止所有交互音SFX（保留activeSmallScenes）');
+
+    try {
+      this.sfxPlayer.stopAll();
+      __DEV__ && console.log('[AudioService] ✅ SFXPlayer 已停止所有交互音');
+      // 注意：不清空 activeSmallScenes，不通知监听器
+      __DEV__ && console.log('[AudioService] ✅ stopAllAmbientOnly 完成（UI状态保持不变）');
+    } catch (error: any) {
+      console.error('[AudioService] ❌ stopAllAmbientOnly 失败:', error);
       throw error;
     }
   }
@@ -4090,6 +4151,7 @@ The tool call you made did not produce any output yet. The system is waiting for
 }
 
 // 具名导出封装（保持原有调用方式）
+// 【Hermes Release + R8 修复】所有导出函数使用箭头函数，确保被 proguard 保留
 export const setupPlayer = () => AudioService.getInstance().setupPlayer();
 export const play = () => AudioService.getInstance().play();
 export const pause = () => AudioService.getInstance().pause();
@@ -4110,7 +4172,123 @@ export const clearSleepTimer = () => AudioService.getInstance().clearSleepTimer(
 export const updateAmbientVolume = (volume: number) => AudioService.getInstance().updateAmbientVolume(volume);
 export const playAmbient = (id: string) => AudioService.getInstance().playAmbient(id);
 export const stopAllAmbient = () => AudioService.getInstance().stopAllAmbient();
-export const toggleAmbience = (scene: any, targetState: boolean) => AudioService.getInstance().toggleAmbience(scene, targetState);
+// 【UI激活状态同步修复】具名导出 stopAllAmbientOnly，防止Hermes优化丢失
+export const stopAllAmbientOnly = () => AudioService.getInstance().stopAllAmbientOnly();
+export const togglePlayback = (scene: any) => AudioService.getInstance().togglePlayback(scene);
+export const getAmbientVolumeById = (id: string) => AudioService.getInstance().getAmbientVolumeById(id);
+export const toggleAmbience = (scene: any, targetState: boolean) => {
+    try {
+      console.error('[AudioService-EXPORT] 🔍 toggleAmbience called');
+      const instance = AudioService.getInstance();
+      console.error('[AudioService-EXPORT] 🔍 getInstance() returned:', typeof instance);
+      console.error('[AudioService-EXPORT] 🔍 instance._isReady =', (instance as any)._isReady);
+      console.error('[AudioService-EXPORT] 🔍 instance.setupPlayer type =', typeof (instance as any).setupPlayer);
+    } catch (e) {
+      console.error('[AudioService-EXPORT] 🔍 getInstance() 异常:', e);
+    }
+    return AudioService.getInstance().toggleAmbience(scene, targetState);
+};
+// ════════════════════════════════════════════════════════
+// 【R8 终极修复】导出监听器注册函数 — 使用静态回调机制绕过方法名+属性名混淆
+// ════════════════════════════════════════════════════════
+
+// R8 混淆会同时改变方法和属性名，所以通过 instance.smallScenesListeners 访问 Set
+// 也可能拿到 undefined（因为属性名被改了）。改为使用静态回调列表，完全不依赖实例属性。
+let _smallScenesCallbacks: Array<(ids: string[]) => void> = [];
+let _volumeCallbacks: Array<(vol: number) => void> = [];
+let _timerCallbacks: Array<(remaining: number | null) => void> = [];
+
+// 注册静态回调（导出函数直接操作，不经过实例）
+export const addSmallScenesListener = (l: (ids: string[]) => void) => {
+  _smallScenesCallbacks.push(l);
+  return () => {
+    const idx = _smallScenesCallbacks.indexOf(l);
+    if (idx !== -1) _smallScenesCallbacks.splice(idx, 1);
+  };
+};
+
+// 通知所有 smallScenes 监听器
+export const notifyAllSmallScenesListeners = (ids: string[]) => {
+  for (const cb of _smallScenesCallbacks) {
+    try { cb(ids); } catch (e) { console.error('[AudioService] smallScenes callback error:', e); }
+  }
+};
+
+// 【核心修复】让 AudioService 实例的 notifySmallScenes 在触发时，同时调用静态回调
+// 这样即使 R8 混淆了方法名，只要方法体里的 this.smallScenesListeners.forEach 还在，
+// 就能通过重写该方法的引用来桥接。
+// 
+// 实现方式：在 AudioService 类内部新增一个公开方法 _pushStaticCallbackSmallScenes，
+// 由该类内部调用，外部导出函数负责绑定。
+export const _registerInternalListeners = (service: AudioService) => {
+  // 将静态回调桥接到实例：当实例需要通知时，同时触发静态回调
+  (service as any)._pushStaticCallback = {
+    smallScenes: (ids: string[]) => {
+      for (const cb of _smallScenesCallbacks) {
+        try { cb(ids); } catch (e) { console.error('[AudioService] smallScenes callback error:', e); }
+      }
+    },
+    volume: (vol: number) => {
+      for (const cb of _volumeCallbacks) {
+        try { cb(vol); } catch (e) { console.error('[AudioService] volume callback error:', e); }
+      }
+    },
+    timer: (remaining: number | null) => {
+      for (const cb of _timerCallbacks) {
+        try { cb(remaining); } catch (e) { console.error('[AudioService] timer callback error:', e); }
+      }
+    },
+  };
+
+  // 【关键】重写实例的 notifySmallScenes 方法，在原有通知后额外触发静态回调
+  const originalNotify = (service as any).notifySmallScenes.bind(service);
+  if (typeof originalNotify === 'function') {
+    (service as any).notifySmallScenes = function() {
+      // 先执行原始的通知逻辑
+      originalNotify();
+      // 再触发静态回调（确保外部订阅者也能收到）
+      const ids = (service as any).activeSmallScenes 
+        ? Array.from((service as any).activeSmallScenes) 
+        : [];
+      if (ids.length > 0) {
+        (_pushStaticCallback?.smallScenes as any)?.(ids);
+      }
+    };
+  }
+
+  console.log('[AudioService] 📦 R8 静态回调桥接完成');
+};
+
+// 引用上级作用域的 _pushStaticCallback（在 _registerInternalListeners 中被赋值）
+const _pushStaticCallback: {
+  smallScenes?: (ids: string[]) => void;
+  volume?: (vol: number) => void;
+  timer?: (remaining: number | null) => void;
+} = {};
+
+export const addVolumeListener = (l: (vol: number) => void) => {
+  _volumeCallbacks.push(l);
+  return () => {
+    const idx = _volumeCallbacks.indexOf(l);
+    if (idx !== -1) _volumeCallbacks.splice(idx, 1);
+  };
+};
+
+export const addSleepTimerListener = (l: (remaining: number | null) => void) => {
+  _timerCallbacks.push(l);
+  return () => {
+    const idx = _timerCallbacks.indexOf(l);
+    if (idx !== -1) _timerCallbacks.splice(idx, 1);
+  };
+};
+
+// 【R8 修复】通过静态回调注册，不依赖实例方法
+export const addSmallScenesListenerViaInstance = (l: (ids: string[]) => void) => {
+  // 直接注册到静态回调（与 addSmallScenesListener 相同）
+  return addSmallScenesListener(l);
+};
+
+
 export const getRealIsPlaying = () => AudioService.getInstance().getRealIsPlaying();
 export const getVolume = () => AudioService.getInstance().getVolume();
 export const setVolume = (volume: number) => AudioService.getInstance().setVolume(volume);

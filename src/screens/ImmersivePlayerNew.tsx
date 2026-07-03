@@ -24,7 +24,7 @@ import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
 import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
-import AudioService from '../services/AudioService';
+import AudioService, { stopAllAmbientOnly } from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { Event, useTrackPlayerEvents, State } from 'react-native-track-player';
@@ -474,9 +474,13 @@ const ImmersivePlayerNew: React.FC = () => {
     initPage(audioService);
 
     return () => {
-      console.log('[ImmersivePlayer] Stopping all ambient sounds on exit.');
-      if (audioService.isReady()) {
-        audioService.stopAllAmbient();
+      console.log('[ImmersivePlayer] Cleaning up interactive sounds (保留activeSmallSceneIds).');
+      // 【UI激活状态同步修复】使用 stopAllAmbientOnly 代替 stopAllAmbient
+      // 防止 useEffect 依赖变化时意外清空用户正在使用的interactive按钮UI状态
+      try {
+        stopAllAmbientOnly();
+      } catch (e) {
+        console.warn('[ImmersivePlayer] ⚠️ cleanup停止交互音失败:', e);
       }
     };
   }, [targetScene?.id]);

@@ -1,6 +1,18 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
-import AudioService from '../services/AudioService';
+import AudioService, { 
+  toggleAmbience as _toggleAmbience,
+  pause as _pause,
+  playScene as _playScene,
+  togglePlayback as _togglePlayback,
+  syncNativeStatus as _syncNativeStatus,
+  setSleepTimer as _setSleepTimer,
+  clearSleepTimer as _clearSleepTimer,
+  getAmbientVolumeById as _getAmbientVolumeById,
+  addSmallScenesListener as _addSmallScenesListener,
+  addVolumeListener as _addVolumeListener,
+  addSleepTimerListener as _addSleepTimerListener,
+} from '../services/AudioService';
 
 // 【RN 0.81 兼容】使用默认导入，与 TrackPlayer 保持一致
 import TrackPlayer, { State } from 'react-native-track-player';
@@ -44,12 +56,21 @@ interface AudioContextType {
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  console.error('[AudioContext] 🔴 [COMPONENT RENDERED] AudioProvider组件被渲染了');
+  
   // 【v1.4.2 Release 防御】获取 AudioService 实例，增加 try/catch 防止模块加载失败导致崩溃
   let audioService;
   try {
+    console.error('[AudioContext] 🔍 初始化 AudioService...');
     audioService = typeof AudioService !== 'undefined' && typeof AudioService.getInstance === 'function' 
       ? AudioService.getInstance() 
       : null;
+    if (audioService) {
+      console.error('[AudioContext] 🔍 getInstance() 返回对象, _isReady=', (audioService as any)._isReady);
+      console.error('[AudioContext] 🔍 audioService.toggleAmbience type =', typeof (audioService as any).toggleAmbience);
+    } else {
+      console.error('[AudioContext] 🔍 getInstance() 返回 null/undefined!');
+    }
   } catch (e) {
     console.error('[AudioContext] ❌ AudioService getInstance 调用失败:', e);
     audioService = null;
@@ -279,7 +300,6 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     console.warn('[AudioContext] ✅ isServiceReady=true, 开始注册监听器');
-    
     const svc = audioService as any; // 【关键修复】使用 any cast 解决 TS 类型检测不到的 runtime-added methods
     
     const unsubscribeState = typeof (svc as any)?.addAudioStateListener === 'function' ? (svc as any).addAudioStateListener((state: any) => {
@@ -298,15 +318,16 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }) : () => {};
 
-    const unsubscribeSmallScenes = typeof (svc as any)?.addSmallScenesListener === 'function' ? (svc as any).addSmallScenesListener((ids: string[]) => {
+    // 【R8 修复】使用具名导出函数，避免实例方法被混淆
+    const unsubscribeSmallScenes = typeof _addSmallScenesListener === 'function' ? _addSmallScenesListener((ids: string[]) => {
       setActiveSmallSceneIds(ids);
     }) : () => {};
 
-    const unsubscribeVolume = typeof (svc as any)?.addVolumeListener === 'function' ? (svc as any).addVolumeListener((vol: number) => {
+    const unsubscribeVolume = typeof _addVolumeListener === 'function' ? _addVolumeListener((vol: number) => {
       setAmbientVolume(vol);
     }) : () => {};
 
-    const unsubscribeTimer = typeof (svc as any)?.addSleepTimerListener === 'function' ? (svc as any).addSleepTimerListener((remaining: number | null) => {
+    const unsubscribeTimer = typeof _addSleepTimerListener === 'function' ? _addSleepTimerListener((remaining: number | null) => {
       setRemainingTime(remaining);
       if (remaining !== null && initialRemaining === null) {
         setInitialRemaining((svc as any)?.getInitialSleepSeconds() ?? 0);
@@ -391,9 +412,11 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [audioService]); // 【关键修复】添加 audioService 依赖，确保引用更新时回调也同步
 
   // 【v1.4.2 Release 防御】安全调用包装器：所有方法先检查函数存在性再调用
-  const safeCall = (fn: any, ...args: any[]) => {
-    if (typeof fn === 'function') {
-      try { return fn(...args); } 
+  // 【Hermes Release + R8 修复】safeCall 必须用 bind 绑定 this，否则类方法内部 this 丢失
+  // 【Hermes Release + R8 终极修复】所有方法调用改用导出函数（不会被混淆）
+  const safeCall = (exportFn: any, ...args: any[]) => {
+    if (typeof exportFn === 'function') {
+      try { return exportFn(...args); } 
       catch (e) { console.warn('[AudioContext] ⚠️ safeCall 失败:', e); return undefined; }
     }
   };
@@ -414,7 +437,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const getAmbientVolumeById = useCallback((id: string) => {
     if (!isServiceReady || !audioService) return 1.0;
-    return safeCall(audioService.getAmbientVolumeById, id) ?? 1.0;
+    return safeCall(_getAmbientVolumeById, id) ?? 1.0;
   }, [isServiceReady, audioService]);
 
   const toggleAmbience = useCallback(async (scene: Scene, targetState: boolean) => {
@@ -422,7 +445,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 toggleAmbience');
       return;
     }
-    try { await safeCall(audioService.toggleAmbience, scene, targetState); } 
+    try { await safeCall(_toggleAmbience, scene, targetState); } 
     catch (e) { console.error('[AudioContext] ❌ toggleAmbience 失败:', e); }
   }, [isServiceReady, audioService]);
 
@@ -445,7 +468,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 pause');
       return;
     }
-    try { await safeCall(audioService.pause); } 
+    try { await safeCall(_pause); } 
     catch (e) { console.error('[AudioContext] ❌ pause 失败:', e); }
   }, [isServiceReady, audioService]);
 
@@ -454,7 +477,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 togglePlayback');
       return;
     }
-    try { await safeCall(audioService.togglePlayback, scene); } 
+    try { await safeCall(_togglePlayback, scene); } 
     catch (e) { console.error('[AudioContext] ❌ togglePlayback 失败:', e); }
   }, [isServiceReady, audioService]);
 
@@ -465,7 +488,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     // 【关键】在切换场景前，强制重置交互音状态
     setActiveSmallSceneIds([]);
-    try { await safeCall(audioService.playScene, scene); } 
+    try { await safeCall(_playScene, scene); } 
     catch (e) { console.error('[AudioContext] ❌ playScene 失败:', e); }
   }, [isServiceReady, audioService]);
 
@@ -474,7 +497,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 syncNativeStatus');
       return;
     }
-    try { await safeCall(audioService.syncNativeStatus); } 
+    try { await safeCall(_syncNativeStatus); } 
     catch (e) { console.error('[AudioContext] ❌ syncNativeStatus 失败:', e); }
   }, [isServiceReady, audioService]);
 
@@ -483,7 +506,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 setSleepTimer');
       return;
     }
-    try { await safeCall(audioService.setSleepTimer, minutes); } 
+    try { await safeCall(_setSleepTimer, minutes); } 
     catch (e) { console.error('[AudioContext] ❌ setSleepTimer 失败:', e); }
   }, [isServiceReady, audioService]);
 
@@ -492,7 +515,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 clearSleepTimer');
       return;
     }
-    try { safeCall(audioService.clearSleepTimer); } 
+    try { safeCall(_clearSleepTimer); } 
     catch (e) { console.error('[AudioContext] ❌ clearSleepTimer 失败:', e); }
   }, [isServiceReady, audioService]);
 

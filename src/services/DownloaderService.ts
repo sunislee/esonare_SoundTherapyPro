@@ -282,7 +282,16 @@ class DownloaderService {
     
     // 【穿透测试】验证远程 URL
     console.log(`[Downloader] 🔥 [downloadResource] 远程URL: ${resource.remoteUrl}`);
-    
+
+    // 【关键修复】统一在 fetch 前创建父目录，防止 ENOENT
+    const _dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+    try {
+      await RNFS.mkdir(_dirPath);
+      console.log(`[Downloader] ✅ [MKDIR] 目录已确保: ${_dirPath}`);
+    } catch (mkdirErr: any) {
+      console.warn(`[Downloader] ⚠️ [MKDIR] 创建目录失败: ${mkdirErr.message}`);
+    }
+
     try {
       // ════════════════════════════════════════════════════════════
       // 🔥 物理证据日志 - 下载前（6行）
@@ -323,28 +332,56 @@ class DownloaderService {
         }
 
         // RNFS.appendFile 每块约 1MB（~1048576 bytes），按 chunked 分片追加
-        if (!response.body) throw new Error('Response body is null');
         let totalWritten = 0;
-        const reader = response.body.getReader();
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        // 🔧🔥 Response body is null 兜底方案：使用 arrayBuffer() + RNFS.writeFile
+        // React Native Android 的 fetch response.body.getReader() 可能不可用（Web Streams API 不支持）
+        const rnResponse: any = response;
 
-          // Uint8Array → ArrayBuffer → base64 (RNFS.appendFile 'base64' 模式)
-          const bytes = new Uint8Array(value);
+        if (!rnResponse.body) {
+          console.log(`[Downloader] ⚠️ [FALLBACK] response.body 为 null，切换到 arrayBuffer 兜底模式`);
+
+          // 确保父目录存在
+          const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+          await RNFS.mkdir(dirPath);
+
+          const buffer = await response.arrayBuffer();
+          const uint8 = new Uint8Array(buffer);
+          // ArrayBuffer → base64 → RNFS.writeFile 'base64' 写入二进制文件
           let binary = '';
-          for (let i = 0; i < Math.min(bytes.length, 1048576); i++) {
-            binary += String.fromCharCode(bytes[i]);
+          const chunkSize = Math.min(uint8.length, 1048576); // 每次处理最多 1MB
+          for (let i = 0; i < chunkSize; i++) {
+            binary += String.fromCharCode(uint8[i]);
           }
-          const base64Chunk = btoa(binary);
+          const base64Data = ((globalThis as any).btoa || function(s: string) { return s; })(binary);
 
-          await RNFS.appendFile(localPath, base64Chunk, 'base64');
-          totalWritten += bytes.length;
+          await RNFS.writeFile(localPath, base64Data, 'base64');
+          totalWritten = uint8.length;
+          console.log(`[Downloader] ✅ [FALLBACK] arrayBuffer 方式下载完成: ${totalWritten} bytes`);
+        } else {
+          // 正常流式下载路径（原有逻辑）
+          const reader = rnResponse.body.getReader();
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            // Uint8Array → ArrayBuffer → base64 (RNFS.appendFile 'base64' 模式)
+            const bytes = new Uint8Array(value);
+            let binary = '';
+            for (let i = 0; i < Math.min(bytes.length, 1048576); i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+              const base64Chunk = ((globalThis as any).btoa || function(s: string) { return s; })(binary);
+
+            await RNFS.appendFile(localPath, base64Chunk, 'base64');
+            totalWritten += bytes.length;
+          }
+
+          console.log(`[Downloader] ✅ ${resource.filename} 下载完成: ${totalWritten} bytes`);
         }
 
         clearInterval(progressInterval);
-        console.log(`[Downloader] ✅ ${resource.filename} 下载完成: ${totalWritten} bytes`);
         
         this.notify({
           resourceId: resource.id,

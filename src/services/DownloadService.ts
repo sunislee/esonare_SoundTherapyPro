@@ -82,9 +82,15 @@ export const DownloadService = {
   },
 
   async silentBackgroundDownload(): Promise<{success: number; failed: number}> {
+    console.error('[DEBUG-DL] 🔥🔥🔥 函数被调用！PRIORITY_SCENES长度:', [
+      'nature_ocean', 'nature_forest', 'nature_deep_sea', 'nature_misty_forest',
+      'healing_zen_bowl', 'oriental_zen_monastery', 'life_rain_boat', 'brainwave_alpha',
+      'interactive_white_noise', 'interactive_wind_chime', 'interactive_breath',
+      'interactive_apple', 'interactive_match'
+    ].length);
     console.log(`[App-Download] 🚨🚨🚨 [SILENT_DOWNLOAD_START] 启动后台静默下载... 🚨🚨🚨`);
     
-    // 【优化】定义核心场景优先级（首页推荐的前 8 个场景）
+    // 【优化】定义核心场景优先级（首页推荐的前 8 个场景 + interactive 交互音频）
     const PRIORITY_SCENES = [
       'nature_ocean',        // 海洋
       'nature_forest',       // 森林
@@ -94,6 +100,12 @@ export const DownloadService = {
       'oriental_zen_monastery', // 东方禅意·寺院
       'life_rain_boat',      // 雨天小船
       'brainwave_alpha',     // α脑波
+      // ==================== interactive 交互音频（确保首页加载时自动下载）====================
+      'interactive_white_noise',  // 白噪音
+      'interactive_wind_chime',   // 风铃
+      'interactive_breath',       // 呼吸
+      'interactive_apple',        // 苹果脆响
+      'interactive_match',        // 火柴点燃
     ];
     
     const CONST_TOTAL_SIZE = GLOBAL_TOTAL_SIZE > 0 ? GLOBAL_TOTAL_SIZE : ASSET_LIST.reduce((sum, a) => sum + a.expectedSize, 0);
