@@ -58,7 +58,6 @@ export const usePlayerState = () => {
     const syncInitialState = () => {
       try {
         // 【防御】所有方法调用前检查函数存在性
-        const safeGetIsPlaying = typeof audioService.isPlaying === 'function' ? audioService.isPlaying() : false;
         const currentStateStr = typeof audioService.getCurrentState === 'function' ? audioService.getCurrentState() : '';
         const currentScene = typeof audioService.getCurrentScene === 'function' ? audioService.getCurrentScene() : null;
         
@@ -70,18 +69,30 @@ export const usePlayerState = () => {
           currentStateEnum = State.Paused;
         }
         
-        // 3. 如果 Service 状态有效，立即更新本地 state
-        setIsPlaying(safeGetIsPlaying);
+        // 3. 优先使用 getRealIsPlaying() 获取真实播放状态（同步/异步都支持）
+        const syncGetIsPlaying = () => {
+          // 先尝试直接读取 isActuallyPlaying 属性（同步）
+          if (typeof audioService.isActuallyPlaying === 'boolean') {
+            return audioService.isActuallyPlaying;
+          }
+          return false;
+        };
+        
+        const initialIsPlaying = syncGetIsPlaying();
+        
+        // 4. 立即更新本地 state
+        setIsPlaying(initialIsPlaying);
         setCurrentState(currentStateEnum);
         setCurrentTrackId(currentScene?.id || null);
         
-        console.log(`[usePlayerState] Immediate sync: isPlaying=${safeGetIsPlaying}, id=${currentScene?.id}`);
+        console.log(`[usePlayerState] Immediate sync: isPlaying=${initialIsPlaying}, id=${currentScene?.id}`);
 
-        // 4. 异步检查作为兜底 — 防御 getRealIsPlaying 不存在的情况
+        // 5. 异步检查作为兜底 — 确保状态准确（防御 getRealIsPlaying 不存在的情况）
         if (typeof audioService.getRealIsPlaying === 'function') {
           audioService.getRealIsPlaying().then((realIsPlaying: boolean) => {
-            if (realIsPlaying !== safeGetIsPlaying) {
-              console.log(`[usePlayerState] Async sync corrected isPlaying to ${realIsPlaying}`);
+            console.log(`[usePlayerState] Async sync: realIsPlaying=${realIsPlaying}, current=${initialIsPlaying}`);
+            if (realIsPlaying !== initialIsPlaying) {
+              console.log(`[usePlayerState] Corrected isPlaying from ${initialIsPlaying} to ${realIsPlaying}`);
               setIsPlaying(realIsPlaying);
             }
           }).catch((err: any) => {
