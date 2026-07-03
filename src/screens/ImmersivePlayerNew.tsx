@@ -24,7 +24,7 @@ import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
 import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
-import AudioService, { stopAllAmbientOnly } from '../services/AudioService';
+import AudioService, { stopAllAmbientOnly, getRealIsPlaying } from '../services/AudioService';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { Event, useTrackPlayerEvents, State } from 'react-native-track-player';
@@ -105,6 +105,53 @@ const ImmersivePlayerNew: React.FC = () => {
   
   // 【最终播放状态】：乐观状态优先，否则使用 Context
   const isPlaying = optimisticIsPlaying ?? contextIsPlaying;
+
+  // 【新增】使用 ref 追踪 optimisticIsPlaying，避免闭包陈旧值问题
+  const optimisticIsPlayingRef = useRef(optimisticIsPlaying);
+  
+  // 【同步ref】保持 ref 与 state 一致
+  useEffect(() => {
+    optimisticIsPlayingRef.current = optimisticIsPlaying;
+  }, [optimisticIsPlaying]);
+
+  // 【新增】组件挂载时主动读取 AudioService 真实播放状态 + 持续监听 audioStateChanged 事件
+  // 解决：场景已在后台播放时，usePlayerState 同步读取延迟导致 UI 图标反向的问题
+  useEffect(() => {
+    const syncRealPlaybackState = async () => {
+      try {
+        const realPlaying = await getRealIsPlaying();
+        if (realPlaying) {
+          console.log('[ImmersivePlayer] 🔄 [挂载同步] AudioService 正在播放，同步 optimisticIsPlaying=true');
+          setOptimisticIsPlaying(true);
+        }
+      } catch (e) {
+        console.warn('[ImmersivePlayer] ⚠️ [挂载同步] getRealIsPlaying 失败:', e);
+      }
+    };
+
+    // 【补充】监听 audioStateChanged 事件，持续同步播放状态变化
+    // 使用 ref 读取最新值，避免闭包陈旧问题
+    const handleAudioStateChanged = (event: { isActuallyPlaying: boolean; currentBaseSceneId: string | null; timestamp: number }) => {
+      const currentOptimistic = optimisticIsPlayingRef.current;
+      
+      if (event.isActuallyPlaying && currentOptimistic !== true) {
+        console.log('[ImmersivePlayer] 🔄 [事件同步] AudioService 正在播放，同步 optimisticIsPlaying=true');
+        setOptimisticIsPlaying(true);
+      } else if (!event.isActuallyPlaying && currentOptimistic === true) {
+        // 只有当乐观状态为 true 且实际已暂停时，才回退到 context
+        console.log('[ImmersivePlayer] 🔄 [事件同步] AudioService 已暂停，清 optimisticIsPlaying');
+        setOptimisticIsPlaying(null);
+      }
+    };
+
+    syncRealPlaybackState();
+
+    const subscription = DeviceEventEmitter.addListener('audioStateChanged', handleAudioStateChanged);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []); // 只在组件挂载时执行一次
   
   // 【静默模式兜底】资源加载状态
   const [resourceLoading, setResourceLoading] = useState<{ loading: boolean; message: string }>({ loading: false, message: '' });

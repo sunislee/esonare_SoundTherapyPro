@@ -26,7 +26,13 @@ export const REMOTE_RESOURCE_BASE_URL = PRIMARY_REMOTE_RESOURCE_BASE_URL;
 export const LOCAL_RESOURCE_PATH = `${RNFS.DocumentDirectoryPath}/audio_resources`; 
 
 export const getLocalPath = (category: string, filename: string) => { 
-    const rawPath = `${LOCAL_RESOURCE_PATH}/${filename}`; 
+    // 【🔥 v10 修复】正确处理 category 子目录（如 scene_backgrounds/zen）
+    // 之前只用了 filename，导致背景图下载后找不到（路径不一致）
+    const hasSubPath = category.includes('/');
+    const subDir = hasSubPath ? category.replace(/^scene_backgrounds\//, '') : '';
+    const rawPath = subDir 
+        ? `${LOCAL_RESOURCE_PATH}/${subDir}/${filename}` 
+        : `${LOCAL_RESOURCE_PATH}/${filename}`;
     return Platform.OS === 'ios' ? `file://${rawPath}` : rawPath; 
 }; 
 
