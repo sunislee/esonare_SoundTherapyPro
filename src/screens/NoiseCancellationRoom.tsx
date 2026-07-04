@@ -83,8 +83,6 @@ const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> 
     }
 
     console.log(`[NoiseCancellationRoom] ✅ 8-track 资源全部就绪: ${audioGroupId}`);
-    // 🔍 Alert 调试：资源检查结果
-    Alert.alert('🔍 资源检查结果', `ready = true\naudioGroupId = ${audioGroupId}`);
     return true;
   } catch (error) {
     console.warn('[NC] ❌ checkNoiseResourcesReady catch block, error:', error instanceof Error ? error.message : String(error));
@@ -286,12 +284,6 @@ const NoiseCancellationRoom: React.FC = () => {
 
       console.warn('[NC] 准备跳转下载页，targetFiles count:', targetFiles.length, 'first:', targetFiles[0]);
       
-      // 🔍 Alert 调试：准备跳转下载页
-      Alert.alert(
-        '🔍 准备跳转下载页',
-        `audioGroupId = ${audioGroupId}\ntargetFiles count = ${targetFiles.length}`
-      );
-      
       try {
         // @ts-ignore - navigation type already added to RootStackParamList
         navigation.navigate('ResourceDownloadScreen', { targetFiles });
@@ -303,22 +295,15 @@ const NoiseCancellationRoom: React.FC = () => {
       return false;
     }
 
-    // 🔍 Alert 调试：准备播放
-    Alert.alert('🔍 准备播放', `audioGroupId = ${audioGroupId}`);
-    
     // 资源就绪，直接播放
     // @ts-ignore - play8TrackAudio exists
     await play8TrackAudio(audioGroupId);
     
-    // 🔍 Alert 调试：播放调用完成
-    Alert.alert('🔍 播放调用完成', `audioGroupId = ${audioGroupId}`);
     return true;
   };
 
   // 处理模式切换（统一播放状态管理）
   const handleModePress = async (modeId: string) => {
-    // 🔍 Alert 调试：handleModePress 是否被调用
-    Alert.alert('🔍 handleModePress 触发', `modeId = ${modeId}`);
     console.warn('[NC] handleModePress called:', modeId);
     
     // 【关键修复】如果点击的是当前正在播放的模式，则停止播放

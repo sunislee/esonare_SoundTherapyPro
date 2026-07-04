@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'; 
-import { View, Text, StyleSheet, Dimensions, Animated, Easing, BackHandler, Alert, TouchableOpacity } from 'react-native'; 
+import React, { useEffect, useState, useRef, useCallback } from 'react'; 
+import { View, Text, StyleSheet, Dimensions, Animated, Easing, BackHandler, TouchableOpacity } from 'react-native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
@@ -20,23 +20,34 @@ export type ResourceDownloadScreenParams = {
 };
 
 /**
- * 下载指定文件列表（targetFiles 模式）
+ * 下载指定文件列表（targetFiles 模式）— 并发并行下载版本
  * @param filePaths 本地文件路径数组（如 getLocalPath() 返回的路径）
+ * @param onProgress 可选的进度回调，用于实时更新 UI
+ * @param maxConcurrent 最大并发数（默认4），限制同时下载的文件数量
+ * @returns Promise<{ successCount: number; errors: string[] }>
  */
-const downloadTargetFilesAsync = async (filePaths: string[]) => {
-  console.log(`[ResourceDownloadScreen] 🎯 targetFiles 模式：开始下载 ${filePaths.length} 个指定文件`);
-  
-  let downloadedCount = 0;
+const downloadTargetFilesAsync = async (
+  filePaths: string[],
+  onProgress?: (progress: { progress: number; receivedBytes: number; totalBytes: number }) => void,
+  maxConcurrent: number = 4
+): Promise<{ successCount: number; errors: string[] }> => {
+  console.log(`[ResourceDownloadScreen] 🎯 targetFiles 模式 START：并发=${maxConcurrent}，开始下载 ${filePaths.length} 个指定文件`);
 
-  for (const localPath of filePaths) {
+  let downloadedCount = 0;       // 成功下载数（含已存在的）
+  const errors: string[] = [];
+  const totalSize = filePaths.length;
+
+  /**
+   * 单个文件的下载任务
+   */
+  const downloadSingleFile = async (localPath: string, index: number): Promise<{ success: boolean }> => {
     try {
       // 检查文件是否已存在
       if (await RNFS.exists(localPath)) {
         const stat = await RNFS.stat(localPath);
         if (stat.size > 0) {
-          console.log(`[ResourceDownloadScreen] ✅ ${localPath} 已存在，跳过`);
-          downloadedCount++;
-          continue;
+          console.log(`[ResourceDownloadScreen] ✅ [${index+1}/${filePaths.length}] ${localPath} 已存在，跳过`);
+          return { success: true };
         }
       }
 
@@ -46,15 +57,17 @@ const downloadTargetFilesAsync = async (filePaths: string[]) => {
       );
 
       if (!manifestItem) {
-        console.error(`[ResourceDownloadScreen] ❌ 未找到文件配置: ${localPath}`);
-        continue;
+        const errorMsg = `MANIFEST_NOT_FOUND: ${localPath}`;
+        console.error(`[ResourceDownloadScreen] ❌ [${index+1}/${filePaths.length}]`, errorMsg);
+        errors.push(errorMsg);
+        return { success: false };
       }
 
       // 构造远程 URL
       const encodedFilename = manifestItem.filename.split('/').map(part => encodeURIComponent(part)).join('/');
       const remoteUrl = `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encodedFilename}`;
 
-      console.log(`[ResourceDownloadScreen] 📥 开始下载: ${manifestItem.filename}`);
+      console.log(`[ResourceDownloadScreen] 📥 [${index+1}/${filePaths.length}] 开始下载: ${manifestItem.filename}`);
 
       // 确保目录存在
       const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
@@ -62,26 +75,76 @@ const downloadTargetFilesAsync = async (filePaths: string[]) => {
         await RNFS.mkdir(dirPath);
       }
 
-      const result = await RNFS.downloadFile({
+      // 🔑 并行下载 + 进度回调 + 超时20秒（每个文件）
+      const downloadPromise = RNFS.downloadFile({
         fromUrl: remoteUrl,
         toFile: localPath,
-        connectionTimeout: 60000,
-        readTimeout: 120000,
+        background: ((bgProgress: { bytesWritten: number; totalBytes: number }) => {}) as any, // RNFS background callback for iOS
+        progressInterval: 150, // 每150ms触发一次进度更新（降低网络开销）
+        progress: (progressRes) => {
+          console.log(`[ResourceDownloadScreen] 📊 [${index+1}/${filePaths.length}] ${manifestItem.filename}: ${(progressRes.bytesWritten || 0)} bytes`);
+        },
+        connectionTimeout: 20000,
+        readTimeout: 30000,
       }).promise;
 
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('DOWNLOAD_TIMEOUT_20S')), 20000); // 每文件20秒超时
+      });
+
+      const result = await Promise.race([downloadPromise, timeoutPromise]);
+
       if (result.statusCode === 200) {
-        downloadedCount++;
-        console.log(`[ResourceDownloadScreen] ✅ ${manifestItem.filename} 下载成功 (${downloadedCount}/${filePaths.length})`);
+        console.log(`[ResourceDownloadScreen] ✅ [${index+1}/${filePaths.length}] ${manifestItem.filename} 下载成功`);
+        return { success: true };
       } else {
-        console.error(`[ResourceDownloadScreen] ❌ ${manifestItem.filename} 下载失败：HTTP ${result.statusCode}`);
+        const errorMsg = `HTTP_${result.statusCode}: ${manifestItem.filename}`;
+        console.error(`[ResourceDownloadScreen] ❌ [${index+1}/${filePaths.length}]`, errorMsg);
+        errors.push(errorMsg);
+        return { success: false };
       }
     } catch (error: any) {
-      console.error(`[ResourceDownloadScreen] ❌ 下载异常:`, error.message || error);
+      const reason = error?.message || String(error);
+      console.error(`[ResourceDownloadScreen] ❌ [${index+1}/${filePaths.length}] 下载异常:`, reason);
+      const filenameFromPath = localPath.split('/').pop() || localPath;
+      errors.push(filenameFromPath + ': ' + reason);
+      return { success: false };
     }
-  }
+  };
 
-  console.log(`[ResourceDownloadScreen] 🎯 targetFiles 下载完成：成功 ${downloadedCount}/${filePaths.length}`);
-  return downloadedCount;
+  /**
+   * 并发队列控制器：维护 maxConcurrent 个同时运行的下载任务
+   */
+  let taskIndex = 0; // 下一个待分配任务的索引
+
+  const runNextTask = async (): Promise<void> => {
+    while (taskIndex < filePaths.length) {
+      const currentIndex = taskIndex++;
+      const localPath = filePaths[currentIndex];
+
+      const result = await downloadSingleFile(localPath, currentIndex);
+
+      if (result.success) {
+        downloadedCount++;
+      }
+
+      // 更新进度（每完成一个任务）
+      onProgress?.({
+        progress: Math.min((downloadedCount + errors.length) / totalSize, 1.0),
+        receivedBytes: downloadedCount,
+        totalBytes: totalSize,
+      });
+    }
+  };
+
+  // 启动 maxConcurrent 个并发 Worker
+  const workerCount = Math.min(maxConcurrent, filePaths.length);
+  console.log(`[ResourceDownloadScreen] 🚀 启动 ${workerCount} 个并行下载 Worker`);
+  const workers = Array.from({ length: workerCount }, () => runNextTask());
+  await Promise.all(workers);
+
+  console.log(`[ResourceDownloadScreen] 🎯 targetFiles 下载汇总：成功=${downloadedCount}, 失败=${errors.length}`);
+  return { successCount: downloadedCount, errors };
 };
 
 export const ResourceDownloadScreen = ({ navigation, route }: any) => { 
@@ -93,6 +156,15 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
 
   // 【新增】是否使用目标文件模式（只下载指定文件）
   const isTargetMode = Array.isArray(targetFiles) && targetFiles.length > 0;
+
+  // 【新增】targetFiles 下载进度回调：将下载进度映射到 downloadInfo state
+  const handleTargetFileProgress = useCallback((progress: { progress: number; receivedBytes: number; totalBytes: number }) => {
+    setDownloadInfo({
+      progress: Math.min(progress.progress, 1.0),
+      receivedBytes: progress.receivedBytes,
+      totalBytes: progress.totalBytes,
+    });
+  }, []);
   
   // 【多语言支持】自动检测系统语言并加载对应文案
   // i18n 已经在 src/i18n/index.ts 中配置了自动检测 (zh/en/ja)
@@ -133,7 +205,7 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
   
   // 【真机测试专用】双击跳过下载逻辑
   const skipClickCount = useRef(0);
-  const skipClickTimer = useRef<NodeJS.Timeout | null>(null);
+  const skipClickTimer = useRef<number | null>(null);
 
   // 定义 enterMainApp 函数在组件顶层（targetFiles 模式需要引用）
   const enterMainApp = async () => {
@@ -335,15 +407,17 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
 
     const checkAndStart = async () => { 
       try { 
-        console.log('[ResourceDownloadScreen] 开始检查资源状态...');
+        console.log('[ResourceDownloadScreen] 开始检查资源状态...', { isTargetMode, targetFileCount: targetFiles?.length });
         
-        // 【targetFiles 模式】直接下载指定文件，然后返回
+         // 【targetFiles 模式】直接下载指定文件，然后返回
         if (isTargetMode && targetFiles && targetFiles.length > 0) {
           console.log('[ResourceDownloadScreen] 🎯 检测到 targetFiles 模式，开始下载指定文件...');
           setIsResourceAlreadyExists(false); // 显示进度条
+
+          // 执行 targetFiles 下载（带进度回调）
+          const result = await downloadTargetFilesAsync(targetFiles, handleTargetFileProgress);
           
-          // 执行 targetFiles 下载
-          await downloadTargetFilesAsync(targetFiles);
+          console.log(`[ResourceDownloadScreen] 🎯 targetFiles 下载完成：成功=${result.successCount}, 失败=${result.errors.length}`);
           
           // 标记完成
           setIsDownloadCompleted(true);
