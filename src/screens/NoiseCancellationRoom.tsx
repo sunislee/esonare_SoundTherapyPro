@@ -37,6 +37,9 @@ import {
   cleanup8TrackAudio,
 } from '../services/8TrackAudioService';
 import AudioService from '../services/AudioService';
+// @dr.pogodin/react-native-fs 使用具名导出，无默认导出
+import * as RNFS from '@dr.pogodin/react-native-fs';
+import { getLocalPath } from '../constants/audioAssets';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,6 +55,37 @@ const SCENE_BACKGROUNDS = {
 const DEFAULT_BACKGROUND = require('../assets/images/nc_backgrounds/noise_balanced.jpg');
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+/**
+ * 检查指定音频组对应的8个轨道文件是否全部存在于本地。
+ * @param audioGroupId 音频组 ID，如 'balanced_noise'、'wind_noise'
+ * @returns true 表示8个文件全部就绪（可播放）
+ */
+const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> => {
+  try {
+    // audioGroupId 格式如：balanced_noise, wind_noise, crowd_noise, traffic_noise
+    const folderName = audioGroupId; // 直接使用 audioGroupId 作为文件夹名
+
+    for (let trackNum = 1; trackNum <= 8; trackNum++) {
+      const filename = `${folderName}_track_${trackNum}.mp3`;
+      // 根据 8TrackAudioService.ts 中的路径构造逻辑（第397-400行）：
+      // getLocalPath('noise_reduction', `noise reduction/${filename}`)
+      const localPath = getLocalPath('noise_reduction', `noise reduction/${filename}`);
+
+      const exists = await RNFS.exists(localPath);
+      if (!exists) {
+        console.log(`[NoiseCancellationRoom] ❌ 资源未就绪：缺少 ${filename}`);
+        return false;
+      }
+    }
+
+    console.log(`[NoiseCancellationRoom] ✅ 8-track 资源全部就绪: ${audioGroupId}`);
+    return true;
+  } catch (error) {
+    console.error('[NoiseCancellationRoom] ❌ 检查资源时出错:', error);
+    return false;
+  }
+};
 
 /**
  * NoiseCancellationRoom - 降噪冥想室
@@ -220,6 +254,42 @@ const NoiseCancellationRoom: React.FC = () => {
     ReactNativeHapticFeedback.trigger('impactLight', options);
   };
 
+  /**
+   * 【新增】播放前检查资源并下载（如果需要）
+   * @param modeId 模式 ID，如 'noise_balanced'
+   * @returns true 表示资源就绪并已/正在播放；false 表示已跳转下载页
+   */
+  const playWithResourceCheck = async (modeId: string): Promise<boolean> => {
+    // 转换 ID 格式：noise_balanced -> balanced_noise
+    const audioGroupId = modeId.replace('noise_', '') + '_noise';
+
+    // 检查资源是否就绪
+    const ready = await checkNoiseResourcesReady(audioGroupId);
+    
+    if (!ready) {
+      console.log(`[NoiseCancellationRoom] 📥 资源未就绪，跳转到下载页面: ${audioGroupId}`);
+      
+      // 构建 targetFiles：8个轨道文件的本地路径
+      const targetFiles: string[] = [];
+      for (let trackNum = 1; trackNum <= 8; trackNum++) {
+        const filename = `${audioGroupId}_track_${trackNum}.mp3`;
+        const localPath = getLocalPath('noise_reduction', `noise reduction/${filename}`);
+        targetFiles.push(localPath);
+      }
+
+      // 导航到下载页面，传入 targetFiles
+      navigation.navigate('ResourceDownloadScreen' as never, {
+        targetFiles,
+      } as never);
+      
+      return false;
+    }
+
+    // 资源就绪，直接播放
+    await play8TrackAudio(audioGroupId);
+    return true;
+  };
+
   // 处理模式切换（统一播放状态管理）
   const handleModePress = async (modeId: string) => {
     console.log('[NoiseCancellationRoom] 点击模式:', modeId);
@@ -240,10 +310,6 @@ const NoiseCancellationRoom: React.FC = () => {
     // 【关键修复】否则播放新模式（自动停止旧场景）
     console.log('[NoiseCancellationRoom] 切换到新模式:', modeId);
     setIsLoading(true);
-    
-    // 【关键修复】转换 ID 格式：noise_balanced -> balanced_noise
-    const audioGroupId = modeId.replace('noise_', '') + '_noise';
-    console.log('[NoiseCancellationRoom] 转换音频组 ID:', modeId, '->', audioGroupId);
     
     // 【核心】背景淡入淡出动画（1.5 秒平滑过渡）
     Animated.timing(backgroundOpacity, {
@@ -268,10 +334,12 @@ const NoiseCancellationRoom: React.FC = () => {
     setCurrentSceneId(modeId);
     setSelectedMode(modeId);
     
-    // 播放新场景（使用 8 轨音频）
-    await play8TrackAudio(audioGroupId);
+    // 【新增】使用带资源检查的播放函数
+    const played = await playWithResourceCheck(modeId);
     
-    setIsPlaying(true);
+    if (played) {
+      setIsPlaying(true);
+    }
     setIsLoading(false);
     triggerHaptic();
   };
@@ -553,8 +621,23 @@ const NoiseCancellationRoom: React.FC = () => {
               if (selectedMode) {
                 setIsLoading(true);
                 const audioGroupId = selectedMode.replace('noise_', '') + '_noise';
-                await play8TrackAudio(audioGroupId);
-                setIsPlaying(true);
+                // 【新增】EQ 面板播放也使用资源检查
+                const ready = await checkNoiseResourcesReady(audioGroupId);
+                if (ready) {
+                  await play8TrackAudio(audioGroupId);
+                  setIsPlaying(true);
+                } else {
+                  // 未就绪，跳转下载页
+                  const targetFiles: string[] = [];
+                  for (let trackNum = 1; trackNum <= 8; trackNum++) {
+                    const filename = `${audioGroupId}_track_${trackNum}.mp3`;
+                    const localPath = getLocalPath('noise_reduction', `noise reduction/${filename}`);
+                    targetFiles.push(localPath);
+                  }
+                  navigation.navigate('ResourceDownloadScreen' as never, {
+                    targetFiles,
+                  } as never);
+                }
                 setIsLoading(false);
               }
             }

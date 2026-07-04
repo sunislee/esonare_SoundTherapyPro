@@ -7,16 +7,92 @@ import { DownloadService, DownloadProgress } from '../services/DownloadService';
 import AudioService from '../services/AudioService';
 import EngineControl from '../constants/EngineControl';
 import { PermissionService } from '../services/PermissionService';
-import { AUDIO_MANIFEST, getLocalPath } from '../constants/audioAssets';
+import { AUDIO_MANIFEST, getLocalPath, GHPROXY_NET_URL } from '../constants/audioAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import * as RNFS from '@dr.pogodin/react-native-fs';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const ResourceDownloadScreen = ({ navigation }: any) => { 
+// targetFiles 导航参数类型定义
+export type ResourceDownloadScreenParams = {
+  targetFiles?: string[];
+};
+
+/**
+ * 下载指定文件列表（targetFiles 模式）
+ * @param filePaths 本地文件路径数组（如 getLocalPath() 返回的路径）
+ */
+const downloadTargetFilesAsync = async (filePaths: string[]) => {
+  console.log(`[ResourceDownloadScreen] 🎯 targetFiles 模式：开始下载 ${filePaths.length} 个指定文件`);
+  
+  let downloadedCount = 0;
+
+  for (const localPath of filePaths) {
+    try {
+      // 检查文件是否已存在
+      if (await RNFS.exists(localPath)) {
+        const stat = await RNFS.stat(localPath);
+        if (stat.size > 0) {
+          console.log(`[ResourceDownloadScreen] ✅ ${localPath} 已存在，跳过`);
+          downloadedCount++;
+          continue;
+        }
+      }
+
+      // 从 audioAssets.ts 查找对应的远程 URL
+      const manifestItem = AUDIO_MANIFEST.find(item => 
+        getLocalPath(item.category, item.filename) === localPath
+      );
+
+      if (!manifestItem) {
+        console.error(`[ResourceDownloadScreen] ❌ 未找到文件配置: ${localPath}`);
+        continue;
+      }
+
+      // 构造远程 URL
+      const encodedFilename = manifestItem.filename.split('/').map(part => encodeURIComponent(part)).join('/');
+      const remoteUrl = `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encodedFilename}`;
+
+      console.log(`[ResourceDownloadScreen] 📥 开始下载: ${manifestItem.filename}`);
+
+      // 确保目录存在
+      const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
+      if (!(await RNFS.exists(dirPath))) {
+        await RNFS.mkdir(dirPath);
+      }
+
+      const result = await RNFS.downloadFile({
+        fromUrl: remoteUrl,
+        toFile: localPath,
+        connectionTimeout: 60000,
+        readTimeout: 120000,
+      }).promise;
+
+      if (result.statusCode === 200) {
+        downloadedCount++;
+        console.log(`[ResourceDownloadScreen] ✅ ${manifestItem.filename} 下载成功 (${downloadedCount}/${filePaths.length})`);
+      } else {
+        console.error(`[ResourceDownloadScreen] ❌ ${manifestItem.filename} 下载失败：HTTP ${result.statusCode}`);
+      }
+    } catch (error: any) {
+      console.error(`[ResourceDownloadScreen] ❌ 下载异常:`, error.message || error);
+    }
+  }
+
+  console.log(`[ResourceDownloadScreen] 🎯 targetFiles 下载完成：成功 ${downloadedCount}/${filePaths.length}`);
+  return downloadedCount;
+};
+
+export const ResourceDownloadScreen = ({ navigation, route }: any) => { 
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  
+  // 【新增】从路由参数获取 targetFiles（指定要下载的文件列表）
+  const { targetFiles } = (route?.params as ResourceDownloadScreenParams) || {};
+
+  // 【新增】是否使用目标文件模式（只下载指定文件）
+  const isTargetMode = Array.isArray(targetFiles) && targetFiles.length > 0;
   
   // 【多语言支持】自动检测系统语言并加载对应文案
   // i18n 已经在 src/i18n/index.ts 中配置了自动检测 (zh/en/ja)
@@ -47,7 +123,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   const breathAnim = useRef(new Animated.Value(0)).current;
   const animatedProgress = useRef(new Animated.Value(0)).current;
   
-  // 【暴力修复 1】严防死守 100%：除非 18 个文件全部下载完成并通过物理校验，否则严禁显示"资源准备完成"
+  // 【暴力修复 1】严防死守 100%：除非文件全部下载完成并通过物理校验，否则严禁显示"资源准备完成"
   const [realProgress, setRealProgress] = useState(0);
   const [isDownloadCompleted, setIsDownloadCompleted] = useState(false);
   const [isUiCompleted, setIsUiCompleted] = useState(false);
@@ -58,7 +134,30 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
   // 【真机测试专用】双击跳过下载逻辑
   const skipClickCount = useRef(0);
   const skipClickTimer = useRef<NodeJS.Timeout | null>(null);
-  
+
+  // 定义 enterMainApp 函数在组件顶层（targetFiles 模式需要引用）
+  const enterMainApp = async () => {
+    console.log('[ResourceDownloadScreen] 🤫 静默模式：直接进入主应用...');
+    
+    try {
+      await AsyncStorage.setItem('resourcesDownloaded', 'true');
+      
+      EngineControl.allow();
+      
+      // targetFiles 模式下，下载完成后返回上一页（NoiseCancellationRoom）
+      if (isTargetMode && navigation.canGoBack()) {
+        console.log('[ResourceDownloadScreen] ✅ targetFiles 下载完成，返回上一页');
+        navigation.goBack();
+      } else if (savedName) {
+        navigation.replace('MainTabs');
+      } else {
+        navigation.replace('NameEntry');
+      }
+    } catch (e) {
+      console.error('[ResourceDownloadScreen] enterMainApp error:', e);
+    }
+  };
+
   /**
    * 并发下载控制器（根据渠道限制线程数）
    */
@@ -94,8 +193,8 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
         const result = await RNFS.downloadFile({
           fromUrl: resource.remoteUrl,
           toFile: localPath,
-          connectionTimeout: IS_GOOGLE_PLAY_VERSION ? 60000 : 30000,
-          readTimeout: IS_GOOGLE_PLAY_VERSION ? 120000 : 60000,
+          connectionTimeout: 60000,
+          readTimeout: 120000,
         }).promise;
         
         if (result.statusCode === 200) {
@@ -179,49 +278,35 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           setAllFilesVerified(true);
         } else {
           console.error('[ResourceDownloadScreen] ❌ 物理校验失败，但允许进入应用（降级体验）');
-          console.error(`缺失文件：${result.missingFiles.length}个`);
-          console.error(`损坏文件：${result.corruptedFiles.length}个`);
           // 【关键修复】即使物理校验失败，也允许显示"资源准备完成"并进入应用
           setAllFilesVerified(true);
-          // 不再重置状态，允许用户继续使用应用
         }
       });
     }
   }, [isUiCompleted, isDownloadCompleted, allFilesVerified]);
 
-  // 监听下载完成和 UI 完成状态，自动跳转到主应用
+  // targetFiles 模式：监听下载完成状态，自动跳转
   useEffect(() => {
-    if (isUiCompleted && isDownloadCompleted) {
+    if (isTargetMode && isDownloadCompleted) {
+      console.log('[ResourceDownloadScreen] 🎯 targetFiles 下载完成，等待 2 秒确保文件落盘...');
+      const timer = setTimeout(async () => {
+        await enterMainApp();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isTargetMode, isDownloadCompleted]);
+
+  // 监听下载完成和 UI 完成状态，自动跳转到主应用（原有行为：非 targetFiles 模式）
+  useEffect(() => {
+    if (!isTargetMode && isUiCompleted && isDownloadCompleted) {
       console.log('[ResourceDownloadScreen] 下载和 UI 都完成了，等待 2 秒确保所有文件落盘...');
       
-      // 【暴力修复】延迟 2 秒确保所有文件完全落盘
       const timer = setTimeout(async () => {
         enterMainApp();
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isUiCompleted, isDownloadCompleted]);
-
-  // 定义 enterMainApp 函数在组件顶层
-  const enterMainApp = async () => {
-    console.log('[ResourceDownloadScreen] 🤫 静默模式：直接进入主应用...');
-    
-    // 【静默模式】简化逻辑：直接进入，后台处理资源
-    try {
-      await AsyncStorage.setItem('resourcesDownloaded', 'true');
-      
-      EngineControl.allow();
-      
-      // 直接导航到主界面
-      if (savedName) {
-        navigation.replace('MainTabs');
-      } else {
-        navigation.replace('NameEntry');
-      }
-    } catch (e) {
-      console.error('[ResourceDownloadScreen] enterMainApp error:', e);
-    }
-  };
+  }, [isTargetMode, isUiCompleted, isDownloadCompleted]);
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -245,7 +330,6 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
     // 【关键修复】拦截返回键，防止下载中断导致黑屏
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       console.log('[ResourceDownloadScreen] 拦截返回键');
-      // 下载过程中直接拦截，不允许退出
       return true;
     });
 
@@ -253,8 +337,24 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       try { 
         console.log('[ResourceDownloadScreen] 开始检查资源状态...');
         
-        // 【100% 还原】核心修复逻辑
-        console.log('[ResourceDownloadScreen] ====== 开始异步并行预检 ======');
+        // 【targetFiles 模式】直接下载指定文件，然后返回
+        if (isTargetMode && targetFiles && targetFiles.length > 0) {
+          console.log('[ResourceDownloadScreen] 🎯 检测到 targetFiles 模式，开始下载指定文件...');
+          setIsResourceAlreadyExists(false); // 显示进度条
+          
+          // 执行 targetFiles 下载
+          await downloadTargetFilesAsync(targetFiles);
+          
+          // 标记完成
+          setIsDownloadCompleted(true);
+          setIsUiCompleted(true);
+          setRealProgress(1);
+          
+          console.log('[ResourceDownloadScreen] ✅ targetFiles 模式完成，等待自动跳转...');
+          return;
+        }
+
+        // 【原有行为】非 targetFiles 模式的正常流程
         
         // 1. 异步并行预检：同时检查资源和用户名
         console.log('[ResourceDownloadScreen] 1. 检查资源完整性...');
@@ -288,20 +388,19 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           // IF (资源齐 && 有名字) -> 老用户进主页
           console.log('[ResourceDownloadScreen] ✅ 老用户：资源完整 + 有用户名 -> 跳转到 MainTabs');
           navigation.replace('MainTabs');
-          return; // ⚠️ 关键：立即返回，禁止继续执行
+          return;
         }
         
         if (isResourcesReady && !savedName) {
           // IF (资源齐 && 没名字) -> 新用户去起名
           console.log('[ResourceDownloadScreen] ✅ 新用户：资源完整 + 无用户名 -> 跳转到 NameEntry');
           navigation.replace('NameEntry');
-          return; // ⚠️ 关键：立即返回，禁止继续执行
+          return;
         }
         
         // ELSE (只有资源不齐) -> 静默模式：先进入App，后台下载
         console.log('[ResourceDownloadScreen] 🤫 资源不完整，启动静默后台下载...');
         
-        // 【静默模式】直接进入主界面，后台下载资源
         if (savedName) {
           console.log('[ResourceDownloadScreen] 🤫 有用户名 -> 直接进 MainTabs + 后台下载');
           navigation.replace('MainTabs');
@@ -328,7 +427,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           }
         }, 1000);
         
-        return; // 立即返回，不执行传统下载流程
+        return;
       } catch (err) {
         console.error('[ResourceDownloadScreen] Download error:', err);
         console.error('[ResourceDownloadScreen] Error stack:', (err as Error).stack);
@@ -341,7 +440,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
       loop.stop();
       backHandler.remove(); // 清理返回键监听
     };
-  }, []); 
+  }, [isTargetMode, targetFiles]); 
 
   const iconScale = breathAnim.interpolate({
     inputRange: [0, 1],
@@ -393,7 +492,7 @@ export const ResourceDownloadScreen = ({ navigation }: any) => {
           </Text>
         )}
         
-        {/* 【关键修复】进度条只在资源不完整时显示 */}
+        {/* 【关键修复】进度条只在资源不完整时显示（targetFiles 模式也适用） */}
         {!isResourceAlreadyExists && (
           <>
             <View style={styles.progressBarContainer}>
