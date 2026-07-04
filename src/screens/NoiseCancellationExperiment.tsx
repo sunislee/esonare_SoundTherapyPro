@@ -10,7 +10,10 @@ import {
   Animated,
   TouchableOpacity,
 } from 'react-native';
-import * as RNFS from '@dr.pogodin/react-native-fs';
+
+// 服务导入：8轨音频播放 + 资源检查
+import { play8TrackAudio, stop8TrackAudio } from '../services/8TrackAudioService';
+import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/NoiseResourceChecker';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MODAL_WIDTH = SCREEN_WIDTH * 0.92;
@@ -20,6 +23,8 @@ const TRANSITION_DURATION = 300;
 interface NoiseLabModalProps {
   visible: boolean;
   onClose: () => void;
+  /** 资源未就绪时，跳转到下载页面的回调 */
+  onNavigateToDownload?: (audioGroupId: string, targetFiles: string[]) => void;
 }
 
 type SceneType = 'commute' | 'office' | 'social' | 'outdoor' | 'manual';
@@ -60,7 +65,20 @@ const DB_MIN = -24;
 const DB_MAX = 6;
 const DB_RANGE = DB_MAX - DB_MIN;
 const DEADZONE_PX = 2;
-const AUDIO_BASE_PATH = RNFS.DocumentDirectoryPath + '/audio_resources';
+// SceneType → audioGroupId 映射表（降噪场景 ↔ 8轨音源）
+// commute(通勤) → traffic_noise(交通噪音)
+// office(办公室) → balanced_noise(均衡降噪)
+// social(社交) → crowd_noise(人声降噪)
+// outdoor(户外) → wind_noise(风声降噪)
+const SCENE_TO_AUDIO_GROUP: Record<SceneType, string | null> = {
+  commute: 'traffic_noise',
+  office: 'balanced_noise',
+  social: 'crowd_noise',
+  outdoor: 'wind_noise',
+  manual: null, // 自定义模式无对应音源
+};
+
+const AUDIO_BASE_PATH = ''; // RNFS 不再直接使用该常量，移除依赖
 
 function snapToGrid(db: number): number { return Math.round(db); }
 function clampDb(db: number): number { return Math.max(DB_MIN, Math.min(DB_MAX, db)); }
@@ -191,11 +209,17 @@ const SceneTab: React.FC<{ scene: ScenePreset; isActive: boolean; onPress: () =>
 );
 SceneTab.displayName = 'SceneTab';
 
-const NoiseLabModal: React.FC<NoiseLabModalProps> = ({ visible, onClose }) => {
+const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
+  const { visible, onClose } = props;
+
   const [bandValues, setBandValues] = useState<number[]>(() => BANDS.map(b => b.initialDb));
   const [activeScene, setActiveScene] = useState<SceneType>('manual');
   const animatedValues = useRef<Animated.Value[]>(BANDS.map(b => new Animated.Value(b.initialDb))).current;
   const transitionAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  // 【新增】8轨音频播放状态追踪
+  const isPlayingRef = useRef(false);
+  const currentAudioGroupRef = useRef<string | null>(null);
 
   const onValueChangeRef = useRef<(bandIndex: number, dbValue: number) => void>(undefined);
 
@@ -205,6 +229,15 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = ({ visible, onClose }) => {
       return () => backHandler.remove();
     }
   }, [visible, onClose]);
+
+  // Modal 关闭时：停止8轨音频播放，避免弹窗关闭后音频还在后台播放
+  const handleClose = useCallback(() => {
+    console.log('[NoiseLab] ⛔ Modal 关闭，停止所有音频');
+    stop8TrackAudio();
+    isPlayingRef.current = false;
+    currentAudioGroupRef.current = null;
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (!visible && transitionAnimRef.current) { transitionAnimRef.current.stop(); transitionAnimRef.current = null; }
@@ -224,10 +257,15 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = ({ visible, onClose }) => {
   const stableOnDragStart = useCallback((_bandIndex: number) => {}, []);
   const stableOnDragEnd = useCallback((_bandIndex: number) => {}, []);
 
-  const handleSceneSelect = useCallback((sceneId: SceneType) => {
+  /**
+   * 场景切换：EQ 动画 + 8轨音频播放
+   */
+  const handleSceneSelect = useCallback(async (sceneId: SceneType) => {
     if (sceneId === activeScene) return;
     const preset = SCENE_PRESETS.find(p => p.id === sceneId);
     if (!preset) return;
+
+    // ========== EQ 滑块动画（保留原有逻辑）==========
     setActiveScene(sceneId);
     if (transitionAnimRef.current) transitionAnimRef.current.stop();
     const animations = preset.values.map((targetValue, index) =>
@@ -237,6 +275,43 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = ({ visible, onClose }) => {
     (transitionAnimRef.current as Animated.CompositeAnimation).start(({ finished }: { finished: boolean }) => {
       if (finished) { setBandValues([...preset.values]); transitionAnimRef.current = null; }
     });
+
+    // ========== 8轨音频播放（新增逻辑）==========
+    const audioGroupId = SCENE_TO_AUDIO_GROUP[sceneId];
+
+    // manual 模式无对应音源，不播放
+    if (!audioGroupId) {
+      console.log('[NoiseLab] 自定义模式，跳过音频播放');
+      return;
+    }
+
+    // 先停止当前正在播放的场景（防止多场景叠加）
+    if (isPlayingRef.current && currentAudioGroupRef.current !== audioGroupId) {
+      console.log('[NoiseLab] 🛑 停止上一个场景:', currentAudioGroupRef.current);
+      await stop8TrackAudio();
+      isPlayingRef.current = false;
+    }
+
+    // 检查资源是否就绪
+    const ready = await checkNoiseResourcesReady(audioGroupId);
+
+    if (ready) {
+      console.log('[NoiseLab] ▶️ 资源就绪，开始播放:', audioGroupId);
+      try {
+        await play8TrackAudio(audioGroupId);
+        isPlayingRef.current = true;
+        currentAudioGroupRef.current = audioGroupId;
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error('[NoiseLab] ❌ 播放失败:', errorMsg);
+        isPlayingRef.current = false;
+      }
+    } else {
+      // 资源未就绪，跳转下载页
+      console.warn('[NoiseLab] 📥 资源未就绪，跳转下载页面');
+      const targetFiles = getNoiseResourceFiles(audioGroupId);
+      props.onNavigateToDownload?.(audioGroupId, targetFiles);
+    }
   }, [activeScene, animatedValues]);
 
   const spectrumHeights = useMemo(() => BANDS.map((_, index) => ((bandValues[index] - DB_MIN) / DB_RANGE) * 100), [bandValues]);
@@ -267,6 +342,13 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = ({ visible, onClose }) => {
               {SCENE_PRESETS.map(scene => (
                 <SceneTab key={scene.id} scene={scene} isActive={activeScene === scene.id} onPress={() => handleSceneSelect(scene.id)} />
               ))}
+
+              {/* 调试信息：显示当前音频组 */}
+              {activeScene !== 'manual' && currentAudioGroupRef.current && (
+                <Text style={{ color: '#4ECDC4', fontSize: 10, marginTop: 4 }}>
+                  🎵 {currentAudioGroupRef.current}
+                </Text>
+              )}
               {activeScene === 'manual' && (
                 <View style={[styles.sceneTab, styles.sceneTabActive, { borderColor: '#FFD700' }]}>
                   <Text style={styles.sceneIcon}>✋</Text>
@@ -295,7 +377,7 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = ({ visible, onClose }) => {
             <TouchableOpacity style={styles.calibrateButton} onPress={handleCalibrate}>
               <Text style={styles.calibrateButtonText}>CALIBRATE ANC</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
               <Text style={styles.closeButtonText}>关闭</Text>
             </TouchableOpacity>
           </View>

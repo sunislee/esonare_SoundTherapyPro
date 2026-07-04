@@ -1196,6 +1196,17 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
       <NoiseLabModal
         visible={showNoiseLabModal}
         onClose={() => setShowNoiseLabModal(false)}
+        /**
+         * 资源未就绪时，跳转到下载页面
+         * @param audioGroupId 音频组 ID
+         * @param targetFiles 8个轨道文件的本地路径数组
+         */
+        onNavigateToDownload={(audioGroupId, targetFiles) => {
+          console.log('[HomeScreen] 📥 NoiseLab 资源未就绪，跳转下载页:', audioGroupId);
+          setShowNoiseLabModal(false); // 先关闭 Modal
+          // @ts-ignore - navigation type already added to RootStackParamList
+          navigation.navigate('ResourceDownloadScreen', { targetFiles });
+        }}
       />
     </View>
   );
