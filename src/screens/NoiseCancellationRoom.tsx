@@ -40,6 +40,7 @@ import {
 import AudioService from '../services/AudioService';
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import * as RNFS from '@dr.pogodin/react-native-fs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocalPath } from '../constants/audioAssets';
 
 const { width, height } = Dimensions.get('window');
@@ -157,6 +158,9 @@ const NoiseCancellationRoom: React.FC = () => {
   const backgroundOpacity = useRef(new Animated.Value(1)).current;
   const prevSceneRef = useRef('noise_balanced');
 
+  // 【新增】标记是否刚从下载页返回，用于自动播放触发
+  const justReturnedFromDownloadRef = useRef(false);
+
   // 页面获得焦点时启动音频分析器
   useFocusEffect(
     useCallback(() => {
@@ -214,15 +218,53 @@ const NoiseCancellationRoom: React.FC = () => {
         ]).start();
       });
       
-      // 恢复上次播放的模式
-      const lastMode = getCurrentMode();
-      if (lastMode) {
-        setSelectedMode(lastMode);
-        setIsPlaying(true);
-        const audioGroupId = lastMode.replace('noise_', '') + '_noise';
-        play8TrackAudio(audioGroupId);
-      }
-      
+      // 【新增】如果刚从下载页返回（通过 AsyncStorage 标记检测），检查资源并自动播放
+      AsyncStorage.getItem('downloadJustCompleted').then((flag) => {
+        if (flag === 'true') {
+          // 清除标记，防止重复触发
+          AsyncStorage.removeItem('downloadJustCompleted').catch(() => {});
+          
+          const pendingMode = selectedMode || getCurrentMode();
+          if (!pendingMode) return;
+          
+          console.log('[NoiseCancellationRoom] 🔄 检测到下载完成标记，自动播放:', pendingMode);
+          const audioGroupId = pendingMode.replace('noise_', '') + '_noise';
+          checkNoiseResourcesReady(audioGroupId).then((ready) => {
+            if (ready) {
+              console.log('[NoiseCancellationRoom] ✅ 资源就绪，自动播放');
+              play8TrackAudio(audioGroupId);
+              setIsPlaying(true);
+            } else {
+              console.warn('[NoiseCancellationRoom] ⚠️ 下载完成但资源未就绪，跳转下载页');
+              const targetFiles: string[] = [];
+              for (let trackNum = 1; trackNum <= 8; trackNum++) {
+                const filename = `${audioGroupId}_track_${trackNum}.mp3`;
+                targetFiles.push(getLocalPath('noise_reduction', `noise reduction/${filename}`));
+              }
+              navigation.navigate('ResourceDownloadScreen' as never, { targetFiles } as never);
+            }
+          }).catch(() => {});
+        } else {
+          // 原有逻辑：恢复上次播放的模式（无下载完成标记）
+          const lastMode = getCurrentMode();
+          if (lastMode) {
+            setSelectedMode(lastMode);
+            setIsPlaying(true);
+            const audioGroupId = lastMode.replace('noise_', '') + '_noise';
+            play8TrackAudio(audioGroupId);
+          }
+        }
+      }).catch(() => {
+        // AsyncStorage 失败时降级为正常恢复
+        const lastMode = getCurrentMode();
+        if (lastMode) {
+          setSelectedMode(lastMode);
+          setIsPlaying(true);
+          const audioGroupId = lastMode.replace('noise_', '') + '_noise';
+          play8TrackAudio(audioGroupId);
+        }
+      });
+
       // 页面失焦时停止分析器
       return () => {
         console.log('[NoiseCancellationRoom] 页面失焦，停止音频分析器');

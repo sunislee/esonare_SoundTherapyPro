@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'; 
-import { View, Text, StyleSheet, Dimensions, Animated, Easing, BackHandler, TouchableOpacity } from 'react-native'; 
+import { View, Text, StyleSheet, Dimensions, Animated, Easing, BackHandler, TouchableOpacity, Alert } from 'react-native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
@@ -17,19 +17,20 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // targetFiles 导航参数类型定义
 export type ResourceDownloadScreenParams = {
   targetFiles?: string[];
+  audioGroupId?: string; // 【新增】传递音频组 ID，用于下载完成后自动播放
 };
 
 /**
  * 下载指定文件列表（targetFiles 模式）— 并发并行下载版本
  * @param filePaths 本地文件路径数组（如 getLocalPath() 返回的路径）
  * @param onProgress 可选的进度回调，用于实时更新 UI
- * @param maxConcurrent 最大并发数（默认4），限制同时下载的文件数量
+ * @param maxConcurrent 最大并发数（默认3），限制同时下载的文件数量
  * @returns Promise<{ successCount: number; errors: string[] }>
  */
 const downloadTargetFilesAsync = async (
   filePaths: string[],
   onProgress?: (progress: { progress: number; receivedBytes: number; totalBytes: number }) => void,
-  maxConcurrent: number = 4
+  maxConcurrent: number = 3 // 【调整】从4→3，减少带宽争抢导致的超时概率
 ): Promise<{ successCount: number; errors: string[] }> => {
   console.log(`[ResourceDownloadScreen] 🎯 targetFiles 模式 START：并发=${maxConcurrent}，开始下载 ${filePaths.length} 个指定文件`);
 
@@ -38,9 +39,9 @@ const downloadTargetFilesAsync = async (
   const totalSize = filePaths.length;
 
   /**
-   * 单个文件的下载任务
+   * 单个文件的下载任务（内部重试1次机制）
    */
-  const downloadSingleFile = async (localPath: string, index: number): Promise<{ success: boolean }> => {
+  const downloadSingleFile = async (localPath: string, index: number, isRetry: boolean = false): Promise<{ success: boolean }> => {
     try {
       // 检查文件是否已存在
       if (await RNFS.exists(localPath)) {
@@ -67,7 +68,7 @@ const downloadTargetFilesAsync = async (
       const encodedFilename = manifestItem.filename.split('/').map(part => encodeURIComponent(part)).join('/');
       const remoteUrl = `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${encodedFilename}`;
 
-      console.log(`[ResourceDownloadScreen] 📥 [${index+1}/${filePaths.length}] 开始下载: ${manifestItem.filename}`);
+      console.log(`[ResourceDownloadScreen] 📥 [${index+1}/${filePaths.length}] 开始下载: ${manifestItem.filename}${isRetry ? ' (重试)' : ''}`);
 
       // 确保目录存在
       const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
@@ -75,21 +76,26 @@ const downloadTargetFilesAsync = async (
         await RNFS.mkdir(dirPath);
       }
 
-      // 🔑 并行下载 + 进度回调 + 超时20秒（每个文件）
+      // 【新增】先删除可能存在的残缺文件（避免下载旧的不完整文件）
+      try {
+        await RNFS.unlink(localPath).catch(() => {}); // 忽略不存在的情况
+      } catch (_) {}
+
+      // 🔑 并行下载 + 进度回调 + 超时40秒（每个文件）
       const downloadPromise = RNFS.downloadFile({
         fromUrl: remoteUrl,
         toFile: localPath,
         background: ((bgProgress: { bytesWritten: number; totalBytes: number }) => {}) as any, // RNFS background callback for iOS
-        progressInterval: 150, // 每150ms触发一次进度更新（降低网络开销）
+        progressInterval: 200, // 每200ms触发一次进度更新（降低网络开销）
         progress: (progressRes) => {
           console.log(`[ResourceDownloadScreen] 📊 [${index+1}/${filePaths.length}] ${manifestItem.filename}: ${(progressRes.bytesWritten || 0)} bytes`);
         },
-        connectionTimeout: 20000,
-        readTimeout: 30000,
+        connectionTimeout: 30000, // 连接超时30秒（给 ghproxy 留足够时间）
+        readTimeout: 60000,      // 读取超时60秒
       }).promise;
 
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('DOWNLOAD_TIMEOUT_20S')), 20000); // 每文件20秒超时
+        setTimeout(() => reject(new Error('DOWNLOAD_TIMEOUT_40S')), 40000); // 每文件40秒超时（从20秒→40秒）
       });
 
       const result = await Promise.race([downloadPromise, timeoutPromise]);
@@ -106,6 +112,15 @@ const downloadTargetFilesAsync = async (
     } catch (error: any) {
       const reason = error?.message || String(error);
       console.error(`[ResourceDownloadScreen] ❌ [${index+1}/${filePaths.length}] 下载异常:`, reason);
+
+      // 【新增】如果是非重试且超时错误，尝试自动重试一次
+      if (!isRetry && (reason.includes('DOWNLOAD_TIMEOUT') || reason.includes('ECONNABORTED'))) {
+        console.warn(`[ResourceDownloadScreen] 🔄 [${index+1}/${filePaths.length}] 首次超时，1秒后重试...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒再重试
+        const retryResult = await downloadSingleFile(localPath, index, true);
+        return retryResult;
+      }
+
       const filenameFromPath = localPath.split('/').pop() || localPath;
       errors.push(filenameFromPath + ': ' + reason);
       return { success: false };
@@ -207,6 +222,44 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
   const skipClickCount = useRef(0);
   const skipClickTimer = useRef<number | null>(null);
 
+  // 【新增】下载失败状态 + 重试相关
+  const [targetFileErrors, setTargetFileErrorsState] = useState<Array<{ path: string; reason: string }>>([]);
+  const targetAudioGroupIdRef = useRef<string>('');
+
+  /**
+   * 【新增】重新下载失败的 targetFiles（只重试真正失败的文件）
+   */
+  const retryDownloadFailedFiles = async () => {
+    console.log('[ResourceDownloadScreen] 🔄 开始重试下载失败的文件...');
+    setTargetFileErrorsState([]); // 清空错误状态
+
+    // 过滤出失败文件的路径（从当前 state 中获取）
+    const failedPaths = targetFileErrors.map(e => e.path);
+    if (failedPaths.length === 0) {
+      console.log('[ResourceDownloadScreen] 🔄 无失败文件，跳过重试');
+      return;
+    }
+
+    console.log(`[ResourceDownloadScreen] 🔄 重试 ${failedPaths.length} 个文件...`);
+    // 【注意】这里重新执行下载，使用相同的 downloadTargetFilesAsync 但只传失败文件
+    await downloadTargetFilesAsync(failedPaths, handleTargetFileProgress);
+
+    console.log('[ResourceDownloadScreen] 🔄 重试完成');
+  };
+
+  /**
+   * 【新增】设置错误状态（内部辅助函数）
+   */
+  const setDownloadErrors = (errors: string[], audioGroupId: string) => {
+    // 将 errors string[] 转为带路径的对象数组
+    const mapped = targetFiles!.map((path, i) => ({
+      path,
+      reason: errors[i] || `文件 ${i + 1} 下载失败`,
+    }));
+    setTargetFileErrorsState(mapped);
+    targetAudioGroupIdRef.current = audioGroupId;
+  };
+
   // 定义 enterMainApp 函数在组件顶层（targetFiles 模式需要引用）
   const enterMainApp = async () => {
     console.log('[ResourceDownloadScreen] 🤫 静默模式：直接进入主应用...');
@@ -218,7 +271,8 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
       
       // targetFiles 模式下，下载完成后返回上一页（NoiseCancellationRoom）
       if (isTargetMode && navigation.canGoBack()) {
-        console.log('[ResourceDownloadScreen] ✅ targetFiles 下载完成，返回上一页');
+        console.log('[ResourceDownloadScreen] ✅ targetFiles 下载完成，标记自动播放并返回上一页');
+        await AsyncStorage.setItem('downloadJustCompleted', 'true').catch(() => {});
         navigation.goBack();
       } else if (savedName) {
         navigation.replace('MainTabs');
@@ -416,15 +470,22 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
 
           // 执行 targetFiles 下载（带进度回调）
           const result = await downloadTargetFilesAsync(targetFiles, handleTargetFileProgress);
-          
+
           console.log(`[ResourceDownloadScreen] 🎯 targetFiles 下载完成：成功=${result.successCount}, 失败=${result.errors.length}`);
-          
-          // 标记完成
-          setIsDownloadCompleted(true);
-          setIsUiCompleted(true);
-          setRealProgress(1);
-          
-          console.log('[ResourceDownloadScreen] ✅ targetFiles 模式完成，等待自动跳转...');
+
+          // 【修复】只在全部文件成功时才标记为完成（errors.length === 0）
+          if (result.errors.length > 0) {
+            // 有失败的文件，不标记完成，显示错误提示+重试按钮
+            console.warn(`[ResourceDownloadScreen] ⚠️ ${result.errors.length} 个文件下载失败`);
+            const audioGroupId = route?.params?.audioGroupId;
+            setDownloadErrors(result.errors, audioGroupId || '');
+          } else {
+            // 全部成功，标记完成并自动跳转
+            setIsDownloadCompleted(true);
+            setIsUiCompleted(true);
+            setRealProgress(1);
+            console.log('[ResourceDownloadScreen] ✅ targetFiles 模式全部成功，等待自动跳转...');
+          }
           return;
         }
 
@@ -582,14 +643,29 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
                 ]} 
               />
             </View>
-            
+
+            {/* 【新增】下载失败时的错误提示和重试按钮 */}
+            {targetFileErrors.length > 0 && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorTitle}>⚠️ 部分文件下载失败</Text>
+                <Text style={styles.errorSubtitle}>请检查网络连接后点击重试</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={retryDownloadFailedFiles}>
+                  <Text style={styles.retryButtonText}>🔄 重新下载 ({targetFileErrors.length})</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* 【纯净显示】显示百分比和实时大小 */}
-            <Text style={styles.percentText}>
-              {formatPercent(realProgress)}%
-            </Text>
-            <Text style={styles.sizeText}>
-              {formatMB(downloadInfo.receivedBytes)} MB / {formatMB(downloadInfo.totalBytes || 153.1 * 1024 * 1024)} MB
-            </Text>
+            {!isDownloadCompleted && targetFileErrors.length === 0 && (
+              <>
+                <Text style={styles.percentText}>
+                  {formatPercent(realProgress)}%
+                </Text>
+                <Text style={styles.sizeText}>
+                  {formatMB(downloadInfo.receivedBytes)} MB / {formatMB(downloadInfo.totalBytes || 153.1 * 1024 * 1024)} MB
+                </Text>
+              </>
+            )}
           </>
         )}
         </View>
@@ -654,6 +730,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(108, 93, 211, 0.7)',
     marginBottom: 20,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: 'rgba(255, 69, 58, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 69, 58, 0.3)',
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF453A',
+    marginBottom: 8,
+  },
+  errorSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#FF453A',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   progressText: {
     fontSize: 14,
