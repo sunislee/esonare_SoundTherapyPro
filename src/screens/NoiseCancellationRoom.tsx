@@ -63,6 +63,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
  */
 const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> => {
   try {
+    console.warn('[NC] checkNoiseResourcesReady START', audioGroupId);
     // audioGroupId 格式如：balanced_noise, wind_noise, crowd_noise, traffic_noise
     const folderName = audioGroupId; // 直接使用 audioGroupId 作为文件夹名
 
@@ -72,9 +73,10 @@ const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> 
       // getLocalPath('noise_reduction', `noise reduction/${filename}`)
       const localPath = getLocalPath('noise_reduction', `noise reduction/${filename}`);
 
+      console.warn('[NC] RNFS.exists check:', { trackNum, filename, localPath });
       const exists = await RNFS.exists(localPath);
       if (!exists) {
-        console.log(`[NoiseCancellationRoom] ❌ 资源未就绪：缺少 ${filename}`);
+        console.warn('[NC] ❌ 资源未就绪：缺少', filename, 'localPath:', localPath);
         return false;
       }
     }
@@ -82,7 +84,7 @@ const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> 
     console.log(`[NoiseCancellationRoom] ✅ 8-track 资源全部就绪: ${audioGroupId}`);
     return true;
   } catch (error) {
-    console.error('[NoiseCancellationRoom] ❌ 检查资源时出错:', error);
+    console.warn('[NC] ❌ checkNoiseResourcesReady catch block, error:', error instanceof Error ? error.message : String(error));
     return false;
   }
 };
@@ -260,12 +262,14 @@ const NoiseCancellationRoom: React.FC = () => {
    * @returns true 表示资源就绪并已/正在播放；false 表示已跳转下载页
    */
   const playWithResourceCheck = async (modeId: string): Promise<boolean> => {
+    console.warn('[NC] playWithResourceCheck START', modeId);
     // 转换 ID 格式：noise_balanced -> balanced_noise
     const audioGroupId = modeId.replace('noise_', '') + '_noise';
 
     // 检查资源是否就绪
     const ready = await checkNoiseResourcesReady(audioGroupId);
-    
+    console.warn('[NC] checkNoiseResourcesReady returned', { audioGroupId, ready });
+
     if (!ready) {
       console.log(`[NoiseCancellationRoom] 📥 资源未就绪，跳转到下载页面: ${audioGroupId}`);
       
@@ -277,22 +281,28 @@ const NoiseCancellationRoom: React.FC = () => {
         targetFiles.push(localPath);
       }
 
-      // 导航到下载页面，传入 targetFiles
-      navigation.navigate('ResourceDownloadScreen' as never, {
-        targetFiles,
-      } as never);
+      console.warn('[NC] 准备跳转下载页，targetFiles count:', targetFiles.length, 'first:', targetFiles[0]);
+      
+      try {
+        // @ts-ignore - navigation type already added to RootStackParamList
+        navigation.navigate('ResourceDownloadScreen', { targetFiles });
+        console.warn('[NC] navigation.navigate 调用成功');
+      } catch (navError) {
+        console.warn('[NC] navigation.navigate 抛出异常', navError);
+      }
       
       return false;
     }
 
     // 资源就绪，直接播放
+    // @ts-ignore - play8TrackAudio exists
     await play8TrackAudio(audioGroupId);
     return true;
   };
 
   // 处理模式切换（统一播放状态管理）
   const handleModePress = async (modeId: string) => {
-    console.log('[NoiseCancellationRoom] 点击模式:', modeId);
+    console.warn('[NC] handleModePress called:', modeId);
     
     // 【关键修复】如果点击的是当前正在播放的模式，则停止播放
     if (currentSceneId === modeId && isPlaying) {
@@ -334,8 +344,12 @@ const NoiseCancellationRoom: React.FC = () => {
     setCurrentSceneId(modeId);
     setSelectedMode(modeId);
     
+    console.warn('[NC] 即将调用 playWithResourceCheck', modeId);
+    
     // 【新增】使用带资源检查的播放函数
     const played = await playWithResourceCheck(modeId);
+    
+    console.warn('[NC] playWithResourceCheck 返回结果', { modeId, played });
     
     if (played) {
       setIsPlaying(true);
