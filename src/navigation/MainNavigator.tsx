@@ -16,9 +16,11 @@ import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import PolicyWebView from '../screens/PolicyWebView';
 import NoiseCancellationRoom from '../screens/NoiseCancellationRoom';
+import { ResourceDownloadScreen } from '../screens/ResourceDownloadScreen';
 
 // 导入类型
 export type RootStackParamList = {
+  AppBootstrap: undefined;
   Landing: undefined;
   NameEntry: undefined;
   MainTabs: undefined;
@@ -29,6 +31,7 @@ export type RootStackParamList = {
   About: undefined;
   PolicyWebView: { url: string; title: string };
   NoiseRoom: undefined;
+  ResourceDownloadScreen: { targetFiles?: string[] } | undefined;
 };
 
 type NavigationType = NavigationProp<RootStackParamList>;
@@ -134,6 +137,17 @@ export function MainNavigator() {
         <Stack.Screen 
           name="NoiseRoom" 
           component={NoiseCancellationRoom} 
+          options={{
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            headerShown: false,
+          }}
+        />
+        
+        {/* 下载检查页面（降噪实验室 8-track 下载前置检查） */}
+        <Stack.Screen 
+          name="ResourceDownloadScreen" 
+          component={ResourceDownloadScreen} 
           options={{
             animation: 'slide_from_bottom',
             gestureEnabled: true,
