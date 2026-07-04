@@ -85,7 +85,6 @@ const downloadTargetFilesAsync = async (
       const downloadPromise = RNFS.downloadFile({
         fromUrl: remoteUrl,
         toFile: localPath,
-        background: ((bgProgress: { bytesWritten: number; totalBytes: number }) => {}) as any, // RNFS background callback for iOS
         progressInterval: 200, // 每200ms触发一次进度更新（降低网络开销）
         progress: (progressRes) => {
           console.log(`[ResourceDownloadScreen] 📊 [${index+1}/${filePaths.length}] ${manifestItem.filename}: ${(progressRes.bytesWritten || 0)} bytes`);
@@ -274,7 +273,12 @@ export const ResourceDownloadScreen = ({ navigation, route }: any) => {
         console.log('[ResourceDownloadScreen] ✅ targetFiles 下载完成，标记自动播放并返回上一页');
         await AsyncStorage.setItem('downloadJustCompleted', 'true').catch(() => {});
         navigation.goBack();
-      } else if (savedName) {
+        return;
+      }
+      
+      // 非 targetFiles 模式：从 AsyncStorage 读取用户名决定跳转
+      const savedName = await AsyncStorage.getItem('USER_NAME');
+      if (savedName) {
         navigation.replace('MainTabs');
       } else {
         navigation.replace('NameEntry');

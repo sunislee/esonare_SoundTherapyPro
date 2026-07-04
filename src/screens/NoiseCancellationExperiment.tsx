@@ -15,6 +15,9 @@ import {
 import { play8TrackAudio, stop8TrackAudio } from '../services/8TrackAudioService';
 import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/NoiseResourceChecker';
 
+// AsyncStorage 跨页面通信：读取下载完成标记，自动播放刚下载的资源
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MODAL_WIDTH = SCREEN_WIDTH * 0.92;
 const SLIDER_HEIGHT = 200;
@@ -220,6 +223,60 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
   // 【新增】8轨音频播放状态追踪
   const isPlayingRef = useRef(false);
   const currentAudioGroupRef = useRef<string | null>(null);
+
+  // 【🔥 关键修复】Modal 打开时检查 AsyncStorage 跨页面通信标记
+  // 来源：ResourceDownloadScreen 下载完成后设置 'downloadJustCompleted' = 'true'
+  // 目的：用户刚下载完降噪资源，返回此 Modal 时应自动播放，而非空白等待
+  useEffect(() => {
+    if (!visible) return;
+
+    let dismissed = false;
+
+    const checkAndAutoPlay = async () => {
+      try {
+        const flag = await AsyncStorage.getItem('downloadJustCompleted');
+        if (dismissed) return;
+
+        if (flag === 'true') {
+          // 清除标记，防止重复触发
+          await AsyncStorage.removeItem('downloadJustCompleted').catch(() => {});
+
+          // 检查当前场景对应的资源是否就绪，如果就绪则自动播放
+          const currentSceneId = activeScene;
+          const audioGroupId = SCENE_TO_AUDIO_GROUP[currentSceneId];
+
+          if (audioGroupId) {
+            console.log('[NoiseLab] 🔄 检测到下载完成标记，检查资源并自动播放:', audioGroupId);
+            const ready = await checkNoiseResourcesReady(audioGroupId);
+            if (ready) {
+              console.log('[NoiseLab] ✅ 资源就绪，自动播放:', audioGroupId);
+              try {
+                await play8TrackAudio(audioGroupId);
+                isPlayingRef.current = true;
+                currentAudioGroupRef.current = audioGroupId;
+              } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : String(error);
+                console.error('[NoiseLab] ❌ 自动播放失败:', errorMsg);
+                isPlayingRef.current = false;
+              }
+            } else {
+              console.warn('[NoiseLab] ⚠️ 下载完成但资源未就绪，跳转下载页');
+              const targetFiles = getNoiseResourceFiles(audioGroupId);
+              props.onNavigateToDownload?.(audioGroupId, targetFiles);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[NoiseLab] ❌ 检查 downloadJustCompleted 标记失败:', error);
+      }
+    };
+
+    checkAndAutoPlay();
+
+    return () => {
+      dismissed = true;
+    };
+  }, [visible, activeScene, props.onNavigateToDownload]);
 
   const onValueChangeRef = useRef<(bandIndex: number, dbValue: number) => void>(undefined);
 
