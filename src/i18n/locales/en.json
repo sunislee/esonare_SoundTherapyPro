@@ -23,7 +23,9 @@
     "deleted": "Deleted",
     "deleteFailed": "Delete failed",
     "restored": "Playback restored",
-    "download": "Download"
+    "download": "Download",
+    "updateSuccess": "Update successful",
+    "saveFailed": "Save failed"
   },
   "slogans": {
     "journey": "Begin a relaxation journey",
