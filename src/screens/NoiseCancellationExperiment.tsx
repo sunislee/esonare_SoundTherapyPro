@@ -280,13 +280,6 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
 
   const onValueChangeRef = useRef<(bandIndex: number, dbValue: number) => void>(undefined);
 
-  useEffect(() => {
-    if (visible) {
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => { onClose(); return true; });
-      return () => backHandler.remove();
-    }
-  }, [visible, onClose]);
-
   // Modal 关闭时：停止8轨音频播放，避免弹窗关闭后音频还在后台播放
   const handleClose = useCallback(() => {
     console.log('[NoiseLab] ⛔ Modal 关闭，停止所有音频');
@@ -295,6 +288,14 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     currentAudioGroupRef.current = null;
     onClose();
   }, [onClose]);
+
+  // 【🔥 修复】安卓物理返回键：调用 handleClose 而非直接 onClose，确保 stop8TrackAudio() 被执行
+  useEffect(() => {
+    if (visible) {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => { handleClose(); return true; });
+      return () => backHandler.remove();
+    }
+  }, [visible, handleClose]);
 
   useEffect(() => {
     if (!visible && transitionAnimRef.current) { transitionAnimRef.current.stop(); transitionAnimRef.current = null; }
@@ -386,8 +387,9 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     });
   }, [animatedValues]);
 
+  // 【🔥 修复】onRequestClose 改为 handleClose，确保系统手势返回时也执行 stop8TrackAudio()
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={handleClose} statusBarTranslucent>
       <View style={styles.modalContainer}>
         <View style={[styles.absoluteFill, styles.overlayBackground]} />
         <View style={styles.panelContainer}>
