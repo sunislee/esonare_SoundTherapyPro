@@ -62,6 +62,10 @@ import TrackPlayer from 'react-native-track-player';
 import { NativeModules } from 'react-native';
 import { DownloadService } from './src/services/DownloadService';
 import { preloadBackgroundAvailability } from './src/constants/scenes';
+// 【🔥 Toast 修复】引入 react-native-toast-message 容器组件和配置
+import Toast from 'react-native-toast-message';
+import toastConfig from './src/config/toastConfig';
+import ToastUtil from './src/utils/ToastUtil';
 
 // 【🔥 v1.4.7 修复】自动下载场景背景图片（使用 RNFS.downloadFile，与 DownloadService 一致）
 // 之前用 fetch + btoa + appendFile 处理二进制图片会损坏文件
@@ -163,6 +167,9 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // 【🔥 Toast 修复】应用启动时初始化 ToastUtil，让 isInitialized=true
+    ToastUtil.init();
+
     const initApp = async () => {
       const startTime = Date.now();
       try {
@@ -264,6 +271,8 @@ function App() {
             <AudioProvider>
               <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
               <MainNavigator />
+              {/* 【🔥 Toast 容器】全局 Toast 弹出层 */}
+              <Toast config={toastConfig} />
             </AudioProvider>
           </NavigationContainer>
         </SafeAreaProvider>

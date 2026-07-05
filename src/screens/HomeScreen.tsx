@@ -48,6 +48,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { subscribeSceneDownloadChanged, getSceneDownloadState, tickScene } from '../utils/SceneDownloadStore';
 import { sceneRoamManager } from '../services/SceneRoamManager';
 import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } from '../services/ResourceStatusManager';
+import ToastUtil from '../utils/ToastUtil';
+import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/NoiseResourceChecker';
+import { downloadTargetFilesAsync } from './ResourceDownloadScreen';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 40;
@@ -633,6 +636,51 @@ export const HomeScreen: React.FC = () => {
   // 【🔥 已禁用】此 useEffect 会覆盖 v3 终极暴力修复的状态，导致场景显示 "Queued"
   // 原因：v3 已经强制点亮所有场景，不需要再扫描文件系统
 
+  // ════════════════════════════════════════════════════════
+  // 【预下载拦截逻辑】悬浮球入口 — 检查四组资源 + 后台静默下载
+  // ════════════════════════════════════════════════════════
+  const NOISE_LAB_AUDIO_GROUPS = ['wind_noise', 'balanced_noise', 'crowd_noise', 'traffic_noise'] as const;
+
+  /**
+   * 检查降噪实验室四组资源是否全部就绪
+   */
+  const checkAllNoiseResourcesReady = useCallback(async (): Promise<boolean> => {
+    try {
+      const results = await Promise.all(
+        NOISE_LAB_AUDIO_GROUPS.map(group => checkNoiseResourcesReady(group))
+      );
+      return results.every(r => r === true);
+    } catch (error) {
+      console.error('[HomeScreen] ❌ checkAllNoiseResourcesReady 异常:', error);
+      return false;
+    }
+  }, []);
+
+  /**
+   * 后台静默预下载全部32个文件（四组各8个轨道）
+   */
+  const silentPreDownloadAll = useCallback(async () => {
+    console.log('[HomeScreen] 🚀 [silentPreDownload] 开始后台静默预下载32个文件...');
+    
+    try {
+      // 收集所有需要下载的文件路径
+      const allPaths: string[] = [];
+      for (const group of NOISE_LAB_AUDIO_GROUPS) {
+        const files = getNoiseResourceFiles(group);
+        allPaths.push(...files);
+      }
+
+      console.log(`[HomeScreen] 📥 [silentPreDownload] 共 ${allPaths.length} 个文件，启动后台下载...`);
+      
+      // 调用已修复的 downloadTargetFilesAsync（并发3）
+      const result = await downloadTargetFilesAsync(allPaths);
+      
+      console.log(`[HomeScreen] ✅ [silentPreDownload] 完成：成功=${result.successCount}, 失败=${result.errors.length}`);
+    } catch (error) {
+      console.error('[HomeScreen] ❌ [silentPreDownload] 异常:', error);
+    }
+  }, []);
+
   // 【核心修改】初始化 Pan 坐标，设在底部中央
   const pan = useRef(new Animated.ValueXY({ 
     x: SCREEN_WIDTH / 2 - BUTTON_SIZE / 2, 
@@ -1067,7 +1115,7 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
     });
   }, [shufflingCategory, downloadedSceneIds, shuffleAnimRef]);
 
-  // 【核心修改】PanResponder 逻辑：去掉了回弹跳变，增加 flattenOffset
+  // 【核心修改】PanResponder 逻辑：去掉了回弹跳变，增加 flattenOffset + 预下载拦截
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -1076,12 +1124,27 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
         pan.extractOffset(); // 锁定当前位置为起点
       },
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
-      onPanResponderRelease: (e, gestureState) => {
+      onPanResponderRelease: async (e, gestureState) => {
         pan.flattenOffset(); // 合并偏移量
 
-        // 如果是点击（移动距离极小）→ 打开毛玻璃 Modal
+        // 如果是点击（移动距离极小）→ 预下载拦截 + 打开毛玻璃 Modal
         if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
-          setShowNoiseLabModal(true);
+          console.log('[HomeScreen] 🎯 [悬浮球点击] 开始检查降噪实验室资源...');
+          
+          const allReady = await checkAllNoiseResourcesReady();
+          
+          if (allReady) {
+            // 四组全部就绪 → 正常打开 Modal
+            console.log('[HomeScreen] ✅ [悬浮球点击] 四组资源全部就绪，正常打开 Modal');
+            setShowNoiseLabModal(true);
+          } else {
+            // 有任何未就绪 → Toast + 后台静默预下载
+            console.warn('[HomeScreen] ⚠️ [悬浮球点击] 资源未全部就绪，触发后台静默预下载');
+            ToastUtil.info('资源准备中，稍后再试');
+            
+            // 不打开 Modal，同时在后台静默下载全部32个文件
+            silentPreDownloadAll();
+          }
           return;
         }
 
@@ -1179,10 +1242,23 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
           <TouchableOpacity 
             style={styles.noiseCancelHexagon} 
             activeOpacity={0.8}
-            onPress={() => {
-              console.log('[HomeScreen] 🔥🔥🔥 NoiseLab 按钮被点击！准备打开 Modal...');
-              setShowNoiseLabModal(true);  // 🎯 打开毛玻璃 Modal
-              console.log('[HomeScreen] ✅ showNoiseLabModal 已设置为:', true);
+            onPress={async () => {
+              console.log('[HomeScreen] 🔥🔥🔥 [悬浮球按钮点击] 开始检查降噪实验室资源...');
+              
+              const allReady = await checkAllNoiseResourcesReady();
+              
+              if (allReady) {
+                // 四组全部就绪 → 正常打开 Modal
+                console.log('[HomeScreen] ✅ [悬浮球按钮点击] 四组资源全部就绪，正常打开 Modal');
+                setShowNoiseLabModal(true);
+              } else {
+                // 有任何未就绪 → Toast + 后台静默预下载
+                console.warn('[HomeScreen] ⚠️ [悬浮球按钮点击] 资源未全部就绪，触发后台静默预下载');
+                ToastUtil.info('资源准备中，稍后再试');
+                
+                // 不打开 Modal，同时在后台静默下载全部32个文件
+                silentPreDownloadAll();
+              }
             }}
           >
             <NoiseLabIcon size={40} />

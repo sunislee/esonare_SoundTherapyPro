@@ -27,7 +27,10 @@ export type ResourceDownloadScreenParams = {
  * @param maxConcurrent 最大并发数（默认3），限制同时下载的文件数量
  * @returns Promise<{ successCount: number; errors: string[] }>
  */
-const downloadTargetFilesAsync = async (
+/**
+ * 导出供 HomeScreen 预下载模式使用（后台静默下载指定文件列表）
+ */
+export const downloadTargetFilesAsync = async (
   filePaths: string[],
   onProgress?: (progress: { progress: number; receivedBytes: number; totalBytes: number }) => void,
   maxConcurrent: number = 3 // 【调整】从4→3，减少带宽争抢导致的超时概率
@@ -86,9 +89,10 @@ const downloadTargetFilesAsync = async (
         fromUrl: remoteUrl,
         toFile: localPath,
         progressInterval: 200, // 每200ms触发一次进度更新（降低网络开销）
-        progress: (progressRes) => {
-          console.log(`[ResourceDownloadScreen] 📊 [${index+1}/${filePaths.length}] ${manifestItem.filename}: ${(progressRes.bytesWritten || 0)} bytes`);
-        },
+        // 【临时移除 progress 回调】测试是否导致 'undefined is not a function' 错误
+        // progress: (progressRes) => {
+        //   console.log(`[ResourceDownloadScreen] 📊 [${index+1}/${filePaths.length}] ${manifestItem.filename}: ${(progressRes.bytesWritten || 0)} bytes`);
+        // },
         connectionTimeout: 30000, // 连接超时30秒（给 ghproxy 留足够时间）
         readTimeout: 60000,      // 读取超时60秒
       }).promise;
@@ -109,8 +113,19 @@ const downloadTargetFilesAsync = async (
         return { success: false };
       }
     } catch (error: any) {
-      const reason = error?.message || String(error);
-      console.error(`[ResourceDownloadScreen] ❌ [${index+1}/${filePaths.length}] 下载异常:`, reason);
+      // 【增强错误日志】输出完整堆栈用于诊断 'undefined is not a function' 问题
+      const errorDetail = {
+        message: error?.message || String(error),
+        stack: error?.stack,
+        type: typeof error,
+        constructor: error?.constructor?.name,
+      };
+      console.error(`[ResourceDownloadScreen] ❌ [${index+1}/${filePaths.length}] 下载异常:`, JSON.stringify(errorDetail, null, 2));
+      if (error?.stack) {
+        console.error(`[ResourceDownloadScreen] 📍 Full stack trace:`);
+        console.error(String(error.stack).split('\n').slice(0, 15).join('\n'));
+      }
+      const reason = errorDetail.message;
 
       // 【新增】如果是非重试且超时错误，尝试自动重试一次
       if (!isRetry && (reason.includes('DOWNLOAD_TIMEOUT') || reason.includes('ECONNABORTED'))) {
