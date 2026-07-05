@@ -23,7 +23,9 @@
     "deleted": "已删除",
     "deleteFailed": "删除失败",
     "restored": "已恢复播放",
-    "download": "去下载"
+    "download": "去下载",
+    "updateSuccess": "更新成功",
+    "saveFailed": "保存失败"
   },
   "slogans": {
     "journey": "开启一段放松之旅",
