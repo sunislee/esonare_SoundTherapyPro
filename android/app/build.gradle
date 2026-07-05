@@ -90,7 +90,7 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 143
+        versionCode 144
         versionName "1.4.2"
         
         // 【16KB 页适配】只打包 arm64-v8a 架构
