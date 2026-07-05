@@ -1,6 +1,6 @@
 {
   "name": "SoundTherapy081",
-  "version": "1.4.2-beta",
+  "version": "1.4.2",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
