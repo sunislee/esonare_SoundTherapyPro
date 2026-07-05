@@ -25,7 +25,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { DeviceEventEmitter } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import ToastUtil from '../utils/ToastUtil';
@@ -252,32 +252,6 @@ export const ProfileScreen = () => {
 
     console.log('[ProfileScreen] ✅ [subscribe] 实时进度监听已注册');
   }, [t]);
-
-  // 【🔥🔥🔨 关键修复】页面获得焦点时，检查是否正在下载并启动 subscribe
-  useBackHandler(false, navigation);
-
-  // 【🔥🔥🔨 关键修复】页面获得焦点时，检查是否正在下载并启动 subscribe
-  useFocusEffect(
-    useCallback(() => {
-      console.log('[ProfileScreen] 🎯 [useFocusEffect] 页面获得焦点');
-
-      const loadingStates = ['downloading', 'ready'];
-      for (const status of Object.values(downloads)) {
-        if (status.status === 'downloading') {
-          console.log(`[ProfileScreen] 🔄 [useFocusEffect] ${id} 正在下载中，启动实时进度监听`);
-          startRealBackgroundDownload();
-          return; // 找到一个正在下载的即可退出
-        }
-      }
-
-      for (const status of Object.values(downloads)) {
-        if (status.status === 'ready') {
-          console.log(`[ProfileScreen] ✅ [useFocusEffect] ${id} 已就绪`);
-          return;
-        }
-      }
-    }, [downloads, startRealBackgroundDownload])
-  );
 
   const handleOpenRename = () => {
     setNewName(userName);
