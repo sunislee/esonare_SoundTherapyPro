@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-// 服务导入：8轨音频播放 + 资源检查
-import { play8TrackAudio, stop8TrackAudio } from '../services/8TrackAudioService';
+// 服务导入：8轨音频播放 + 资源检查 + 独立音量控制
+import { play8TrackAudio, stop8TrackAudio, setTrackVolume } from '../services/8TrackAudioService';
 import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/NoiseResourceChecker';
 
 // AsyncStorage 跨页面通信：读取下载完成标记，自动播放刚下载的资源
@@ -37,7 +37,7 @@ interface ScenePreset {
   label: string;
   icon: string;
   color: string;
-  values: number[];
+  values: number[]; // 原始预设值（-24~+6 dB范围）
 }
 
 const SCENE_PRESETS: ScenePreset[] = [
@@ -47,32 +47,66 @@ const SCENE_PRESETS: ScenePreset[] = [
   { id: 'outdoor', label: '户外', icon: '🌲', color: '#7D5AC9', values: [-20, -15, -8, -3, 0, -2, -9, -18] },
 ];
 
+// ─── 滑块百分比映射工具 ──────────────────────────────
+// 滑块范围：0（静音）~ 100（最大音量），线性对应
+const SLIDER_MIN = 0;
+const SLIDER_MAX = 100;
+const SLIDER_RANGE = SLIDER_MAX - SLIDER_MIN;
+
+// SCENE_PRESETS 预设值 → 滑块百分比映射表（原始 dB 范围 -24~+6 映射到 0~100）
+const PRESET_DB_TO_PERCENT: Record<number, number> = {
+  [-24]: 0,
+  [-20]: 7,
+  [-18]: 15,
+  [-15]: 23,
+  [-12]: 35,
+  [-9]: 42,
+  [-8]: 46,
+  [-6]: 52,
+  [-5]: 55,
+  [-3]: 62,
+  [0]: 70,
+  [+1]: 74,
+  [+2]: 78,
+  [+3]: 82,
+  [+5]: 90,
+  [+6]: 100,
+};
+
+// 将预设值（原始 dB 范围 -24~+6）映射到滑块百分比 0~100
+function mapPresetValueToPercent(value: number): number {
+  const sortedKeys = Object.keys(PRESET_DB_TO_PERCENT).map(Number).sort((a, b) => a - b);
+  for (let i = 0; i < sortedKeys.length; i++) {
+    if (value <= sortedKeys[i]) {
+      return PRESET_DB_TO_PERCENT[sortedKeys[i]];
+    }
+  }
+  return PRESET_DB_TO_PERCENT[sortedKeys[sortedKeys.length - 1]];
+}
+
+// 滑块百分比 → 线性音量 0~1（直接除以 100）
+function percentToVolume(percent: number): number {
+  return Math.max(0, Math.min(1, percent / 100));
+}
+
 interface BandConfig {
   frequency: string;
   color: string;
-  initialDb: number;
+  defaultPercent: number; // 默认滑块百分比（0~100）
 }
 
 const BANDS: BandConfig[] = [
-  { frequency: '32Hz', color: '#4ECDC4', initialDb: -12 },
-  { frequency: '64Hz', color: '#45B7AA', initialDb: -5 },
-  { frequency: '125Hz', color: '#3DA190', initialDb: 0 },
-  { frequency: '250Hz', color: '#358B76', initialDb: +3 },
-  { frequency: '500Hz', color: '#4A90E4', initialDb: +5 },
-  { frequency: '1kHz', color: '#6C6CD2', initialDb: 0 },
-  { frequency: '2kHz', color: '#7D5AC9', initialDb: -9 },
-  { frequency: '4kHz', color: '#9F36B7', initialDb: -18 },
+  { frequency: '32Hz', color: '#4ECDC4', defaultPercent: mapPresetValueToPercent(-12) },
+  { frequency: '64Hz', color: '#45B7AA', defaultPercent: mapPresetValueToPercent(-5) },
+  { frequency: '125Hz', color: '#3DA190', defaultPercent: mapPresetValueToPercent(0) },
+  { frequency: '250Hz', color: '#358B76', defaultPercent: mapPresetValueToPercent(3) },
+  { frequency: '500Hz', color: '#4A90E4', defaultPercent: mapPresetValueToPercent(5) },
+  { frequency: '1kHz', color: '#6C6CD2', defaultPercent: mapPresetValueToPercent(0) },
+  { frequency: '2kHz', color: '#7D5AC9', defaultPercent: mapPresetValueToPercent(-9) },
+  { frequency: '4kHz', color: '#9F36B7', defaultPercent: mapPresetValueToPercent(-18) },
 ];
 
-const DB_MIN = -24;
-const DB_MAX = 6;
-const DB_RANGE = DB_MAX - DB_MIN;
-const DEADZONE_PX = 2;
 // SceneType → audioGroupId 映射表（降噪场景 ↔ 8轨音源）
-// commute(通勤) → traffic_noise(交通噪音)
-// office(办公室) → balanced_noise(均衡降噪)
-// social(社交) → crowd_noise(人声降噪)
-// outdoor(户外) → wind_noise(风声降噪)
 const SCENE_TO_AUDIO_GROUP: Record<SceneType, string | null> = {
   commute: 'traffic_noise',
   office: 'balanced_noise',
@@ -81,48 +115,51 @@ const SCENE_TO_AUDIO_GROUP: Record<SceneType, string | null> = {
   manual: null, // 自定义模式无对应音源
 };
 
-const AUDIO_BASE_PATH = ''; // RNFS 不再直接使用该常量，移除依赖
+const DEADZONE_PX = 2;
 
-function snapToGrid(db: number): number { return Math.round(db); }
-function clampDb(db: number): number { return Math.max(DB_MIN, Math.min(DB_MAX, db)); }
-function dbToHeight(db: number): number { return ((db - DB_MIN) / DB_RANGE) * SLIDER_HEIGHT; }
+// ─── VerticalSlider：百分比驱动的垂直滑块 ────────────
 
 interface VerticalSliderProps {
-  bandIndex: number; color: string; currentDb: number; isLocked: boolean;
+  bandIndex: number; color: string; currentPercent: number; isLocked: boolean;
   onValueChange: (bandIndex: number, value: number) => void;
   onDragStart: (bandIndex: number) => void;
   onDragEnd: (bandIndex: number) => void;
 }
 
 const VerticalSlider: React.FC<VerticalSliderProps> = React.memo(({
-  bandIndex, color, currentDb, isLocked, onValueChange, onDragStart, onDragEnd,
+  bandIndex, color, currentPercent, isLocked, onValueChange, onDragStart, onDragEnd,
 }) => {
-  const lastDbRef = useRef(currentDb);
+  const lastPercentRef = useRef(currentPercent);
   const fillViewRef = useRef<View>(null);
-  const dbTextRef = useRef<Text>(null);
-  const pendingValueRef = useRef<number | null>(null);
+  const percentTextRef = useRef<Text>(null);
   const isLockedRef = useRef(isLocked);
   const isDraggingRef = useRef(false);
-  const startDbRef = useRef<number | null>(null);
+  const startPercentRef = useRef<number | null>(null);
 
   isLockedRef.current = isLocked;
 
-  useEffect(() => {
-    if (isDraggingRef.current) return;
-    if (dbTextRef.current) dbTextRef.current.setNativeProps({ text: `${currentDb}dB` });
-    if (fillViewRef.current) fillViewRef.current.setNativeProps({ style: [{ height: Math.max(0, dbToHeight(currentDb)) }] });
-    lastDbRef.current = currentDb;
-  }, [currentDb]);
-
-  const applyNativeUI = useCallback((db: number) => {
-    if (fillViewRef.current) fillViewRef.current.setNativeProps({ style: [{ height: Math.max(0, dbToHeight(db)) }] });
-    if (dbTextRef.current) dbTextRef.current.setNativeProps({ text: `${db}dB` });
+  // 百分比 → UI 高度比例（0~100% → 0~SLIDER_HEIGHT）
+  const percentToHeight = useCallback((p: number) => {
+    return (p / SLIDER_MAX) * SLIDER_HEIGHT;
   }, []);
 
-  const computeDbFromDelta = useCallback((dy: number): number | null => {
-    if (isLockedRef.current || startDbRef.current === null) return null;
-    const newDb = startDbRef.current - (dy / SLIDER_HEIGHT) * DB_RANGE;
-    return clampDb(snapToGrid(newDb));
+  useEffect(() => {
+    if (isDraggingRef.current) return;
+    if (percentTextRef.current) percentTextRef.current.setNativeProps({ text: `${Math.round(currentPercent)}%` });
+    if (fillViewRef.current) fillViewRef.current.setNativeProps({ style: [{ height: Math.max(0, percentToHeight(currentPercent)) }] });
+    lastPercentRef.current = currentPercent;
+  }, [currentPercent, percentToHeight]);
+
+  const applyNativeUI = useCallback((percent: number) => {
+    if (fillViewRef.current) fillViewRef.current.setNativeProps({ style: [{ height: Math.max(0, percentToHeight(percent)) }] });
+    if (percentTextRef.current) percentTextRef.current.setNativeProps({ text: `${Math.round(percent)}%` });
+  }, [percentToHeight]);
+
+  // 手势位移 → 百分比（向上拖增加，向下拖减少）
+  const computePercentFromDelta = useCallback((dy: number): number | null => {
+    if (isLockedRef.current || startPercentRef.current === null) return null;
+    const newPercent = startPercentRef.current - (dy / SLIDER_HEIGHT) * SLIDER_RANGE;
+    return Math.max(SLIDER_MIN, Math.min(SLIDER_MAX, Math.round(newPercent)));
   }, []);
 
   const panResponder = useMemo(() =>
@@ -134,49 +171,45 @@ const VerticalSlider: React.FC<VerticalSliderProps> = React.memo(({
       onPanResponderGrant: () => {
         if (isLockedRef.current) return;
         isDraggingRef.current = true;
-        startDbRef.current = lastDbRef.current;
+        startPercentRef.current = lastPercentRef.current;
         onDragStart(bandIndex);
-        applyNativeUI(lastDbRef.current);
+        applyNativeUI(lastPercentRef.current);
       },
 
+      // 🔥 拖动过程中实时更新 UI + 触发音量变化（实时反馈）
       onPanResponderMove: (_evt, gestureState) => {
         if (isLockedRef.current) return;
         if (Math.abs(gestureState.dy) < DEADZONE_PX && Math.abs(gestureState.dx) < DEADZONE_PX) return;
-        const finalDb = computeDbFromDelta(gestureState.dy);
-        if (finalDb !== null && finalDb !== lastDbRef.current) {
-          lastDbRef.current = finalDb;
-          pendingValueRef.current = finalDb;
-          applyNativeUI(finalDb);
+        const finalPercent = computePercentFromDelta(gestureState.dy);
+        if (finalPercent !== null && finalPercent !== lastPercentRef.current) {
+          lastPercentRef.current = finalPercent;
+          applyNativeUI(finalPercent);
+          // 🔥 拖动过程中实时调用 onValueChange → setTrackVolume，让用户听到实时反馈
+          onValueChange(bandIndex, finalPercent);
         }
       },
 
       onPanResponderRelease: () => {
         isDraggingRef.current = false;
-        startDbRef.current = null;
-        if (pendingValueRef.current !== null && pendingValueRef.current !== currentDb) {
-          onValueChange(bandIndex, pendingValueRef.current);
-          pendingValueRef.current = null;
-        }
+        startPercentRef.current = null;
         onDragEnd(bandIndex);
       },
 
       onPanResponderTerminate: () => {
         isDraggingRef.current = false;
-        startDbRef.current = null;
-        if (pendingValueRef.current !== null && pendingValueRef.current !== currentDb) {
-          onValueChange(bandIndex, pendingValueRef.current);
-          pendingValueRef.current = null;
-        }
+        startPercentRef.current = null;
         onDragEnd(bandIndex);
       },
-    }), [bandIndex, onValueChange, onDragStart, onDragEnd, computeDbFromDelta, applyNativeUI]
+    }), [bandIndex, onValueChange, onDragStart, onDragEnd, computePercentFromDelta, applyNativeUI]
   );
 
-  const initHeight = dbToHeight(currentDb);
+  const initHeight = percentToHeight(currentPercent);
 
   return (
     <View style={styles.sliderItem}>
-      <Text style={[styles.frequencyLabel, { color }]}>{BANDS[bandIndex].frequency}</Text>
+      <Text style={[styles.frequencyLabel, { color }]}>
+        {BANDS[bandIndex].frequency.replace('Hz', '')}
+      </Text>
       <View style={[styles.sliderTrack, { backgroundColor: `${color}33` }]} pointerEvents="box-only" {...panResponder.panHandlers}>
         <View
           ref={fillViewRef}
@@ -185,27 +218,34 @@ const VerticalSlider: React.FC<VerticalSliderProps> = React.memo(({
           <View style={[styles.thumb, { backgroundColor: color }]} />
         </View>
       </View>
-      <Text ref={dbTextRef} style={[styles.dbLabel, { color }]}>{`${currentDb}dB`}</Text>
+      <Text ref={percentTextRef} style={[styles.dbLabel, { color }]}>{`${Math.round(currentPercent)}%`}</Text>
     </View>
   );
 }, (prevProps, nextProps) =>
-  prevProps.currentDb === nextProps.currentDb &&
+  prevProps.currentPercent === nextProps.currentPercent &&
   prevProps.color === nextProps.color
 );
 
 VerticalSlider.displayName = 'VerticalSlider';
 
-const SpectrumBar: React.FC<{ height: number; color: string }> = React.memo(({ height, color }) => (
+const SpectrumBar: React.FC<{ percent: number; color: string }> = React.memo(({ percent, color }) => (
   <View style={styles.spectrumBarContainer}>
-    <View style={[styles.spectrumBar, { height: `${height}%`, backgroundColor: color }]} />
+    <View style={[styles.spectrumBar, { height: `${percent}%`, backgroundColor: color }]} />
   </View>
 ));
 SpectrumBar.displayName = 'SpectrumBar';
 
-const SceneTab: React.FC<{ scene: ScenePreset; isActive: boolean; onPress: () => void }> = React.memo(
-  ({ scene, isActive, onPress }) => (
+const SceneTab: React.FC<{ scene: ScenePreset; isActive: boolean; onPress: () => void; isPlayingSource?: boolean }> = React.memo(
+  ({ scene, isActive, onPress, isPlayingSource }) => (
     <TouchableOpacity style={[styles.sceneTab, isActive && styles.sceneTabActive, isActive && { borderColor: scene.color }]} onPress={onPress} activeOpacity={0.8}>
-      <Text style={styles.sceneIcon}>{scene.icon}</Text>
+      <View style={styles.iconWrapper}>
+        <Text style={styles.sceneIcon}>{scene.icon}</Text>
+        {isPlayingSource && (
+          <View style={[styles.playingBadge, { backgroundColor: `${scene.color}66` }]}>
+            <View style={[styles.playingDot, { backgroundColor: scene.color }]} />
+          </View>
+        )}
+      </View>
       <Text style={[styles.sceneLabel, isActive ? { color: scene.color } : styles.sceneLabelInactive]}>{scene.label}</Text>
     </TouchableOpacity>
   )
@@ -215,18 +255,72 @@ SceneTab.displayName = 'SceneTab';
 const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
   const { visible, onClose } = props;
 
-  const [bandValues, setBandValues] = useState<number[]>(() => BANDS.map(b => b.initialDb));
+  // bandValues 现在是滑块百分比值（0~100），不是 dB
+  const [bandValues, setBandValues] = useState<number[]>(() => BANDS.map(b => b.defaultPercent));
   const [activeScene, setActiveScene] = useState<SceneType>('manual');
-  const animatedValues = useRef<Animated.Value[]>(BANDS.map(b => new Animated.Value(b.initialDb))).current;
+  const animatedValues = useRef<Animated.Value[]>(BANDS.map(b => new Animated.Value(b.defaultPercent))).current;
   const transitionAnimRef = useRef<Animated.CompositeAnimation | null>(null);
 
   // 【新增】8轨音频播放状态追踪
   const isPlayingRef = useRef(false);
   const currentAudioGroupRef = useRef<string | null>(null);
 
+  // 【🔥 修复】用 state + ref 双保模式跟踪当前播放音源：
+  // playingGroupIdState 用于触发 React 重新渲染（playingSourceScene 依赖它）
+  // playingGroupIdRef 用于异步回调中读取最新值（避免闭包陷阱）
+  const [playingGroupIdState, setPlayingGroupIdState] = useState<string | null>(null);
+  const playingGroupIdRef = useRef<string | null>(null);
+
+  // 【🔥 修复】playingSourceScene 基于 state 计算，确保音源切换时立刻触发重渲染
+  const playingSourceScene = useMemo(() => {
+    if (!isPlayingRef.current || !playingGroupIdState) return null;
+    for (const [sceneId, groupId] of Object.entries(SCENE_TO_AUDIO_GROUP)) {
+      if (groupId === playingGroupIdState) return sceneId as SceneType;
+    }
+    return null;
+  }, [playingGroupIdState]);
+
+  // 【🔥 引导提示动画】hintAnim — 手指 emoji 上下浮动循环动画
+  const hintAnim = useRef(new Animated.Value(0)).current;
+  const hintAnimRef = useRef<any>(null);
+
+  // 启动/重启浮动动画（仅在提示文字显示时运行）
+  useEffect(() => {
+    if (playingSourceScene !== null) {
+      // 没有播放 → 停止动画
+      if (hintAnimRef.current) {
+        hintAnim.stopAnimation();
+        hintAnimRef.current = null;
+      }
+      hintAnim.setValue(0);
+      return;
+    }
+
+    // 正在引导 → 启动循环浮动动画（上下 ±5px，单次耗时 750ms，总循环 1.5s）
+    hintAnim.stopAnimation();
+    const sequence = Animated.sequence([
+      Animated.timing(hintAnim, {
+        toValue: -5,  // 向上移动 5px
+        duration: 750,
+        useNativeDriver: true,
+      }),
+      Animated.timing(hintAnim, {
+        toValue: 5,   // 向下移动 5px
+        duration: 750,
+        useNativeDriver: true,
+      }),
+    ]);
+    const loop = Animated.loop(sequence);
+    loop.start();
+    hintAnimRef.current = loop;
+
+    return () => {
+      loop.stop();
+      hintAnimRef.current = null;
+    };
+  }, [playingSourceScene]);
+
   // 【🔥 关键修复】Modal 打开时检查 AsyncStorage 跨页面通信标记
-  // 来源：ResourceDownloadScreen 下载完成后设置 'downloadJustCompleted' = 'true'
-  // 目的：用户刚下载完降噪资源，返回此 Modal 时应自动播放，而非空白等待
   useEffect(() => {
     if (!visible) return;
 
@@ -238,10 +332,8 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
         if (dismissed) return;
 
         if (flag === 'true') {
-          // 清除标记，防止重复触发
           await AsyncStorage.removeItem('downloadJustCompleted').catch(() => {});
 
-          // 检查当前场景对应的资源是否就绪，如果就绪则自动播放
           const currentSceneId = activeScene;
           const audioGroupId = SCENE_TO_AUDIO_GROUP[currentSceneId];
 
@@ -254,6 +346,8 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
                 await play8TrackAudio(audioGroupId);
                 isPlayingRef.current = true;
                 currentAudioGroupRef.current = audioGroupId;
+                setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
+                playingGroupIdRef.current = audioGroupId;   // 🔥 同步 ref
               } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
                 console.error('[NoiseLab] ❌ 自动播放失败:', errorMsg);
@@ -273,12 +367,14 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
 
     checkAndAutoPlay();
 
-    return () => {
-      dismissed = true;
-    };
+    return () => { dismissed = true; };
   }, [visible, activeScene, props.onNavigateToDownload]);
 
-  const onValueChangeRef = useRef<(bandIndex: number, dbValue: number) => void>(undefined);
+  // 🔥 bandValues ref：用于 setTrackVolume 实时读取当前百分比值
+  const bandValuesRef = useRef(bandValues);
+  bandValuesRef.current = bandValues;
+
+  const onValueChangeRef = useRef<(bandIndex: number, percentValue: number) => void>(undefined);
 
   // Modal 关闭时：停止8轨音频播放，避免弹窗关闭后音频还在后台播放
   const handleClose = useCallback(() => {
@@ -286,10 +382,12 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     stop8TrackAudio();
     isPlayingRef.current = false;
     currentAudioGroupRef.current = null;
+    setPlayingGroupIdState(null);      // 🔥 清除播放音源 state
+    playingGroupIdRef.current = null;   // 🔥 同步 ref
     onClose();
   }, [onClose]);
 
-  // 【🔥 修复】安卓物理返回键：调用 handleClose 而非直接 onClose，确保 stop8TrackAudio() 被执行
+  // 【🔥 修复】安卓物理返回键：调用 handleClose 而非直接 onClose
   useEffect(() => {
     if (visible) {
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => { handleClose(); return true; });
@@ -301,9 +399,21 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     if (!visible && transitionAnimRef.current) { transitionAnimRef.current.stop(); transitionAnimRef.current = null; }
   }, [visible]);
 
-  const handleBandChange = useCallback((bandIndex: number, dbValue: number) => {
+  // 🔥 handleBandChange：滑块百分比 → 线性音量 → setTrackVolume（实时调用）
+  const handleBandChange = useCallback((bandIndex: number, percentValue: number) => {
     if (transitionAnimRef.current) return;
-    setBandValues(prev => { const newValues = [...prev]; newValues[bandIndex] = dbValue; return newValues; });
+
+    // 更新本地 state（用于 UI 显示）
+    setBandValues(prev => {
+      const newValues = [...prev];
+      newValues[bandIndex] = percentValue;
+      return newValues;
+    });
+
+    // 🔥 实时调用 setTrackVolume：百分比 → 线性音量 0~1，应用到对应 track（bandIndex+1）
+    const volume = percentToVolume(percentValue);
+    setTrackVolume(bandIndex + 1, volume);
+
     if (activeScene !== 'manual') setActiveScene('manual');
   }, [activeScene]);
 
@@ -311,7 +421,10 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     onValueChangeRef.current = handleBandChange;
   }, [handleBandChange]);
 
-  const stableOnValueChange = useCallback((bandIndex: number, value: number) => { onValueChangeRef.current?.(bandIndex, value); }, []);
+  // stableOnValueChange：拖动过程中实时触发音量更新
+  const stableOnValueChange = useCallback((bandIndex: number, value: number) => {
+    onValueChangeRef.current?.(bandIndex, value);
+  }, []);
   const stableOnDragStart = useCallback((_bandIndex: number) => {}, []);
   const stableOnDragEnd = useCallback((_bandIndex: number) => {}, []);
 
@@ -323,21 +436,28 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     const preset = SCENE_PRESETS.find(p => p.id === sceneId);
     if (!preset) return;
 
-    // ========== EQ 滑块动画（保留原有逻辑）==========
+    // ========== EQ 滑块动画（预设值 → 百分比映射）==========
     setActiveScene(sceneId);
     if (transitionAnimRef.current) transitionAnimRef.current.stop();
-    const animations = preset.values.map((targetValue, index) =>
+    const targetPercents = preset.values.map(v => mapPresetValueToPercent(v));
+    const animations = targetPercents.map((targetValue, index) =>
       Animated.timing(animatedValues[index], { toValue: targetValue, duration: TRANSITION_DURATION, useNativeDriver: false })
     );
     transitionAnimRef.current = Animated.parallel(animations);
     (transitionAnimRef.current as Animated.CompositeAnimation).start(({ finished }: { finished: boolean }) => {
-      if (finished) { setBandValues([...preset.values]); transitionAnimRef.current = null; }
+      if (finished) {
+        setBandValues(targetPercents);
+        // 场景切换后，将所有预设滑块的音量应用到对应 track
+        targetPercents.forEach((percent, index) => {
+          setTrackVolume(index + 1, percentToVolume(percent));
+        });
+        transitionAnimRef.current = null;
+      }
     });
 
     // ========== 8轨音频播放（新增逻辑）==========
     const audioGroupId = SCENE_TO_AUDIO_GROUP[sceneId];
 
-    // manual 模式无对应音源，不播放
     if (!audioGroupId) {
       console.log('[NoiseLab] 自定义模式，跳过音频播放');
       return;
@@ -359,31 +479,41 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
         await play8TrackAudio(audioGroupId);
         isPlayingRef.current = true;
         currentAudioGroupRef.current = audioGroupId;
+        setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
+        playingGroupIdRef.current = audioGroupId;   // 🔥 同步 ref
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.error('[NoiseLab] ❌ 播放失败:', errorMsg);
         isPlayingRef.current = false;
       }
     } else {
-      // 资源未就绪，跳转下载页
       console.warn('[NoiseLab] 📥 资源未就绪，跳转下载页面');
       const targetFiles = getNoiseResourceFiles(audioGroupId);
       props.onNavigateToDownload?.(audioGroupId, targetFiles);
     }
   }, [activeScene, animatedValues]);
 
-  const spectrumHeights = useMemo(() => BANDS.map((_, index) => ((bandValues[index] - DB_MIN) / DB_RANGE) * 100), [bandValues]);
+  // 滑块百分比 → spectrum bar 高度百分比（0~100%）
+  const spectrumHeights = useMemo(() => bandValues.map(p => (p / SLIDER_MAX) * 100), [bandValues]);
 
   const handleCalibrate = useCallback(() => {
     if (transitionAnimRef.current) return;
     setActiveScene('manual');
-    const optimizedValues = BANDS.map(() => Math.floor(Math.random() * 10) - 5);
-    const animations = optimizedValues.map((targetValue, index) =>
+    // CALIBRATE：随机生成 0~100% 的滑块值
+    const randomPercents = BANDS.map(() => Math.floor(Math.random() * 101));
+    const animations = randomPercents.map((targetValue, index) =>
       Animated.timing(animatedValues[index], { toValue: targetValue, duration: TRANSITION_DURATION, useNativeDriver: false })
     );
     transitionAnimRef.current = Animated.parallel(animations);
     (transitionAnimRef.current as Animated.CompositeAnimation).start(({ finished }: { finished: boolean }) => {
-      if (finished) { setBandValues([...optimizedValues]); transitionAnimRef.current = null; }
+      if (finished) {
+        setBandValues(randomPercents);
+        // CALIBRATE 后也应用音量到对应 track
+        randomPercents.forEach((percent, index) => {
+          setTrackVolume(index + 1, percentToVolume(percent));
+        });
+        transitionAnimRef.current = null;
+      }
     });
   }, [animatedValues]);
 
@@ -399,7 +529,7 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
 
             <View style={styles.sceneTabsContainer}>
               {SCENE_PRESETS.map(scene => (
-                <SceneTab key={scene.id} scene={scene} isActive={activeScene === scene.id} onPress={() => handleSceneSelect(scene.id)} />
+                <SceneTab key={scene.id} scene={scene} isActive={activeScene === scene.id} isPlayingSource={playingSourceScene === scene.id} onPress={() => handleSceneSelect(scene.id)} />
               ))}
 
               {/* 调试信息：显示当前音频组 */}
@@ -416,18 +546,26 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
               )}
             </View>
 
+            {/* 【🔥 引导提示】当没有场景在播放时，显示操作指引（手指 emoji 带浮动动画） */}
+            {playingSourceScene === null && (
+              <View style={styles.hintContainer}>
+                <Animated.Text style={[styles.hintEmoji, { transform: [{ translateY: hintAnim }] }]}>👆</Animated.Text>
+                <Text style={styles.hintText}>点击上方场景开始降噪</Text>
+              </View>
+            )}
+
             <Text style={styles.sectionTitle}>8-BAND FREQUENCY CONTROL</Text>
 
             <View style={styles.spectrumDisplay}>
               {BANDS.map((band, index) => (
-                <SpectrumBar key={`spectrum-${index}`} height={spectrumHeights[index]} color={band.color} />
+                <SpectrumBar key={`spectrum-${index}`} percent={spectrumHeights[index]} color={band.color} />
               ))}
             </View>
 
             <View style={styles.slidersGrid}>
               {BANDS.map((band, index) => (
                 <VerticalSlider key={`slider-${index}`} bandIndex={index} color={band.color}
-                  currentDb={bandValues[index]} isLocked={false}
+                  currentPercent={bandValues[index]} isLocked={false}
                   onValueChange={stableOnValueChange} onDragStart={stableOnDragStart} onDragEnd={stableOnDragEnd}
                 />
               ))}
@@ -461,16 +599,33 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.1)' },
   sceneTabActive: { backgroundColor: 'rgba(108, 93, 211, 0.2)', shadowColor: '#6C5DD3', shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5, shadowRadius: 10, elevation: 8 },
+  iconWrapper: { position: 'relative', alignItems: 'center' },
+  playingBadge: {
+    position: 'absolute', top: -4, right: -8, width: 10, height: 10, borderRadius: 5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  playingDot: { width: 6, height: 6, borderRadius: 3 },
   sceneIcon: { fontSize: 20, marginBottom: 4 },
   sceneLabel: { fontSize: 11, fontWeight: '700' },
   sceneLabelInactive: { color: 'rgba(255, 255, 255, 0.4)' },
   sectionTitle: { color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, fontWeight: '600', letterSpacing: 2, textAlign: 'center', marginBottom: 16 },
+  hintContainer: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', marginBottom: 12 },
+  hintEmoji: { fontSize: 18, marginRight: 6 },
+  hintText: { 
+    color: '#4ECDC4', 
+    fontSize: 15, 
+    fontWeight: '700', 
+    textAlign: 'center', 
+    marginTop: 8, 
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
   spectrumDisplay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 120, width: '100%', paddingHorizontal: 8, marginBottom: 20 },
   spectrumBarContainer: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', marginHorizontal: 2 },
   spectrumBar: { width: '80%', minHeight: 10, borderRadius: 5, borderTopLeftRadius: 8, borderTopRightRadius: 8 },
   slidersGrid: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 4, marginBottom: 20 },
   sliderItem: { flex: 1, alignItems: 'center', marginHorizontal: 2 },
-  frequencyLabel: { fontSize: 11, fontWeight: '700', marginBottom: 6 },
+  frequencyLabel: { fontSize: 10, fontWeight: '700', marginBottom: 6 },
   sliderTrack: { width: 28, height: SLIDER_HEIGHT, borderRadius: 14, overflow: 'hidden', marginBottom: 6 },
   sliderFill: { position: 'absolute', bottom: 0, left: 0, right: 0, borderRadius: 14, justifyContent: 'flex-start', paddingTop: 2 },
   thumb: { width: 24, height: 24, borderRadius: 12, alignSelf: 'center', shadowColor: '#000000', shadowOffset: { width: 0, height: 2 },
