@@ -466,26 +466,12 @@ export const play8TrackAudio = async (audioGroupId: string) => {
       // 【关键修复】抢跑机制：等待 6 个轨道成功或全局超时
       console.log(`[8Track] 🔍 等待轨道加载完成（最多 ${MAX_LOADING_TIME_MS}ms，最少 ${MIN_SUCCESS_COUNT} 个）...`);
       
-      await Promise.race([
-        earlyResolvePromise,
-        Promise.all(loadPromises).then((results) => {
-          // 保存结果
-          for (let i = 0; i < 8; i++) {
-            loadedPlayers[i] = results[i];
-          }
-        })
-      ]).catch((error) => {
-        console.error('[8Track] ❌ 加载过程出错:', error);
-      });
-      
-      // 确保所有结果都已保存
-      if (loadedPlayers.every(s => s === null)) {
-        console.log('[8Track] 📊 等待所有 Promise 完成以保存结果...');
-        await Promise.all(loadPromises).then((results) => {
-          for (let i = 0; i < 8; i++) {
-            loadedPlayers[i] = results[i];
-          }
-        });
+      // 【Bug修复】放弃 Promise.race + catch 吞错，改用 allSettled 确保结果完整收集
+      const settledResults = await Promise.allSettled(loadPromises);
+      for (let i = 0; i < 8; i++) {
+        if (settledResults[i].status === 'fulfilled' && settledResults[i].value !== null) {
+          loadedPlayers[i] = settledResults[i].value;
+        }
       }
       
       // 检查加载成功数量
@@ -637,6 +623,7 @@ export const play8TrackAudio = async (audioGroupId: string) => {
     isPlaying = false;
     currentAudioGroupId = null;
     isSwitching = false;
+    throw error; // 【Bug修复】重新抛出错误，让调用方（handleSceneSelect）收到失败信号并触发降级逻辑
   }
 };
 

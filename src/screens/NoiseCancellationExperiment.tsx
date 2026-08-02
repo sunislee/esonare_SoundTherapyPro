@@ -470,24 +470,20 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
       isPlayingRef.current = false;
     }
 
-    // 检查资源是否就绪
-    const ready = await checkNoiseResourcesReady(audioGroupId);
-
-    if (ready) {
-      console.log('[NoiseLab] ▶️ 资源就绪，开始播放:', audioGroupId);
-      try {
-        await play8TrackAudio(audioGroupId);
-        isPlayingRef.current = true;
-        currentAudioGroupRef.current = audioGroupId;
-        setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
-        playingGroupIdRef.current = audioGroupId;   // 🔥 同步 ref
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error('[NoiseLab] ❌ 播放失败:', errorMsg);
-        isPlayingRef.current = false;
-      }
-    } else {
-      console.warn('[NoiseLab] 📥 资源未就绪，跳转下载页面');
+    // 直接尝试8轨混合播放，由 play8TrackAudio 内部的抢跑机制判断能否播：
+    //   - 2秒内6/8就绪 → 正常播放（不再要求全部下载完）
+    //   - <4轨就绪 → 抛异常，降级到资源下载页
+    try {
+      console.log('[NoiseLab] ▶️ 尝试启动8轨混合播放:', audioGroupId);
+      await play8TrackAudio(audioGroupId);
+      isPlayingRef.current = true;
+      currentAudioGroupRef.current = audioGroupId;
+      setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
+      playingGroupIdRef.current = audioGroupId;   // 🔥 同步 ref
+    } catch (playError) {
+      const errorMsg = playError instanceof Error ? playError.message : String(playError);
+      console.warn('[NoiseLab] ⚠️ 抢跑失败，轨道不足，降级到资源下载页:', errorMsg);
+      isPlayingRef.current = false;
       const targetFiles = getNoiseResourceFiles(audioGroupId);
       props.onNavigateToDownload?.(audioGroupId, targetFiles);
     }
