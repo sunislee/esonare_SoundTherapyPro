@@ -9,11 +9,21 @@ import {
   PanResponder,
   Animated,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 
-// 服务导入：8轨音频播放 + 资源检查 + 独立音量控制
+// 服务导入：8轨音频播放 + 资源检查 + 独立音量控制 + 降噪音频路由
 import { play8TrackAudio, stop8TrackAudio, setTrackVolume } from '../services/8TrackAudioService';
+import { playNoiseAudio, stopNoiseAudio } from '../services/NoiseAudioService';
 import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/NoiseResourceChecker';
+
+// TrackPlayer：用于跨服务停止音频 + 播放状态监听
+import TrackPlayer, { Event, State, useTrackPlayerEvents } from 'react-native-track-player';
+
+// EQ 动态生成器 + 环境音频分析
+import { generateEQ } from '../services/EQGenerator';
+import { AudioAnalyzer } from '../services/AudioAnalyzer';
+import { AudioLevel } from '../modules/AudioLevel';
 
 // AsyncStorage 跨页面通信：读取下载完成标记，自动播放刚下载的资源
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,7 +40,7 @@ interface NoiseLabModalProps {
   onNavigateToDownload?: (audioGroupId: string, targetFiles: string[]) => void;
 }
 
-type SceneType = 'commute' | 'office' | 'social' | 'outdoor' | 'manual';
+type SceneType = 'commute' | 'office' | 'social' | 'outdoor' | 'mic' | 'manual';
 
 interface ScenePreset {
   id: SceneType;
@@ -40,12 +50,44 @@ interface ScenePreset {
   values: number[]; // 原始预设值（-24~+6 dB范围）
 }
 
-const SCENE_PRESETS: ScenePreset[] = [
-  { id: 'commute', label: '通勤', icon: '🚗', color: '#4ECDC4', values: [-18, -12, -5, 0, +3, +2, -3, -9] },
-  { id: 'office', label: '办公室', icon: '💼', color: '#45B7AA', values: [-8, -5, -3, 0, +2, +1, -6, -12] },
-  { id: 'social', label: '社交', icon: '👥', color: '#4A90E4', values: [-5, -3, 0, +3, +6, +5, -3, -15] },
-  { id: 'outdoor', label: '户外', icon: '🌲', color: '#7D5AC9', values: [-20, -15, -8, -3, 0, -2, -9, -18] },
+// ─── 场景标签配置（独立于 EQ 值，仅用于 UI 渲染） ──────────
+
+interface SceneTabConfig extends Omit<ScenePreset, 'values'> {
+  // values 字段由 generateEQ() 动态生成，不在配置中硬编码
+}
+
+const SCENE_TABS_CONFIG: SceneTabConfig[] = [
+  { id: 'commute', label: '通勤', icon: '🚗', color: '#4ECDC4' },
+  { id: 'office', label: '办公室', icon: '💼', color: '#45B7AA' },
+  { id: 'social', label: '社交', icon: '👥', color: '#4A90E4' },
+  { id: 'outdoor', label: '户外', icon: '🌲', color: '#7D5AC9' },
+  { id: 'mic', label: '麦克风采集', icon: '🎙️', color: '#FF6B6B' },
 ];
+
+// SceneType → EQ 场景类型映射（与 SCENE_TO_AUDIO_GROUP 对应）
+const AUDIO_GROUP_TO_EQ_SCENE: Record<string, string> = {
+  traffic_noise: 'commute',
+  balanced_noise: 'office',
+  crowd_noise: 'social',
+  wind_noise: 'outdoor',
+};
+
+// ─── AudioAnalyzer → 降噪实验室场景映射（环境自动切换用） ──────────
+//
+// AudioAnalyzer.SceneType = 'traffic' | 'crowd' | 'wind' | 'unknown'
+// NoiseLab SceneType     = 'commute' | 'office' | 'social' | 'outdoor' | 'mic' | 'manual'
+//
+// ⚠️ office 场景不在 AudioAnalyzer 识别范围内（它只能识别 traffic/crowd/wind），
+//    因此 office 永远不会被自动触发切换，只能通过用户手动选择 Tab 进入。
+//    这是预期行为：办公室环境噪声特征不够独特，无法与通勤/社交可靠区分，
+//    由用户主动指定是最合理的交互方式。
+
+const ANALYZER_TO_NOLAB_SCENE: Record<string, SceneType | null> = {
+  traffic: 'commute',   // 车流/交通噪声 → 通勤模式（地铁、公交、马路）
+  crowd: 'social',      // 人群噪声     → 社交模式（咖啡馆、餐厅、会议室）
+  wind: 'outdoor',      // 风噪         → 户外模式（公园、街道、骑行）
+  unknown: null,        // 未识别       → 不触发切换，保持当前场景
+};
 
 // ─── 滑块百分比映射工具 ──────────────────────────────
 // 滑块范围：0（静音）~ 100（最大音量），线性对应
@@ -53,7 +95,7 @@ const SLIDER_MIN = 0;
 const SLIDER_MAX = 100;
 const SLIDER_RANGE = SLIDER_MAX - SLIDER_MIN;
 
-// SCENE_PRESETS 预设值 → 滑块百分比映射表（原始 dB 范围 -24~+6 映射到 0~100）
+// dB 增益值 → 滑块百分比映射表（原始 dB 范围 -24~+6 映射到 0~100，兼容预设值和生成值）
 const PRESET_DB_TO_PERCENT: Record<number, number> = {
   [-24]: 0,
   [-20]: 7,
@@ -108,10 +150,11 @@ const BANDS: BandConfig[] = [
 
 // SceneType → audioGroupId 映射表（降噪场景 ↔ 8轨音源）
 const SCENE_TO_AUDIO_GROUP: Record<SceneType, string | null> = {
-  commute: 'traffic_noise',
+  commute: 'noise_traffic',
   office: 'balanced_noise',
-  social: 'crowd_noise',
-  outdoor: 'wind_noise',
+  social: 'noise_crowd',
+  outdoor: 'noise_wind',
+  mic: null, // 麦克风采集模式无对应音源
   manual: null, // 自定义模式无对应音源
 };
 
@@ -139,8 +182,8 @@ const VerticalSlider: React.FC<VerticalSliderProps> = React.memo(({
   isLockedRef.current = isLocked;
 
   // 百分比 → UI 高度比例（0~100% → 0~SLIDER_HEIGHT）
-  const percentToHeight = useCallback((p: number) => {
-    return (p / SLIDER_MAX) * SLIDER_HEIGHT;
+  const percentToHeight = useCallback((p?: number) => {
+    return ((Math.max(0, p ?? 0)) / SLIDER_MAX) * SLIDER_HEIGHT;
   }, []);
 
   useEffect(() => {
@@ -230,17 +273,19 @@ VerticalSlider.displayName = 'VerticalSlider';
 
 const SpectrumBar: React.FC<{ percent: number; color: string }> = React.memo(({ percent, color }) => (
   <View style={styles.spectrumBarContainer}>
-    <View style={[styles.spectrumBar, { height: `${percent}%`, backgroundColor: color }]} />
+    <View style={[styles.spectrumBar, { height: `${Math.max(0, Math.min(100, percent || 0))}%`, backgroundColor: color }]} />
   </View>
 ));
 SpectrumBar.displayName = 'SpectrumBar';
 
-const SceneTab: React.FC<{ scene: ScenePreset; isActive: boolean; onPress: () => void; isPlayingSource?: boolean }> = React.memo(
-  ({ scene, isActive, onPress, isPlayingSource }) => (
+const SceneTab: React.FC<{ scene: ScenePreset; isActive: boolean; onPress: () => void; isPlayingSource?: boolean; isLoading?: boolean }> = React.memo(
+  ({ scene, isActive, onPress, isPlayingSource, isLoading }) => (
     <TouchableOpacity style={[styles.sceneTab, isActive && styles.sceneTabActive, isActive && { borderColor: scene.color }]} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.iconWrapper}>
         <Text style={styles.sceneIcon}>{scene.icon}</Text>
-        {isPlayingSource && (
+        {isLoading ? (
+          <ActivityIndicator size="small" color={scene.color} />
+        ) : isPlayingSource && (
           <View style={[styles.playingBadge, { backgroundColor: `${scene.color}66` }]}>
             <View style={[styles.playingDot, { backgroundColor: scene.color }]} />
           </View>
@@ -279,6 +324,27 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     }
     return null;
   }, [playingGroupIdState]);
+
+  // 【🔥 Buffering 状态】仅非办公室场景（办公室走本地8轨，不经 TrackPlayer）
+  const [isBuffering, setIsBuffering] = useState(false);
+
+  // 【🔥 防循环误触发】标记当前是否用户主动切换场景，用于区分"播放中自然循环重启"和"真正的加载新音源"
+  const isSwitchingSceneRef = useRef(false);
+
+  useTrackPlayerEvents([Event.PlaybackState], (event) => {
+    if (!visible || activeScene === 'office') return;
+    if (event.state === State.Buffering || event.state === State.Loading) {
+      // 仅在用户主动切换场景时，才显示 loading 指示（避免 RepeatMode 循环重启误判）
+      if (isSwitchingSceneRef.current) setIsBuffering(true);
+    } else if (event.state === State.Playing) {
+      setIsBuffering(false);
+      isSwitchingSceneRef.current = false;
+    }
+  });
+
+  // 【🔥 麦克风采集实验】实时分贝数据 + 波形历史
+  const [micDbLevel, setMicDbLevel] = useState<number>(-90);
+  const [micHistory, setMicHistory] = useState<number[]>(() => new Array(64).fill(-90));
 
   // 【🔥 引导提示动画】hintAnim — 手指 emoji 上下浮动循环动画
   const hintAnim = useRef(new Animated.Value(0)).current;
@@ -320,6 +386,31 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     };
   }, [playingSourceScene]);
 
+  // 【🔥 麦克风采集实验】监听 AudioLevel 实时分贝并更新波形历史
+  useEffect(() => {
+    if (!visible || activeScene !== 'mic') return;
+
+    const unsubscribe = AudioLevel.onAmplitudeChanged((_amplitude: number, dB: number) => {
+      setMicDbLevel(dB);
+      setMicHistory(prev => [...prev.slice(1), dB]); // 保持最近 64 个点
+    });
+
+    // 首次启动采集（带权限检查）
+    AudioLevel.checkMicrophonePermission?.().then(granted => {
+      if (granted) {
+        AudioLevel.start((_amplitude: number, dB: number) => {
+          setMicDbLevel(dB);
+          setMicHistory(prev => [...prev.slice(1), dB]);
+        }, 50); // 20Hz 采集率
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      AudioLevel.stop?.();
+    };
+  }, [visible, activeScene]);
+
   // 【🔥 关键修复】Modal 打开时检查 AsyncStorage 跨页面通信标记
   useEffect(() => {
     if (!visible) return;
@@ -343,7 +434,12 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
             if (ready) {
               console.log('[NoiseLab] ✅ 资源就绪，自动播放:', audioGroupId);
               try {
-                await play8TrackAudio(audioGroupId);
+                const isBalancedAuto = audioGroupId === 'balanced_noise';
+                if (isBalancedAuto) {
+                  await play8TrackAudio(audioGroupId);
+                } else {
+                  await playNoiseAudio(audioGroupId);
+                }
                 isPlayingRef.current = true;
                 currentAudioGroupRef.current = audioGroupId;
                 setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
@@ -376,10 +472,16 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
 
   const onValueChangeRef = useRef<(bandIndex: number, percentValue: number) => void>(undefined);
 
-  // Modal 关闭时：停止8轨音频播放，避免弹窗关闭后音频还在后台播放
+  // Modal 关闭时：停止所有音频服务，避免弹窗关闭后音频还在后台播放
   const handleClose = useCallback(() => {
     console.log('[NoiseLab] ⛔ Modal 关闭，停止所有音频');
-    stop8TrackAudio();
+    if (currentAudioGroupRef.current === 'balanced_noise') {
+      stop8TrackAudio();
+    } else {
+      stopNoiseAudio();
+      TrackPlayer.stop();
+      TrackPlayer.reset();
+    }
     isPlayingRef.current = false;
     currentAudioGroupRef.current = null;
     setPlayingGroupIdState(null);      // 🔥 清除播放音源 state
@@ -395,8 +497,138 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     }
   }, [visible, handleClose]);
 
+  // ── 环境自动切换防抖 refs ──────────────────────────────
+  const GRACE_PERIOD_MS = 10_000;                    // 用户手动操作后，自动切换静默等待期（10秒）
+  const MIN_AUTO_SWITCH_INTERVAL_MS = 8_000;         // 两次自动切换之间最短间隔（8秒）
+  const lastManualTapRef = useRef<number>(0);        // 上次用户手动点击场景的时间戳
+  const lastAutoSwitchRef = useRef<number>(0);       // 上次环境自动切换的时间戳
+
+  /**
+   * 核心场景切换逻辑：EQ 动画 + 8轨音频播放
+   */
+  const applyScene = useCallback(async (sceneId: SceneType) => {
+    if (sceneId === activeScene) return;
+    setIsBuffering(false);
+
+    // 先获取音频组映射（供 EQ 生成器和音频播放共用）
+    const audioGroupId = SCENE_TO_AUDIO_GROUP[sceneId];
+    
+    // ========== EQ 滑块动画（动态生成值 → 百分比映射）==========
+    
+    // 获取当前环境平均分贝值（麦克风未采集时 fallback 到 moderate 档）
+    const ambientDB = AudioAnalyzer.getAverageDB();
+    const eqSceneType: string = audioGroupId ? (AUDIO_GROUP_TO_EQ_SCENE[audioGroupId] ?? sceneId) : sceneId;
+    const targetGains = generateEQ(eqSceneType, ambientDB);
+
+    setActiveScene(sceneId);
+    if (transitionAnimRef.current) transitionAnimRef.current.stop();
+    const targetPercents = targetGains.map(v => mapPresetValueToPercent(v));
+    const animations = targetPercents.map((targetValue, index) =>
+      Animated.timing(animatedValues[index], { toValue: targetValue, duration: TRANSITION_DURATION, useNativeDriver: false })
+    );
+    transitionAnimRef.current = Animated.parallel(animations);
+    (transitionAnimRef.current as Animated.CompositeAnimation).start(({ finished }: { finished: boolean }) => {
+      if (finished) {
+        setBandValues(targetPercents);
+        // 场景切换后，将所有预设滑块的音量应用到对应 track
+        targetPercents.forEach((percent, index) => {
+          setTrackVolume(index + 1, percentToVolume(percent));
+        });
+        transitionAnimRef.current = null;
+      }
+    });
+
+    // ========== 音频播放路由（balanced_noise → 8轨，其他噪声 → NoiseAudioService）==========
+
+    if (!audioGroupId) {
+      console.log('[NoiseLab] 自定义模式，跳过音频播放');
+      return;
+    }
+
+    const isBalanced = audioGroupId === 'balanced_noise';
+
+    // 先停止当前正在播放的场景（防止多场景叠加）
+    if (isPlayingRef.current) {
+      console.log('[NoiseLab] 🛑 停止当前场景:', currentAudioGroupRef.current, 'activeScene=', activeScene);
+      if (currentAudioGroupRef.current === 'balanced_noise') {
+        await stop8TrackAudio();
+      } else {
+        await TrackPlayer.stop();
+        await TrackPlayer.reset();
+      }
+      isPlayingRef.current = false;
+    }
+
+    try {
+      if (isBalanced) {
+        // balanced_noise：走 8轨混合播放（抢跑机制）—— 本地音频，不经过 TrackPlayer，无需设置 isSwitchingSceneRef
+        console.log('[NoiseLab] ▶️ 尝试启动8轨混合播放:', audioGroupId);
+        await play8TrackAudio(audioGroupId);
+        isPlayingRef.current = true;
+        currentAudioGroupRef.current = audioGroupId;
+        setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
+        playingGroupIdRef.current = audioGroupId;   // 🔥 同步 ref
+      } else {
+        // 其他噪声：走 NoiseAudioService（远程 URL + 缓存）—— 经过 TrackPlayer，需要设置 isSwitchingSceneRef 以正确显示 buffering 状态
+        console.log('[NoiseLab] ▶️ 播放降噪音频:', audioGroupId);
+        const result = await playNoiseAudio(audioGroupId);
+        // 仅当本次未命中本地缓存（需要联网下载/首次缓冲）时，才标记为切换中、触发 loading
+        if (!result.isFromCache) {
+          isSwitchingSceneRef.current = true;
+        }
+        isPlayingRef.current = true;
+        currentAudioGroupRef.current = audioGroupId;
+        setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
+        playingGroupIdRef.current = audioGroupId;   // 🔥 同步 ref
+      }
+    } catch (playError) {
+      if (isBalanced) {
+        const errorMsg = playError instanceof Error ? playError.message : String(playError);
+        console.warn('[NoiseLab] ⚠️ 抢跑失败，轨道不足，降级到资源下载页:', errorMsg);
+        isPlayingRef.current = false;
+        const targetFiles = getNoiseResourceFiles(audioGroupId);
+        props.onNavigateToDownload?.(audioGroupId, targetFiles);
+      } else {
+        console.error('[NoiseLab] ❌ 降噪音频播放失败:', playError);
+        isPlayingRef.current = false;
+      }
+    }
+  }, [activeScene, animatedValues, props.onNavigateToDownload]);
+
   useEffect(() => {
     if (!visible && transitionAnimRef.current) { transitionAnimRef.current.stop(); transitionAnimRef.current = null; }
+  }, [visible]);
+
+  // 🎤 Modal 生命周期：打开时启动麦克风采集 + 环境自动识别场景切换，关闭时停止（释放麦克风）
+  useEffect(() => {
+    if (visible) {
+      AudioAnalyzer.start((scene: string, _confidence: number, _db: number) => {
+        // ── 环境自动识别驱动 EQ 切换 ──────────────────────────
+
+        const targetScene = ANALYZER_TO_NOLAB_SCENE[scene];
+        if (!targetScene) return;                    // unknown → 不切换
+
+        // 防抖①：自动切换最小间隔 8 秒（避免连续波动反复触发）
+        if (Date.now() - lastAutoSwitchRef.current < MIN_AUTO_SWITCH_INTERVAL_MS) return;
+
+        // 防抖②：用户最近 10 秒内手动操作过 → 跳过（保护用户选择权）
+        // （本回调路径始终是环境自动切换，isAuto=true，需要检查静默期）
+        if (lastManualTapRef.current > 0) return;
+
+        // 自动识别结果 ≠ 当前活跃场景 → 执行切换
+        if (targetScene !== activeScene) {
+          console.log(`[NoiseLab] 🔄 环境自动切换: ${scene} → ${targetScene}`);
+          lastAutoSwitchRef.current = Date.now();   // 记录本次自动切换时间
+          applyScene(targetScene);
+        }
+      });
+    } else {
+      AudioAnalyzer.stop();
+    }
+
+    return () => {
+      AudioAnalyzer.stop();
+    };
   }, [visible]);
 
   // 🔥 handleBandChange：滑块百分比 → 线性音量 → setTrackVolume（实时调用）
@@ -429,65 +661,16 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
   const stableOnDragEnd = useCallback((_bandIndex: number) => {}, []);
 
   /**
-   * 场景切换：EQ 动画 + 8轨音频播放
+   * 用户手动选择场景：更新防抖时间戳 + 调用 applyScene
    */
   const handleSceneSelect = useCallback(async (sceneId: SceneType) => {
     if (sceneId === activeScene) return;
-    const preset = SCENE_PRESETS.find(p => p.id === sceneId);
-    if (!preset) return;
 
-    // ========== EQ 滑块动画（预设值 → 百分比映射）==========
-    setActiveScene(sceneId);
-    if (transitionAnimRef.current) transitionAnimRef.current.stop();
-    const targetPercents = preset.values.map(v => mapPresetValueToPercent(v));
-    const animations = targetPercents.map((targetValue, index) =>
-      Animated.timing(animatedValues[index], { toValue: targetValue, duration: TRANSITION_DURATION, useNativeDriver: false })
-    );
-    transitionAnimRef.current = Animated.parallel(animations);
-    (transitionAnimRef.current as Animated.CompositeAnimation).start(({ finished }: { finished: boolean }) => {
-      if (finished) {
-        setBandValues(targetPercents);
-        // 场景切换后，将所有预设滑块的音量应用到对应 track
-        targetPercents.forEach((percent, index) => {
-          setTrackVolume(index + 1, percentToVolume(percent));
-        });
-        transitionAnimRef.current = null;
-      }
-    });
+    // 记录用户操作时间 → 自动切换进入 10 秒静默期
+    lastManualTapRef.current = Date.now();
 
-    // ========== 8轨音频播放（新增逻辑）==========
-    const audioGroupId = SCENE_TO_AUDIO_GROUP[sceneId];
-
-    if (!audioGroupId) {
-      console.log('[NoiseLab] 自定义模式，跳过音频播放');
-      return;
-    }
-
-    // 先停止当前正在播放的场景（防止多场景叠加）
-    if (isPlayingRef.current && currentAudioGroupRef.current !== audioGroupId) {
-      console.log('[NoiseLab] 🛑 停止上一个场景:', currentAudioGroupRef.current);
-      await stop8TrackAudio();
-      isPlayingRef.current = false;
-    }
-
-    // 直接尝试8轨混合播放，由 play8TrackAudio 内部的抢跑机制判断能否播：
-    //   - 2秒内6/8就绪 → 正常播放（不再要求全部下载完）
-    //   - <4轨就绪 → 抛异常，降级到资源下载页
-    try {
-      console.log('[NoiseLab] ▶️ 尝试启动8轨混合播放:', audioGroupId);
-      await play8TrackAudio(audioGroupId);
-      isPlayingRef.current = true;
-      currentAudioGroupRef.current = audioGroupId;
-      setPlayingGroupIdState(audioGroupId);     // 🔥 触发渲染更新
-      playingGroupIdRef.current = audioGroupId;   // 🔥 同步 ref
-    } catch (playError) {
-      const errorMsg = playError instanceof Error ? playError.message : String(playError);
-      console.warn('[NoiseLab] ⚠️ 抢跑失败，轨道不足，降级到资源下载页:', errorMsg);
-      isPlayingRef.current = false;
-      const targetFiles = getNoiseResourceFiles(audioGroupId);
-      props.onNavigateToDownload?.(audioGroupId, targetFiles);
-    }
-  }, [activeScene, animatedValues]);
+    await applyScene(sceneId);
+  }, [activeScene]);
 
   // 滑块百分比 → spectrum bar 高度百分比（0~100%）
   const spectrumHeights = useMemo(() => bandValues.map(p => (p / SLIDER_MAX) * 100), [bandValues]);
@@ -524,8 +707,8 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
             <Text style={styles.mainTitle}>🎙️ AI 降噪实验室 (8-BAND Pro) 🧠</Text>
 
             <View style={styles.sceneTabsContainer}>
-              {SCENE_PRESETS.map(scene => (
-                <SceneTab key={scene.id} scene={scene} isActive={activeScene === scene.id} isPlayingSource={playingSourceScene === scene.id} onPress={() => handleSceneSelect(scene.id)} />
+              {SCENE_TABS_CONFIG.map(tab => (
+                <SceneTab key={tab.id} scene={tab as any} isActive={activeScene === tab.id} isPlayingSource={playingSourceScene === tab.id} isLoading={isBuffering && tab.id === activeScene} onPress={() => handleSceneSelect(tab.id)} />
               ))}
 
               {/* 调试信息：显示当前音频组 */}
@@ -545,8 +728,86 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
             {/* 【🔥 引导提示】当没有场景在播放时，显示操作指引（手指 emoji 带浮动动画） */}
             {playingSourceScene === null && (
               <View style={styles.hintContainer}>
-                <Animated.Text style={[styles.hintEmoji, { transform: [{ translateY: hintAnim }] }]}>👆</Animated.Text>
+                {/* 手指 emoji（第一行居中） */}
+                <Animated.Text 
+                  style={[styles.hintEmoji, { transform: [{ translateY: hintAnim }], marginBottom: 4 }]}
+                >
+                  👆
+                </Animated.Text>
+                
+                {/* 环境自动识别说明（第二行，常驻显示） */}
+                <Text style={styles.autoIdentifyHint}>
+                  🎧 正在自动识别环境声音，将自动匹配对应场景
+                </Text>
+                
+                {/* 操作提示（第三行） */}
                 <Text style={styles.hintText}>点击上方场景开始降噪</Text>
+              </View>
+            )}
+
+            {/* 【🔥 麦克风采集实验 UI】实时分贝 + 波形显示 */}
+            {activeScene === 'mic' && (
+              <View style={styles.micExperimentContainer}>
+                <Text style={styles.sectionTitle}>MICROPHONE EXPERIMENT</Text>
+                
+                {/* 当前分贝值大字体显示 */}
+                <View style={styles.dbDisplay}>
+                  <Text style={[styles.dbValue, { color: micDbLevel > -30 ? '#FF6B6B' : '#4ECDC4' }]}>
+                    {micDbLevel} dB
+                  </Text>
+                  <Text style={styles.dbLabel}>当前音量</Text>
+                </View>
+
+                {/* 实时波形显示 */}
+                <View style={styles.waveformContainer}>
+                  <View style={styles.waveformGraph}>
+                    {micHistory.map((db, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.waveformBar,
+                          {
+                            height: `${Math.max(0, Math.min(100, (((Number(db) || -90) + 90) / 60) * 100))}%`,
+                            backgroundColor: db > -30 ? '#FF6B6B' : '#4ECDC4',
+                            opacity: 0.3 + (index / micHistory.length) * 0.7,
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                </View>
+
+                {/* 参考刻度 */}
+                <View style={styles.micReference}>
+                  <Text style={styles.refLabel}>安静环境: -20 dB</Text>
+                  <Text style={styles.refLabel}>正常对话: 60 dB</Text>
+                  <Text style={styles.refLabel}>嘈杂街道: 80+ dB</Text>
+                </View>
+
+                {/* 状态指示 */}
+                <TouchableOpacity 
+                  style={[styles.startStopButton, micDbLevel > -90 ? styles.stopButton : styles.startButton]}
+                  onPress={() => {
+                    if (micDbLevel > -90) {
+                      AudioLevel.stop?.();
+                      setMicDbLevel(-90);
+                      setMicHistory(new Array(64).fill(-90));
+                    } else {
+                      AudioLevel.checkMicrophonePermission?.().then(granted => {
+                        if (granted) {
+                          AudioLevel.start((_amplitude: number, dB: number) => {
+                            setMicDbLevel(dB);
+                            setMicHistory(prev => [...prev.slice(1), dB]);
+                          }, 50);
+                        }
+                      });
+                    }
+                  }}
+                >
+                  <Text style={styles.startStopButtonText}>
+                    {micDbLevel > -90 ? '停止采集' : '开始采集'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
 
@@ -605,7 +866,7 @@ const styles = StyleSheet.create({
   sceneLabel: { fontSize: 11, fontWeight: '700' },
   sceneLabelInactive: { color: 'rgba(255, 255, 255, 0.4)' },
   sectionTitle: { color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, fontWeight: '600', letterSpacing: 2, textAlign: 'center', marginBottom: 16 },
-  hintContainer: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', marginBottom: 12 },
+  hintContainer: { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 12, paddingHorizontal: 16 },
   hintEmoji: { fontSize: 18, marginRight: 6 },
   hintText: { 
     color: '#4ECDC4', 
@@ -615,6 +876,13 @@ const styles = StyleSheet.create({
     marginTop: 8, 
     marginBottom: 12,
     letterSpacing: 0.3,
+  },
+  autoIdentifyHint: { 
+    color: 'rgba(255, 255, 255, 0.4)', 
+    fontSize: 13, 
+    fontWeight: '400', 
+    textAlign: 'center', 
+    marginBottom: 4,
   },
   spectrumDisplay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 120, width: '100%', paddingHorizontal: 8, marginBottom: 20 },
   spectrumBarContainer: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', marginHorizontal: 2 },
@@ -627,6 +895,18 @@ const styles = StyleSheet.create({
   thumb: { width: 24, height: 24, borderRadius: 12, alignSelf: 'center', shadowColor: '#000000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.6, shadowRadius: 4, elevation: 5 },
   dbLabel: { fontSize: 12, fontWeight: '700', width: 40, textAlign: 'center' },
+  micExperimentContainer: { alignItems: 'center', marginVertical: 16, width: '100%' },
+  dbDisplay: { marginBottom: 20, alignItems: 'center' },
+  dbValue: { fontSize: 48, fontWeight: '700', letterSpacing: 2 },
+  waveformContainer: { width: '100%', paddingHorizontal: 16, marginBottom: 16 },
+  waveformGraph: { flexDirection: 'row', alignItems: 'flex-end', height: 80, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: 4 },
+  waveformBar: { flex: 1, marginHorizontal: 1, borderRadius: 2, minHeight: 4 },
+  micReference: { flexDirection: 'row', justifyContent: 'space-around', width: '90%', marginBottom: 20 },
+  refLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 10 },
+  startStopButton: { paddingVertical: 12, paddingHorizontal: 28, borderRadius: 20, marginBottom: 16 },
+  startButton: { backgroundColor: '#4ECDC4' },
+  stopButton: { backgroundColor: '#FF6B6B' },
+  startStopButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', letterSpacing: 1 },
   calibrateButton: { paddingVertical: 14, paddingHorizontal: 32, backgroundColor: '#4ECDC4', borderRadius: 22, marginBottom: 10 },
   calibrateButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', letterSpacing: 2 },
   closeButton: { paddingVertical: 10, paddingHorizontal: 22, backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 18 },

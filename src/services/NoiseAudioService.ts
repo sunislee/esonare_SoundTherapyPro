@@ -11,7 +11,7 @@
 
 import TrackPlayer, { RepeatMode, Track } from 'react-native-track-player';
 import * as RNFS from '@dr.pogodin/react-native-fs';
-import { Platform } from 'react-native';
+import { Platform, DeviceEventEmitter } from 'react-native';
 import { NOISE_CANCELLATION_AUDIO, getNoiseCancellationAudio } from '../constants/noiseCancellationAudio';
 
 // 当前播放的降噪模式 ID
@@ -23,22 +23,47 @@ const getLocalCachePath = (url: string) => {
   return `${RNFS.DocumentDirectoryPath}/${filename}`;
 };
 
-// 清理旧的 .m4a 缓存文件（1.4.2 修复：URL 从 .m4a 改为 .mp3）
-const cleanOldM4aCache = async () => {
-  try {
-    const oldFiles = ['wind_noise.m4a', 'crowd_noise.m4a', 'traffic_noise.m4a', 'balanced_noise.m4a'];
-    for (const file of oldFiles) {
-      const oldPath = `${RNFS.DocumentDirectoryPath}/${file}`;
+// 清理旧的 .m4a 缓存文件并手动触发降噪音频下载（1.5.0 修复）
+export async function cleanOldM4aCache(): Promise<void> {
+  const oldFiles = ['wind_noise.m4a', 'crowd_noise.m4a'];
+
+  for (const file of oldFiles) {
+    const oldPath = `${RNFS.DocumentDirectoryPath}/${file}`;
+    try {
       const exists = await RNFS.exists(oldPath);
       if (exists) {
         await RNFS.unlink(oldPath);
-        console.log('[NoiseAudio] 🗑️ 清理旧缓存:', file);
+        console.log(`[NoiseAudio] 🧹 已删除旧缓存: ${file}`);
       }
+    } catch (e) {
+      console.warn(`[NoiseAudio] ⚠️ 删除失败: ${file}`, e);
     }
-  } catch (error) {
-    console.error('[NoiseAudio] 清理旧缓存失败:', error);
   }
-};
+
+  // ✅ 手动触发降噪音频下载（silentBackgroundDownload 不包含这些）
+  try {
+    const { DownloaderServiceInstance } = await import('./DownloaderService');
+
+    for (const audio of NOISE_CANCELLATION_AUDIO) {
+      const localPath = `${RNFS.DocumentDirectoryPath}/${audio.id}.m4a`;
+      const resource: any = {
+        id: audio.id,
+        filename: `${audio.id}.m4a`,
+        category: 'noise_cancellation',
+        priority: 1 as const,
+        remoteUrl: audio.url,
+        localPath: localPath,
+      };
+
+      (DownloaderServiceInstance as any).downloadQueue.push(resource);
+    }
+    
+    DownloaderServiceInstance.startDownload();
+    console.log('[NoiseAudio] 📥 已触发降噪音频下载');
+  } catch (e) {
+    console.error('[NoiseAudio] ❌ 触发下载失败:', e);
+  }
+}
 
 // 初始化音频（预加载）
 export const initNoiseAudio = async () => {
@@ -55,8 +80,16 @@ export const initNoiseAudio = async () => {
   }
 };
 
+/**
+ * 播放结果，供调用方判断是否需要显示 loading
+ */
+interface PlayResult {
+  /** 本次是否命中本地缓存（true=纯本地、无需联网） */
+  isFromCache: boolean;
+}
+
 // 播放降噪音频
-export const playNoiseAudio = async (modeId: string) => {
+export const playNoiseAudio = async (modeId: string): Promise<PlayResult> => {
   try {
     console.log('[NoiseAudio] 播放模式:', modeId);
     
@@ -76,7 +109,7 @@ export const playNoiseAudio = async (modeId: string) => {
     const audioConfig = getNoiseCancellationAudio(modeId);
     if (!audioConfig || !audioConfig.url) {
       console.error('[NoiseAudio] ❌ 未找到音频配置:', modeId);
-      return;
+      return { isFromCache: false };
     }
     
     console.log('[NoiseAudio] 🌐 使用远程 URL 播放:', audioConfig.url);
@@ -124,18 +157,23 @@ export const playNoiseAudio = async (modeId: string) => {
     
     console.log('[NoiseAudio] 🎵 添加到 TrackPlayer:', track.url);
     await TrackPlayer.add([track]);
+    // 音量拉满，对齐 8Track 侧满音量设置
+    await TrackPlayer.setVolume(1.0);
     await TrackPlayer.setRepeatMode(RepeatMode.Track);
     await TrackPlayer.play();
     
     currentModeId = modeId;
-    console.log('[NoiseAudio] ✅ 播放开始');
+    console.log('[NoiseAudio] ✅ 播放开始, isFromCache:', isCached);
+
+    return { isFromCache: isCached };
     
   } catch (error) {
     console.error('[NoiseAudio] 播放失败:', error);
+    throw error;
   }
 };
 
-// 后台下载音频文件（不阻塞播放）
+// 后台下载音频文件（不阻塞播放）+ UI 通知回调
 const downloadInBackground = async (url: string, localPath: string) => {
   try {
     console.log('[NoiseAudio] 📥 后台下载:', url, '->', localPath);
@@ -150,15 +188,20 @@ const downloadInBackground = async (url: string, localPath: string) => {
     ret.promise.then((result: { statusCode: number }) => {
       if (result.statusCode === 200) {
         console.log('[NoiseAudio] ✅ 后台下载完成:', localPath);
+        // 通知 UI 刷新缓存状态（文件已就绪）
+        DeviceEventEmitter.emit('noiseAudioCacheUpdated', { filePath: localPath, status: 'ready' });
       } else {
         console.error('[NoiseAudio] ❌ 后台下载失败:', result.statusCode);
+        DeviceEventEmitter.emit('noiseAudioCacheUpdated', { filePath: localPath, status: 'failed', statusCode: result.statusCode });
       }
     }).catch((error: any) => {
       console.error('[NoiseAudio] ❌ 后台下载异常:', error);
+      DeviceEventEmitter.emit('noiseAudioCacheUpdated', { filePath: localPath, status: 'error', errorMessage: String(error) });
     });
     
   } catch (error) {
     console.error('[NoiseAudio] 后台下载失败:', error);
+    DeviceEventEmitter.emit('noiseAudioCacheUpdated', { filePath: localPath, status: 'error', errorMessage: String(error) });
   }
 };
 
