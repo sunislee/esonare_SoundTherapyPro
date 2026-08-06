@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -24,10 +24,8 @@ import { AudioAnalyzer, FrequencyDistribution } from '../services/AudioAnalyzer'
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import EQControlPanel from '../components/EQControlPanel';
 import {
-  initNoiseAudio,
   playNoiseAudio,
   stopNoiseAudio,
-  cleanupNoiseAudio,
   getCurrentMode,
   warmupAudio,
 } from '../services/NoiseAudioService';
@@ -35,7 +33,6 @@ import {
   init8TrackAudio,
   play8TrackAudio,
   stop8TrackAudio,
-  cleanup8TrackAudio,
 } from '../services/8TrackAudioService';
 import AudioService from '../services/AudioService';
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
@@ -100,7 +97,7 @@ const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> 
  * 3. AI 仅提供视觉参考，控制权完全在用户手中
  */
 const NoiseCancellationRoom: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
   
@@ -133,7 +130,7 @@ const NoiseCancellationRoom: React.FC = () => {
       icon: 'planet-outline',
       color: '#7ED321',
     },
-  ], [t, i18n.language]);
+  ], [t]);
   
   const [frequencyDist, setFrequencyDist] = useState<FrequencyDistribution | null>(null);
   const [hasPermission, setHasPermission] = useState(true);
@@ -157,9 +154,6 @@ const NoiseCancellationRoom: React.FC = () => {
   // 【核心】背景淡入淡出动画
   const backgroundOpacity = useRef(new Animated.Value(1)).current;
   const prevSceneRef = useRef('noise_balanced');
-
-  // 【新增】标记是否刚从下载页返回，用于自动播放触发
-  const justReturnedFromDownloadRef = useRef(false);
 
   // 页面获得焦点时启动音频分析器
   useFocusEffect(
@@ -271,6 +265,7 @@ const NoiseCancellationRoom: React.FC = () => {
         AudioAnalyzer.stop();
         stop8TrackAudio();
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
 
@@ -287,6 +282,7 @@ const NoiseCancellationRoom: React.FC = () => {
     useCallback(() => {
       const sub = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
       return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
 
@@ -347,12 +343,21 @@ const NoiseCancellationRoom: React.FC = () => {
   // 处理模式切换（统一播放状态管理）
   const handleModePress = async (modeId: string) => {
     console.warn('[NC] handleModePress called:', modeId);
-    
+
+    // ══════════════════════════════════════════
+    // 【场景路由】balanced_noise → 8轨，其余单轨噪声
+    // ══════════════════════════════════════════
+    const isBalancedNoise = modeId === 'noise_balanced';
+
     // 【关键修复】如果点击的是当前正在播放的模式，则停止播放
     if (currentSceneId === modeId && isPlaying) {
       console.log('[NoiseCancellationRoom] 停止当前模式');
       setIsLoading(true);
-      await stop8TrackAudio();
+      if (isBalancedNoise) {
+        await stop8TrackAudio();
+      } else {
+        await stopNoiseAudio();
+      }
       setIsPlaying(false);
       setCurrentSceneId(null);
       setSelectedMode(null);
@@ -360,11 +365,11 @@ const NoiseCancellationRoom: React.FC = () => {
       triggerHaptic();
       return;
     }
-    
+
     // 【关键修复】否则播放新模式（自动停止旧场景）
-    console.log('[NoiseCancellationRoom] 切换到新模式:', modeId);
+    console.log('[NoiseCancellationRoom] 切换到新模式:', modeId, isBalancedNoise ? '(8轨)' : '(单轨)');
     setIsLoading(true);
-    
+
     // 【核心】背景淡入淡出动画（1.5 秒平滑过渡）
     Animated.timing(backgroundOpacity, {
       toValue: 0,
@@ -374,7 +379,7 @@ const NoiseCancellationRoom: React.FC = () => {
     }).start(() => {
       // 更新场景引用
       prevSceneRef.current = modeId;
-      
+
       // 淡入新背景（1.5 秒总时长）
       Animated.timing(backgroundOpacity, {
         toValue: 1,
@@ -383,21 +388,31 @@ const NoiseCancellationRoom: React.FC = () => {
         easing: Easing.inOut(Easing.ease),
       }).start();
     });
-    
+
     // 【关键修复】立即更新 UI 状态（其他卡片立即失去播放态）
     setCurrentSceneId(modeId);
     setSelectedMode(modeId);
-    
-    console.warn('[NC] 即将调用 playWithResourceCheck', modeId);
-    
-    // 【新增】使用带资源检查的播放函数
-    const played = await playWithResourceCheck(modeId);
-    
-    console.warn('[NC] playWithResourceCheck 返回结果', { modeId, played });
-    
-    if (played) {
-      setIsPlaying(true);
+
+    console.warn('[NC] 路由到', isBalancedNoise ? 'playWithResourceCheck (8轨)' : 'playNoiseAudio (单轨)', modeId);
+
+    // 【场景路由分发】按类型选择播放服务
+    if (isBalancedNoise) {
+      const played = await playWithResourceCheck(modeId);
+      console.warn('[NC] playWithResourceCheck 返回结果', { modeId, played });
+      if (played) setIsPlaying(true);
+    } else {
+      // wind/traffic/crowd → 单轨噪声播放
+      try {
+        const audioGroupId = modeId.replace('noise_', ''); // e.g. 'wind' from 'noise_wind'
+        console.log('[NC] 🎵 播放单轨噪声:', audioGroupId);
+        await playNoiseAudio(audioGroupId);
+        setIsPlaying(true);
+      } catch (err) {
+        console.error('[NC] ❌ playNoiseAudio 失败:', err);
+        Alert.alert('播放失败', '该场景音频资源加载出错');
+      }
     }
+
     setIsLoading(false);
     triggerHaptic();
   };
@@ -406,7 +421,12 @@ const NoiseCancellationRoom: React.FC = () => {
   const handleStopAll = async () => {
     console.log('[NoiseCancellationRoom] 停止所有降噪');
     setIsLoading(true);
-    await stop8TrackAudio();
+    // 【场景路由】按当前场景类型调用对应的停止函数
+    if (currentSceneId === 'noise_balanced') {
+      await stop8TrackAudio();
+    } else {
+      await stopNoiseAudio();
+    }
     setCurrentSceneId(null);
     setSelectedMode(null);
     setIsPlaying(false);
