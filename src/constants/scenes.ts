@@ -1,7 +1,7 @@
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import { Platform, ImageSourcePropType, Image } from 'react-native';
 import * as RNFS from '@dr.pogodin/react-native-fs';
-import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, IS_GOOGLE_PLAY_VERSION, GITEE_URL, GITHUB_URL, getLocalPath as getLocalPathHelper } from './audioAssets';
+import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, getLocalPath as getLocalPathHelper } from './audioAssets';
 
 // 【背景图状态缓存】在应用启动时预加载所有文件存在性状态
 let backgroundAvailabilityCache: Record<string, boolean> = {};
@@ -218,6 +218,8 @@ export const getIconName = (id: string) => {
   if (id.includes('match')) return 'flame';
   if (id.includes('rain')) return 'rainy-outline';
   if (id.includes('ocean')) return 'boat-outline';
+  if (id.includes('record_shop')) return 'musical-note-outline';
+  if (id.includes('bookstore')) return 'book-outline';
   return 'musical-notes-outline';
 };
 
@@ -228,6 +230,15 @@ export const SMALL_SCENE_IDS = [
   'interactive_wind_chime',
   'interactive_breath',
   'interactive_white_noise',
+];
+
+// 2. SFX-only entries for the record shop scene — not standalone scenes on HomeScreen
+export const RECORD_SHOP_SFX_IDS = [
+  'life_record_shop_vinyl_crackle',
+  'life_record_shop_door_chime',
+  'life_record_shop_footsteps',
+  'life_record_shop_vinyl_pop',
+  'life_record_shop_radio_tuning',
 ];
 
 // 西方教会场景背景图文件名映射（远程CDN下载到本地后使用，与东方禅意模式一致）
@@ -314,6 +325,7 @@ const SCENE_ORDER: Record<string, number> = {
   // Life 生活场景 (order 11-20)
   life_rain_boat: 11,
   life_bookstore: 12,
+  life_record_shop: 13,
   
   // Healing 疗愈场景 (order 21-30)
   healing_zen_bowl: 21,
@@ -367,6 +379,7 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       'manual_starlit_wilderness',
       'life_rain_boat',
       'life_bookstore',
+      'life_record_shop',
       'healing_zen_bowl',
       'healing_clean_space',
       'healing_crystal',
@@ -388,6 +401,8 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
       isBase = false;
     } else if (baseSceneIds.includes(item.id)) {
       isBase = true;
+    } else if (RECORD_SHOP_SFX_IDS.includes(item.id)) {
+      isBase = false;
     } else {
       // Default logic: small scenes if in fx/ directory or interactive category
       isBase = !item.filename.startsWith('fx/') && item.category !== 'interactive';

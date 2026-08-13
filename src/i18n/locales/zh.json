@@ -434,6 +434,12 @@
     "manual_starlit_wilderness": { "title": "星空旷野", "desc": "繁星点缀无垠旷野" },
     "life_rain_boat": { "title": "舟上雨", "desc": "微雨落孤舟" },
     "life_bookstore": { "title": "午后书店", "desc": "纸张与宁静" },
+    "life_record_shop": { "title": "消失在雨中的老唱片店", "desc": "细雨敲窗，唱片静默" },
+    "life_record_shop_vinyl_crackle": { "title": "唱片噪音", "desc": "记录着岁月的摩擦声" },
+    "life_record_shop_door_chime": { "title": "门铃", "desc": "稀客至，门铃响" },
+    "life_record_shop_footsteps": { "title": "脚步声", "desc": "匆匆过客的脚步" },
+    "life_record_shop_vinyl_pop": { "title": "唱片爆裂", "desc": "黑胶上的瞬间爆响" },
+    "life_record_shop_radio_tuning": { "title": "收音机调台", "desc": "古老收音机的电波寻找" },
     "healing_zen_bowl": { "title": "颂钵冥想", "desc": "瞬间定静" },
     "healing_clean_space": { "title": "洁净空间", "desc": "如水般流动" },
     "healing_crystal": { "title": "水晶钵", "desc": "高频能量共振" },
@@ -484,5 +490,10 @@
   "home_eq_desc": "发烧级音频精细调节实验室",
   "noise_room_desc": "背景条显示环境噪音分布，滑动调节对冲音量",
   "noise_room_ai_hint": "AI 仅提供视觉参考，控制权在您手中",
-  "eq_current_source": "当前音源"
+  "eq_current_source": "当前音源",
+  "recordShop": {
+    "rain": "雨声层",
+    "vinyl": "唱片噪音层",
+    "sfx": "随机音效层"
+  }
 }

@@ -40,6 +40,7 @@ import i18n from '../i18n';
 
 // 【交互音效独立播放器】
 import SFXPlayer from './SFXPlayer';
+import { recordShopAudioManager, RecordShopLayer, RecordShopVolumes } from './RecordShopAudioManager';
 
 // 【Shuffle 后台切换优化】静态导入 SceneRoamManager，避免锁屏后 await import() 卡死
 import { sceneRoamManager } from './SceneRoamManager';
@@ -147,6 +148,10 @@ class AudioService {
   private isActuallyPlaying = false;
   private _isReady = false;
   private _setupPromise: Promise<void> | null = null;
+
+  // 【🔑 修复 #2】自动识别禁用标志
+  // 当进入 life_record_shop 时设置为 true，通知 NoiseCancellationExperiment 跳过自动识别
+  private skipAutoEnvironmentDetection: boolean = false;
   
   // 【漫游轮询定时器】
   private roamCheckTimer: any = null;
@@ -572,10 +577,23 @@ class AudioService {
         try {
           const queue = await TrackPlayer.getQueue();
           const currentTrackIndex = await TrackPlayer.getCurrentTrack();
-          const remainingTracks = queue.length - (currentTrackIndex !== null ? currentTrackIndex + 1 : 0);
+          if (currentTrackIndex === null) {
+            console.warn('[AudioService] ⚠️ [TrackChanged] getCurrentTrack() 返回 null，跳过队列检查');
+            return; // 无有效 track，无法计算剩余量
+          }
           
+          if (currentTrackIndex >= queue.length) {
+            console.warn('[AudioService] ⚠️ [TrackChanged-队列检查] 当前 track 索引越界，跳过');
+            return; // bounds check failed
+          }
+
+          const remainingTracks = queue.length - currentTrackIndex - 1;
+
+
           console.log(`[AudioService] 📊 [TrackChanged-队列检查] 剩余待播放: ${remainingTracks} 首`);
           
+
+
           if (remainingTracks <= 2 && this.shuffleQueuePreloaded) {
             console.log('[AudioService] 🔄 [TrackChanged] 队列即将耗尽，补充新曲目...');
             await this.preloadShuffleQueue(sceneRoamManager);
@@ -1657,6 +1675,10 @@ class AudioService {
     // 【性能优化】标记开始处理，但允许覆盖
     isProcessing = true;
     
+    // 【🔑 修复 #1】保存前一个场景 ID，用于后续停止逻辑判断
+    // 必须在 this.currentBaseScene 被修改之前保存
+    const prevSceneId = this.currentBaseScene?.id;
+
     try {
       // ══════════════════════════════════════════
       // 【🔁 Loop 实验】根据漫游状态智能设置 RepeatMode：
@@ -1693,9 +1715,20 @@ class AudioService {
         this.notifyListeners();
       }
       
-      // 【场景切换保护】同步停止所有交互音效
-      console.log('[AudioService] 🛑 场景切换，同步停止所有交互音');
-      await this.stopAllAmbient();
+    // 【场景切换保护】同步停止所有交互音效
+    console.log('[AudioService] 🛑 场景切换，同步停止所有交互音');
+
+    // 【老唱片店】场景切换前停止录音机场景音频层
+    // 【🔑 修复 #1】使用 prevSceneId 而非 this.currentBaseScene?.id，
+    // 因为 currentBaseScene 已在上面被设置为目标场景，导致停止逻辑失效
+    if (prevSceneId === 'life_record_shop') {
+      console.log('[AudioService] 🛑 停止老唱片店场景音频层（vinyl crackle + 随机 SFX）');
+      await recordShopAudioManager.stop();
+      // 【🔑 修复 #2】离开 life_record_shop 时重置自动识别标志
+      this.resetAutoEnvironmentDetection();
+    }
+
+    await this.stopAllAmbient();
 
       const shouldTriggerLoading = options?.triggerLoading !== false;
       if (shouldTriggerLoading) {
@@ -2020,6 +2053,18 @@ class AudioService {
           this.clearLoadingTimeout();
           this.notifyLoading(false, scene.id);
           console.log('[AudioService] ✅ loading 状态已清除');
+
+      // 【老唱片店】如果**目标**场景是老唱片店，启动录像机场景音频层
+      if (scene.id === 'life_record_shop' && this._isReady) {
+        console.log('[AudioService] 🎵 启动老唱片店场景音频层（vinyl crackle + 随机 SFX）');
+        // 设置 TrackPlayer 雨声层音量
+        const rainVol = recordShopAudioManager.getLayerVolume('rain');
+        await TrackPlayer.setVolume(rainVol);
+        // 【🔑 修复 #2】进入 life_record_shop 时禁用自动识别
+        // 防止 NoiseCancellationExperiment 屏幕意外激活自动场景识别
+        this.disableAutoEnvironmentDetection();
+        await recordShopAudioManager.start();
+      }
         } else {
           console.error('[AudioService] ❌ 队列为空，无法播放');
         }
@@ -2205,7 +2250,8 @@ class AudioService {
     
     // 【LFO 集成】清理 LFO
     this.disableLFO();
-    
+
+    await recordShopAudioManager.stop();
     await TrackPlayer.reset();
     this.isActuallyPlaying = false;
     this.currentBaseScene = null;
@@ -2222,6 +2268,39 @@ class AudioService {
     this.ambientVolume = volume;
     await TrackPlayer.setVolume(volume);
     this.volumeListeners.forEach(l => l(volume));
+  }
+
+  /**
+   * 【老唱片店】设置录音机场景各层音量
+   * rain 层控制 TrackPlayer 音量，vinyl/sfx 层控制 SFXPlayer 音量
+   */
+  async setRecordShopLayerVolume(layer: RecordShopLayer, volume: number): Promise<void> {
+    recordShopAudioManager.setLayerVolume(layer, volume);
+
+    if (layer === 'rain' && this._isReady) {
+      await TrackPlayer.setVolume(volume);
+    }
+  }
+
+  /**
+   * 【老唱片店】获取录音机场景各层音量
+   */
+  getRecordShopVolumes(): RecordShopVolumes {
+    return recordShopAudioManager.getVolumes();
+  }
+
+  disableAutoEnvironmentDetection() {
+    this.skipAutoEnvironmentDetection = true;
+    console.log('[AudioService] ✅ 自动环境识别已禁用 (life_record_shop)');
+  }
+
+  getSkipAutoEnvironmentDetection(): boolean {
+    return this.skipAutoEnvironmentDetection;
+  }
+
+  resetAutoEnvironmentDetection() {
+    this.skipAutoEnvironmentDetection = false;
+    console.log('[AudioService] 🔄 自动环境识别标志已重置');
   }
 
 // --- 监听器管理 ---
@@ -4150,6 +4229,31 @@ The tool call you made did not produce any output yet. The system is waiting for
   }
 }
 
+/**
+ * 【音频缓存清理】仅删除 /Documents/audio_resources/noise_reduction/ 子目录。
+ * 用途：替换本地音源后，需删除旧缓存以触发重新下载（DownloaderService 检测到文件存在会跳过）。
+ * 
+ * ⚠️ v1.5.0 修复：不再删除整个 audio_resources 目录，避免误删其他场景音频。
+ */
+export async function clearAllAudioCache(): Promise<{ success: boolean; deletedFiles: number }> {
+  const noiseDir = `${RNFS.DocumentDirectoryPath}/audio_resources/noise_reduction`;
+
+  try {
+    if (!(await RNFS.exists(noiseDir))) {
+      console.log('[AudioService] 🧹 noise_reduction 目录不存在，无需清理');
+      return { success: true, deletedFiles: 0 };
+    }
+
+    // 只删除 noise_reduction 子目录（RNFS.unlink 对目录会递归删除）
+    await RNFS.unlink(noiseDir);
+    console.log('[AudioService] 🧹 已删除 noise_reduction 目录');
+    return { success: true, deletedFiles: 1 };
+  } catch (e) {
+    console.error('[AudioService] ❌ 清除音频缓存失败:', e);
+    return { success: false, deletedFiles: 0 };
+  }
+}
+
 // 具名导出封装（保持原有调用方式）
 // 【Hermes Release + R8 修复】所有导出函数使用箭头函数，确保被 proguard 保留
 export const setupPlayer = () => AudioService.getInstance().setupPlayer();
@@ -4293,5 +4397,13 @@ export const getRealIsPlaying = () => AudioService.getInstance().getRealIsPlayin
 export const getVolume = () => AudioService.getInstance().getVolume();
 export const setVolume = (volume: number) => AudioService.getInstance().setVolume(volume);
 export const isAssetReady = (type: string) => AudioService.getInstance().isAssetReady(type);
+
+export const setRecordShopLayerVolume = (layer: RecordShopLayer, volume: number) =>
+  AudioService.getInstance().setRecordShopLayerVolume(layer, volume);
+export const getRecordShopVolumes = () =>
+  AudioService.getInstance().getRecordShopVolumes();
+
+export const getSkipAutoEnvironmentDetection = () =>
+  AudioService.getInstance().getSkipAutoEnvironmentDetection();
 
 export default AudioService;

@@ -19,9 +19,6 @@ export enum LFOEffectType {
   LOWPASS_FILTER = 'lowpass_filter',
 }
 
-/**
- * LFO 回调函数类型
- */
 export type LFOPresetName = 
   | 'deepSeaBreath'        // 深海呼吸
   | 'boatRainPanning'      // 舟上雨 - 空间平移
@@ -30,6 +27,7 @@ export type LFOPresetName =
   | 'zenVibration'         // 禅意组 - 共振
   | 'riverFlow'            // 流水组 - 流动
   | 'brainwaveSync'        // 脑波组 - 同步
+  | 'recordShopAmbience'   // 老唱片店 - 雨声 + 唱片噪音
   | 'none';                // 无 LFO 效果
 
 /**
@@ -237,6 +235,20 @@ export const SCENE_LFO_CONFIGS: Record<string, SceneLFOConfig> = {
     preset: 'none',
     effects: [],
     enabled: false,
+  },
+
+  // ==================== 生活组 ====================
+  /** 消失在雨中的老唱片店 */
+  'life_record_shop': {
+    sceneId: 'life_record_shop',
+    preset: 'recordShopAmbience',
+    effects: [LFOEffectType.VOLUME, LFOEffectType.PANNING],
+    baseVolume: 0.75,
+    volumeFluctuation: 0.03, // ±3% (细微雨声脉动)
+    randomPeriod1: 12000,
+    randomPeriod2: 18000,
+    panRange: 0.08, // ±0.08 轻微空间漂移 (模拟唱片机上唱针的微观抖动)
+    enabled: true,
   },
 };
 

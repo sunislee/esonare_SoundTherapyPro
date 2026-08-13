@@ -12,6 +12,8 @@ import AudioService, {
   addSmallScenesListener as _addSmallScenesListener,
   addVolumeListener as _addVolumeListener,
   addSleepTimerListener as _addSleepTimerListener,
+  setRecordShopLayerVolume as _setRecordShopLayerVolume,
+  getRecordShopVolumes as _getRecordShopVolumes,
 } from '../services/AudioService';
 
 // 【RN 0.81 兼容】使用默认导入，与 TrackPlayer 保持一致
@@ -25,6 +27,7 @@ import zh from '../i18n/locales/zh.json';
 import en from '../i18n/locales/en.json';
 import ja from '../i18n/locales/ja.json';
 import { NativeEQ } from '../modules/NativeEQ';
+import { RecordShopLayer, RecordShopVolumes } from '../services/RecordShopAudioManager';
 
 interface AudioContextType {
   activeSoundId: string | null;
@@ -39,6 +42,8 @@ interface AudioContextType {
   isTimerActive: boolean;
   ambientVolume: number;
   eqGains: number[]; // 8 段均衡器增益值
+  recordShopVolumes: RecordShopVolumes | null;
+  isRecordShopActive: boolean;
   play: (scene?: Scene) => Promise<void>;
   pause: () => Promise<void>;
   togglePlayback: (scene: Scene) => Promise<void>;
@@ -46,9 +51,11 @@ interface AudioContextType {
   setSleepTimer: (minutes: number) => Promise<void>;
   clearSleepTimer: () => void;
   updateAmbientVolume: (volume: number) => void;
-  updateEqGain: (index: number, gain: number) => void; // 更新指定频段增益
+  updateEqGain: (index: number, gain: number) => void;
+  updateRecordShopVolume: (layer: RecordShopLayer, volume: number) => void;
   setAmbient: (id: string | null) => Promise<void>;
   getAmbientVolumeById: (id: string) => number;
+  getRecordShopVolumes: () => RecordShopVolumes | null;
   toggleAmbience: (scene: Scene, targetState: boolean) => Promise<void>;
   playScene: (scene: Scene) => Promise<void>;
 }
@@ -214,6 +221,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [initialRemaining, setInitialRemaining] = useState<number | null>(null);
   const [ambientVolume, setAmbientVolume] = useState<number>(1.0);
   const [eqGains, setEqGains] = useState<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 8 段均衡器，初始值均为 1.0
+  const [recordShopVolumes, setRecordShopVolumes] = useState<RecordShopVolumes | null>(null);
+  const [isRecordShopActive, setIsRecordShopActive] = useState<boolean>(false);
   const eqGainsRef = useRef<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 【关键修复】用 ref 存储最新值，避免闭包问题
 
   // 检查 AudioService 是否已准备好（v1.4.2: 全路径防御性检查）
@@ -242,6 +251,17 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setActiveSmallSceneIds(typeof audioService.getActiveSmallSceneIds === 'function' ? audioService.getActiveSmallSceneIds() : []);
           setInitialRemaining(typeof audioService.getInitialSleepSeconds === 'function' ? audioService.getInitialSleepSeconds() : null);
           setAmbientVolume(typeof audioService.getAmbientVolume === 'function' ? audioService.getAmbientVolume() : 1.0);
+
+          // 同步老唱片店场景音量状态
+          try {
+            const rsVolumes = typeof audioService.getRecordShopVolumes === 'function'
+              ? audioService.getRecordShopVolumes()
+              : null;
+            setRecordShopVolumes(rsVolumes);
+            setIsRecordShopActive(rsVolumes !== null);
+          } catch (e) {
+            console.warn('[AudioContext] ⚠️ 同步 record shop 音量失败:', e);
+          }
           
           const endTime = typeof audioService.getSleepEndTime === 'function' ? audioService.getSleepEndTime() : undefined;
           if (endTime) {
@@ -312,6 +332,20 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCurrentScene(svc.getCurrentScene());
         setCurrentBaseSceneId(svc.getCurrentBaseSceneId());
         setActiveSmallSceneIds(svc.getActiveSmallSceneIds());
+
+        // 【老唱片店】同步录音机场景音量状态
+        try {
+          const baseSceneId = svc.getCurrentBaseSceneId?.() ?? null;
+          const rsActive = baseSceneId === 'life_record_shop';
+          setIsRecordShopActive(rsActive);
+          if (rsActive && typeof svc.getRecordShopVolumes === 'function') {
+            setRecordShopVolumes(svc.getRecordShopVolumes());
+          } else {
+            setRecordShopVolumes(null);
+          }
+        } catch (e) {
+          console.warn('[AudioContext] ⚠️ 同步 record shop 状态失败:', e);
+        }
         console.warn('--- [AudioContext] state 更新完成 ---');
       } catch (err) {
         console.error('[AudioContext] ❌ 状态回调异常:', err);
@@ -365,6 +399,32 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try { audioService.updateAmbientVolume(volume); } 
     catch (e) { console.error('[AudioContext] ❌ updateAmbientVolume 失败:', e); }
   }, [isServiceReady, audioService]);
+
+  const updateRecordShopVolume = useCallback(async (layer: RecordShopLayer, volume: number) => {
+    if (!isServiceReady || !audioService) {
+      console.warn('[AudioContext] ⚠️ AudioService 未准备好，跳过 updateRecordShopVolume');
+      return;
+    }
+    try {
+      await _setRecordShopLayerVolume(layer, volume);
+      setRecordShopVolumes(prev => {
+        if (!prev) return null;
+        return { ...prev, [layer]: volume };
+      });
+    } catch (e) {
+      console.error('[AudioContext] ❌ updateRecordShopVolume 失败:', e);
+    }
+  }, [isServiceReady, audioService]);
+
+  const getRecordShopVolumes = useCallback((): RecordShopVolumes | null => {
+    if (!isServiceReady || !audioService) return recordShopVolumes;
+    try {
+      return _getRecordShopVolumes();
+    } catch (e) {
+      console.error('[AudioContext] ❌ getRecordShopVolumes 失败:', e);
+      return recordShopVolumes;
+    }
+  }, [isServiceReady, audioService, recordShopVolumes]);
 
   // 【防抖优化】EQ 增益更新防抖计时器
   const eqDebounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
@@ -534,6 +594,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isTimerActive,
         ambientVolume,
         eqGains,
+        recordShopVolumes,
+        isRecordShopActive,
         play,
         pause,
         togglePlayback,
@@ -543,6 +605,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         clearSleepTimer,
         updateAmbientVolume,
         updateEqGain,
+        updateRecordShopVolume,
+        getRecordShopVolumes,
         setAmbient,
         getAmbientVolumeById,
         toggleAmbience,

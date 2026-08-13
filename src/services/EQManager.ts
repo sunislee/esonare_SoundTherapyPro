@@ -144,6 +144,8 @@ export const getSceneEQPreset = (sceneId: string): EQPreset => {
   if (sceneId.includes('zen') || sceneId.includes('bowl') || sceneId.includes('clean')) return SCENE_EQ_PRESETS.zen;
   if (sceneId.includes('alpha')) return SCENE_EQ_PRESETS.alpha;
   if (sceneId.includes('delta')) return SCENE_EQ_PRESETS.delta;
+  if (sceneId.includes('record_shop')) return SCENE_EQ_PRESETS.bookstore;
+  if (sceneId.includes('bookstore')) return SCENE_EQ_PRESETS.bookstore;
   
   // 新增：Jazz-Funk 和 Deep Sleep 模式
   if (sceneId.includes('jazz') || sceneId.includes('funk')) return SCENE_EQ_PRESETS.jazzFunk;

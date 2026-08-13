@@ -217,6 +217,7 @@ export const stopNoiseAudio = async () => {
 
 // 获取当前播放的模式
 export const getCurrentMode = () => {
+  console.log('[DIAG-B] getCurrentMode() called, returning currentModeId=', currentModeId);
   return currentModeId;
 };
 

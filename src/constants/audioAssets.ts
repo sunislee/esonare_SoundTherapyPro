@@ -9,7 +9,6 @@ const nativeChannel =
 
 export const IS_GOOGLE_PLAY_VERSION = nativeChannel ? nativeChannel === 'googlePlay' : true;
 
-export const GITEE_URL = 'https://gitee.com/sunislee/sound-therapy-assets/raw/main/';
 export const GITHUB_URL = 'https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main/';
 export const GHPROXY_URL = 'https://ghproxy.net/';
 
@@ -30,9 +29,12 @@ export const getLocalPath = (category: string, filename: string) => {
     // 之前只用了 filename，导致背景图下载后找不到（路径不一致）
     const hasSubPath = category.includes('/');
     const subDir = hasSubPath ? category.replace(/^scene_backgrounds\//, '') : '';
+    // 【 降噪音频修复】路径中的空格会导致 react-native-sound 在 Android 上加载失败
+    // 将空格统一替换为下划线：noise reduction → noise_reduction
+    const normalizedFilename = filename.replace(/ /g, '_');
     const rawPath = subDir 
-        ? `${LOCAL_RESOURCE_PATH}/${subDir}/${filename}` 
-        : `${LOCAL_RESOURCE_PATH}/${filename}`;
+        ? `${LOCAL_RESOURCE_PATH}/${subDir}/${normalizedFilename}` 
+        : `${LOCAL_RESOURCE_PATH}/${normalizedFilename}`;
     return Platform.OS === 'ios' ? `file://${rawPath}` : rawPath; 
 }; 
 
@@ -47,6 +49,13 @@ export const AMBIENT_RESOURCES = {
 
   RAIN: 'base/final_healing_rain.m4a',
   OCEAN: 'base/ocean.mp3',
+
+  // 【消失在雨中的老唱片店】录音机场景音频资源（复用现有资源）
+  RECORD_SHOP_CRACKLE: 'interactive/white_noise.m4a',
+  RECORD_SHOP_DOOR_CHIME: 'interactive/wind-chime.m4a',
+  RECORD_SHOP_FOOTSTEPS: 'interactive/match_strike.wav',
+  RECORD_SHOP_VINYL_POP: 'interactive/apple_crunch.m4a',
+  RECORD_SHOP_RADIO_TUNING: 'western_church/western_church_morning_bell.m4a',
 };
 
 export const AUDIO_MANIFEST = [ 
@@ -63,7 +72,12 @@ export const AUDIO_MANIFEST = [
 
   { id: 'life_rain_boat', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_rain_boat.title', description: 'scenes.life_rain_boat.desc', size: 7201196 }, 
   { id: 'life_bookstore', filename: 'fx/library_vibe.m4a', category: 'life', title: 'scenes.life_bookstore.title', description: 'scenes.life_bookstore.desc', size: 907157 },
- 
+  { id: 'life_record_shop', filename: 'base/rain_boat.mp3', category: 'life', title: 'scenes.life_record_shop.title', description: 'scenes.life_record_shop.desc', size: 7201196 },
+  { id: 'life_record_shop_vinyl_crackle', filename: AMBIENT_RESOURCES.RECORD_SHOP_CRACKLE, category: 'life', title: 'scenes.life_record_shop_vinyl_crackle.title', description: 'scenes.life_record_shop_vinyl_crackle.desc', size: 69881 },
+  { id: 'life_record_shop_door_chime', filename: AMBIENT_RESOURCES.RECORD_SHOP_DOOR_CHIME, category: 'life', title: 'scenes.life_record_shop_door_chime.title', description: 'scenes.life_record_shop_door_chime.desc', size: 256806 },
+  { id: 'life_record_shop_footsteps', filename: AMBIENT_RESOURCES.RECORD_SHOP_FOOTSTEPS, category: 'life', title: 'scenes.life_record_shop_footsteps.title', description: 'scenes.life_record_shop_footsteps.desc', size: 846284 },
+  { id: 'life_record_shop_vinyl_pop', filename: AMBIENT_RESOURCES.RECORD_SHOP_VINYL_POP, category: 'life', title: 'scenes.life_record_shop_vinyl_pop.title', description: 'scenes.life_record_shop_vinyl_pop.desc', size: 32853 },
+  { id: 'life_record_shop_radio_tuning', filename: AMBIENT_RESOURCES.RECORD_SHOP_RADIO_TUNING, category: 'life', title: 'scenes.life_record_shop_radio_tuning.title', description: 'scenes.life_record_shop_radio_tuning.desc', size: 194690 },
 
   { id: 'healing_zen_bowl', filename: 'fx/zen_bowl.m4a', category: 'healing', title: 'scenes.healing_zen_bowl.title', description: 'scenes.healing_zen_bowl.desc', size: 391549 }, 
   { id: 'healing_clean_space', filename: 'base/liquid_peace.m4a', category: 'healing', title: 'scenes.healing_clean_space.title', description: 'scenes.healing_clean_space.desc', size: 4574599 }, 
@@ -89,14 +103,7 @@ export const AUDIO_MANIFEST = [
   { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.m4a', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 822079 },
 
   // 8 轨音频资源（降噪实验室 EQ 调节用）
-  { id: '8track_balanced_1', filename: 'noise reduction/balanced_noise_track_1.mp3', category: 'noise_reduction', title: '均衡降噪 Track 1', description: '8 轨均衡降噪音频', size: 4438143 },
-  { id: '8track_balanced_2', filename: 'noise reduction/balanced_noise_track_2.mp3', category: 'noise_reduction', title: '均衡降噪 Track 2', description: '8 轨均衡降噪音频', size: 4438143 },
-  { id: '8track_balanced_3', filename: 'noise reduction/balanced_noise_track_3.mp3', category: 'noise_reduction', title: '均衡降噪 Track 3', description: '8 轨均衡降噪音频', size: 4438143 },
-  { id: '8track_balanced_4', filename: 'noise reduction/balanced_noise_track_4.mp3', category: 'noise_reduction', title: '均衡降噪 Track 4', description: '8 轨均衡降噪音频', size: 4438143 },
-  { id: '8track_balanced_5', filename: 'noise reduction/balanced_noise_track_5.mp3', category: 'noise_reduction', title: '均衡降噪 Track 5', description: '8 轨均衡降噪音频', size: 4438143 },
-  { id: '8track_balanced_6', filename: 'noise reduction/balanced_noise_track_6.mp3', category: 'noise_reduction', title: '均衡降噪 Track 6', description: '8 轨均衡降噪音频', size: 4438143 },
-  { id: '8track_balanced_7', filename: 'noise reduction/balanced_noise_track_7.mp3', category: 'noise_reduction', title: '均衡降噪 Track 7', description: '8 轨均衡降噪音频', size: 4438143 },
-  { id: '8track_balanced_8', filename: 'noise reduction/balanced_noise_track_8.mp3', category: 'noise_reduction', title: '均衡降噪 Track 8', description: '8 轨均衡降噪音频', size: 4438143 },
+  { id: '8track_balanced_m4a', filename: 'noise reduction/balanced_noise.m4a', category: 'noise_reduction', title: '均衡降噪 (单文件)', description: '8 轨合成降噪音频', size: 979691 },
 
   { id: '8track_wind_1', filename: 'noise reduction/wind_noise_track_1.mp3', category: 'noise_reduction', title: '风声降噪 Track 1', description: '8 轨风声降噪音频', size: 531061 },
   { id: '8track_wind_2', filename: 'noise reduction/wind_noise_track_2.mp3', category: 'noise_reduction', title: '风声降噪 Track 2', description: '8 轨风声降噪音频', size: 531061 },
@@ -190,16 +197,16 @@ export const ASSET_LIST = [
   { id: 'manual_morning_forest', expectedSize: 784448 },      // offroad_avenue.m4a
   { id: 'manual_serene_lakeside', expectedSize: 594199 },    // moonlight.m4a
   { id: 'manual_starlit_wilderness', expectedSize: 466422 }, // star_glass.m4a
+  // 【消失在雨中的老唱片店】场景音频 + 随机 SFX
+  { id: 'life_record_shop', expectedSize: 7201196 },        // rain_boat.mp3
+  { id: 'life_record_shop_vinyl_crackle', expectedSize: 69881 }, // white_noise.m4a
+  { id: 'life_record_shop_door_chime', expectedSize: 256806 },      // wind-chime.m4a
+  { id: 'life_record_shop_footsteps', expectedSize: 846284 },      // match_strike.wav
+  { id: 'life_record_shop_vinyl_pop', expectedSize: 32853 },      // apple_crunch.m4a
+  { id: 'life_record_shop_radio_tuning', expectedSize: 194690 },   // morning_bell.m4a
 
   // 8 轨音频资源（降噪实验室 EQ 调节用）
-  { id: '8track_balanced_1', expectedSize: 4438143 },
-  { id: '8track_balanced_2', expectedSize: 4438143 },
-  { id: '8track_balanced_3', expectedSize: 4438143 },
-  { id: '8track_balanced_4', expectedSize: 4438143 },
-  { id: '8track_balanced_5', expectedSize: 4438143 },
-  { id: '8track_balanced_6', expectedSize: 4438143 },
-  { id: '8track_balanced_7', expectedSize: 4438143 },
-  { id: '8track_balanced_8', expectedSize: 4438143 },
+  { id: '8track_balanced_m4a', expectedSize: 979691 },
 
   { id: '8track_wind_1', expectedSize: 531061 },
   { id: '8track_wind_2', expectedSize: 531061 },
@@ -244,8 +251,8 @@ export const ASSET_LIST = [
   { id: 'bg_western_church_light_rays', expectedSize: 135480 },
   { id: 'bg_western_church_sunlight_monastery', expectedSize: 223932 },
 
-  // 西方教会场景背景图（第5张复用 candlelight）
-  // bg_western_church_forest_echo 复用 candlelight.webp，已在 AUDIO_MANIFEST 中定义，无需额外条目
+   // 西方教会场景背景图（第5张复用 candlelight）
+   // bg_western_church_forest_echo 复用 candlelight.webp，已在 AUDIO_MANIFEST 中定义，无需额外条目
 ];
 
 // 【核心】计算 GLOBAL_TOTAL_SIZE（算出来的，但不可篡改）

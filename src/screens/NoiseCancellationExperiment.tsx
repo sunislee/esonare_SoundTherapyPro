@@ -1,16 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  Dimensions,
-  Modal,
-  BackHandler,
-  PanResponder,
-  Animated,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { NativeModules, View, StyleSheet, Text, Dimensions, Modal, BackHandler, PanResponder, Animated, TouchableOpacity, ActivityIndicator } from 'react-native';
+
+const DiagLog = NativeModules.DiagLog;
 
 // 服务导入：8轨音频播放 + 资源检查 + 独立音量控制 + 降噪音频路由
 import { play8TrackAudio, stop8TrackAudio, setTrackVolume } from '../services/8TrackAudioService';
@@ -19,6 +10,9 @@ import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/Noi
 
 // TrackPlayer：用于跨服务停止音频 + 播放状态监听
 import TrackPlayer, { Event, State, useTrackPlayerEvents } from 'react-native-track-player';
+
+// 【🔑 修复 #2】查询 AudioService 中的自动识别禁用标志
+import { getSkipAutoEnvironmentDetection } from '../services/AudioService';
 
 // EQ 动态生成器 + 环境音频分析
 import { generateEQ } from '../services/EQGenerator';
@@ -328,6 +322,9 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
   // 【🔥 Buffering 状态】仅非办公室场景（办公室走本地8轨，不经 TrackPlayer）
   const [isBuffering, setIsBuffering] = useState(false);
 
+  // 【修复 #1】自动环境识别开关：默认关闭，用户主动开启后才允许启动麦克风 + 自动播放
+  const [autoDetectionEnabled, setAutoDetectionEnabled] = useState(false);
+
   // 【🔥 防循环误触发】标记当前是否用户主动切换场景，用于区分"播放中自然循环重启"和"真正的加载新音源"
   const isSwitchingSceneRef = useRef(false);
 
@@ -349,6 +346,135 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
   // 【🔥 引导提示动画】hintAnim — 手指 emoji 上下浮动循环动画
   const hintAnim = useRef(new Animated.Value(0)).current;
   const hintAnimRef = useRef<any>(null);
+
+  // 【🔥 降噪实验室 - 麦克风采集联动场景音】
+  const wasPlayingBeforeMicRef = useRef(false);        // 进入 mic 前是否正在播放场景音
+  const playingGroupIdBeforeMicRef = useRef<string | null>(null); // 进入 mic 前的当前播放音频组
+
+  /**
+   * 🔥 麦克风模式核心逻辑：环境噪声自动匹配并播放对应场景音
+   */
+  const handleMicAutoPlayScene = useCallback(async (detectedScene: string) => {
+    // noiseType → audioGroupId（traffic/crowd/wind/unknown）
+    const audioGroupId = AUDIO_GROUP_TO_EQ_SCENE[detectedScene];
+    
+    if (!audioGroupId) {
+      console.log('[NoiseLab] 麦克风采集：未识别到有效环境噪声，不播放场景音');
+      return;
+    }
+
+    // 当前已在播放对应音频组 → 不需要重复播放
+    if (isPlayingRef.current && currentAudioGroupRef.current === audioGroupId) {
+      console.log('[NoiseLab] 麦克风采集：已正在播放目标场景音，跳过', audioGroupId);
+      return;
+    }
+
+    // 🔥 关键逻辑：如果之前手动切换到了其他场景（有音频在播），先停掉再切
+    if (isPlayingRef.current) {
+      const prevGroup = currentAudioGroupRef.current;
+      console.log('[NoiseLab] 麦克风采集：检测到环境噪声', detectedScene, '→', audioGroupId, '，停止之前的场景音:', prevGroup);
+      
+      // 停止当前播放的音频
+      if (prevGroup === 'balanced_noise') {
+        await stop8TrackAudio();
+      } else {
+        await TrackPlayer.stop();
+        await TrackPlayer.reset();
+      }
+      isPlayingRef.current = false;
+    }
+
+    console.log('[NoiseLab] 麦克风采集：自动播放场景音 →', audioGroupId);
+    
+    const isBalanced = audioGroupId === 'balanced_noise';
+    try {
+      if (isBalanced) {
+        await play8TrackAudio(audioGroupId);
+      } else {
+        await playNoiseAudio(audioGroupId);
+      }
+      isPlayingRef.current = true;
+      currentAudioGroupRef.current = audioGroupId;
+      setPlayingGroupIdState(audioGroupId);
+      playingGroupIdRef.current = audioGroupId;
+    } catch (error) {
+      console.error('[NoiseLab] 麦克风采集：自动播放场景音失败:', error);
+      isPlayingRef.current = false;
+    }
+  }, []);
+
+  /**
+   * 🔥 进入 mic 模式时：保存当前播放状态，如有正在播放的场景音则恢复它（不切换 tab）
+   */
+  const handleEnterMicMode = useCallback(async () => {
+    wasPlayingBeforeMicRef.current = isPlayingRef.current;
+    playingGroupIdBeforeMicRef.current = currentAudioGroupRef.current;
+
+    // 当前没有音频在播 → 等待环境自动识别后播放对应场景音（由 AudioAnalyzer 回调处理）
+    if (!isPlayingRef.current) {
+      console.log('[NoiseLab] 麦克风模式：当前未播放场景音，等待环境自动识别');
+      return;
+    }
+
+    // 🔥 有音频在播 → 先停掉之前的场景音（用户手动切换过其他场景），然后恢复 mic 前的场景音
+    const prevGroup = playingGroupIdBeforeMicRef.current;
+    console.log('[NoiseLab] 麦克风模式：之前正在播放的场景音 →', prevGroup, '，暂停保留');
+
+    if (prevGroup === 'balanced_noise') {
+      await stop8TrackAudio();
+    } else {
+      await TrackPlayer.stop();
+      await TrackPlayer.reset();
+    }
+    isPlayingRef.current = false;
+
+    // 🔥 恢复之前的场景音播放（在 mic tab 上继续播放对应的环境音效）
+    if (prevGroup) {
+      console.log('[NoiseLab] 麦克风模式：恢复播放 →', prevGroup);
+      const eqSceneType = AUDIO_GROUP_TO_EQ_SCENE[prevGroup] ?? 'unknown';
+      try {
+        if (prevGroup === 'balanced_noise') {
+          await play8TrackAudio(prevGroup);
+        } else {
+          await playNoiseAudio(prevGroup);
+        }
+        isPlayingRef.current = true;
+        currentAudioGroupRef.current = prevGroup;
+        setPlayingGroupIdState(prevGroup);
+        playingGroupIdRef.current = prevGroup;
+      } catch (error) {
+        console.error('[NoiseLab] 麦克风模式：恢复播放失败:', error);
+        isPlayingRef.current = false;
+      }
+    }
+  }, []);
+
+  /**
+   * 🔥 离开 mic 模式时：停止所有通过麦克风联动播放的场景音
+   */
+  const handleLeaveMicMode = useCallback(async () => {
+    if (isPlayingRef.current && playingGroupIdBeforeMicRef.current === currentAudioGroupRef.current) {
+      // 当前播放的是 mic 模式下自动播放的音频 → 完全停掉
+      console.log('[NoiseLab] 离开麦克风模式：停止通过 mic 联动播放的场景音');
+      if (currentAudioGroupRef.current === 'balanced_noise') {
+        await stop8TrackAudio();
+      } else {
+        await TrackPlayer.stop();
+        await TrackPlayer.reset();
+      }
+      isPlayingRef.current = false;
+    } else {
+      // 当前播放的不是 mic 联动音频 → 保留，不做任何操作
+      console.log('[NoiseLab] 离开麦克风模式：之前播放的场景音不受影响');
+    }
+    
+    wasPlayingBeforeMicRef.current = false;
+    playingGroupIdBeforeMicRef.current = null;
+    
+    // 🔥 停止 AudioAnalyzer（释放麦克风 + 停止环境音识别）
+    AudioAnalyzer.stop();
+    lastManualTapRef.current = 0; // 🔥 重置手动切换静默期计时器
+  }, []);
 
   // 启动/重启浮动动画（仅在提示文字显示时运行）
   useEffect(() => {
@@ -408,6 +534,7 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     return () => {
       unsubscribe();
       AudioLevel.stop?.();
+      if (activeScene === 'mic') handleLeaveMicMode();
     };
   }, [visible, activeScene]);
 
@@ -500,6 +627,7 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
   // ── 环境自动切换防抖 refs ──────────────────────────────
   const GRACE_PERIOD_MS = 10_000;                    // 用户手动操作后，自动切换静默等待期（10秒）
   const MIN_AUTO_SWITCH_INTERVAL_MS = 8_000;         // 两次自动切换之间最短间隔（8秒）
+  const MANUAL_TAP_SILENCE_MS = 10_000;              // 用户手动点击后，自动识别静默期（10秒）
   const lastManualTapRef = useRef<number>(0);        // 上次用户手动点击场景的时间戳
   const lastAutoSwitchRef = useRef<number>(0);       // 上次环境自动切换的时间戳
 
@@ -512,12 +640,18 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
 
     // 先获取音频组映射（供 EQ 生成器和音频播放共用）
     const audioGroupId = SCENE_TO_AUDIO_GROUP[sceneId];
+
+    // mic / manual 模式无对应音源，跳过 EQ 计算与滑块动画，保留当前 bandValues 不变
+    if (audioGroupId === null) {
+      setActiveScene(sceneId);
+      return;
+    }
     
     // ========== EQ 滑块动画（动态生成值 → 百分比映射）==========
     
     // 获取当前环境平均分贝值（麦克风未采集时 fallback 到 moderate 档）
     const ambientDB = AudioAnalyzer.getAverageDB();
-    const eqSceneType: string = audioGroupId ? (AUDIO_GROUP_TO_EQ_SCENE[audioGroupId] ?? sceneId) : sceneId;
+    const eqSceneType: string = AUDIO_GROUP_TO_EQ_SCENE[audioGroupId] ?? sceneId;
     const targetGains = generateEQ(eqSceneType, ambientDB);
 
     setActiveScene(sceneId);
@@ -595,41 +729,68 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     }
   }, [activeScene, animatedValues, props.onNavigateToDownload]);
 
+  // 🔥 音频资源兜底清理：当 visible === false 时确保所有音频停止
+  // 场景：Modal 被系统手势/导航返回关闭、HomeScreen 被 pop/replace，
+  //       handleClose() 可能未被调用，但 useEffect 仍会触发。
   useEffect(() => {
-    if (!visible && transitionAnimRef.current) { transitionAnimRef.current.stop(); transitionAnimRef.current = null; }
+    if (!visible) {
+      if (transitionAnimRef.current) { transitionAnimRef.current.stop(); transitionAnimRef.current = null; }
+      try { stop8TrackAudio(); } catch (_e) { /* ignore */ }
+      try { stopNoiseAudio(); } catch (_e) { /* ignore */ }
+    }
   }, [visible]);
 
   // 🎤 Modal 生命周期：打开时启动麦克风采集 + 环境自动识别场景切换，关闭时停止（释放麦克风）
   useEffect(() => {
-    if (visible) {
-      AudioAnalyzer.start((scene: string, _confidence: number, _db: number) => {
-        // ── 环境自动识别驱动 EQ 切换 ──────────────────────────
+    if (!visible) {
+      // 🔥 Modal 关闭 → 立即停止 AudioAnalyzer，防止持续运行
+      AudioAnalyzer.stop();
+      lastManualTapRef.current = 0;
+      return;
+    }
 
-        const targetScene = ANALYZER_TO_NOLAB_SCENE[scene];
-        if (!targetScene) return;                    // unknown → 不切换
-
-        // 防抖①：自动切换最小间隔 8 秒（避免连续波动反复触发）
-        if (Date.now() - lastAutoSwitchRef.current < MIN_AUTO_SWITCH_INTERVAL_MS) return;
-
-        // 防抖②：用户最近 10 秒内手动操作过 → 跳过（保护用户选择权）
-        // （本回调路径始终是环境自动切换，isAuto=true，需要检查静默期）
-        if (lastManualTapRef.current > 0) return;
-
-        // 自动识别结果 ≠ 当前活跃场景 → 执行切换
-        if (targetScene !== activeScene) {
-          console.log(`[NoiseLab] 🔄 环境自动切换: ${scene} → ${targetScene}`);
-          lastAutoSwitchRef.current = Date.now();   // 记录本次自动切换时间
-          applyScene(targetScene);
-        }
-      });
-    } else {
+    if (activeScene === 'mic') {
       AudioAnalyzer.stop();
     }
 
-    return () => {
-      AudioAnalyzer.stop();
-    };
-  }, [visible]);
+    if (!autoDetectionEnabled) return;
+
+    if (activeScene === 'mic') {
+      return;
+    }
+
+    AudioAnalyzer.stop();
+
+    AudioAnalyzer.start((scene: string, _confidence: number, _db: number) => {
+      const targetScene = ANALYZER_TO_NOLAB_SCENE[scene];
+      console.log('[DIAG-A] AudioAnalyzer callback fired, scene=', scene, 'targetScene=', targetScene);
+      if (DiagLog) DiagLog.info('AudioAnalyzer', `callback: scene=${scene} target=${ANALYZER_TO_NOLAB_SCENE[scene]}`);
+
+      if (!targetScene) return;
+
+      if (Date.now() - lastAutoSwitchRef.current < MIN_AUTO_SWITCH_INTERVAL_MS) return;
+
+      // 用户手动点击后，10秒内暂停自动识别（临时静默期）
+      if (lastManualTapRef.current > 0 && Date.now() - lastManualTapRef.current < MANUAL_TAP_SILENCE_MS) return;
+
+      if (getSkipAutoEnvironmentDetection()) return;
+
+      if (targetScene !== activeScene) {
+        console.log(`[NoiseLab] 🔄 环境自动切换: ${scene} → ${targetScene}`);
+        lastAutoSwitchRef.current = Date.now();
+        applyScene(targetScene);
+      }
+    });
+  }, [visible, activeScene, autoDetectionEnabled]);
+
+  // 🔥 handleEnterMicMode / handleLeaveMicMode：随 activeScene 进出 mic 模式
+  useEffect(() => {
+    if (activeScene === 'mic') {
+      handleEnterMicMode();
+    } else {
+      handleLeaveMicMode();
+    }
+  }, [activeScene]);
 
   // 🔥 handleBandChange：滑块百分比 → 线性音量 → setTrackVolume（实时调用）
   const handleBandChange = useCallback((bandIndex: number, percentValue: number) => {
@@ -723,6 +884,19 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
                   <Text style={[styles.sceneLabel, { color: '#FFD700' }]}>自定义</Text>
                 </View>
               )}
+            </View>
+
+            {/* 【修复 #1】自动环境识别开关 */}
+            <View style={styles.autoDetectSwitchContainer}>
+              <Text style={styles.autoDetectLabel}>自动环境识别</Text>
+              <TouchableOpacity
+                onPress={() => setAutoDetectionEnabled(prev => !prev)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.toggleTrack, { backgroundColor: autoDetectionEnabled ? '#4ECDC4' : 'rgba(255, 255, 255, 0.2)' }]}>
+                  <View style={[styles.toggleThumb, { transform: [{ translateX: autoDetectionEnabled ? 18 : 0 }] }]} />
+                </View>
+              </TouchableOpacity>
             </View>
 
             {/* 【🔥 引导提示】当没有场景在播放时，显示操作指引（手指 emoji 带浮动动画） */}
@@ -866,6 +1040,10 @@ const styles = StyleSheet.create({
   sceneLabel: { fontSize: 11, fontWeight: '700' },
   sceneLabelInactive: { color: 'rgba(255, 255, 255, 0.4)' },
   sectionTitle: { color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, fontWeight: '600', letterSpacing: 2, textAlign: 'center', marginBottom: 16 },
+  autoDetectSwitchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '80%', paddingVertical: 8, marginBottom: 4 },
+  autoDetectLabel: { color: 'rgba(255, 255, 255, 0.6)', fontSize: 13, fontWeight: '500' },
+  toggleTrack: { width: 44, height: 24, borderRadius: 12, justifyContent: 'center', paddingHorizontal: 2 },
+  toggleThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFFFFF', shadowColor: '#000000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3 },
   hintContainer: { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 12, paddingHorizontal: 16 },
   hintEmoji: { fontSize: 18, marginRight: 6 },
   hintText: { 

@@ -14,7 +14,6 @@
  * - 低 CPU 占用
  */
 
-import { Platform } from 'react-native';
 import { AudioLevel } from '../modules/AudioLevel';
 
 export type SceneType = 'traffic' | 'crowd' | 'wind' | 'unknown';
@@ -60,8 +59,7 @@ export interface SceneDetectionResult {
 
 class AudioAnalyzerClass {
   private isRecording = false;
-  private sampleInterval: NodeJS.Timeout | null = null;
-  private reevaluationInterval: NodeJS.Timeout | null = null;
+  private reevaluationInterval: ReturnType<typeof setInterval> | null = null;
   private samples: AudioSample[] = [];
   private currentScene: SceneType = 'unknown';
   private lastAvgDB: number = 0; // 记录上次平均 dB，用于检测环境变化
@@ -85,7 +83,7 @@ class AudioAnalyzerClass {
       return;
     }
 
-    console.log('[AudioAnalyzer] 🎤 开始真实麦克风采集');
+    console.log('[AudioAnalyzer] 🎤 [DEBUG] start() called, isRecording was:', this.isRecording);
     
     this.isRecording = true;
     this.samples = [];
@@ -93,32 +91,48 @@ class AudioAnalyzerClass {
     this.onSceneChangeCallback = onSceneChange;
     this.onErrorCallback = onError;
 
-    // 启动原生音频采集（每 100ms 回调一次）
-    AudioLevel.start(
-      (amplitude, dB) => {
-        // 原生回调：收到分贝值
-        const sample: AudioSample = {
-          timestamp: Date.now(),
-          dB: dB,
-          amplitude: amplitude,
-        };
+    // [DEBUG] detect native module API
+    const nativeMod = (AudioLevel as any).module;
+    console.log('[AudioAnalyzer] [DEBUG] Native module keys:', nativeMod ? Object.keys(nativeMod) : 'NO MODULE');
 
-        this.samples.push(sample);
-        
-        // DEBUG: 每 5 个样本打印一次
-        if (this.samples.length % 5 === 0) {
-          console.log(`[AudioAnalyzer] 📊 真实采集 #${this.samples.length}: ${dB.toFixed(1)}dB (振幅：${amplitude.toFixed(4)})`);
-        }
+    // 先请求麦克风权限（非阻塞，授权后再采集）
+    if ((AudioLevel as any).checkMicrophonePermission) {
+      try { await (AudioLevel as any).checkMicrophonePermission(); } catch (_e) {}
+    }
 
-        // 检查是否达到采样窗口（30 个样本 = 3 秒）
-        if (this.samples.length >= CONFIG.SAMPLE_WINDOW_MS / CONFIG.SAMPLE_INTERVAL_MS) {
-          this.analyzeWindow();
-          this.samples = []; // 清空窗口
-        }
-      },
-      CONFIG.SAMPLE_INTERVAL_MS
-    );
-    
+    try {
+      // 启动原生音频采集（每 100ms 回调一次）
+      AudioLevel.start(
+        (amplitude, dB) => {
+          // 原生回调：收到分贝值
+          const sample: AudioSample = {
+            timestamp: Date.now(),
+            dB: dB,
+            amplitude: amplitude,
+          };
+
+          this.samples.push(sample);
+          
+          // DEBUG: 每 5 个样本打印一次
+          if (this.samples.length % 5 === 0) {
+            console.log(`[AudioAnalyzer] 📊 [DEBUG] 真实采集 #${this.samples.length}: ${dB.toFixed(1)}dB (振幅：${amplitude.toFixed(4)})`);
+          }
+
+          // 检查是否达到采样窗口（30 个样本 = 3 秒）
+          if (this.samples.length >= CONFIG.SAMPLE_WINDOW_MS / CONFIG.SAMPLE_INTERVAL_MS) {
+            this.analyzeWindow();
+            this.samples = []; // 清空窗口
+          }
+        },
+        CONFIG.SAMPLE_INTERVAL_MS
+      );
+      console.log('[AudioAnalyzer] [DEBUG] AudioLevel.start() returned successfully');
+    } catch (err: any) {
+      console.error('[AudioAnalyzer] [DEBUG] AudioLevel.start() threw:', err?.message || err);
+      this.isRecording = false;
+      return;
+    }
+
     // 启动持续监测循环（每 10 秒重新评估一次）
     this.reevaluationInterval = setInterval(() => {
       this.forceReevaluate();
@@ -167,52 +181,7 @@ class AudioAnalyzerClass {
     };
   }
 
-  /**
-   * 采集单个样本（模拟真实环境数据）
-   */
-  private collectSample(): void {
-    try {
-      // TODO: 替换为原生音频采集（react-native-audio-level）
-      // 模拟真实环境数据：生成动态变化的分贝值
-      const now = Date.now();
-      
-      // 基础分贝值（40-70dB 之间波动）
-      const baseDB = 50;
-      
-      // 添加随机波动（±15dB），模拟真实环境变化
-      const randomFluctuation = (Math.random() - 0.5) * 30;
-      
-      // 添加周期性波动（模拟人声/交通的间歇性）
-      const periodicWave = Math.sin(now / 1000) * 10;
-      
-      // 偶尔的峰值（模拟突然的噪音）
-      const spike = Math.random() > 0.9 ? Math.random() * 20 : 0;
-      
-      // 计算最终分贝值
-      const simulatedDB = Math.max(30, Math.min(85, baseDB + randomFluctuation + periodicWave + spike));
-      
-      const sample: AudioSample = {
-        timestamp: now,
-        dB: simulatedDB,
-        amplitude: Math.pow(10, (simulatedDB - 94) / 20), // 转换为振幅
-      };
 
-      this.samples.push(sample);
-      // DEBUG: 每 5 个样本打印一次（避免日志过多）
-      if (this.samples.length % 5 === 0) {
-        console.log(`[AudioAnalyzer] 采集样本 #${this.samples.length}: ${sample.dB.toFixed(1)}dB (波动：${randomFluctuation.toFixed(1)}, 周期：${periodicWave.toFixed(1)}, 峰值：${spike.toFixed(1)})`);
-      }
-
-      // 检查是否达到采样窗口
-      if (this.samples.length >= CONFIG.SAMPLE_WINDOW_MS / CONFIG.SAMPLE_INTERVAL_MS) {
-        this.analyzeWindow();
-        this.samples = []; // 清空窗口
-      }
-    } catch (error) {
-      console.error('[AudioAnalyzer] 采集失败:', error);
-      this.onErrorCallback?.(error as Error);
-    }
-  }
 
   /**
    * 分析采样窗口（带详细 DEBUG 日志）
@@ -274,9 +243,10 @@ class AudioAnalyzerClass {
       console.log(`[AudioAnalyzer] 🗣️ 推测结果：Crowd（兜底，dB=${avgDB.toFixed(1)}）`);
     }
 
-    // 防抖逻辑：连续确认
-    if (detectedScene !== 'unknown') {
-      this.sceneConfirmCount[detectedScene]++;
+    // 防抖逻辑：连续确认（detectedScene 在此处已缩小为 traffic/crowd/wind）
+    const scene = detectedScene as SceneType;
+    if (scene !== 'unknown') {
+      this.sceneConfirmCount[scene]++;
       console.log(`[AudioAnalyzer] 场景 ${detectedScene} 确认次数：${this.sceneConfirmCount[detectedScene]}/${CONFIG.CONFIRM_COUNT}`);
       
       if (this.sceneConfirmCount[detectedScene] >= CONFIG.CONFIRM_COUNT) {
@@ -327,6 +297,16 @@ class AudioAnalyzerClass {
    */
   getIsRecording(): boolean {
     return this.isRecording;
+  }
+
+  /**
+   * 获取当前采样窗口的平均分贝值
+   * @returns 平均分贝值，如果尚未采集则返回 null
+   */
+  getAverageDB(): number | null {
+    if (this.samples.length === 0) return null;
+    const sum = this.samples.reduce((s, v: AudioSample) => s + v.dB, 0);
+    return sum / this.samples.length;
   }
 }
 

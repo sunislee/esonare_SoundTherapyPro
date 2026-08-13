@@ -1,18 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Dimensions,
-  ImageBackground,
-  BackHandler,
-  Animated,
-  ScrollView,
-  Easing,
-  Platform,
-  Alert,
-} from 'react-native';
+import { NativeModules, View, StyleSheet, Text, TouchableOpacity, Dimensions, ImageBackground, BackHandler, Animated, ScrollView, Easing, Platform, Alert } from 'react-native';
+
+const DiagLog = NativeModules.DiagLog;
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -212,8 +201,15 @@ const NoiseCancellationRoom: React.FC = () => {
         ]).start();
       });
       
+      // 【DIAG-C】useFocusEffect 入口日志（冷启动诊断）
+      const lastMode = getCurrentMode();
+      console.log('[DIAG-C] useFocusEffect fired, lastMode=', lastMode);
+      if (DiagLog) DiagLog.info('useFocusEffect-entry', `lastMode=${lastMode}`);
+
       // 【新增】如果刚从下载页返回（通过 AsyncStorage 标记检测），检查资源并自动播放
+      console.log('[DIAG] NoiseCancellationRoom useFocusEffect fired, downloadJustCompleted check starting');
       AsyncStorage.getItem('downloadJustCompleted').then((flag) => {
+        console.log('[DIAG] downloadJustCompleted =', flag);
         if (flag === 'true') {
           // 清除标记，防止重复触发
           AsyncStorage.removeItem('downloadJustCompleted').catch(() => {});
@@ -241,16 +237,25 @@ const NoiseCancellationRoom: React.FC = () => {
         } else {
           // 原有逻辑：恢复上次播放的模式（无下载完成标记）
           const lastMode = getCurrentMode();
+          console.log('[DIAG] else branch: lastMode from getCurrentMode() =', lastMode);
           if (lastMode) {
             setSelectedMode(lastMode);
             setIsPlaying(true);
             const audioGroupId = lastMode.replace('noise_', '') + '_noise';
+            console.log('[DIAG-C] useFocusEffect fired, lastMode=', lastMode);
+            if (DiagLog) DiagLog.info('useFocusEffect', `lastMode=${lastMode}`);
+            console.log('[DIAG] ❌ AUTO-PLAY via lastMode:', lastMode, '-> audioGroupId:', audioGroupId);
             play8TrackAudio(audioGroupId);
+          } else {
+            console.log('[DIAG] else branch: lastMode is null, no auto-play');
           }
         }
       }).catch(() => {
         // AsyncStorage 失败时降级为正常恢复
         const lastMode = getCurrentMode();
+        console.log('[DIAG-C] useFocusEffect fired, lastMode=', lastMode);
+        if (DiagLog) DiagLog.info('useFocusEffect-catch', `lastMode=${lastMode}`);
+        console.log('[DIAG] catch branch: lastMode from getCurrentMode() =', lastMode);
         if (lastMode) {
           setSelectedMode(lastMode);
           setIsPlaying(true);
@@ -403,9 +408,8 @@ const NoiseCancellationRoom: React.FC = () => {
     } else {
       // wind/traffic/crowd → 单轨噪声播放
       try {
-        const audioGroupId = modeId.replace('noise_', ''); // e.g. 'wind' from 'noise_wind'
-        console.log('[NC] 🎵 播放单轨噪声:', audioGroupId);
-        await playNoiseAudio(audioGroupId);
+        console.log('[NC] 🎵 播放单轨噪声:', modeId);
+        await playNoiseAudio(modeId);
         setIsPlaying(true);
       } catch (err) {
         console.error('[NC] ❌ playNoiseAudio 失败:', err);

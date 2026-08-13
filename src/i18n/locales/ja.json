@@ -250,6 +250,12 @@
     "manual_starlit_wilderness": { "title": "星空の荒野", "desc": "果てしない荒野に散りばめられた星々" },
     "life_rain_boat": { "title": "舟の上の雨", "desc": "小舟に落ちる微かな雨" },
     "life_bookstore": { "title": "午後の書店", "desc": "紙と静寂" },
+    "life_record_shop": { "title": "雨の中の消えたレコードショップ", "desc": "窓への雨、レコードの静寂" },
+    "life_record_shop_vinyl_crackle": { "title": "ヴィニルノイズ", "desc": "時間が刻む摩耗音" },
+    "life_record_shop_door_chime": { "title": "ドアチャイム", "desc": "めったに来ない客" },
+    "life_record_shop_footsteps": { "title": "足音", "desc": "通り過ぎる人の足音" },
+    "life_record_shop_vinyl_pop": { "title": "ヴィニルポップ", "desc": "グルーヴ上の一瞬の爆音" },
+    "life_record_shop_radio_tuning": { "title": "ラジオチューニング", "desc": "古いラジオの信号探し" },
     "healing_zen_bowl": { "title": "シンギングボウル", "desc": "一瞬の静寂" },
     "healing_clean_space": { "title": "清らかな空間", "desc": "水のように流れる" },
     "healing_crystal": { "title": "クリスタルボウル", "desc": "高周波エネルギーの共鳴" },
@@ -294,5 +300,10 @@
   "home_eq_desc": "プロ仕様のオーディオチューニングラボ。",
   "noise_room_desc": "背景バーが環境ノイズの分布を表示。スライドしてカウンター音量を調整。",
   "noise_room_ai_hint": "AI は視覚的な参考のみを提供します。控制权はあなたにあります。",
-  "eq_current_source": "現在の音源"
+  "eq_current_source": "現在の音源",
+  "recordShop": {
+    "rain": "雨音層",
+    "vinyl": "ヴィニルノイズ層",
+    "sfx": "ランダム効果音層"
+  }
 }

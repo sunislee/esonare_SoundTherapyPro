@@ -439,6 +439,12 @@
     "manual_starlit_wilderness": { "title": "Starlit Wilderness", "desc": "Stars dotting the boundless wilderness" },
     "life_rain_boat": { "title": "Rain on Boat", "desc": "Light rain on a lonely boat" },
     "life_bookstore": { "title": "Afternoon Bookstore", "desc": "Paper and silence" },
+    "life_record_shop": { "title": "Disappeared Record Shop in the Rain", "desc": "Rain on the window, vinyl in silence" },
+    "life_record_shop_vinyl_crackle": { "title": "Vinyl Crackle", "desc": "The friction of time on record" },
+    "life_record_shop_door_chime": { "title": "Door Chime", "desc": "Rare visitor arrives" },
+    "life_record_shop_footsteps": { "title": "Footsteps", "desc": "Passerby footsteps" },
+    "life_record_shop_vinyl_pop": { "title": "Vinyl Pop", "desc": "Instant crackle on the groove" },
+    "life_record_shop_radio_tuning": { "title": "Radio Tuning", "desc": "Old radio searching for signals" },
     "healing_zen_bowl": { "title": "Zen Bowl", "desc": "Instant stillness" },
     "healing_clean_space": { "title": "Liquid Peace", "desc": "Flowing like water" },
     "healing_crystal": { "title": "Crystal Bowl", "desc": "High frequency resonance" },
@@ -486,5 +492,10 @@
   "home_eq_desc": "Professional-grade audio tuning laboratory.",
   "noise_room_desc": "Background bars show ambient noise distribution. Slide to adjust counter-volume.",
   "noise_room_ai_hint": "AI provides visual reference only. You're in full control.",
-  "eq_current_source": "Current Source"
+  "eq_current_source": "Current Source",
+  "recordShop": {
+    "rain": "Rain Layer",
+    "vinyl": "Vinyl Crackle Layer",
+    "sfx": "Random SFX Layer"
+  }
 }

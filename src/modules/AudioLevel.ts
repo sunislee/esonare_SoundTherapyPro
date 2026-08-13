@@ -14,9 +14,10 @@ import { NativeModules, DeviceEventEmitter, Platform } from 'react-native';
 const { AudioLevelModule } = NativeModules;
 
 interface AudioLevelModuleType {
-  startListening: (intervalMs: number) => void;
+  startListening: (intervalMs?: number) => void;
   stopListening: () => void;
   setAmplitudeListener: (listenerName: string) => void;
+  checkAndRequestPermission?: () => Promise<void>;
 }
 
 type AmplitudeCallback = (amplitude: number, dB: number) => void;
@@ -59,6 +60,7 @@ class AudioLevelService {
     this.eventSubscription = DeviceEventEmitter.addListener('onAmplitudeChanged', (data: any) => {
       if (this.callback && data) {
         const { amplitude, dB } = data;
+        console.log(`[AudioLevel] 📡 收到原生振幅: amp=${amplitude}, dB=${dB}`);
         this.callback(amplitude, dB);
       }
     });
@@ -87,6 +89,57 @@ class AudioLevelService {
     
     this.callback = null;
     this.listenerId = null;
+  }
+
+  /**
+   * Android 运行时麦克风权限检查与申请。
+   * @returns true=已授权 / false=被拒绝或用户取消
+   */
+  async checkMicrophonePermission(): Promise<boolean> {
+    if (!this.module.checkAndRequestPermission) return true; // iOS/降级路径无需原生权限
+    try {
+      await this.module.checkAndRequestPermission();
+      return true;
+    } catch (_e: unknown) {
+      console.warn('[AudioLevel] 麦克风权限未授予');
+      return false;
+    }
+  }
+
+  /**
+   * 监听振幅变化事件（非侵入式订阅）。
+   * @returns 取消订阅函数，调用后停止接收回调（不影响其他监听器）
+   */
+  onAmplitudeChanged(callback: AmplitudeCallback): () => void {
+    // 创建一个临时的 start 方式：直接注册事件监听
+    const listenerId = `onmic_${Date.now()}`;
+    this.module.setAmplitudeListener(listenerId);
+    
+    const subscription = DeviceEventEmitter.addListener('onAmplitudeChanged', (data: any) => {
+      if (data && typeof data === 'object' && 'amplitude' in data && 'dB' in data) {
+        callback(data.amplitude, data.dB);
+      }
+    });
+    
+    // 返回 unsubscribe 函数
+    return () => {
+      subscription.remove();
+      this.module.stopListening?.(); // 如果没有其他监听器，停止原生采集
+    };
+  }
+
+  /**
+   * 带权限检查的 start。先申请权限，授权后再开始采集。
+   * @param onAmplitude 振幅回调 (amplitude: 0-1, dB: 0-160)
+   * @param intervalMs 采样间隔（毫秒），默认 100ms
+   */
+  async startWithPermission(onAmplitude: AmplitudeCallback, intervalMs: number = 100): Promise<boolean> {
+    const granted = await this.checkMicrophonePermission();
+    if (!granted) return false;
+
+    console.log(`[AudioLevel] 权限已授予，开始采集（间隔 ${intervalMs}ms）`);
+    this.start(onAmplitude, intervalMs);
+    return true;
   }
 }
 
