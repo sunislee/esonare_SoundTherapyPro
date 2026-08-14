@@ -156,12 +156,12 @@ const SceneItem = React.memo(({
     return isThisPlaying;
   })();
 
-  const triggerHaptic = (type: 'light' | 'heavy' = 'light') => {
+  const triggerHaptic = useCallback((type: 'light' | 'heavy' = 'light') => {
     ReactNativeHapticFeedback.trigger(type === 'heavy' ? 'impactHeavy' : 'impactLight', { enableVibrateFallback: true });
-  };
+  }, []);
 
   // 【核心】处理点击事件 - 根据三态决定行为
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     console.log(`[SceneItem] 👆 [handlePress] 点击事件触发: ${item.id}`);
     console.log(`[SceneItem] 📊 当前状态: isReady=${isReady}, isDownloading=${isDownloading}, isIdle=${isIdle}`);
     console.log(`[SceneItem] 📊 downloadProgress: ${downloadProgress}%, status: ${downloadStatus}`);
@@ -172,8 +172,8 @@ const SceneItem = React.memo(({
     if (isReady) {
       // 【Ready】资源就绪 → 直接导航
       console.log(`[SceneItem] ✅ [handlePress] 资源就绪，导航到播放器: ${item.id}`);
-      if (item.id.includes('breath')) navigation.navigate('BreathDetail', { sceneId: item.id });
-      else navigation.navigate('ImmersivePlayer', { sceneId: item.id });
+      if (item.id.includes("breath")) navigation.navigate("BreathDetail", { sceneId: item.id });
+      else navigation.navigate("ImmersivePlayer", { sceneId: item.id });
     } else {
       // 【Downloading / Idle】触发优先下载
       console.log(`[SceneItem] ⬇️ [handlePress] 触发下载: ${item.id}`);
@@ -184,9 +184,9 @@ const SceneItem = React.memo(({
       } else {
         console.error(`[SceneItem] ❌ [handlePress] onBoostPriority 不存在！`);
       }
-      triggerHaptic('heavy');
+      triggerHaptic("heavy");
     }
-  };
+  }, [item.id, isReady, isDownloading, isIdle, downloadProgress, downloadStatus, onBoostPriority, triggerHaptic, navigation]);
 
   useEffect(() => {
     return () => {
@@ -506,7 +506,7 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     console.log(`[HomeScreen] 🔄 [状态监控] isPlaying=${isPlaying}, currentBaseSceneId=${currentBaseSceneId}, 触发版本更新: ${stateVersion + 1}`);
     setStateVersion(v => v + 1);
-  }, [isPlaying, currentBaseSceneId]);
+  }, [isPlaying, currentBaseSceneId, realIsPlaying, realBaseSceneId]);
   
   // 【🔥 关键】页面获得焦点时，直接从 AudioService 获取真实状态
   useFocusEffect(
@@ -950,13 +950,15 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
     // ════════════════════════════════════════
     // 监听 1: TrackPlayer PlaybackActiveTrackChanged
     // ════════════════════════════════════════
-    let trackChangedSubscription: any = null;
-    
+    const trackSubscriptionRef = useRef<any>(null);
+    let isMounted = true;
+
     const setupTrackListener = async () => {
+      if (!isMounted) return;
       try {
         const TrackPlayer = (await import('react-native-track-player')).default;
         
-        trackChangedSubscription = await TrackPlayer.addEventListener(
+        trackSubscriptionRef.current = await TrackPlayer.addEventListener(
           'PlaybackActiveTrackChanged',
           (data: any) => {
             console.log(`[HomeScreen] 🎵 [TrackPlayer事件] 活跃轨道变更:`, data);
@@ -1005,9 +1007,10 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
     
     // 内存安全：组件卸载时移除所有监听器（只执行一次！）
     return () => {
-      if (trackChangedSubscription) {
-        trackChangedSubscription.remove();
-        console.log('[HomeScreen] 🧹 [v8 双重监听] 已移除 PlaybackActiveTrackChanged');
+      isMounted = false;
+      if (trackSubscriptionRef.current) {
+        trackSubscriptionRef.current.remove();
+        console.log("[HomeScreen] 🧹 [v8 双重监听] 已移除 PlaybackActiveTrackChanged");
       }
       
       switchStartSubscription.remove();
@@ -1115,6 +1118,12 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
     });
   }, [shufflingCategory, downloadedSceneIds, shuffleAnimRef]);
 
+  const handleShufflePress = useCallback((title: string) => {
+    console.log(`[HomeScreen] 🔥🔥🔴 [DEBUG] Shuffle 按钮被点击！！！ group.title=${title}, group.label=`);
+    console.log(`[HomeScreen] 🔥 [DEBUG] shufflingCategory 当前值: ${shufflingCategory}`);
+    handleShuffle(title as SceneCategory);
+  }, [handleShuffle, shufflingCategory]);
+
   // 【核心修改】PanResponder 逻辑：去掉了回弹跳变，增加 flattenOffset + 预下载拦截
   const panResponder = useRef(
     PanResponder.create({
@@ -1193,11 +1202,7 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
                 <Text style={styles.sectionTitle}>{group.label}</Text>
                 {/* 🔴🔴🔴 调试版本 Shuffle 按钮 - 已优化样式 */}
                 <TouchableOpacity
-                  onPress={() => {
-                    console.log(`[HomeScreen] 🔥🔥🔴 [DEBUG] Shuffle 按钮被点击！！！ group.title=${group.title}, group.label=${group.label}`);
-                    console.log(`[HomeScreen] 🔥 [DEBUG] shufflingCategory 当前值: ${shufflingCategory}`);
-                    handleShuffle(group.title);
-                  }}
+                  onPress={() => handleShufflePress(group.title)}
                   activeOpacity={0.7}
                   hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                   style={{
@@ -1277,21 +1282,17 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
          * @param audioGroupId 音频组 ID
          * @param targetFiles 8个轨道文件的本地路径数组
          */
-        onNavigateToDownload={(audioGroupId, targetFiles) => {
-          console.log('[HomeScreen] 📥 NoiseLab 资源未就绪，跳转下载页:', audioGroupId);
-          setShowNoiseLabModal(false); // 先关闭 Modal
-          // @ts-ignore - navigation type already added to RootStackParamList
-          navigation.navigate('ResourceDownloadScreen', { targetFiles });
-        }}
+        onNavigateToDownload={handleNavigateToDownload}
       />
     </View>
   );
-};
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#080912' },
-  gradientBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: '#080912' },
-  scrollContent: { paddingBottom: 120, alignItems: 'center' },
+  const handleNavigateToDownload = useCallback((audioGroupId: string, targetFiles: string[]) => {
+    console.log('[HomeScreen] 📥 NoiseLab 资源未就绪，跳转下载页:', audioGroupId);
+    setShowNoiseLabModal(false); // 先关闭 Modal
+    navigation.navigate('ResourceDownloadScreen', { targetFiles });
+  }, [navigation]);
+
   header: { alignItems: 'center', marginBottom: 40 },
   headerIcon: { marginBottom: 10 },
   title: { fontSize: 32, color: '#fff', fontWeight: '700', letterSpacing: 1 },
