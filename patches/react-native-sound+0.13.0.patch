@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt b/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
+index 749ea14..79d6f8d 100644
+--- a/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
++++ b/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
+@@ -237,7 +237,7 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+         if (callbackWasCalled) return true
+         callbackWasCalled = true
+         try {
+-          callback?.invoke(true)
++          callback?.invoke(false)
+         } catch (e: Exception) {
+           //Catches the exception: java.lang.RuntimeException·Illegal callback invocation from native module
+         }
