@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioManager
+import android.media.AudioAttributes
 import android.media.AudioPlaybackConfiguration
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -334,8 +335,30 @@ class AudioLevelModule(reactContext: ReactApplicationContext) : ReactContextBase
     }
     
     /**
-     * 初始化均衡器
+     * 【关键】创建 session=0 全局混音均衡器（master EQ）。
+     *
+     * 在 initializeProAudio() 初始化阶段立即挂载，无需等待会话捕获。
+     * 策略：MIUI/Android 16 会清除播放回调中的会话 ID、按会话挂载不可行，
+     * 故兜底把主均衡器固定挂载到 session=0（全局混音点）。
+     *
+     * ⚠️ 关键副作用：必须把 currentSessionId = 0。否则后续
+     * scanActivePlaybackConfigurations → pickTargetSession 会把真实媒体会话
+     *（如 sessionId=123）误当"新会话"触发 reattachEqualizer，释放掉全局 EQ。
+     *
+     * 复用 initEqualizer(0)：内部完成 Equalizer 创建 + enabled + probeDeviceBands
+     * + target→gainMatrix[0] 同步 + dirtyGains=true → flushGainsToDevice()。
      */
+    private fun ensureGlobalEqualizer() {
+        try {
+            if (equalizer != null) return // 已挂载全局 EQ，跳过
+            initEqualizer(0)               // sessionId=0 = 全局混音点
+            currentSessionId = 0           // 固定会话，防止被真实媒体会话抢占
+            Log.d(TAG, "✅ 全局混音均衡器 (session=0) 已挂载")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ ensureGlobalEqualizer 失败", e)
+        }
+    }
+
     private fun initEqualizer(sessionId: Int) {
         try {
             equalizer = Equalizer(0, sessionId)
