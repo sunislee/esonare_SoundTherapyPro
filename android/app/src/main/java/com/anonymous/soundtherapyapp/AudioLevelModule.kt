@@ -94,6 +94,11 @@ class AudioLevelModule(reactContext: ReactApplicationContext) : ReactContextBase
     private var captureThread: Thread? = null
     private var audioRecord: AudioRecord? = null
     @Volatile private var currentListenerId: String? = null
+
+    // 当前挂载的音频播放会话 ID（-1=未挂载）；跨线程被平滑循环/采集线程读取，加 @Volatile
+    @Volatile private var currentSessionId = -1
+    // 会话ID探测失败日志只打印一次的保护标志
+    @Volatile private var sessionProbeLogged = false
     
     override fun getName(): String = "AudioLevelModule"
     
