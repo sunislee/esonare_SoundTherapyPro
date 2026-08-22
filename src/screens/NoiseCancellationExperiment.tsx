@@ -342,6 +342,38 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
   // 【🔥 麦克风采集实验】实时分贝数据 + 波形历史
   const [micDbLevel, setMicDbLevel] = useState<number>(-90);
   const [micHistory, setMicHistory] = useState<number[]>(() => new Array(64).fill(-90));
+  // 【🔥 麦克风采集平滑】EMA 指数滑动平均 + 显示节流，削弱"太灵敏"的快速跳动
+  const micDbSmoothRef = useRef(-90);
+  const lastMicUiUpdateRef = useRef(0);
+
+  /**
+   * 麦克风采样统一入口：EMA 平滑（α=0.25）+ 波形 50ms 历史 + 大数字节流到 200ms 刷新
+   * 原始 RMS 采样抖动大，直接 20Hz 上屏会显得数值跳动刺眼，这里先平滑再显示
+   */
+  const pushMicSample = useCallback((rawDb: number) => {
+    const prev = micDbSmoothRef.current;
+    // 平滑值仍为初始值（-90）时直接采用原始值，避免从 -90 缓慢拉升
+    const smoothed = prev <= -89.99 ? rawDb : prev + (rawDb - prev) * 0.25;
+    micDbSmoothRef.current = smoothed;
+
+    // 波形保持 50ms 分辨率，使用平滑值避免尖峰噪声
+    setMicHistory(h => [...h.slice(1), smoothed]);
+
+    // 大数字限流约 5 次/秒，减少闪烁感
+    const now = Date.now();
+    if (now - lastMicUiUpdateRef.current >= 200) {
+      lastMicUiUpdateRef.current = now;
+      setMicDbLevel(smoothed);
+    }
+  }, []);
+
+  /** 重置麦克风平滑器与显示（停止采集时调用） */
+  const resetMicSample = useCallback(() => {
+    micDbSmoothRef.current = -90;
+    lastMicUiUpdateRef.current = 0;
+    setMicDbLevel(-90);
+    setMicHistory(new Array(64).fill(-90));
+  }, []);
 
   // 【🔥 引导提示动画】hintAnim — 手指 emoji 上下浮动循环动画
   const hintAnim = useRef(new Animated.Value(0)).current;
@@ -517,16 +549,16 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     if (!visible || activeScene !== 'mic') return;
 
     const unsubscribe = AudioLevel.onAmplitudeChanged((_amplitude: number, dB: number) => {
-      setMicDbLevel(dB);
-      setMicHistory(prev => [...prev.slice(1), dB]); // 保持最近 64 个点
+      pushMicSample(dB);
     });
 
     // 首次启动采集（带权限检查）
     AudioLevel.checkMicrophonePermission?.().then(granted => {
       if (granted) {
+        micDbSmoothRef.current = -90; // 启动时重置平滑器，首个采样即时生效
+        lastMicUiUpdateRef.current = 0;
         AudioLevel.start((_amplitude: number, dB: number) => {
-          setMicDbLevel(dB);
-          setMicHistory(prev => [...prev.slice(1), dB]);
+          pushMicSample(dB);
         }, 50); // 20Hz 采集率
       }
     });
@@ -534,6 +566,7 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
     return () => {
       unsubscribe();
       AudioLevel.stop?.();
+      resetMicSample();
       if (activeScene === 'mic') handleLeaveMicMode();
     };
   }, [visible, activeScene]);
@@ -927,7 +960,7 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
                 {/* 当前分贝值大字体显示 */}
                 <View style={styles.dbDisplay}>
                   <Text style={[styles.dbValue, { color: micDbLevel > -30 ? '#FF6B6B' : '#4ECDC4' }]}>
-                    {micDbLevel} dB
+                    {micDbLevel.toFixed(2)} dB
                   </Text>
                   <Text style={styles.dbLabel}>当前音量</Text>
                 </View>
@@ -964,14 +997,14 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
                   onPress={() => {
                     if (micDbLevel > -90) {
                       AudioLevel.stop?.();
-                      setMicDbLevel(-90);
-                      setMicHistory(new Array(64).fill(-90));
+                      resetMicSample();
                     } else {
                       AudioLevel.checkMicrophonePermission?.().then(granted => {
                         if (granted) {
+                          micDbSmoothRef.current = -90; // 启动时重置平滑器，首个采样即时生效
+                          lastMicUiUpdateRef.current = 0;
                           AudioLevel.start((_amplitude: number, dB: number) => {
-                            setMicDbLevel(dB);
-                            setMicHistory(prev => [...prev.slice(1), dB]);
+                            pushMicSample(dB);
                           }, 50);
                         }
                       });

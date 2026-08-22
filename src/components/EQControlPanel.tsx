@@ -288,7 +288,8 @@ const EQControlPanel: React.FC<EQControlPanelProps> = ({
 
   // 重置所有 EQ
   const handleResetVolumes = () => {
-    const defaultGains = Array(8).fill(1.0);
+    // 原生契约（AudioLevelModule.kt）：gain 0.0 = 平响(0dB)；旧值 1.0 实为全带 +12dB
+    const defaultGains = Array(8).fill(0.0);
     // 重置每个频段
     defaultGains.forEach((gain, index) => {
       updateEqGain(index, gain);

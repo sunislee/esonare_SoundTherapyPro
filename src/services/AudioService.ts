@@ -140,6 +140,7 @@ class AudioService {
   private sleepEndTime: number | null = null;
   private initialSleepSeconds: number | null = null;
   private sleepTimer: any = null;
+  private sleepTimerInterval: ReturnType<typeof setInterval> | null = null;
   private loadingSceneId: string | null = null;
   private loadingTimeout: any = null;
   private loadingTimeoutMs = 20000;
@@ -2575,12 +2576,45 @@ The tool call you made did not produce any output yet. The system is waiting for
   async setSleepTimer(minutes: number): Promise<void> {
     this.initialSleepSeconds = minutes * 60;
     this.sleepEndTime = Date.now() + this.initialSleepSeconds * 1000;
+    console.log(`🎙️ 定时器启动：${minutes} 分钟`);
+
+    // 清空旧定时器（幂等：定时器已在运行时重复设置不会叠加 tick）
+    if (this.sleepTimerInterval) {
+      clearInterval(this.sleepTimerInterval);
+      this.sleepTimerInterval = null;
+    }
+
+    // 启动 tick 循环：每 1s 计算剩余秒数并通知监听器；到点自动停止
+    // 基于绝对时间戳（sleepEndTime）计算，后台节流返回后下一次 tick 仍准确
+    this.sleepTimerInterval = setInterval(() => {
+      this.notifySleepTimer();
+      const remaining = this.sleepEndTime ? Math.max(0, Math.floor((this.sleepEndTime - Date.now()) / 1000)) : null;
+      if (remaining === null) return; // 已清除，等 clearInterval 生效
+      if (remaining > 0) {
+        console.log(`⏱️ 剩余秒数：${remaining}`);
+      }
+      if (remaining <= 0) {
+        console.log('⏰ 睡眠定时到点，自动停止播放');
+        this.stopAll().catch((e) => {
+          console.warn('[AudioService] ⚠️ 睡眠定时自动停止失败:', e);
+        });
+        this.clearSleepTimer();
+        this.notifyListeners();
+      }
+    }, 1000);
+
     this.notifyListeners();
   }
 
   clearSleepTimer(): void {
+    // 停止 tick 循环（幂等：重复调用或已停止时调用均安全）
+    if (this.sleepTimerInterval) {
+      clearInterval(this.sleepTimerInterval);
+      this.sleepTimerInterval = null;
+    }
     this.initialSleepSeconds = null;
     this.sleepEndTime = null;
+    console.log('🛑 睡眠定时器已清除');
     this.notifyListeners();
   }
 

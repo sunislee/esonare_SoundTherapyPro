@@ -19,10 +19,48 @@ import {
   SCENE_BACKGROUND_RESOURCES,
   type AudioResource,
 } from '../config/ResourceConfig';
-import { AUDIO_MANIFEST, getLocalPath as getAudioLocalPath, IS_GOOGLE_PLAY_VERSION } from '../constants/audioAssets';
+import {
+  AUDIO_MANIFEST,
+  ASSET_LIST,
+  getAssetUrls,
+  getLocalPath as getAudioLocalPath,
+  IS_GOOGLE_PLAY_VERSION,
+} from '../constants/audioAssets';
 
 // 本地缓存目录
 const CACHE_DIR = `${RNFS.DocumentDirectoryPath}/noise_reduction_cache`;
+
+// ════════════════════════════════════════════════════════════
+// 【P1-1】下载超时与看门狗配置（详见 streamDownloadTo）
+// ════════════════════════════════════════════════════════════
+const DOWNLOAD_CONN_TIMEOUT_MS = 10_000;     // 连接阶段：10s 未收到响应即 abort
+const STREAM_STALL_TIMEOUT_MS = 5_000;       // 流式路径：5s 无新 chunk 即 abort
+const BODY_READ_DEFAULT_BUDGET_MS = 120_000; // arrayBuffer 回退：缺 Content-Length 时的默认读预算
+
+/** arrayBuffer 回退读预算：按最低可行速率 ~16KB/s 由 Content-Length 估算，钳制在 [30s, 5min] */
+const bodyReadBudget = (bytes: number): number =>
+    Math.min(300_000, Math.max(30_000, Math.round((bytes / 16_384) * 1000)));
+
+/**
+ * 纯 JS 二进制 → base64（标准表驱动，逐 3 字节分组）。
+ * RN (Hermes) 无全局 btoa；旧代码 `btoa || identity` 兜底会把原始二进制字符串按 'base64' 编码写入，产出损坏文件。
+ */
+const bytesToBase64 = (bytes: Uint8Array): string => {
+    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let out = '';
+    for (let i = 0; i < bytes.length; i += 3) {
+        const b0 = bytes[i];
+        const hasB1 = i + 1 < bytes.length;
+        const hasB2 = i + 2 < bytes.length;
+        const b1 = hasB1 ? bytes[i + 1] : 0;
+        const b2 = hasB2 ? bytes[i + 2] : 0;
+        out += CHARS[b0 >> 2];
+        out += CHARS[((b0 & 0x3) << 4) | (b1 >> 4)];
+        out += hasB1 ? CHARS[((b1 & 0xF) << 2) | (b2 >> 6)] : '=';
+        out += hasB2 ? CHARS[b2 & 0x3F] : '=';
+    }
+    return out;
+};
 
 // 下载状态
 export interface DownloadStatus {
@@ -239,8 +277,6 @@ class DownloaderService {
    * 避免原生层 Java Downloader.java 在 Release 包中的死锁问题
    */
   private async downloadResource(resource: AudioResource) {
-    console.log(`[Downloader] 🔥🔥🔥 [downloadResource] 穿透测试 - 开始下载: ${resource.filename}`);
-    
     const localPath = this.getLocalPath(resource.id);
     
     console.log(`[Downloader] 🔥 [downloadResource] 本地路径: ${localPath}`);
@@ -280,8 +316,10 @@ class DownloaderService {
       // 继续下载，不影响主流程
     }
     
-    // 【穿透测试】验证远程 URL
-    console.log(`[Downloader] 🔥 [downloadResource] 远程URL: ${resource.remoteUrl}`);
+    // 【P1-1】通过统一入口 getAssetUrls 解析 CDN URL 列表（4 级故障转移，替代旧单 ghproxy.net 源）
+    const urls = this.getUrlsForResource(resource);
+    console.log(`[Downloader] 🌐 [URLS] ${resource.filename} 可用源 (${urls.length})`);
+    urls.forEach((u, i) => console.log(`[Downloader] 🌐 [URLS]   [${i}] ${u}`));
 
     // 【关键修复】统一在 fetch 前创建父目录，防止 ENOENT
     const _dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
@@ -293,16 +331,6 @@ class DownloaderService {
     }
 
     try {
-      // ════════════════════════════════════════════════════════════
-      // 🔥 物理证据日志 - 下载前（6行）
-      // ════════════════════════════════════════════════════════════
-      console.log(`[Downloader] 🔥🔥🔥 [fetch] ⚡ 物理请求即将发送！`);
-      console.log(`[Downloader] 🔥 [fetch] URL: ${resource.remoteUrl}`);
-      console.log(`[Downloader] 🔥 [fetch] 目标路径: ${localPath}`);
-      console.log(`[Downloader] 🔥 [fetch] 进程 ID: [TypeScript层]`);
-      console.log(`[Downloader] 🔥 [fetch] 时间戳: ${Date.now()}`);
-      console.log(`[Downloader] 🔥 [fetch] 网络源: ghproxy`);
-      
       this.notify({
         resourceId: resource.id,
         filename: resource.filename,
@@ -310,94 +338,41 @@ class DownloaderService {
         status: 'downloading',
       });
 
-      // ════════════════════════════════════════════════════════════
-      // 🔥🔨 Bug #3 修复：fetch chunked-stream + RNFS.appendFile —
-      //   不用 blob/base64（省内存），stat 轮询上报实时进度。
-      // ════════════════════════════════════════════════════════════
+      let totalWritten = 0;
 
-      const progressInterval = setInterval(() => {
-        RNFS.stat(localPath).then(
-          (_stat: any) => this.notify({ resourceId: resource.id, filename: resource.filename, progress: 0, status: 'downloading' }),
-          () => {} // stat pending
-        );
-      }, 1500);
+      // 【P1-1】CDN 故障转移循环：当前源失败（网络错误/超时/HTTP 4xx/5xx）则切换下一源，
+      // 全部源耗尽后才抛出进入外层重试队列逻辑
+      for (let urlIdx = 0; urlIdx < urls.length; urlIdx++) {
+        const url = urls[urlIdx];
 
-      try {
-        console.log(`[Downloader] 🌐 开始流式下载: ${resource.remoteUrl}`);
-        const response = await fetch(resource.remoteUrl);
+        // 每次尝试前清理残留的部分文件（上一次失败会留下损坏数据，appendFile 会继续追加导致彻底损坏）
+        try { await RNFS.unlink(localPath); } catch (_e) { /* 无文件则跳过 */ }
 
-        if (!response.ok) {
-          clearInterval(progressInterval);
-          throw new Error(`HTTP ${response.status}`);
+        if (urlIdx > 0) {
+          console.log(`[Downloader] 🔀 [FAILOVER] ${resource.filename} 切换源 ${urlIdx + 1}/${urls.length}: ${url}`);
         }
 
-        // RNFS.appendFile 每块约 1MB（~1048576 bytes），按 chunked 分片追加
-        let totalWritten = 0;
-
-        // 🔧🔥 Response body is null 兜底方案：使用 arrayBuffer() + RNFS.writeFile
-        // React Native Android 的 fetch response.body.getReader() 可能不可用（Web Streams API 不支持）
-        const rnResponse: any = response;
-
-        if (!rnResponse.body) {
-          console.log(`[Downloader] ⚠️ [FALLBACK] response.body 为 null，切换到 arrayBuffer 兜底模式`);
-
-          // 确保父目录存在
-          const dirPath = localPath.substring(0, localPath.lastIndexOf('/'));
-          await RNFS.mkdir(dirPath);
-
-          const buffer = await response.arrayBuffer();
-          const uint8 = new Uint8Array(buffer);
-          // ArrayBuffer → base64 → RNFS.writeFile 'base64' 写入二进制文件
-          let binary = '';
-          const chunkSize = Math.min(uint8.length, 1048576); // 每次处理最多 1MB
-          for (let i = 0; i < chunkSize; i++) {
-            binary += String.fromCharCode(uint8[i]);
-          }
-          const base64Data = ((globalThis as any).btoa || function(s: string) { return s; })(binary);
-
-          await RNFS.writeFile(localPath, base64Data, 'base64');
-          totalWritten = uint8.length;
-          console.log(`[Downloader] ✅ [FALLBACK] arrayBuffer 方式下载完成: ${totalWritten} bytes`);
-        } else {
-          // 正常流式下载路径（原有逻辑）
-          const reader = rnResponse.body.getReader();
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            // Uint8Array → ArrayBuffer → base64 (RNFS.appendFile 'base64' 模式)
-            const bytes = new Uint8Array(value);
-            let binary = '';
-            for (let i = 0; i < Math.min(bytes.length, 1048576); i++) {
-              binary += String.fromCharCode(bytes[i]);
-            }
-              const base64Chunk = ((globalThis as any).btoa || function(s: string) { return s; })(binary);
-
-            await RNFS.appendFile(localPath, base64Chunk, 'base64');
-            totalWritten += bytes.length;
-          }
-
-          console.log(`[Downloader] ✅ ${resource.filename} 下载完成: ${totalWritten} bytes`);
+        try {
+          totalWritten = await this.streamDownloadTo(resource, url, localPath);
+          break; // ✅ 当前源成功
+        } catch (error: any) {
+          console.error(`[Downloader] ❌ [URL_FAIL] 源 ${urlIdx + 1}/${urls.length} 失败 (${url}):`, error?.message || error);
+          if (urlIdx === urls.length - 1) throw error; // 所有源耗尽 → 交给外层 catch 重试逻辑
         }
-
-        clearInterval(progressInterval);
-        
-        this.notify({
-          resourceId: resource.id,
-          filename: resource.filename,
-          progress: 100,
-          status: 'completed',
-        });
-        this.retryCount.delete(resource.id);
-
-        // 🔄 轮询直到 stat.size == totalWritten（chunked transfer 下 RNFS writeFile
-        //   可能比 appendFile 的 fsync 先完成，导致本应在「下载中」的阶段跳到 100%）
-        await this.pollUntilReady(localPath, totalWritten);
-      } catch (error: any) {
-        clearInterval(progressInterval);
-        throw error;
       }
+
+      console.log(`[Downloader] ✅ ${resource.filename} 下载完成: ${totalWritten} bytes`);
+
+      this.notify({
+        resourceId: resource.id,
+        filename: resource.filename,
+        progress: 100,
+        status: 'completed',
+      });
+      this.retryCount.delete(resource.id);
+
+      // 🔄 轮询直到 stat.size == totalWritten（确保 fsync 落盘完成后再标记可用）
+      await this.pollUntilReady(localPath, totalWritten);
     } catch (error: any) {
       console.error(`[Downloader] ❌ ${resource.filename} 下载失败:`, error?.message);
       
@@ -418,6 +393,139 @@ class DownloaderService {
     } finally {
       this.currentDownload = null;
     }
+  }
+
+  /** 【P1-1】资源的期望字节数（0 = 未知，进度切换为模拟模式） */
+  private getExpectedSize(resourceId: string): number {
+    const fromAssetList = ASSET_LIST.find(a => a.id === resourceId);
+    if (fromAssetList && fromAssetList.expectedSize > 0) return fromAssetList.expectedSize;
+    const manifestItem = AUDIO_MANIFEST.find(a => a.id === resourceId);
+    return manifestItem ? manifestItem.size : 0;
+  }
+
+  /** 【P1-1】解析资源的 CDN URL 列表（统一走 getAssetUrls，消除单点故障） */
+  private getUrlsForResource(resource: AudioResource): string[] {
+    const manifestItem = AUDIO_MANIFEST.find(a => a.id === resource.id);
+    if (manifestItem) return getAssetUrls(manifestItem.filename);
+
+    // 非 manifest 资源（如降噪系列）：从 remoteUrl 中提取仓库相对路径构造 URL 列表
+    const marker = 'sound-therapy-assets/main/';
+    const idx = resource.remoteUrl.indexOf(marker);
+    if (idx >= 0) {
+      return getAssetUrls(decodeURIComponent(resource.remoteUrl.slice(idx + marker.length)));
+    }
+
+    console.warn(`[Downloader] ⚠️ [URLS] ${resource.id} 无法解析仓库路径，回退原单源: ${resource.remoteUrl}`);
+    return [resource.remoteUrl];
+  }
+
+  /**
+   * 【P1-1】单源下载核心（带超时看门狗）：fetch → 流式/arrayBuffer → 写盘。
+   * - 连接阶段：DOWNLOAD_CONN_TIMEOUT_MS 内未收到响应即 abort；
+   * - 流式路径：每个新 chunk 重置停滞计时，STREAM_STALL_TIMEOUT_MS 无数据即 abort；
+   * - arrayBuffer 回退（RN 实际主路径）：whatwg-fetch 在原生层整包缓冲、JS 无法观测中间 chunk，
+   *   故按 Content-Length × 最低可行速率估算读预算，并以 race 定时器双保险确保 await 必然 settle。
+   * 超时通过 AbortController.abort() 终止底层 XHR（已验证 whatwg-fetch 3.6.20 对 signal 会 reject AbortError）。
+   */
+  private async streamDownloadTo(resource: AudioResource, url: string, localPath: string): Promise<number> {
+    const controller = new AbortController();
+    const expectedSize = this.getExpectedSize(resource.id);
+
+    // 【P1-1 进度修复】已知大小 → stat.size/expectedSize 真实进度；未知 → 按 chunk 模拟（上限 95%），UI 不再恒为 0%
+    let simProgress = 0;
+    let lastNotified = -1;
+
+    const notifyRealProgress = () => {
+      RNFS.stat(localPath).then(
+        (stat: any) => {
+          const real = expectedSize > 0 ? Math.min(95, Math.floor((stat.size / expectedSize) * 100)) : simProgress;
+          if (real > lastNotified) {
+            lastNotified = real;
+            this.notify({ resourceId: resource.id, filename: resource.filename, progress: real, status: 'downloading' });
+          }
+        },
+        () => {} // 文件尚未创建或 stat 失败，忽略
+      );
+    };
+    const progressInterval = setInterval(notifyRealProgress, 1500);
+
+    let connTimer: ReturnType<typeof setTimeout> | null = null;
+    let stallTimer: ReturnType<typeof setTimeout> | null = null;
+    const armStallWatchdog = (ms: number) => {
+      if (stallTimer) clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        console.warn(`[Downloader] ⏱️ [STALL_WATCHDOG] ${resource.filename} 已 ${Math.round(ms / 1000)}s 无数据，中止当前源`);
+        controller.abort();
+      }, ms);
+    };
+
+    let totalWritten = 0;
+
+    try {
+      // 连接阶段超时：10s 未收到响应头即 abort
+      connTimer = setTimeout(() => {
+        console.warn(`[Downloader] ⏱️ [CONN_TIMEOUT] ${resource.filename} ${DOWNLOAD_CONN_TIMEOUT_MS}ms 无响应，中止`);
+        controller.abort();
+      }, DOWNLOAD_CONN_TIMEOUT_MS);
+
+      const response = await fetch(url, { signal: controller.signal });
+      if (connTimer) clearTimeout(connTimer);
+      connTimer = null;
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      if ((response as any).body && typeof (response as any).body.getReader === 'function') {
+        // ══ 流式路径（Web Streams 可用时）══
+        const reader = (response as any).body.getReader();
+        armStallWatchdog(STREAM_STALL_TIMEOUT_MS);
+
+        while (true) {
+          const readResult: { done: boolean; value?: Uint8Array } = await reader.read();
+          if (readResult.done || !readResult.value) break;
+
+          // 【P1-1 修复】旧代码此处同样截断 >1MB 的 chunk；现在整块写入
+          const bytes = new Uint8Array(readResult.value);
+          await RNFS.appendFile(localPath, bytesToBase64(bytes), 'base64');
+          totalWritten += bytes.length;
+
+          simProgress = Math.min(95, simProgress + 2); // 未知大小时的模拟进度递增
+          armStallWatchdog(STREAM_STALL_TIMEOUT_MS);   // 新 chunk 到达，重置看门狗
+        }
+      } else {
+        // ══ arrayBuffer 回退路径（RN 的 whatwg-fetch 未实现 Response.body，此为实际主路径）══
+        const contentLength = Number(response.headers?.get('content-length') || 0);
+        const readBudgetMs = contentLength > 0 ? bodyReadBudget(contentLength) : BODY_READ_DEFAULT_BUDGET_MS;
+        armStallWatchdog(readBudgetMs);
+
+        // 双保险：即使 abort 因故未传播，race 定时器也保证本 await 必然 settle（防永久挂起阻塞串行队列）
+        const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const guard = setTimeout(() => {
+            controller.abort();
+            reject(new Error(`Body read timeout (${readBudgetMs}ms)`));
+          }, readBudgetMs);
+          response.arrayBuffer().then(
+            (buf: ArrayBuffer) => { clearTimeout(guard); resolve(buf); },
+            (err: any) => { clearTimeout(guard); reject(err); }
+          );
+        });
+
+        // 【P1-1 修复】旧代码此处只写前 1MB，>1MB 文件被静默截断却仍标记完成；现在一次性写入完整内容
+        const uint8 = new Uint8Array(buffer);
+        await RNFS.writeFile(localPath, bytesToBase64(uint8), 'base64');
+        totalWritten = uint8.length;
+        console.log(`[Downloader] ✅ [FALLBACK] arrayBuffer 全量写入完成: ${totalWritten} bytes`);
+      }
+
+      // 成功路径：清除看门狗，避免迟到的 abort 影响后续请求
+      if (stallTimer) clearTimeout(stallTimer);
+      stallTimer = null;
+    } finally {
+      clearInterval(progressInterval);
+      if (connTimer) clearTimeout(connTimer);
+      if (stallTimer) clearTimeout(stallTimer);
+    }
+
+    return totalWritten;
   }
 
   /**
@@ -478,7 +586,7 @@ class DownloaderService {
         const stat = await RNFS.stat(localPath);
         if (stat.size >= totalWritten * 0.95 && stat.size > 0) break;
       } catch (_e) {}
-      await new Promise((r) => setTimeout(r, 3000));
+      await new Promise<void>((r) => setTimeout(() => r(), 3000));
       attempts++;
     }
     console.log(`[Downloader] ✅ [pollUntilReady] ${totalWritten} bytes 落盘完成 (attempts: ${attempts})`);

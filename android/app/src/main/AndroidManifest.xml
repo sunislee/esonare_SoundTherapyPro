@@ -4,7 +4,12 @@
     
     <!-- 麦克风权限（音频分析必需） -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    
+
+    <!-- EQ 均衡器（android.media.audiofx.Equalizer）必需：
+         挂载到会话 0 时文档明确要求；挂载自有会话时作为 OEM 加固兜底防 SecurityException
+         2026-08-20 修复 P1-A：此前缺失导致均衡器创建失败、预设 EQ 无效 -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />

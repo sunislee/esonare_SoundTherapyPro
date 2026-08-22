@@ -21,6 +21,7 @@ import { Scene, SCENES, SMALL_SCENE_IDS, getSceneBackground } from '../constants
 import { useAudio } from '../context/AudioContext';
 import InteractiveButtons from '../components/InteractiveButtons';
 import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
+import QuickPresets from '../components/QuickPresets';
 import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/MainNavigator';
@@ -839,6 +840,9 @@ const ImmersivePlayerNew: React.FC = () => {
                 <Icon name="grid-outline" size={20} color="#FFF" />
               </TouchableOpacity>
             </View>
+
+            {/* 8-BAND EQ 快速预设（一键应用） */}
+            <QuickPresets />
 
             <TouchableOpacity 
               style={[styles.playButton, isLoading && styles.playButtonDisabled]} 

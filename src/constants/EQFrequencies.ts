@@ -1,7 +1,8 @@
-/**
- * 8 段均衡器频段定义
- * 频率单位：Hz
- */
+// 均衡器频段定义
+// 频率范围：60Hz ~ 16kHz（8 段）
+// 增益契约：-1.0 ~ +1.0（其中 0.0 = 平响、+1.0 = +12dB、-1.0 = -12dB）
+// 对应 Android AudioLevelModule.kt L342 原生层映射
+// 频率单位：Hz
 export const EQ_FREQUENCIES = [
   { index: 0, frequency: 60, label: '60Hz', description: '超低频' },
   { index: 1, frequency: 150, label: '150Hz', description: '低频' },
@@ -18,5 +19,5 @@ export const EQ_GAIN_MIN = -1.0;
 export const EQ_GAIN_MAX = 1.0;
 export const EQ_GAIN_STEP = 0.1;
 
-// 默认增益值（0dB）
-export const EQ_DEFAULT_GAIN = 1.0;
+// 默认增益值（0dB = 平响）
+export const EQ_DEFAULT_GAIN = 0.0;

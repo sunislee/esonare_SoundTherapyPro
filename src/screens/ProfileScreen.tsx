@@ -595,17 +595,10 @@ export const ProfileScreen = () => {
           </TouchableWithoutFeedback>
         </Modal>
 
-        {/* <View style={styles.section}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.menu.coreFeatures')}</Text>
-          <MenuItem icon="clock" title={t('profile.menu.sleepTimer')} onPress={() => {
-            // 睡眠定时功能开发中提示
-            if (Platform.OS === 'android') {
-              ToastAndroid.show(t('common.comingSoon'), ToastAndroid.SHORT);
-            } else {
-              Alert.alert(t('common.prompt'), t('common.comingSoon'));
-            }
-          }} />
-        </View> */}
+          <MenuItem icon="clock" title={t('profile.menu.sleepTimer')} onPress={() => setIsTimerVisible(true)} />
+        </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.menu.resources')}</Text>
@@ -630,7 +623,7 @@ export const ProfileScreen = () => {
         <Text style={styles.versionText}>Version {appVersion}</Text>
       </ScrollView>
 
-      {/* SleepTimerSheet已隐藏 - 睡眠定时功能开发中 <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} /> */}
+      <SleepTimerSheet visible={isTimerVisible} onClose={() => setIsTimerVisible(false)} />
 
       <Modal
         visible={isBackgroundModalVisible}

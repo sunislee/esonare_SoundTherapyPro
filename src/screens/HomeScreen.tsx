@@ -945,12 +945,14 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
   // ══════════════════════════════════════════════════════════
   // 【🔥🔥🔥 v8 双向锁定监听】自动漫游切换时立即锁定 UI（只注册一次！）
   // ══════════════════════════════════════════════════════════
+  // useRef 是 hook，只能声明在组件体顶层；放在 effect 回调内会触发 Invalid hook call
+  const trackSubscriptionRef = useRef<any>(null);
+
   useEffect(() => {
     
     // ════════════════════════════════════════
     // 监听 1: TrackPlayer PlaybackActiveTrackChanged
     // ════════════════════════════════════════
-    const trackSubscriptionRef = useRef<any>(null);
     let isMounted = true;
 
     const setupTrackListener = async () => {
@@ -1124,6 +1126,12 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
     handleShuffle(title as SceneCategory);
   }, [handleShuffle, shufflingCategory]);
 
+  const handleNavigateToDownload = useCallback((audioGroupId: string, targetFiles: string[]) => {
+    console.log('[HomeScreen] 📥 NoiseLab 资源未就绪，跳转下载页:', audioGroupId);
+    setShowNoiseLabModal(false); // 先关闭 Modal
+    navigation.navigate('ResourceDownloadScreen', { targetFiles });
+  }, [navigation]);
+
   // 【核心修改】PanResponder 逻辑：去掉了回弹跳变，增加 flattenOffset + 预下载拦截
   const panResponder = useRef(
     PanResponder.create({
@@ -1286,13 +1294,12 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
       />
     </View>
   );
+};
 
-  const handleNavigateToDownload = useCallback((audioGroupId: string, targetFiles: string[]) => {
-    console.log('[HomeScreen] 📥 NoiseLab 资源未就绪，跳转下载页:', audioGroupId);
-    setShowNoiseLabModal(false); // 先关闭 Modal
-    navigation.navigate('ResourceDownloadScreen', { targetFiles });
-  }, [navigation]);
-
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#080912' },
+  gradientBackground: { ...StyleSheet.absoluteFillObject, backgroundColor: '#080912' },
+  scrollContent: { paddingBottom: 120, alignItems: 'center' },
   header: { alignItems: 'center', marginBottom: 40 },
   headerIcon: { marginBottom: 10 },
   title: { fontSize: 32, color: '#fff', fontWeight: '700', letterSpacing: 1 },

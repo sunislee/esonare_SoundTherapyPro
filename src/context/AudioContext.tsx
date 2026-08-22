@@ -220,10 +220,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [initialRemaining, setInitialRemaining] = useState<number | null>(null);
   const [ambientVolume, setAmbientVolume] = useState<number>(1.0);
-  const [eqGains, setEqGains] = useState<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 8 段均衡器，初始值均为 1.0
+  const [eqGains, setEqGains] = useState<number[]>([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]); // 8 段均衡器，初始值均为 0.0（平响；原生契约 gain∈[-1,+1]，1.0 实为 +12dB）
   const [recordShopVolumes, setRecordShopVolumes] = useState<RecordShopVolumes | null>(null);
   const [isRecordShopActive, setIsRecordShopActive] = useState<boolean>(false);
-  const eqGainsRef = useRef<number[]>([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]); // 【关键修复】用 ref 存储最新值，避免闭包问题
+  const eqGainsRef = useRef<number[]>([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]); // 【关键修复】用 ref 存储最新值，避免闭包问题；初始 0.0=平响，与 state 初始值同源
 
   // 检查 AudioService 是否已准备好（v1.4.2: 全路径防御性检查）
   useEffect(() => {

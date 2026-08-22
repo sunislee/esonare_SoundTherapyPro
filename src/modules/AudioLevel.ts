@@ -17,7 +17,8 @@ interface AudioLevelModuleType {
   startListening: (intervalMs?: number) => void;
   stopListening: () => void;
   setAmplitudeListener: (listenerName: string) => void;
-  checkAndRequestPermission?: () => Promise<void>;
+  // 原生侧委托 PermissionsAndroid：resolve 结果为 'granted' | 'denied' | 'never_ask_again'
+  checkAndRequestPermission?: () => Promise<string>;
 }
 
 type AmplitudeCallback = (amplitude: number, dB: number) => void;
@@ -98,8 +99,9 @@ class AudioLevelService {
   async checkMicrophonePermission(): Promise<boolean> {
     if (!this.module.checkAndRequestPermission) return true; // iOS/降级路径无需原生权限
     try {
-      await this.module.checkAndRequestPermission();
-      return true;
+      // 原生 resolve 结果为字符串：仅 'granted' 视为已授权
+      const result = await this.module.checkAndRequestPermission();
+      return result === 'granted';
     } catch (_e: unknown) {
       console.warn('[AudioLevel] 麦克风权限未授予');
       return false;
