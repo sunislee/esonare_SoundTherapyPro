@@ -259,6 +259,7 @@
     "healing_zen_bowl": { "title": "シンギングボウル", "desc": "一瞬の静寂" },
     "healing_clean_space": { "title": "清らかな空間", "desc": "水のように流れる" },
     "healing_crystal": { "title": "クリスタルボウル", "desc": "高周波エネルギーの共鳴" },
+    "city_rain_urban": { "title": "都市の夜の雨", "desc": "眠る都市への雨音、車流と人の声" },
     "brainwave_alpha": { "title": "アルファ波集中", "desc": "集中とリラックス" },
     "brainwave_delta": { "title": "デルタ波入眠", "desc": "左右脳の同期" },
     "interactive_white_noise": { "title": "ホワイトノイズ", "desc": "深い集中" },
