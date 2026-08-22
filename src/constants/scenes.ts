@@ -405,6 +405,9 @@ const SCENE_ORDER: Record<string, number> = {
   morning_market: 147,
   train_window_journey: 148,
   candlelight_dinner: 149,
+
+  // Esonare EQ 新场景（CDN 下载）
+  city_rain_urban: 150,
 };
 
 export const SCENES: Scene[] = AUDIO_MANIFEST
