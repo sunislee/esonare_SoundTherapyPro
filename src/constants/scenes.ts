@@ -266,6 +266,13 @@ const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
   manual_starlit_wilderness: require('../assets/scenes/starlit_wilderness.webp'),
 };
 
+// 【🆕 v1.4.3】城市夜雨专属缩略图映射（Esonare EQ 新场景，CDN 下载）
+// CDN 资源仓库暂无 city_rain 专属背景图，复用内置夜景图 starlit_wilderness.webp 作为专属图，
+// 避免与 Life 分类默认图（category_life.webp）重复；后续 CDN 上传专属图后可改为下载式背景图
+const CITY_RAIN_THUMBNAIL_MAP: Record<string, any> = {
+  city_rain_urban: require('../assets/scenes/starlit_wilderness.webp'),
+};
+
 export const getSceneBackground = (sceneId: string, category: SceneCategory) => {
   if (NEW_NATURE_BG_FALLBACK[sceneId]) {
     return NEW_NATURE_BG_FALLBACK[sceneId];
@@ -305,6 +312,11 @@ export const getSceneBackground = (sceneId: string, category: SceneCategory) => 
     return backgrounds['WesternChurch']?.source || backgrounds[category]?.source || null;
   }
   
+  // 【🆕 v1.4.3】城市夜雨专属缩略图
+  if (CITY_RAIN_THUMBNAIL_MAP[sceneId]) {
+    return CITY_RAIN_THUMBNAIL_MAP[sceneId];
+  }
+
   const bg = backgrounds[category];
   return bg?.source || null;
 };
@@ -356,7 +368,8 @@ const SCENE_ORDER: Record<string, number> = {
    oriental_morning_buddha: 63,
 
    // Esonare EQ 新场景（CDN 下载）
-  city_rain_urban: 150,
+   // 【🔥 v1.4.3 优化】order 150 → 10：从全局排序末尾提前到 Nature(1-9) 之后、Life(11+) 之前，避免被压在 Life 分类最末尾
+  city_rain_urban: 10,
 };
 
 export const SCENES: Scene[] = AUDIO_MANIFEST
