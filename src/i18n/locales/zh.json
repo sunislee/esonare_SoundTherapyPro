@@ -27,6 +27,12 @@
     "updateSuccess": "更新成功",
     "saveFailed": "保存失败"
   },
+  "wifiPrompt": {
+    "title": "检测到移动网络连接",
+    "message": "下载场景音频资源将消耗移动数据（约 23 MB），可等待连接 WiFi 后自动下载。",
+    "waitWifi": "等待 WiFi",
+    "useCellular": "继续用流量"
+  },
   "slogans": {
     "journey": "开启一段放松之旅",
     "peace": "愿你内心平静",

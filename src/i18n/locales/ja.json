@@ -21,6 +21,12 @@
     "previous": "前へ",
     "download": "ダウンロード"
   },
+  "wifiPrompt": {
+    "title": "モバイルデータ接続を検出しました",
+    "message": "シーン音声をダウンロードすると、モバイルデータ（約23MB）を消費します。Wi-Fi接続を待てば、自動的にダウンロードを開始します。",
+    "waitWifi": "Wi-Fiを待つ",
+    "useCellular": "データ通信で続行"
+  },
   "slogans": {
     "journey": "癒しの旅に出かけよう",
     "peace": "心が平和になるように",

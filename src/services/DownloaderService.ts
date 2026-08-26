@@ -26,6 +26,8 @@ import {
   getLocalPath as getAudioLocalPath,
   IS_GOOGLE_PLAY_VERSION,
 } from '../constants/audioAssets';
+import { DeviceEventEmitter } from 'react-native';
+import NetworkGateService, { WIFI_PROMPT_RESOLVED } from './NetworkGateService';
 
 // 本地缓存目录
 const CACHE_DIR = `${RNFS.DocumentDirectoryPath}/noise_reduction_cache`;
@@ -82,9 +84,16 @@ class DownloaderService {
   private listeners: Set<(status: DownloadStatus) => void> = new Set();
   private retryCount: Map<string, number> = new Map();
   private maxRetries = 3;
+  /** [PR-2] WiFi 提示恢复事件订阅（单例生命周期，无需释放） */
+  private wifiGateSub: { remove(): void } | null = null;
 
   constructor() {
     this.initCacheDir();
+    // [PR-2] 移动数据闸门放行（切到 WiFi / 用户允许）后自动恢复下载队列
+    this.wifiGateSub = DeviceEventEmitter.addListener(WIFI_PROMPT_RESOLVED, () => {
+      console.log('[Downloader] 📶 [wifiPromptResolved] 闸门放行，恢复下载队列');
+      this.startDownload();
+    });
   }
 
   /**
@@ -238,6 +247,13 @@ class DownloaderService {
     // 【防重入】如果队列正在处理中，直接返回（不重复启动）
     if (this.queueProcessingPromise) {
       console.log('[Downloader] ℹ️ [startDownload] 队列正在处理中，跳过重复调用');
+      return;
+    }
+
+    // 【PR-2 WiFi 提示】移动数据且用户未允许 → 挂起（任务保留在队列，闸门放行后自动恢复）
+    const gate = await NetworkGateService.requestDownloadAccess();
+    if (gate === 'waiting') {
+      console.log('[Downloader] ⏸️ [startDownload] 移动数据未允许，挂起下载任务');
       return;
     }
 

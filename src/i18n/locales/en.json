@@ -27,6 +27,12 @@
     "updateSuccess": "Update successful",
     "saveFailed": "Save failed"
   },
+  "wifiPrompt": {
+    "title": "Mobile data connection detected",
+    "message": "Downloading scene audio will use mobile data (about 23 MB). You can wait for a Wi-Fi connection and the download will start automatically.",
+    "waitWifi": "Wait for Wi-Fi",
+    "useCellular": "Continue with data"
+  },
   "slogans": {
     "journey": "Begin a relaxation journey",
     "peace": "May your heart be at peace",

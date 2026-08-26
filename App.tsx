@@ -66,6 +66,9 @@ import { preloadBackgroundAvailability } from './src/constants/scenes';
 import Toast from 'react-native-toast-message';
 import toastConfig from './src/config/toastConfig';
 import ToastUtil from './src/utils/ToastUtil';
+// 【PR-2 WiFi 提示】移动数据下载闸门 + 全局提示 Modal
+import NetworkGateService from './src/services/NetworkGateService';
+import WifiDownloadPrompt from './src/components/WifiDownloadPrompt';
 
 // 【🔥 v1.4.7 修复】自动下载场景背景图片（使用 RNFS.downloadFile，与 DownloadService 一致）
 // 之前用 fetch + btoa + appendFile 处理二进制图片会损坏文件
@@ -170,6 +173,9 @@ function App() {
     // 【🔥 Toast 修复】应用启动时初始化 ToastUtil，让 isInitialized=true
     ToastUtil.init();
 
+    // 【PR-2 WiFi 提示】初始化网络状态检测（NetInfo 初始 fetch + 变化监听）
+    NetworkGateService.init();
+
     const initApp = async () => {
       const startTime = Date.now();
       try {
@@ -273,6 +279,8 @@ function App() {
               <MainNavigator />
               {/* 【🔥 Toast 容器】全局 Toast 弹出层 */}
               <Toast config={toastConfig} />
+              {/* 【PR-2 WiFi 提示】移动数据下载全局提示 Modal */}
+              <WifiDownloadPrompt />
             </AudioProvider>
           </NavigationContainer>
         </SafeAreaProvider>
