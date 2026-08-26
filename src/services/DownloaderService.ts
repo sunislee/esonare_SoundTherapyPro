@@ -292,18 +292,25 @@ class DownloaderService {
         console.log(`[Downloader] 🔍 [FILE_CHECK] 文件大小: ${stat.size} bytes`);
         
         if (stat.size > 0) {
-          console.log(`[Downloader] ✅ [downloadResource] 文件已存在: ${resource.filename} (${stat.size} bytes)`);
-          console.log(`[Downloader] ✅ [downloadResource] 跳过重复下载，直接标记为 completed`);
-          console.log(`[Downloader] ⛔ [EARLY_RETURN] 提前退出，不执行 fetch`);
+          // 【P1-5 增强】已知期望大小且实际显著偏小 → 历史版本截断/损坏文件（旧 bug 曾只写前 1MB），删除重下
+          const expected = this.getExpectedSize(resource.id);
+          if (expected > 0 && stat.size < expected * 0.95) {
+            console.warn(`[Downloader] ⚠️ [FILE_CHECK] ${resource.filename} 大小 ${stat.size}B 低于期望 ${expected}B，判定损坏文件，删除重下`);
+            try { await RNFS.unlink(localPath); } catch (_e2) {}
+          } else {
+            console.log(`[Downloader] ✅ [downloadResource] 文件已存在: ${resource.filename} (${stat.size} bytes)`);
+            console.log(`[Downloader] ✅ [downloadResource] 跳过重复下载，直接标记为 completed`);
+            console.log(`[Downloader] ⛔ [EARLY_RETURN] 提前退出，不执行 fetch`);
           
-          this.notify({
-            resourceId: resource.id,
-            filename: resource.filename,
-            progress: 100,
-            status: 'completed',
-          });
+            this.notify({
+              resourceId: resource.id,
+              filename: resource.filename,
+              progress: 100,
+              status: 'completed',
+            });
           
-          return;  // 🎯 直接返回，不重复下载
+            return;  // 🎯 直接返回，不重复下载
+          }
         } else {
           console.log(`[Downloader] ⚠️ [FILE_CHECK] 文件存在但大小为 0，需要重新下载`);
         }
@@ -345,8 +352,10 @@ class DownloaderService {
       for (let urlIdx = 0; urlIdx < urls.length; urlIdx++) {
         const url = urls[urlIdx];
 
-        // 每次尝试前清理残留的部分文件（上一次失败会留下损坏数据，appendFile 会继续追加导致彻底损坏）
-        try { await RNFS.unlink(localPath); } catch (_e) { /* 无文件则跳过 */ }
+        // 【P1-5】断点续传：.part 跨源保留。所有镜像提供同一文件内容（同仓库不同代理），
+        // 已写入的 .part 是合法前缀（每次 appendFile/writeFile 都是完整块原子写入），
+        // streamDownloadTo 内部会探测断点并带 Range 续传；若服务端不支持 Range 会自动丢弃从 0 重下。
+        // 不再无条件 unlink(localPath) —— 那会毁掉续传状态。
 
         if (urlIdx > 0) {
           console.log(`[Downloader] 🔀 [FAILOVER] ${resource.filename} 切换源 ${urlIdx + 1}/${urls.length}: ${url}`);
@@ -420,23 +429,47 @@ class DownloaderService {
   }
 
   /**
-   * 【P1-1】单源下载核心（带超时看门狗）：fetch → 流式/arrayBuffer → 写盘。
+   * 【P1-1 + P1-5】单源下载核心（超时看门狗 + 断点续传）：fetch → 流式/arrayBuffer → 写盘。
+   * - 断点续传：数据写入 `${localPath}.part`；重试时探测 .part 大小，带 `Range: bytes=N-` 请求，
+   *   用 appendFile 追加。服务端忽略 Range（返回 200）→ 丢弃 .part 从 0 重下；
+   *   返回 416 → .part 实际已完整，直接改名。.part 是合法前缀（每次写入都是完整块），续传安全。
    * - 连接阶段：DOWNLOAD_CONN_TIMEOUT_MS 内未收到响应即 abort；
    * - 流式路径：每个新 chunk 重置停滞计时，STREAM_STALL_TIMEOUT_MS 无数据即 abort；
-   * - arrayBuffer 回退（RN 实际主路径）：whatwg-fetch 在原生层整包缓冲、JS 无法观测中间 chunk，
-   *   故按 Content-Length × 最低可行速率估算读预算，并以 race 定时器双保险确保 await 必然 settle。
-   * 超时通过 AbortController.abort() 终止底层 XHR（已验证 whatwg-fetch 3.6.20 对 signal 会 reject AbortError）。
+   * - arrayBuffer 回退（RN whatwg-fetch 实际主路径）：按 Content-Length × 最低可行速率估算读预算，
+   *   race 定时器双保险确保 await 必然 settle。
    */
   private async streamDownloadTo(resource: AudioResource, url: string, localPath: string): Promise<number> {
     const controller = new AbortController();
     const expectedSize = this.getExpectedSize(resource.id);
+    const partPath = `${localPath}.part`;
+
+    // ══【P1-5】断点探测══
+    let startOffset = 0;
+    try {
+      if (await RNFS.exists(partPath)) {
+        const partStat = await RNFS.stat(partPath);
+        startOffset = Number(partStat.size) || 0;
+        if (expectedSize > 0 && startOffset >= expectedSize) {
+          // 上次数据已写满但改名前进程被杀 → 直接改名完成，零网络请求
+          console.log(`[Downloader] ✅ [RESUME] .part 已达期望大小 (${startOffset}/${expectedSize})，跳过重下`);
+          await RNFS.moveFile(partPath, localPath);
+          return startOffset;
+        }
+        if (startOffset > 0) {
+          console.log(`[Downloader] 📌 [RESUME] 发现断点: ${partPath} (${startOffset} bytes)，尝试 Range 续传`);
+        }
+      }
+    } catch (e: any) {
+      console.warn(`[Downloader] ⚠️ [RESUME] 断点探测失败，全新下载:`, e?.message);
+      startOffset = 0;
+    }
 
     // 【P1-1 进度修复】已知大小 → stat.size/expectedSize 真实进度；未知 → 按 chunk 模拟（上限 95%），UI 不再恒为 0%
     let simProgress = 0;
     let lastNotified = -1;
 
     const notifyRealProgress = () => {
-      RNFS.stat(localPath).then(
+      RNFS.stat(partPath).then(
         (stat: any) => {
           const real = expectedSize > 0 ? Math.min(95, Math.floor((stat.size / expectedSize) * 100)) : simProgress;
           if (real > lastNotified) {
@@ -459,7 +492,8 @@ class DownloaderService {
       }, ms);
     };
 
-    let totalWritten = 0;
+    let newBytes = 0; // 本次新写入字节数（不含断点）
+    let finalSize = 0; // 最终文件字节数（优先取实际 stat，stat 不可用时回退为断点+新增）
 
     try {
       // 连接阶段超时：10s 未收到响应头即 abort
@@ -468,16 +502,36 @@ class DownloaderService {
         controller.abort();
       }, DOWNLOAD_CONN_TIMEOUT_MS);
 
-      const response = await fetch(url, { signal: controller.signal });
+      const headers: Record<string, string> = {};
+      if (startOffset > 0) headers['Range'] = `bytes=${startOffset}-`;
+
+      const response = await fetch(url, { signal: controller.signal, headers });
       if (connTimer) clearTimeout(connTimer);
       connTimer = null;
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // ══【P1-5】服务端 Range 响应处理══
+      if (startOffset > 0 && response.status === 200) {
+        // 服务端不支持 Range：丢弃断点，从 0 重下
+        console.warn(`[Downloader] ⚠️ [RESUME] 服务端忽略 Range (HTTP 200)，丢弃断点重新下载`);
+        try { await RNFS.unlink(partPath); } catch (_e) {}
+        startOffset = 0;
+      } else if (startOffset > 0 && response.status === 416) {
+        // Range Not Satisfiable：.part 实际已完整
+        console.log(`[Downloader] ✅ [RESUME] HTTP 416，.part 实际已完整，直接改名`);
+        await RNFS.moveFile(partPath, localPath);
+        return startOffset;
+      } else if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
 
       if ((response as any).body && typeof (response as any).body.getReader === 'function') {
         // ══ 流式路径（Web Streams 可用时）══
         const reader = (response as any).body.getReader();
         armStallWatchdog(STREAM_STALL_TIMEOUT_MS);
+
+        if (startOffset === 0 && !(await RNFS.exists(partPath))) {
+          await RNFS.writeFile(partPath, '', 'base64'); // 预创建空文件，保证 appendFile 可追加
+        }
 
         while (true) {
           const readResult: { done: boolean; value?: Uint8Array } = await reader.read();
@@ -485,8 +539,8 @@ class DownloaderService {
 
           // 【P1-1 修复】旧代码此处同样截断 >1MB 的 chunk；现在整块写入
           const bytes = new Uint8Array(readResult.value);
-          await RNFS.appendFile(localPath, bytesToBase64(bytes), 'base64');
-          totalWritten += bytes.length;
+          await RNFS.appendFile(partPath, bytesToBase64(bytes), 'base64');
+          newBytes += bytes.length;
 
           simProgress = Math.min(95, simProgress + 2); // 未知大小时的模拟进度递增
           armStallWatchdog(STREAM_STALL_TIMEOUT_MS);   // 新 chunk 到达，重置看门狗
@@ -509,23 +563,37 @@ class DownloaderService {
           );
         });
 
-        // 【P1-1 修复】旧代码此处只写前 1MB，>1MB 文件被静默截断却仍标记完成；现在一次性写入完整内容
         const uint8 = new Uint8Array(buffer);
-        await RNFS.writeFile(localPath, bytesToBase64(uint8), 'base64');
-        totalWritten = uint8.length;
-        console.log(`[Downloader] ✅ [FALLBACK] arrayBuffer 全量写入完成: ${totalWritten} bytes`);
+        if (startOffset > 0) {
+          await RNFS.appendFile(partPath, bytesToBase64(uint8), 'base64'); // 续传：追加到断点
+        } else {
+          await RNFS.writeFile(partPath, bytesToBase64(uint8), 'base64'); // 全新下载：覆盖写（与旧行为一致）
+        }
+        newBytes = uint8.length;
+        console.log(`[Downloader] ✅ [FALLBACK] arrayBuffer 全量写入完成: ${newBytes} bytes (本次)`);
       }
 
-      // 成功路径：清除看门狗，避免迟到的 abort 影响后续请求
+      // ══【P1-5】完整性校验 + 改名══
+      let finalStat: any = null;
+      try { finalStat = await RNFS.stat(partPath); } catch (_e) { finalStat = null; }
+      if (finalStat && expectedSize > 0 && finalStat.size !== expectedSize) {
+        // 校验失败：保留 .part（下次从新断点续传），绝不删除、绝不改名
+        throw new Error(`大小校验失败: 期望 ${expectedSize}B，实际 ${finalStat.size}B`);
+      }
+      finalSize = finalStat ? Number(finalStat.size) || startOffset + newBytes : startOffset + newBytes;
+
       if (stallTimer) clearTimeout(stallTimer);
       stallTimer = null;
+
+      await RNFS.moveFile(partPath, localPath);
+      console.log(`[Downloader] 📦 [RESUME] 改名完成: ${partPath} → ${localPath}`);
     } finally {
       clearInterval(progressInterval);
       if (connTimer) clearTimeout(connTimer);
       if (stallTimer) clearTimeout(stallTimer);
     }
 
-    return totalWritten;
+    return finalSize;
   }
 
   /**
