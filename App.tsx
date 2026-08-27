@@ -1,5 +1,6 @@
 import React, { Component, type ErrorInfo, useState, useEffect } from 'react';
-import { StatusBar, useColorScheme, ActivityIndicator, View, Text, Platform, DeviceEventEmitter, StyleSheet, TouchableOpacity } from 'react-native';
+import { StatusBar, useColorScheme, ActivityIndicator, View, Text, Platform, DeviceEventEmitter, StyleSheet, TouchableOpacity, AppState } from 'react-native';
+import { type AppStateStatus } from 'react-native';
 
 // 【v1.4.2 Release 防御】全局 ErrorBoundary — 捕获所有组件渲染/挂载期同步错误
 // Hermes Runtime Sync Error 不会经过 ExceptionsManagerModule.reportException，
@@ -61,6 +62,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer from 'react-native-track-player';
 import { NativeModules } from 'react-native';
 import { DownloadService } from './src/services/DownloadService';
+import { DownloaderServiceInstance } from './src/services/DownloaderService';
 import { preloadBackgroundAvailability } from './src/constants/scenes';
 // 【🔥 Toast 修复】引入 react-native-toast-message 容器组件和配置
 import Toast from 'react-native-toast-message';
@@ -247,6 +249,19 @@ function App() {
     };
 
     initApp();
+  }, []);
+
+  // 【P1-3 后台下载续命】App 从后台切回前台时重新触发下载：
+  // 已下载资源被 FILE_CHECK 跳过，只补缺失文件 —— 天然支持后台中断后的续传
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
+      if (status === 'active') {
+        DownloaderServiceInstance.startDownload().catch((e: any) =>
+          console.error('[App] 后台恢复触发下载失败:', e)
+        );
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   if (!isAudioReady) {
