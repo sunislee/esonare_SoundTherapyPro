@@ -20,6 +20,7 @@ import AudioService, {
 import TrackPlayer, { State } from 'react-native-track-player';
 
 import { Scene } from '../constants/scenes';
+import { getLocalPath } from '../constants/audioAssets'; // 【P0-5】缺失资源 → 下载页 targetFiles 路径来源
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
@@ -178,7 +179,13 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   try {
                     const navObj = navigationRef.current;
                     if (navObj && typeof navObj.navigate === 'function') {
-                      navObj.navigate('ResourceDownload');
+                      // 【P0-5 修复】路由名必须是 MainNavigator 注册的 'ResourceDownloadScreen'
+                      // （原 'ResourceDownload' 未注册 → 点「下载」静默失败，无任何反应）
+                      // targetFiles 与 AudioService.ts:3237 缺失资源判定同源：getLocalPath(scene.category, scene.filename)
+                      const targetFiles = scene?.filename
+                        ? [getLocalPath(scene?.category ?? '', scene.filename)]
+                        : undefined;
+                      navObj.navigate('ResourceDownloadScreen', { targetFiles });
                     } else {
                       console.warn('[AudioContext] ⚠️ navigation.navigate 不可用，无法跳转下载页');
                     }
