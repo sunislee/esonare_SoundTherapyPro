@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { Alert } from 'react-native';
+import { Alert, DeviceEventEmitter } from 'react-native';
 import AudioService, { 
   toggleAmbience as _toggleAmbience,
   pause as _pause,
@@ -57,6 +57,8 @@ interface AudioContextType {
   getAmbientVolumeById: (id: string) => number;
   getRecordShopVolumes: () => RecordShopVolumes | null;
   toggleAmbience: (scene: Scene, targetState: boolean) => Promise<void>;
+   // 【方案 B】将全局 8 段 master EQ 重置为平响（flat），主场景切换时调用
+   resetEqToFlat: () => void;
   playScene: (scene: Scene) => Promise<void>;
 }
 
@@ -370,6 +372,23 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }) : () => {};
 
+    // 【方案 B】监听主场景切换：切换完成后把全局 8 段 master EQ 重置为 flat
+    // 由 AudioService.switchSoundscape 在成功切换后发射 'sceneSwitched' 事件触发。
+    // 用 addListener（RN 的 E 接口提供 addListener，非 on）订阅，返回 EmitterSubscription。
+    const sceneSwitchedSubscription =
+      typeof DeviceEventEmitter?.addListener === 'function'
+        ? DeviceEventEmitter.addListener('sceneSwitched', () => {
+            try { resetEqToFlatRef.current(); }
+            catch (e) { console.error('[AudioContext] ❌ sceneSwitched 处理失败:', e); }
+          })
+        : null;
+
+    // 归一化为 () => void，供 safeUnsubscribe 调用 .remove() 取消订阅
+    const unsubscribeSceneSwitched = () => {
+      try { sceneSwitchedSubscription?.remove(); }
+      catch (e) { /* 忽略 */ }
+    };
+
     // 【v1.4.2 Release 防御】清理函数：确保所有取消订阅函数都存在且为 function
     const safeUnsubscribe = (fn: any) => {
       if (typeof fn === 'function') {
@@ -382,6 +401,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       safeUnsubscribe(unsubscribeSmallScenes);
       safeUnsubscribe(unsubscribeVolume);
       safeUnsubscribe(unsubscribeTimer);
+      safeUnsubscribe(unsubscribeSceneSwitched);
       
       // 【清理】清除所有 EQ 防抖计时器
       for (const timer of Object.values(eqDebounceTimers.current)) {
@@ -470,6 +490,32 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.log(`[AudioContext] ✅ EQ 更新：频段${index}, gain=${gain}, dB=${(gain * 12).toFixed(1)}dB`);
     }, 50);
   }, [audioService]); // 【关键修复】添加 audioService 依赖，确保引用更新时回调也同步
+
+  // 【方案 B】将全局 8 段 master EQ 重置为平响（flat）
+  // 切换主场景时由 AudioService 发射的 'sceneSwitched' 事件触发，
+  // 避免上一个场景的 EQ 曲线带入新场景。QuickPresets 的 6 个全局预设不受影响。
+  const resetEqToFlat = useCallback(() => {
+    const flatGains = new Array(8).fill(0);
+    // 同步 ref（防抖发送时取最新值）
+    eqGainsRef.current = flatGains;
+    // 同步 UI 状态
+    setEqGains(flatGains);
+    // 推送给原生 8 段 master EQ（session=0，全部频段归 0 = 平响）
+    if (set8BandEQ) {
+      try {
+        set8BandEQ(flatGains);
+      } catch (e) {
+        console.error('[AudioContext] ❌ resetEqToFlat 推送原生失败:', e);
+      }
+    } else {
+      console.warn('[AudioContext] ⚠️ NativeEQ.set8BandEQ 不可用，跳过 EQ 重置');
+    }
+    console.log('[AudioContext] 🧯 [方案B] 主场景切换，全局 8 段 EQ 已重置为 flat');
+  }, [set8BandEQ]);
+
+  // 【方案 B】ref 始终持有最新的 resetEqToFlat，供事件监听器调用（避免闭包过期）
+  const resetEqToFlatRef = useRef(resetEqToFlat);
+  resetEqToFlatRef.current = resetEqToFlat;
 
   // 【v1.4.2 Release 防御】安全调用包装器：所有方法先检查函数存在性再调用
   // 【Hermes Release + R8 修复】safeCall 必须用 bind 绑定 this，否则类方法内部 this 丢失
@@ -605,6 +651,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         clearSleepTimer,
         updateAmbientVolume,
         updateEqGain,
+        resetEqToFlat,
         updateRecordShopVolume,
         getRecordShopVolumes,
         setAmbient,

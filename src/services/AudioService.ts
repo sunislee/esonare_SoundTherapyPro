@@ -3107,6 +3107,21 @@ The tool call you made did not produce any output yet. The system is waiting for
       await this.fadeInVolume(1500);
       
       const totalTime = Date.now() - startTime;
+      // ════════════════════════════════════════════════════════
+      // 【方案 B】主场景切换完成 → 发射 sceneSwitched 事件
+      // 由 AudioContext 监听，把全局 8 段 master EQ（session=0）重置为 flat，
+      // 避免上一个场景的 EQ 曲线带入新场景。
+      // 注意：小场景（环境层 toggleAmbience）不触发此重置。
+      // ════════════════════════════════════════════════════════
+      try {
+        const { DeviceEventEmitter: Emitter } = require('react-native');
+        if (Emitter && typeof Emitter.emit === 'function') {
+          Emitter.emit('sceneSwitched', { sceneId: scene.id });
+        }
+      } catch (emitError) {
+        console.warn('[AudioService] ⚠️ [方案B] 发射 sceneSwitched 失败:', emitError?.message);
+      }
+
       console.log(`[AudioService] ✅ [Sine-Crossfade v2.0-响应] 完成！(总耗时: ${totalTime}ms)`);
       
     } catch (error) {
