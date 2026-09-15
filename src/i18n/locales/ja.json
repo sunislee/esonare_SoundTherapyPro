@@ -48,6 +48,7 @@
   "common": {
     "confirm": "OK",
     "cancel": "キャンセル",
+    "unableToOpen": "リンクを開けません",
     "save": "保存",
     "success": "成功",
     "error": "エラー",
@@ -124,6 +125,7 @@
   },
   "download": {
     "title": "リソース準備中",
+    "message": "「{{sceneTitle}}」を再生するにはダウンロードが必要です。今すぐダウンロードしますか？",
     "optimizing": "音質を最適化中...",
     "downloading": "静寂の瞬間を準備中...",
     "checking": "リソースの整合性を確認中...",

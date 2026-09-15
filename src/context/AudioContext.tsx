@@ -157,7 +157,14 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         const dialogTitle = safeT('download.title');
         const sceneTitle = scene?.title || '';
-        const dialogMessage = safeT('download.message', { sceneTitle });
+        // 【P0-7 修复】download.message 含 {{sceneTitle}} 占位，插值参数必须作为 i18next options 传入。
+        // 注意：本文件 :128 有个同名局部 safeT(key, params) 会遮蔽 src/i18n 的模块级 safeT，
+        // 故此处直接用 i18n.t，避免再依赖那个两参局部包装器。
+        const dialogMessage = i18n.t('download.message', {
+          sceneTitle,
+          // 万一某语言包漏键：defaultValue 同样参与插值，不会退化成裸 key
+          defaultValue: '需要下载「{{sceneTitle}}」的音频资源后才能播放，是否现在下载？',
+        });
         const cancelText = safeT('common.cancel');
         const downloadText = safeT('actions.download');
 

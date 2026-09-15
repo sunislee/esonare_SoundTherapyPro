@@ -51,6 +51,10 @@
   "common": {
     "confirm": "确定",
     "cancel": "取消",
+    "exit": "退出",
+    "confirmExit": "确认退出",
+    "confirmExitMessage": "确定要退出应用吗？",
+    "unableToOpen": "无法打开链接",
     "save": "保存",
     "success": "成功",
     "error": "错误",
@@ -360,6 +364,7 @@
   },
   "download": {
     "title": "资源准备中",
+    "message": "需要下载「{{sceneTitle}}」的音频资源后才能播放，是否现在下载？",
     "optimizing": "正在优化音质...",
     "downloading": "正在准备宁静时刻...",
     "checking": "正在验证资源完整性...",
