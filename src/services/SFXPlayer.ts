@@ -83,8 +83,8 @@ class SFXPlayer {
       }
 
       // 【防重复】如果同一个 soundId 正在播放，先停止旧的循环实例
-      // 【P0-2】必须走 stopLoopSound()：公开 stop() 现在会连带释放全部在飞 one-shot，
-      // 若这里调用 stop()，则「点交互音(playAmbient → play)」会误杀老唱片店正在播的随机音效。
+      // 【P0-2】走私有 stopLoopSound() 而非公开 stop()：play 的「防重复」只针对循环池语义，
+      // 不应携带场景收尾类副作用，以免日后 stop() 再扩展时误伤并发中的 one-shot。
       this.stopLoopSound(soundId);
 
       console.log('[SFXPlayer] 开始播放交互音:', soundId, '路径:', soundPath);
@@ -267,13 +267,17 @@ class SFXPlayer {
   }
 
   /**
-   * 停止指定音效（对外语义：该音效所属场景结束时的收尾）
-   * 【P0-2】同时释放全部在飞 one-shot，否则场景退出后内存与音频焦点泄漏
+   * 停止指定的循环音效（不牵连 one-shot）
    * @param soundId 音效 ID
    */
   stop(soundId: string): void {
+    // 【P0-2 回归修复】此处绝不能调用 releaseAllOneShots()：
+    // AudioService.toggleAmbience(:2703) 用 stop('small_<id>') 关闭单个交互音，
+    // 一旦牵连 one-shot，就会掐掉老唱片店正在播放的随机音效（要等下一个 10–35s 周期才补声）。
+    // one-shot 的生命周期另有两道保障，无需单点 stop 兜底：
+    //   ① 播完时由底层 play 回调自释放（success 为 true/false 均释放，见 :220-227 → releaseOneShot）；
+    //   ② 场景切换 / 组件卸载走 stopAll() → releaseAllOneShots() 全量兜底。
     this.stopLoopSound(soundId);
-    this.releaseAllOneShots(`stop:${soundId}`);
   }
 
   /**
