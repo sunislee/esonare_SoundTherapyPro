@@ -5,6 +5,42 @@
 > RN 版本：0.81.5  
 
 ---
+## 1.4.4 / vc147（2026-09-15，Google Play 热修）
+
+### 修复（P0）
+- **P0-1** `AudioService` 的 `addSleepTimerListener` / `addSmallScenesListener` 被一段提示词污染文本吞掉（已实证 v1.4.2 tag 内含该污染，线上调用方 `SleepTimerSheet.tsx` / `BreathDetailScreen.tsx` 取到 undefined 即崩）。本次恢复两个监听器方法。
+- **P0-3** `MultiTrackAudioService.ts` 中未定义变量 `volumeStep`（TS2304）导致混音音量步进直接抛错。
+- **P0-5** Mixer 路由名错误修正。
+- **P0-7** 下载弹窗正文显示裸 key `download.message`：补齐 zh/en/ja 三语 `download.message`，并让模块级 `safeT` 透传 i18next interpolation options（`defaultValue` 收紧为 `string`，「把对象当兜底」在编译期即报错）。
+- **P0-8** `AudioContext.tsx` Provider value 重复键（TS1117）。
+- **恢复 Firebase Crashlytics**：`android/app/build.gradle` 重新 apply crashlytics 插件 + firebase-bom/analytics/crashlytics 三个依赖；`App.tsx` 的 `GlobalErrorBoundary.componentDidCatch` 接入既有 `CrashReportUtil.logException`（不新增依赖、不新写上报逻辑）。
+
+### tsc：182 → 176（净减 6，全部为真实修复，零新增）
+逐条（`comm` 对比 before/after 快照的原始结果）：
+1. `src/components/SleepTimerSheet.tsx` TS2339 `Property 'addSleepTimerListener' does not exist on type 'AudioService'` — P0-1
+2. `src/components/SleepTimerSheet.tsx` TS7006 `Parameter 'remaining' implicitly has an 'any' type` — 随 P0-1 恢复的签名一并消除
+3. `src/screens/BreathDetailScreen.tsx` TS2339 `Property 'addSmallScenesListener' does not exist on type 'AudioService'` — P0-1
+4. `src/screens/BreathDetailScreen.tsx` TS7006 `Parameter 'ids' implicitly has an 'any' type` — 同上
+5. `src/services/MultiTrackAudioService.ts` TS2304 `Cannot find name 'volumeStep'` — P0-3
+6. `src/context/AudioContext.tsx` TS1117 `An object literal cannot have multiple properties with the same name` — P0-8
+
+注：P0-5（路由名）与 P0-7（插值/补键）属运行时缺陷，不体现在 tsc 计数上。
+
+### 未随包发布
+- **老唱片店音效层（P0-2）修复已完成并保留在 `keep/P0-2-sfxplayer` 分支，因需真机音频验证，延至 vc148。**（`SFXPlayer.setVolume/playOneShot` + one-shot 独立池 + `stop(soundId)` 语义收窄；已从 `fix/p0-hotfix-147` revert，见 `f0b45221`）
+
+### 已知遗留 / 风险（诚实口径）
+- **Crashlytics 目前只恢复到「构建期集成」**：`MainApplication.kt` 未注册 `CrashReportPackage`，且 `CrashReportModule.logException` 内部走的是腾讯 Bugly 反射（项目无 Bugly 依赖），因此 JS 侧 `CrashReportUtil.logException` 实际只会落到 `console.warn`。要让 React 边界错误真正进入 Firebase 控制台，需在 vc148 改原生模块 + 注册 Package + apply `com.google.gms.google-services`（本轮范围外，未动）。
+- **本项目没有 productFlavors**，vc147 用单变体 `bundleRelease` / `assembleRelease` 出包（历史脚本里的 `*GoogleRelease` 任务在本仓库不存在）。
+- 未跟踪资源 `src/assets/images/scenes/forest_rain.webp`、`city_rain_urban.webp`：精确 grep（带 `.webp` 后缀）确认**零代码引用**（`scenes.ts:273` 的 `city_rain_urban` 场景实际 require 的是 `starlit_wilderness.webp`），本次不带入仓库，去留由 D6 决定。
+
+### 流程缺陷记录
+- **1.4.3 / vc146 当时漏打 git tag，记为流程缺陷，今后出包必须先打 tag。**（不给历史 commit 补打 v1.4.3 tag，避免误导后续排查）
+- 出包前必须跑「未跟踪源码门禁」：`RecordShopAudioManager.ts` / `QuickPresets.tsx` / `EQGenerator.ts` 曾在 v1.4.0 / v1.4.2 / a8059baf 全部 MISSING，历次线上包能跑全靠打包机工作区里未提交的文件。
+- 临时诊断入口 commit `2507ccdf`（MainActivity 的 `sfx_diag` intent 开关）已在本包前 revert（`ec3ba24d`），复核 `git diff a8059baf -- MainActivity.kt` 为空。
+
+---
+
 ## [2026-05-08] 开发进度：漫游模式与无缝切换优化 (基于 1.4.2-beta)
 
 ### 核心工作
