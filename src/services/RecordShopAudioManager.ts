@@ -103,8 +103,10 @@ class RecordShopAudioManager {
 
       this.scheduleRandomSFX();
       console.log('[RecordShopAudioManager] ✅ 随机 SFX 定时器已启动');
-    } catch (error) {
-      console.error('[RecordShopAudioManager] ❌ 启动失败:', error);
+    } catch (error: any) {
+      // 【P0-2】原来只有一句笼统「启动失败」：setVolume 不存在抛出的 TypeError 被这里吞掉，
+      // 且 scheduleRandomSFX() 随之永不执行 → 整个唱片店音效层静默失效。补可定位日志，不改控制流。
+      console.warn(`[SFX-DIAG] start 失败 soundId=${VINYL_CRACKLE_SOUND_ID} filename=${AMBIENT_RESOURCES.RECORD_SHOP_CRACKLE} msg=${error?.message || error}`);
     }
   }
 
@@ -180,8 +182,10 @@ class RecordShopAudioManager {
       const sfxId = `record_shop_sfx_${Date.now()}`;
       await this.sfxPlayer.playOneShot(sfxPath, sfxId, this.volumes.sfx);
       console.log('[RecordShopAudioManager] ✅ 随机 SFX 播放:', sfxId);
-    } catch (error) {
-      console.error('[RecordShopAudioManager] ❌ 随机 SFX 播放失败:', error);
+    } catch (error: any) {
+      // 【P0-2】playOneShot 不存在时的 TypeError 正是被这里吞掉的。sfxId/sfxPath 声明在 try 内，
+      // catch 里按作用域只能取到 randomFilename（即 path 来源），故输出它 + error.message。
+      console.warn(`[SFX-DIAG] 随机 SFX 播放失败 filename=${randomFilename} msg=${error?.message || error}`);
     }
   }
 }
