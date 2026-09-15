@@ -22,7 +22,7 @@ class SFXPlayer {
   private oneShotSounds: Map<string, Sound> = new Map();
   /** 【P0-2】当前有 in-flight one-shot 的外部 id，用于「同一 id 未播完则忽略新触发」 */
   private activeOneShotIds: Set<string> = new Set();
-  /** 【P0-2】one-shot key 自增序号，stop()/stopAll() 时归零 */
+  /** 【P0-2】one-shot key 自增序号。【必须单调递增，禁止重置】见 releaseAllOneShots() 注释 */
   private oneShotSeq: number = 0;
   private isInitialized: boolean = false;
 
@@ -226,7 +226,7 @@ class SFXPlayer {
               console.log(`[SFX-DIAG] one-shot 播完并释放 key=${internalKey} success=${success}`);
             });
 
-            console.log(`[SFX-DIAG] playOneShot 已开始 key=${internalKey} path=${soundPath} vol=${safeVol}`);
+            console.log(`[SFX-DIAG] playOneShot 已开始 key=${internalKey} soundId=${soundId} path=${soundPath} vol=${safeVol}`);
             resolve(true);
           } catch (innerError: any) {
             console.warn(`[SFX-DIAG] playOneShot 播放异常 key=${internalKey} path=${soundPath} msg=${innerError?.message || innerError}`);
@@ -329,7 +329,7 @@ class SFXPlayer {
   }
 
   /**
-   * 【P0-2】释放全部在飞 one-shot，并清空集合与自增序号。
+   * 【P0-2】释放全部在飞 one-shot，并清空集合（自增序号【不】清空，保持单调）。
    * 只操作 oneShotSounds / activeOneShotIds，绝不触碰循环池 activeSounds。
    */
   private releaseAllOneShots(reason: string): void {
@@ -350,7 +350,9 @@ class SFXPlayer {
 
     this.oneShotSounds.clear();
     this.activeOneShotIds.clear();
-    this.oneShotSeq = 0;
+    // 【序号必须单调递增，禁止重置】若在此把 oneShotSeq 归零，stopAll() 之后新建的 one-shot
+    // 会复用上一代已用过的 key（如 record_shop_sfx_x#0）；上一代 Sound 迟到的 play 结束回调
+    // 便会通过 has(internalKey) 命中这个新 key，把正在播放的新实例误杀。故此处绝不重置序号。
     console.log(`[SFX-DIAG] 已释放 ${count} 个在飞 one-shot (${reason})`);
   }
 
