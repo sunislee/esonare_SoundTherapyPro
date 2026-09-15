@@ -40,6 +40,7 @@ import i18n from '../i18n';
 
 // 【交互音效独立播放器】
 import SFXPlayer from './SFXPlayer';
+import { ensureInteractiveSfxDiagnosis } from '../constants/interactiveSfxDiagnostic';
 import { recordShopAudioManager, RecordShopLayer, RecordShopVolumes } from './RecordShopAudioManager';
 
 // 【Shuffle 后台切换优化】静态导入 SceneRoamManager，避免锁屏后 await import() 卡死
@@ -2619,7 +2620,11 @@ The tool call you made did not produce any output yet. The system is waiting for
   }
 
   async playAmbient(id: string): Promise<void> {
+    const diag = await ensureInteractiveSfxDiagnosis();
+    if (diag) console.log(`[SFX-DIAG] [playAmbient ENTRY] id=${id}`);
+
     if (!this._isReady) {
+      if (diag) console.error('[SFX-DIAG-ERR] _isReady=false → 跳过 playAmbient', id);
       console.warn('[AudioService] ⚠️ 初始化未完成，跳过 playAmbient');
       return;
     }
@@ -2629,12 +2634,14 @@ The tool call you made did not produce any output yet. The system is waiting for
     // 查找对应的场景配置
     const scene = SCENES.find(s => s.id === id);
     if (!scene || !scene.filename) {
+      if (diag) console.error('[SFX-DIAG-ERR] scene/scene.filename 未找到', 'id=', id, 'filename=', scene?.filename);
       console.error('[AudioService] ❌ 交互音场景未找到:', id);
       return;
     }
     
     const uri = AUDIO_MAP[scene.filename];
     if (!uri) {
+      if (diag) console.error('[SFX-DIAG-ERR] AUDIO_MAP 无映射', 'filename=', scene.filename, 'id=', id);
       console.error('[AudioService] ❌ 交互音资源未找到:', scene.filename);
       return;
     }
@@ -2644,17 +2651,21 @@ The tool call you made did not produce any output yet. The system is waiting for
     try {
       // 【关键重构】使用 SFXPlayer 播放，不触碰 TrackPlayer
       const localPath = getValidUrl(uri);
+      if (diag) console.log(`[SFX-DIAG] uri=${uri} → localPath=${localPath}`);
       console.log('[AudioService] 🎵 通过 SFXPlayer 播放交互音:', soundId);
       
       await this.sfxPlayer.play(localPath, soundId);
+      if (diag) console.log(`[SFX-DIAG] sfxPlayer.play resolved → activeCount=${this.sfxPlayer.getActiveCount()} soundId=${soundId}`);
       __DEV__ && console.log('[AudioService] ✅ 交互音已加入 SFXPlayer 播放队列');
       
       // 记录到 activeSmallScenes
       this.activeSmallScenes.add(id);
       this.notifySmallScenes();
       
+      if (diag) console.log(`[SFX-DIAG] activeSmallScenes 已加入 ${id}`);
       __DEV__ && console.log('[AudioService] ✅ 交互音播放已触发');
     } catch (error: any) {
+      if (diag) console.error('[SFX-DIAG-ERR] sfxPlayer.play threw', 'msg=', error?.message, 'stack=', error?.stack);
       console.error('[AudioService] ❌ playAmbient 失败:', error);
       console.error('[AudioService] ❌ 错误消息:', error?.message);
       console.error('[AudioService] ❌ 错误堆栈:', error?.stack);
