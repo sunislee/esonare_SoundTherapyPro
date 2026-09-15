@@ -193,6 +193,12 @@ const fadeOutMultiTrack = async () => {
   
   const duration = CROSSFADE_DURATION;
   const steps = 50;
+  // 【P0-3 修复】防御性提前返回，避免 1/steps 产生 Infinity/NaN 写入 setVolume
+  if (steps <= 0) {
+    console.warn('[MultiTrack] ⚠️ steps <= 0，跳过淡出以避免除零');
+    return;
+  }
+  const volumeStep = 1 / steps; // 【P0-3 修复】原缺失此声明：TS2304 + 运行时 ReferenceError
   const interval = duration / steps;
   
   for (let step = 0; step <= steps; step++) {
@@ -215,28 +221,34 @@ export const stopMultiTrackAudio = async () => {
   console.log('[MultiTrack] 停止播放');
   
   if (players.low || players.mid || players.high) {
-    // 先淡出
-    await fadeOutMultiTrack();
-    
-    // 停止并释放
-    players.low?.stop();
-    players.mid?.stop();
-    players.high?.stop();
-    
-    players.low?.release();
-    players.mid?.release();
-    players.high?.release();
-    
-    players = {
-      low: null,
-      mid: null,
-      high: null,
-    };
-    
-    currentAudioId = null;
-    isPlaying = false;
-    
-    console.log('[MultiTrack] ✅ 已停止播放');
+    try {
+      // 先淡出
+      await fadeOutMultiTrack();
+
+      // 停止
+      players.low?.stop();
+      players.mid?.stop();
+      players.high?.stop();
+    } catch (error) {
+      // 【P0-3 修复】淡出内部任何异常（含 setVolume/定时器）都不得阻断释放
+      console.error('[MultiTrack] ⚠️ 淡出/停止失败，仍强制释放音频实例:', error);
+    } finally {
+      // 【P0-3 修复】release 放入 finally：保证原生 Sound 实例一定回收，不再泄漏
+      players.low?.release();
+      players.mid?.release();
+      players.high?.release();
+
+      players = {
+        low: null,
+        mid: null,
+        high: null,
+      };
+
+      currentAudioId = null;
+      isPlaying = false;
+
+      console.log('[MultiTrack] ✅ 已停止播放');
+    }
   }
 };
 
