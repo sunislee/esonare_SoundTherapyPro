@@ -1,44 +1,11 @@
 package com.anonymous.soundtherapyapp
 
-import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-import com.reactnativecommunity.asyncstorage.ReactDatabaseSupplier
 
 class MainActivity : ReactActivity() {
-
-  /**
-   * 交互音诊断开关（adb 专用临时入口）。
-   *
-   * 用法（release APK 无 JS 调试桥时，从 adb 一键开启 [SFX-DIAG] 分级日志）：
-   *   adb shell am start -W -n com.anonymous.soundtherapyapp/.MainActivity -e sfx_diag 1
-   *
-   * 机制：onCreate 读取 intent extra「sfx_diag=1」，用同一进程直接写入 AsyncStorage 持久化键
-   *       INTERACTIVE_SFX_DIAG_ENABLED=1（app 自有 SQLite，无需 root / 无需 JS 桥）。
-   *       JS 侧 ensureInteractiveSfxDiagnosis() 下次启动即读到该标志并开启诊断日志。
-   *       值持久保存在 DB，故只需启动一次；之后正常启动（不带 extra）仍保持开启。
-   *       【可移除】定位根因后：删掉本 onCreate + 两处 import 即可，无任何残留耦合。
-   */
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    try {
-      if (intent?.extras?.getString("sfx_diag") == "1") {
-        val db = ReactDatabaseSupplier.getInstance(applicationContext).get()
-        // TABLE_CATALYST/KEY_COLUMN/VALUE_COLUMN 为 package-private，跨包需用字面量。
-        val table = "catalystLocalStorage"
-        val sql = "INSERT OR REPLACE INTO $table (key, value) VALUES (?, ?);"
-        val stmt = db.compileStatement(sql)
-        stmt.bindString(1, "INTERACTIVE_SFX_DIAG_ENABLED")
-        stmt.bindString(2, "1")
-        stmt.executeInsert()
-      }
-    } catch (_: Exception) {
-      // 写入失败不阻断启动，诊断默认关闭
-    }
-  }
-
 
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
