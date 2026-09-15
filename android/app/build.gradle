@@ -2,9 +2,9 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-// 【Firebase Crashlytics】应用插件（暂时禁用，等待 google-services.json）
+// 【Firebase Crashlytics】应用插件（google-services 仍按原状态注释）
 // apply plugin: 'com.google.gms.google-services'
-// apply plugin: 'com.google.firebase.crashlytics'
+apply plugin: 'com.google.firebase.crashlytics'
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -90,8 +90,8 @@ android {
         applicationId "com.anonymous.soundtherapyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 146
-        versionName "1.4.3"
+        versionCode 147
+        versionName "1.4.4"
         
         // 【16KB 页适配】只打包 arm64-v8a 架构
         ndk {
@@ -145,10 +145,10 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-    // 【Firebase Crashlytics】添加 Firebase SDK（暂时禁用，等待 google-services.json）
-    // implementation platform('com.google.firebase:firebase-bom:33.1.2')
-    // implementation 'com.google.firebase:firebase-analytics'
-    // implementation 'com.google.firebase:firebase-crashlytics'
+    // 【Firebase Crashlytics】恢复上报能力（vc147 起重新启用）
+    implementation platform('com.google.firebase:firebase-bom:33.1.2')
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-crashlytics'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
