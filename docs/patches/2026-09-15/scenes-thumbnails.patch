@@ -1,0 +1,47 @@
+diff --git a/src/constants/scenes.ts b/src/constants/scenes.ts
+index 9b27f693..04c7403f 100644
+--- a/src/constants/scenes.ts
++++ b/src/constants/scenes.ts
+@@ -157,6 +157,16 @@ const backgrounds: Record<SceneCategory, { source: any; color: string }> = {
+   },
+ };
+ 
++// ════════════════════════════════════════════════════════════
++// 【🆕 专属缩略图资源导入声明】森林雨 / 城市夜雨
++// 文件路径：src/assets/images/scenes/forest_rain.webp 、 city_rain_urban.webp
++// 说明：这两张为「森林雨」与「城市夜雨」两个场景的独立专属缩略图，
++//       不再复用分类图（category_*.webp）或其他场景旧图。
++//       当前文件为占位图：请将两张同名真实图片覆盖到对应路径即可，无需再改动代码。
++// ════════════════════════════════════════════════════════════
++const FOREST_RAIN_THUMBNAIL = require('../assets/images/scenes/forest_rain.webp');               // 森林雨 (oriental_zen_monastery) 专属缩略图
++const CITY_NIGHT_RAIN_THUMBNAIL = require('../assets/images/scenes/city_rain_urban.webp');       // 城市夜雨 (city_rain_urban) 专属缩略图
++
+ // 【🔥 v1.4.3 修复】西方教会场景独立缩略图映射（Release 包使用 require() 静态资源）
+ const WESTERN_CHURCH_THUMBNAIL_MAP: Record<string, any> = {
+   western_church_morning_bell: require('../assets/images/scenes/western_church_candlelight.webp'),
+@@ -168,7 +178,7 @@ const WESTERN_CHURCH_THUMBNAIL_MAP: Record<string, any> = {
+ 
+ // 【 v1.4.6 修复】东方禅意场景独立缩略图映射（使用不同类别图片作为占位，下载完成后显示正确图片）
+ const ORIENTAL_THUMBNAIL_MAP: Record<string, any> = {
+-  oriental_zen_monastery: require('../assets/images/categories/category_nature.webp'), // 森林图作为寺院占位
++  oriental_zen_monastery: FOREST_RAIN_THUMBNAIL, // 森林雨专属缩略图（原复用 category_nature.webp）
+   oriental_tibetan_bowl: require('../assets/images/categories/category_therapy.webp'), // 冥想图作为颂钵占位
+   oriental_morning_buddha: require('../assets/images/scenes/buddha_morning.webp'), // 晨钟佛音用原图
+ };
+@@ -266,11 +276,12 @@ const NEW_NATURE_BG_FALLBACK: Record<string, any> = {
+   manual_starlit_wilderness: require('../assets/scenes/starlit_wilderness.webp'),
+ };
+ 
+-// 【🆕 v1.4.3】城市夜雨专属缩略图映射（Esonare EQ 新场景，CDN 下载）
+-// CDN 资源仓库暂无 city_rain 专属背景图，复用内置夜景图 starlit_wilderness.webp 作为专属图，
+-// 避免与 Life 分类默认图（category_life.webp）重复；后续 CDN 上传专属图后可改为下载式背景图
++// 【🆕 v1.4.3 → 专属图】城市夜雨专属缩略图映射
++// 原复用内置夜景图 starlit_wilderness.webp（与星空旷野 manual_starlit_wilderness 共用同一张，已重复），
++// 现已改为独立专属缩略图 CITY_NIGHT_RAIN_THUMBNAIL（src/assets/images/scenes/city_rain_urban.webp）。
++// 注：当前文件为占位图，请将真实城市夜雨图片覆盖到该路径即可，无需再改代码。
+ const CITY_RAIN_THUMBNAIL_MAP: Record<string, any> = {
+-  city_rain_urban: require('../assets/scenes/starlit_wilderness.webp'),
++  city_rain_urban: CITY_NIGHT_RAIN_THUMBNAIL,
+ };
+ 
+ export const getSceneBackground = (sceneId: string, category: SceneCategory) => {
