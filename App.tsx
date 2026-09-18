@@ -23,6 +23,16 @@ class GlobalErrorBoundary extends Component<{ children: React.ReactNode }, Globa
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[GlobalErrorBoundary] Caught React error:', error);
     console.error('[GlobalErrorBoundary] Component stack:', errorInfo.componentStack);
+    // 【vc147 / P0-1】被边界吞掉的渲染期错误必须进原生上报通道，否则线上只剩 console 日志，
+    // 无法验证监听器相关崩溃是否真的修好。此处只调用既有封装 CrashReportUtil，不新写上报逻辑。
+    try {
+      CrashReportUtil.logException(
+        `[GlobalErrorBoundary] ${error?.name}: ${error?.message}\n${errorInfo?.componentStack?.slice(0, 1000) ?? ''}`,
+      );
+    } catch (reportError) {
+      // 上报自身绝不能再抛出，否则边界会把用户留在空白界面上
+      console.warn('[GlobalErrorBoundary] 异常上报失败:', reportError);
+    }
   }
 
   render() {
@@ -71,6 +81,8 @@ import ToastUtil from './src/utils/ToastUtil';
 // 【PR-2 WiFi 提示】移动数据下载闸门 + 全局提示 Modal
 import NetworkGateService from './src/services/NetworkGateService';
 import WifiDownloadPrompt from './src/components/WifiDownloadPrompt';
+// 【vc147 / P0-1】既有原生上报封装（NativeModules.CrashReport），不引入任何新依赖
+import { CrashReportUtil } from './src/utils/CrashReportUtil';
 
 // 【🔥 v1.4.7 修复】自动下载场景背景图片（使用 RNFS.downloadFile，与 DownloadService 一致）
 // 之前用 fetch + btoa + appendFile 处理二进制图片会损坏文件

@@ -183,9 +183,15 @@ export type { TranslationKeys, TranslationResources };
  * 【v1.4.1 防御性增强】安全的 t() 函数包装器
  * 提供默认值保护，防止 undefined 导致崩溃
  */
-export const safeT = (key: string, defaultValue?: string): string => {
+export const safeT = (key: string, defaultValue?: string, options?: Record<string, any>): string => {
   try {
-    const result = i18n.t(key);
+    // 【P0-7 修复】第二参是「兜底文案」而非 i18next options；插值参数必须走第三参 options。
+    // 旧实现 i18n.t(key) 完全丢弃插值参数，且缺失键时 return defaultValue || key 会把
+    // 调用方误传的对象原样返回 → Alert 正文渲染成 [object Object]。
+    const result = i18n.t(key, {
+      ...(options ?? {}),
+      ...(defaultValue !== undefined ? { defaultValue } : {}),
+    });
     // 如果返回 undefined/null/空字符串，使用默认值
     if (!result || result === key) {
       return defaultValue || key;

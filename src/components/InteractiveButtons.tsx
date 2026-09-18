@@ -6,6 +6,7 @@ import AudioService from '../services/AudioService';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useAudio } from '../context/AudioContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ensureInteractiveSfxDiagnosis } from '../constants/interactiveSfxDiagnostic';
 
 interface InteractiveButtonsProps {
   globalAmbientScenes: Scene[];
@@ -44,14 +45,28 @@ const InteractiveButtons: React.FC<InteractiveButtonsProps> = ({
     triggerHaptic();
     console.log('[InteractiveButtons] Toggle ambience:', ambient.id, 'isActive:', targetState);
 
+    // 【诊断】开启开关后记录点击瞬间状态（含当前 activeSmallSceneIds），用于对比切换前后差异
+    const diag = await ensureInteractiveSfxDiagnosis();
+    if (diag) {
+      console.log(`[SFX-DIAG] [handlePress ENTRY] id=${ambient.id} 目标:${targetState ? '激活' : '取消'} activeSmallSceneIds=${JSON.stringify(activeSmallSceneIds)}`);
+    }
+
     // 点击时先确保资源已下载（复用HomeScreen的prioritizeScene逻辑）
-    import('../services/DownloaderService').then(({ DownloaderServiceInstance }) => {
+    import('../services/DownloaderService').then(({ DownloaderServiceInstance, isDownloaded }) => {
       console.log(`[InteractiveButtons] 🚀 [handlePress] 触发下载: ${ambient.id}, targetState: ${targetState}`);
+
+      // 【诊断】记录"入队前该资源是否已存在于本地"，区分"未下载/下载未完成"导致的无声
+      isDownloaded(ambient.id).then((already) => {
+        if (diag) console.log(`[SFX-DIAG] [handlePress] 入队前 isDownloaded(${ambient.id})=${already}`);
+      }).catch(() => {});
+
       DownloaderServiceInstance.addTaskToQueue(ambient.id);
       DownloaderServiceInstance.startDownload();
     });
 
     await toggleAmbience(ambient, targetState);
+
+    if (diag) console.log(`[SFX-DIAG] [handlePress] toggleAmbience 已解析: ${ambient.id}`);
   }, [triggerHaptic, toggleAmbience]);
   
   const renderButton = useCallback((layout: { ambient: Scene; idx: number; isActive: boolean; column: number; row: number }) => {

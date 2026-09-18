@@ -8,6 +8,23 @@
  * 
  * 【重构】使用 fetch + blob + RNFS.writeFile 替换 RNFS.downloadFile
  * 避免原生层 Java Downloader.java 在 Release 包中的死锁问题
+ *
+ * @architecture-constraint 【P1-4 单引擎目标 · vc147：新下载代码只进这里】
+ *
+ * 本文件是下载能力的**唯一新增入口**。旧引擎 DownloadService.ts（模块级 silentBackgroundDownload /
+ * checkAndDownload / downloadAudio）已冻结为 bugfix only，两者写入同一批 audio_resources/ 文件，
+ * 因此禁止在同一个用户动作里同时驱动两个引擎——会并发写同一 .part 文件，破坏断点续传语义。
+ *
+ * 已确认决策（2026-09）：
+ *   1. **不引入运行时 feature flag**。回滚粒度 = 单个调用点的迁移 commit，比在 release 包里给
+ *      下载路径加分支更细、更可定位；代价是灰度期两引擎并存，靠下面的顺序控制爆炸半径。
+ *   2. vc148 迁移顺序（由低风险到高风险）：
+ *        useResourceDownloader:100 → ResourceStatusManager:218/228 → ResourceDownloadScreen:569
+ *        → BreathDetailScreen:491(checkAndDownload，语义最特殊) → AudioService:3904(downloadAudio，
+ *          需先对齐 onProgress 进度回调契约) → 清理 App.tsx 对 DownloadService 的死 import
+ *   3. 迁移期间新增的每个方法都必须走 getAssetUrls() 取 URL（P1-6 已收敛），禁止再拼 CDN 字面量。
+ *
+ * 详见 DownloadService.ts 头部的旧引擎冻结说明。
  */
 
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出

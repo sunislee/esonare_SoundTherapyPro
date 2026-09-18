@@ -1,3 +1,33 @@
+/**
+ * @architecture-constraint 【P1-4 双引擎冻结 · vc147：仅修 bug，禁止新增调用点】
+ *
+ * 本文件是「旧下载引擎」（模块级函数式 API：silentBackgroundDownload / checkAndDownload /
+ * downloadAudio / setProgressCallback）。它与新引擎 DownloaderService（类 + 串行队列 +
+ * NetworkGateService WiFi 闸门 + .part 断点续传 + getAssetUrls 四级故障转移）当前并存，
+ * 且两者写入同一批本地文件（audio_resources/…），因此：
+ *   1. 禁止在同一个用户动作里同时启动两个引擎——会并发写同一 .part 文件，破坏 P1-5 续传语义。
+ *      （历史事故：ProfileScreen.startRealBackgroundDownload 在旧引擎已启动后又调
+ *        DownloaderService 幽灵方法，见 commit f83758ab。）
+ *   2. 新的下载需求一律走 DownloaderService，不要再往本文件加调用点或新功能。
+ *
+ * 现存调用点（合并时需逐个迁移）：
+ *   BreathDetailScreen:491 checkAndDownload
+ *   ResourceDownloadScreen:569 / ProfileScreen:324 / useResourceDownloader:100
+ *     / ResourceStatusManager:228 silentBackgroundDownload
+ *   ResourceStatusManager:218 setProgressCallback
+ *   AudioService:3904 downloadAudio
+ *   App.tsx:74 仅 import（当前无调用，迁移完成后一并清理）
+ *
+ * 行为差异（这是本分支不做合并的原因，必须在 vc148 逐项对齐后再收敛）：
+ *   旧引擎：MAX_CONCURRENT_TASKS=6 并发 + RNFS.downloadFile onProgress 实时进度；无 WiFi 闸门、无 .part 续传
+ *   新引擎：串行队列 + 移动数据闸门（可挂起后自动恢复）+ .part 断点续传 + 多源故障转移
+ *
+ * 状态（2026-09 决策已确认）: 冻结为 bugfix only，不迁移、不新增调用点；单引擎收敛排期 vc148。
+ *   - 不加运行时 feature flag：回滚粒度取"单调用点迁移 commit"，避免 release 包内出现下载分支路径。
+ *   - 迁移顺序与目标入口见 DownloaderService.ts 头部（新引擎侧同步挂了 @architecture-constraint）。
+ *   - 第三个下载者候选 BackgroundDownloadTask(src/tasks/DownloadTask.js) 已于 P1-3 删除（commit 7f94acb0），
+ *     故当前并存的就是且仅是本文件与 DownloaderService 两个引擎。
+ */
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import * as RNFS from '@dr.pogodin/react-native-fs';
 import { DeviceEventEmitter } from 'react-native';

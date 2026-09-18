@@ -40,6 +40,7 @@ import i18n from '../i18n';
 
 // 【交互音效独立播放器】
 import SFXPlayer from './SFXPlayer';
+import { ensureInteractiveSfxDiagnosis } from '../constants/interactiveSfxDiagnostic';
 import { recordShopAudioManager, RecordShopLayer, RecordShopVolumes } from './RecordShopAudioManager';
 
 // 【Shuffle 后台切换优化】静态导入 SceneRoamManager，避免锁屏后 await import() 卡死
@@ -2312,32 +2313,8 @@ addListener(l: () => void) {
 }
 removeListener(l: () => void) { this.listeners.delete(l); }
 
-/**
- * 场景级状态变更监听（替代 DeviceEventEmitter）
- *
-[Showing lines 1-37 of 52 total. Use start_line=38 to continue reading.]
-
-
-				# TODO LIST UPDATE REQUIRED - You MUST include the task_progress parameter in your NEXT tool call.
-
-**Current Progress: 4/4 items completed (100%)**
-
-- [x] 用 codebase-memory MCP 查询三个 bug 的已有记录和文件调用关系
-- [x] 结合 git diff/log 分析修复原因
-- [x] 分析 DownloaderService 事件广播链路问题
-- [x] 给出结论：真正修复 vs 偶然未复现 + 优化建议
-
-Note: This list was your last task_progress input. It may be outdated or inaccurate now. Check before proceeding — if the work is truly done, use attempt_completion to present results. Do NOT call it based on stale list state; verify first.
-
-ASSUMPTION: The numbers in this list (e.g., "2 of 3") are your best estimate, not verified facts. If you're uncertain about completion status, ASK the user before marking items complete.
-
-				
-
-**You have completed all tasks you set out to do. Do NOT re-run the full workflow.** Before using `attempt_completion`, verify the result is correct using whatever tools are appropriate for the task type — this may include running CLI commands (e.g., `ls`, `grep`, `pytest`) to check outputs, or manual inspection. Only use `attempt_completion` when you are confident the work is done correctly.
-
-				
-<system-reminder>
-The tool call you made did not produce any output yet. The system is waiting for it to complete — please keep monitoring until results come back. Do NOT re-issue the same call unless it failed.
+  
+  addLoadingListener(l: (state: { id: string | null; loading: boolean }) => void) {
     this.loadingListeners.add(l);
     return () => { this.loadingListeners.delete(l); };
   }
@@ -2619,7 +2596,11 @@ The tool call you made did not produce any output yet. The system is waiting for
   }
 
   async playAmbient(id: string): Promise<void> {
+    const diag = await ensureInteractiveSfxDiagnosis();
+    if (diag) console.log(`[SFX-DIAG] [playAmbient ENTRY] id=${id}`);
+
     if (!this._isReady) {
+      if (diag) console.error('[SFX-DIAG-ERR] _isReady=false → 跳过 playAmbient', id);
       console.warn('[AudioService] ⚠️ 初始化未完成，跳过 playAmbient');
       return;
     }
@@ -2629,12 +2610,14 @@ The tool call you made did not produce any output yet. The system is waiting for
     // 查找对应的场景配置
     const scene = SCENES.find(s => s.id === id);
     if (!scene || !scene.filename) {
+      if (diag) console.error('[SFX-DIAG-ERR] scene/scene.filename 未找到', 'id=', id, 'filename=', scene?.filename);
       console.error('[AudioService] ❌ 交互音场景未找到:', id);
       return;
     }
     
     const uri = AUDIO_MAP[scene.filename];
     if (!uri) {
+      if (diag) console.error('[SFX-DIAG-ERR] AUDIO_MAP 无映射', 'filename=', scene.filename, 'id=', id);
       console.error('[AudioService] ❌ 交互音资源未找到:', scene.filename);
       return;
     }
@@ -2644,17 +2627,21 @@ The tool call you made did not produce any output yet. The system is waiting for
     try {
       // 【关键重构】使用 SFXPlayer 播放，不触碰 TrackPlayer
       const localPath = getValidUrl(uri);
+      if (diag) console.log(`[SFX-DIAG] uri=${uri} → localPath=${localPath}`);
       console.log('[AudioService] 🎵 通过 SFXPlayer 播放交互音:', soundId);
       
       await this.sfxPlayer.play(localPath, soundId);
+      if (diag) console.log(`[SFX-DIAG] sfxPlayer.play resolved → activeCount=${this.sfxPlayer.getActiveCount()} soundId=${soundId}`);
       __DEV__ && console.log('[AudioService] ✅ 交互音已加入 SFXPlayer 播放队列');
       
       // 记录到 activeSmallScenes
       this.activeSmallScenes.add(id);
       this.notifySmallScenes();
       
+      if (diag) console.log(`[SFX-DIAG] activeSmallScenes 已加入 ${id}`);
       __DEV__ && console.log('[AudioService] ✅ 交互音播放已触发');
     } catch (error: any) {
+      if (diag) console.error('[SFX-DIAG-ERR] sfxPlayer.play threw', 'msg=', error?.message, 'stack=', error?.stack);
       console.error('[AudioService] ❌ playAmbient 失败:', error);
       console.error('[AudioService] ❌ 错误消息:', error?.message);
       console.error('[AudioService] ❌ 错误堆栈:', error?.stack);
@@ -3107,6 +3094,21 @@ The tool call you made did not produce any output yet. The system is waiting for
       await this.fadeInVolume(1500);
       
       const totalTime = Date.now() - startTime;
+      // ════════════════════════════════════════════════════════
+      // 【方案 B】主场景切换完成 → 发射 sceneSwitched 事件
+      // 由 AudioContext 监听，把全局 8 段 master EQ（session=0）重置为 flat，
+      // 避免上一个场景的 EQ 曲线带入新场景。
+      // 注意：小场景（环境层 toggleAmbience）不触发此重置。
+      // ════════════════════════════════════════════════════════
+      try {
+        const { DeviceEventEmitter: Emitter } = require('react-native');
+        if (Emitter && typeof Emitter.emit === 'function') {
+          Emitter.emit('sceneSwitched', { sceneId: scene.id });
+        }
+      } catch (emitError) {
+        console.warn('[AudioService] ⚠️ [方案B] 发射 sceneSwitched 失败:', emitError?.message);
+      }
+
       console.log(`[AudioService] ✅ [Sine-Crossfade v2.0-响应] 完成！(总耗时: ${totalTime}ms)`);
       
     } catch (error) {

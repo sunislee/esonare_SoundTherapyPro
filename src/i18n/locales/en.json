@@ -365,6 +365,7 @@
   },
   "download": {
     "title": "Preparing Resources",
+    "message": "\"{{sceneTitle}}\" needs to be downloaded before playback. Download now?",
     "optimizing": "Optimizing audio quality...",
     "downloading": "Preparing your serene moment...",
     "checking": "Verifying resource integrity...",

@@ -10,6 +10,7 @@ import {
   Dimensions,
   Platform,
   Image,
+  ToastAndroid,
   InteractionManager
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -502,6 +503,8 @@ const BreathDetailScreen: React.FC = () => {
                 console.error('[BreathDetail] ❌ 下载失败:', downloadError);
                 setIsDownloading(false);
                 setIsLoading(false);
+                // 【兜底】下载失败时给出明确提示，避免界面无响应/静默失败
+                ToastAndroid.show('资源下载失败，请检查网络后重试', ToastAndroid.SHORT);
               }
               
               return; // 下载流程结束，返回
