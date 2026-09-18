@@ -22,7 +22,11 @@
  *   旧引擎：MAX_CONCURRENT_TASKS=6 并发 + RNFS.downloadFile onProgress 实时进度；无 WiFi 闸门、无 .part 续传
  *   新引擎：串行队列 + 移动数据闸门（可挂起后自动恢复）+ .part 断点续传 + 多源故障转移
  *
- * 状态: 已冻结（bugfix only）；单引擎收敛计划排期 vc148，是否引入 feature flag 降级待产品决策。
+ * 状态（2026-09 决策已确认）: 冻结为 bugfix only，不迁移、不新增调用点；单引擎收敛排期 vc148。
+ *   - 不加运行时 feature flag：回滚粒度取"单调用点迁移 commit"，避免 release 包内出现下载分支路径。
+ *   - 迁移顺序与目标入口见 DownloaderService.ts 头部（新引擎侧同步挂了 @architecture-constraint）。
+ *   - 第三个下载者候选 BackgroundDownloadTask(src/tasks/DownloadTask.js) 已于 P1-3 删除（commit 7f94acb0），
+ *     故当前并存的就是且仅是本文件与 DownloaderService 两个引擎。
  */
 // @dr.pogodin/react-native-fs 使用具名导出，无默认导出
 import * as RNFS from '@dr.pogodin/react-native-fs';
