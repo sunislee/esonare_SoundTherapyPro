@@ -26,24 +26,37 @@ class NetworkGateService {
   private promptDismissed = false;
   /** 当前是否有被闸门挂起的下载任务 */
   private hasPending = false;
-  /** 【阶段二 b】最近一次已知连接状态缓存：供 isOffline() 同步查询，避免每次 await NetInfo.fetch()。
-   *  null = 尚未取得任何有效状态（保守视为"未知"，isOffline() 返回 false 以免误伤正常链路）。 */
+  /** 【回归修复】最近一次已知连接状态缓存（仅供日志/闸门辅助，不再作为 isOffline 依据）。 */
   private lastConnected: boolean | null = null;
+  /** 【回归修复】最近一次已知网络类型：isOffline() 的唯一依据（type==='none' 才是真离线）。
+   *  null = 尚未取得任何状态（保守视为未知 → isOffline() 返回 false，避免首帧误伤静默下载）。 */
+  private lastType: NetInfoState['type'] | null = null;
 
   /** App 初始化时调用一次：取初始网络状态 + 监听变化 */
   init() {
     if (this.initialized) return;
     this.initialized = true;
 
+    // 【回归修复】禁用 NetInfo 默认互联网可达性探测（google generate_204）——该探测点在国内网络必挂，
+    // 会把 type=wifi 的真实在线误判为 isConnected=false，进而被 isOffline() 误伤、掐断静默下载。
+    // 关闭后 isConnected 回落为系统层连接状态；离线判定改由下方 lastType(type) 承担，不再依赖可达性探测。
+    try {
+      NetInfo.configure({ reachabilityShouldRun: () => false });
+    } catch (e) {
+      console.warn('[NetworkGate] NetInfo.configure 失败:', e);
+    }
+
     NetInfo.fetch()
       .then((state) => {
         this.lastConnected = state.isConnected === true;
+        this.lastType = state.type;
         console.log(`[NetworkGate] 初始网络: type=${state.type} connected=${state.isConnected}`);
       })
       .catch((e) => console.warn('[NetworkGate] NetInfo.fetch 失败:', e));
 
     NetInfo.addEventListener((state) => {
       this.lastConnected = state.isConnected === true;
+      this.lastType = state.type;
       console.log(`[NetworkGate] 网络变化: type=${state.type} connected=${state.isConnected}`);
       // 切到 WiFi/以太网且有挂起任务 → 自动恢复下载
       if (this.isWlan(state) && this.hasPending) {
@@ -53,13 +66,14 @@ class NetworkGateService {
   }
 
   /**
-   * 【阶段二 b】同步判定当前是否离线。
-   * - 已知 isConnected=false → true（离线）
-   * - 已知 isConnected=true  → false（在线）
-   * - 尚未取得状态(null)     → false（保守：不武断判离线，避免首帧误伤；调用方若需强判定可自行 await NetInfo.fetch）
+   * 【回归修复】同步判定当前是否"无任何网络连接"。
+   * 语义 = type === 'none'（真离线，如飞行模式），不再依赖互联网可达性探测(isConnected)。
+   * - type='none'                                → true（离线）
+   * - wifi / cellular / bluetooth / vpn / ethernet → false（有链路即可下载；蜂窝另由 requestDownloadAccess 提示闸门管控）
+   * - unknown / null(尚未就绪)                    → false（保守：不武断判离线，避免首帧或探测异常误伤静默下载）
    */
   isOffline(): boolean {
-    return this.lastConnected === false;
+    return this.lastType === 'none';
   }
 
   /** wifi / ethernet 视为不消耗移动数据的"安全网络" */

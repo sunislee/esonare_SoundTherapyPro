@@ -1,6 +1,8 @@
 {
   "welcome": "サウンドセラピーアプリへようこそ",
   "appTitle": "サウンドセラピー",
+  "home_card_preparing": "準備中 · {{pct}}%",
+  "home_card_need_network": "ネットワークが必要 · タップで再試行",
   "tabs": {
     "scenes": "シーン",
     "profile": "マイページ"

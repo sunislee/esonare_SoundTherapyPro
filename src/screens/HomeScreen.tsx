@@ -346,7 +346,7 @@ const SceneItem = React.memo(({
                 {/* 【状态提示 - 必须音频+背景图+缩略图全部就绪】 */}
                 {isDownloading ? (
                   <Text style={styles.cardStatusText} numberOfLines={1}>
-                    {Math.round(downloadProgress)}% - Downloading
+                    {t('home_card_preparing', { pct: Math.round(downloadProgress) })}
                   </Text>
                 ) : isResourceReady ? (
                   <Text style={styles.cardReadyText} numberOfLines={1}>
@@ -356,13 +356,13 @@ const SceneItem = React.memo(({
                   <Text style={[styles.cardStatusText, { color: '#FFA500' }]} numberOfLines={1}>
                     Loading Images...
                   </Text>
-                ) : downloadStatus === 'error' ? (
+                ) : downloadStatus === 'error' || NetworkGateService.isOffline() ? (
                   <Text style={[styles.cardSubtitle, { color: '#FF8A65' }]} numberOfLines={1}>
-                    需要网络 · 点按重试
+                    {t('home_card_need_network')}
                   </Text>
                 ) : (
                   <Text style={styles.cardSubtitle} numberOfLines={1}>
-                    Waiting to Download
+                    {t('home_card_preparing', { pct: Math.round(downloadProgress) })}
                   </Text>
                 )}
               </View>

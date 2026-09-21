@@ -1,6 +1,8 @@
 {
   "welcome": "Welcome to Sound Relaxation App",
   "appTitle": "Sound Meditation",
+  "home_card_preparing": "Preparing · {{pct}}%",
+  "home_card_need_network": "Network needed · tap to retry",
   "tabs": {
     "scenes": "Scenes",
     "profile": "Profile"

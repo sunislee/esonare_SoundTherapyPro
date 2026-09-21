@@ -1,6 +1,8 @@
 {
   "welcome": "欢迎使用声音放松应用",
   "appTitle": "心声冥想",
+  "home_card_preparing": "准备中 · {{pct}}%",
+  "home_card_need_network": "需要网络 · 点按重试",
   "tabs": {
     "scenes": "场景",
     "profile": "我的"
