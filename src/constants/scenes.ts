@@ -168,7 +168,7 @@ const WESTERN_CHURCH_THUMBNAIL_MAP: Record<string, any> = {
 
 // 【 v1.4.6 修复】东方禅意场景独立缩略图映射（使用不同类别图片作为占位，下载完成后显示正确图片）
 const ORIENTAL_THUMBNAIL_MAP: Record<string, any> = {
-  oriental_zen_monastery: require('../assets/images/categories/category_nature.webp'),
+  oriental_zen_monastery: require('../assets/images/scenes/bg_temple_lantern_gate.webp'),
   oriental_tibetan_bowl: require('../assets/images/categories/category_therapy.webp'), // 冥想图作为颂钵占位
   oriental_morning_buddha: require('../assets/images/scenes/buddha_morning.webp'), // 晨钟佛音用原图
 };
