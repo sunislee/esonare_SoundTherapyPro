@@ -22,7 +22,8 @@ function shortSha() {
 
 function dirty() {
   try {
-    const out = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
+    // 只看已跟踪文件的改动；未跟踪素材(assets/等)不应把正式包标成 dirty。
+    const out = execSync('git status --porcelain --untracked-files=no', { encoding: 'utf8' }).trim();
     return out.length > 0;
   } catch {
     return false;
