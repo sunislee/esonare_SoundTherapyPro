@@ -105,3 +105,22 @@ SoundTherapy081/src/services/DownloadService.ts
 
 # Expo 缓存文件（无需版本控制）
 .expo/
+
+# ===== 调试/验证临时产物 (2026-09-21，仅根级锚定，避免误伤 src/assets) =====
+/*.png
+/*.mp4
+/dump_*.xml
+/window_dump*.xml
+/window_scene.xml
+/ui_home_current.xml
+/install_check.xml
+/tap_flow_ui.xml
+/logcat_full.txt
+/crash_log.txt
+/logs/
+.omo/
+android/build_final.log
+android/build_release.log
+android/build_release2.log
+build_main_release.log
+*.bak
