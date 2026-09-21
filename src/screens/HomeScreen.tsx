@@ -348,7 +348,9 @@ const SceneItem = React.memo(({
                 {/* 【状态提示 - 必须音频+背景图+缩略图全部就绪】 */}
                 {isDownloading ? (
                   <Text style={styles.cardStatusText} numberOfLines={1}>
-                    {t('home_card_preparing', { pct: Math.round(downloadProgress) })}
+                    {Math.round(downloadProgress) > 0
+                      ? t('home_card_preparing', { pct: Math.round(downloadProgress) })
+                      : t('home_card_preparing_quiet')}
                   </Text>
                 ) : isResourceReady ? (
                   <Text style={styles.cardReadyText} numberOfLines={1}>
@@ -368,7 +370,9 @@ const SceneItem = React.memo(({
                   </Text>
                 ) : (
                   <Text style={styles.cardSubtitle} numberOfLines={1}>
-                    {t('home_card_preparing', { pct: Math.round(downloadProgress) })}
+                    {Math.round(downloadProgress) > 0
+                      ? t('home_card_preparing', { pct: Math.round(downloadProgress) })
+                      : t('home_card_preparing_quiet')}
                   </Text>
                 )}
               </View>

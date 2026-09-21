@@ -84,6 +84,10 @@ import NetworkGateService from './src/services/NetworkGateService';
 import WifiDownloadPrompt from './src/components/WifiDownloadPrompt';
 // 【vc147 / P0-1】既有原生上报封装（NativeModules.CrashReport），不引入任何新依赖
 import { CrashReportUtil } from './src/utils/CrashReportUtil';
+// 【构建指纹 · 永久规则】启动即打印 [BUILD] sha=.. built=..，设备侧据此确证跑的是本次代码。
+import { BUILD_STAMP } from './src/config/buildInfo';
+
+console.log(BUILD_STAMP);
 
 // 【🔥 v1.4.7 修复】自动下载场景背景图片（使用 RNFS.downloadFile，与 DownloadService 一致）
 // 之前用 fetch + btoa + appendFile 处理二进制图片会损坏文件
@@ -95,23 +99,43 @@ async function autoDownloadSceneBackgrounds() {
     const bgDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
     await RNFS.mkdir(bgDir);
 
-    // 【magic 门烧配额防护 · item5】同一 URL 连续 2 次 magic 失败 → 跨启动持久化标记终态并跳过，
-    // 避免「下载坏文件→删除→下次冷启再下」无限循环打爆 ghproxy 共享代理配额。成功则清零。
+    // 【magic 门烧配额防护 · item5 + 死锁修复】同一 URL 连续 2 次 magic 失败 → 跨启动持久化标记并跳过，
+    // 避免「下坏文件→删→下次冷启再下」无限打爆 ghproxy 配额。
+    // 【死锁修复】旧实现 >=2 后永久拉黑、唯一复位是成功下载但再不请求 → 瞬时限流把好 URL 永久黑洞化。
+    //   现记 {n, ts}：满 2 次仅在冷却窗口(6h)内跳过；到期允许一次探测重试，CDN 恢复即可自愈。
+    const MAGIC_GUARD_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 小时
     const failFile = `${bgDir}/.bg_magic_fail.json`;
-    let magicFail: Record<string, number> = {};
+    type FailRec = { n: number; ts: number };
+    let magicFail: Record<string, FailRec> = {};
     try {
-      if (await RNFS.exists(failFile)) magicFail = JSON.parse(await RNFS.readFile(failFile));
+      if (await RNFS.exists(failFile)) {
+        const raw = JSON.parse(await RNFS.readFile(failFile));
+        // 向后兼容旧格式：纯数字 → 视为已过冷却(ts=0)，本次即允许探测，自愈历史黑洞化 URL。
+        for (const k of Object.keys(raw)) {
+          magicFail[k] = typeof raw[k] === 'number' ? { n: raw[k], ts: 0 } : raw[k];
+        }
+      }
     } catch { magicFail = {}; }
     const persistMagicFail = async () => {
       try { await RNFS.writeFile(failFile, JSON.stringify(magicFail), 'utf8'); } catch {}
     };
     const bumpMagicFail = async (u: string): Promise<number> => {
-      magicFail[u] = (magicFail[u] || 0) + 1;
+      const prev = magicFail[u]?.n || 0;
+      magicFail[u] = { n: prev + 1, ts: Date.now() };
       await persistMagicFail();
-      return magicFail[u];
+      return magicFail[u].n;
     };
     const resetMagicFail = async (u: string) => {
       if (magicFail[u]) { delete magicFail[u]; await persistMagicFail(); }
+    };
+    // 是否应跳过该 URL：满 2 次且仍在冷却内才跳；到期则清记录放行一次探测。
+    const shouldSkipMagicFail = (u: string): boolean => {
+      const rec = magicFail[u];
+      if (rec && rec.n >= 2) {
+        if (Date.now() - (rec.ts || 0) < MAGIC_GUARD_COOLDOWN_MS) return true;
+        delete magicFail[u]; // 冷却到期 → 允许本次探测重试（死锁自愈）
+      }
+      return false;
     };
 
     // 2) 下载西方教会背景图（4张独立图片，使用 ghproxy.net 加速源）
@@ -140,8 +164,9 @@ async function autoDownloadSceneBackgrounds() {
       const tempPath = `${localPath}.tmp`;
       try {
         // 【item5 终态跳过】该 URL 已连续 ≥2 次 magic 失败 → 本轮及后续冷启一律不再请求，停止烧配额。
-        if ((magicFail[url] || 0) >= 2) {
-          console.warn(`[MAGIC-GUARD] ⛔ 终态跳过(连续${magicFail[url]}次魔数失败): ${filename} | url=${url}`);
+        // 【item5 跳过 + 死锁自愈】满 2 次且仍在冷却内才跳；到期放行一次探测。
+        if (shouldSkipMagicFail(url)) {
+          console.warn(`[MAGIC-GUARD] ⛔ 冷却内跳过(连续${magicFail[url]?.n}次魔数失败): ${filename} | url=${url}`);
           continue;
         }
 
@@ -160,7 +185,7 @@ async function autoDownloadSceneBackgrounds() {
             const headHex = await readMagicHexPrefix(localPath, 16);
             const fc = await bumpMagicFail(url);
             console.warn(`[MAGIC-GATE] 🗑️ 缓存无效删除: ${filename} | url=${url} | size=${stat.size}B | head16=[${headHex}] | magicFail=${fc}`);
-            if (fc >= 2) { console.warn(`[MAGIC-GUARD] ⛔ 连续${fc}次魔数失败 → 标记终态，本轮不再重下: ${filename}`); continue; }
+            if (fc >= 2) { console.warn(`[MAGIC-GUARD] ⛔ 连续${fc}次魔数失败 → 标记，6h 内跳过(到期自动探测): ${filename}`); continue; }
             await RNFS.unlink(localPath);
           }
         }
@@ -187,7 +212,7 @@ async function autoDownloadSceneBackgrounds() {
             const headHex = await readMagicHexPrefix(tempPath, 16);
             const fc = await bumpMagicFail(url);
             console.warn(`[MAGIC-GATE] 🚫 拒绝落盘(太小/魔数错): ${filename} | url=${url} | HTTP=${result.statusCode} | size=${stat.size}B | head16=[${headHex}] | magicFail=${fc}`);
-            if (fc >= 2) console.warn(`[MAGIC-GUARD] ⛔ 连续${fc}次魔数失败 → 标记终态: ${filename}`);
+            if (fc >= 2) console.warn(`[MAGIC-GUARD] ⛔ 连续${fc}次魔数失败 → 标记，6h 内跳过(到期自动探测): ${filename}`);
             try { await RNFS.unlink(tempPath); } catch {}
           }
         } else {
