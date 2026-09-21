@@ -98,7 +98,7 @@ export const AUDIO_MANIFEST = [
   { id: 'western_church_forest_echo', filename: 'western_church/western_church_forest_echo.m4a', category: 'western_church', title: 'scenes.western_church_forest_echo.title', description: 'scenes.western_church_forest_echo.desc', size: 732037 },
   { id: 'western_church_urban_chant', filename: 'western_church/western_church_urban_chant.m4a', category: 'western_church', title: 'scenes.western_church_urban_chant.title', description: 'scenes.western_church_urban_chant.desc', size: 414572 },
 
-  { id: 'oriental_zen_monastery', filename: 'forest_rain/garuda1982.m4a', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 15657886 },
+  { id: 'oriental_zen_monastery', filename: 'zen/zen_bell.mp3', category: 'oriental', title: 'scenes.oriental_zen_monastery.title', description: 'scenes.oriental_zen_monastery.desc', size: 482184 },
   { id: 'oriental_tibetan_bowl', filename: 'zen/zen_bowl.mp3', category: 'oriental', title: 'scenes.oriental_tibetan_bowl.title', description: 'scenes.oriental_tibetan_bowl.desc', size: 595869 },
   { id: 'oriental_morning_buddha', filename: 'zen/zen_hum.m4a', category: 'oriental', title: 'scenes.oriental_morning_buddha.title', description: 'scenes.oriental_morning_buddha.desc', size: 822079 },
 
@@ -198,7 +198,7 @@ export const ASSET_LIST = [
   { id: 'interactive_match', expectedSize: 846284 },       // 实际：846KB
   
   // 东方禅意音频（3个，oriental/ 子目录）
-  { id: 'oriental_zen_monastery', expectedSize: 15657886 },  // forest_rain/garuda1982.m4a (森林雨)
+  { id: 'oriental_zen_monastery', expectedSize: 482184 },    // zen/zen_bell.mp3
   { id: 'oriental_tibetan_bowl', expectedSize: 595869 },     // zen/zen_bowl.mp3
   { id: 'oriental_morning_buddha', expectedSize: 822079 },  // zen/zen_hum.m4a (sacred bell temple)
   { id: 'city_rain_urban', expectedSize: 6041646 },        // city_rain/roofusj.m4a (城市夜雨)
