@@ -3,6 +3,8 @@
   "appTitle": "心声冥想",
   "home_card_preparing": "准备中 · {{pct}}%",
   "home_card_need_network": "需要网络 · 点按重试",
+  "home_card_transient_error": "暂时下载不了 · 稍后自动重试",
+  "home_net_slow_banner": "网络较慢，稍后会自动继续",
   "tabs": {
     "scenes": "场景",
     "profile": "我的"

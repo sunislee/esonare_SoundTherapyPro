@@ -78,7 +78,7 @@ import { preloadBackgroundAvailability } from './src/constants/scenes';
 import Toast from 'react-native-toast-message';
 import toastConfig from './src/config/toastConfig';
 import ToastUtil from './src/utils/ToastUtil';
-import { hasValidImageMagicBytes } from './src/utils/imageMagic';
+import { hasValidImageMagicBytes, readMagicHexPrefix } from './src/utils/imageMagic';
 // 【PR-2 WiFi 提示】移动数据下载闸门 + 全局提示 Modal
 import NetworkGateService from './src/services/NetworkGateService';
 import WifiDownloadPrompt from './src/components/WifiDownloadPrompt';
@@ -94,6 +94,25 @@ async function autoDownloadSceneBackgrounds() {
     const RNFS = await import('@dr.pogodin/react-native-fs');
     const bgDir = `${RNFS.DocumentDirectoryPath}/audio_resources`;
     await RNFS.mkdir(bgDir);
+
+    // 【magic 门烧配额防护 · item5】同一 URL 连续 2 次 magic 失败 → 跨启动持久化标记终态并跳过，
+    // 避免「下载坏文件→删除→下次冷启再下」无限循环打爆 ghproxy 共享代理配额。成功则清零。
+    const failFile = `${bgDir}/.bg_magic_fail.json`;
+    let magicFail: Record<string, number> = {};
+    try {
+      if (await RNFS.exists(failFile)) magicFail = JSON.parse(await RNFS.readFile(failFile));
+    } catch { magicFail = {}; }
+    const persistMagicFail = async () => {
+      try { await RNFS.writeFile(failFile, JSON.stringify(magicFail), 'utf8'); } catch {}
+    };
+    const bumpMagicFail = async (u: string): Promise<number> => {
+      magicFail[u] = (magicFail[u] || 0) + 1;
+      await persistMagicFail();
+      return magicFail[u];
+    };
+    const resetMagicFail = async (u: string) => {
+      if (magicFail[u]) { delete magicFail[u]; await persistMagicFail(); }
+    };
 
     // 2) 下载西方教会背景图（4张独立图片，使用 ghproxy.net 加速源）
     // 【v1.4.7 修复】ghproxy.net 有缓存 bug，不同 URL 可能返回同一缓存文件，必须加 ?v=N 参数绕过
@@ -120,6 +139,12 @@ async function autoDownloadSceneBackgrounds() {
       const localPath = `${bgDir}/${filename}`;
       const tempPath = `${localPath}.tmp`;
       try {
+        // 【item5 终态跳过】该 URL 已连续 ≥2 次 magic 失败 → 本轮及后续冷启一律不再请求，停止烧配额。
+        if ((magicFail[url] || 0) >= 2) {
+          console.warn(`[MAGIC-GUARD] ⛔ 终态跳过(连续${magicFail[url]}次魔数失败): ${filename} | url=${url}`);
+          continue;
+        }
+
         // 检查是否已存在且有效（>1KB）
         const exists = await RNFS.exists(localPath);
         if (exists) {
@@ -127,11 +152,15 @@ async function autoDownloadSceneBackgrounds() {
           // 【v1.4.8】size>1KB 且 magic bytes 合法才算有效；否则删除并落入下方重下分支
           if ((stat.size ?? 0) > 1024 && (await hasValidImageMagicBytes(localPath))) {
             console.log(`[App] 🖼️ [autoDownload] ✅ 已存在: ${filename} (${stat.size} bytes)`);
+            await resetMagicFail(url);
             downloadedCount++;
             continue;
           } else {
-            // 文件太小或魔数非法（如 404 HTML 冒充 webp），删除后重新下载
-            console.log(`[App] 🖼️ [autoDownload] ⚠️ 文件无效(太小/魔数错)，删除: ${filename} (${stat.size} bytes)`);
+            // 【取证 + item5】删除坏缓存前打印 url + 实际收到的前16字节；并计一次 magic 失败。
+            const headHex = await readMagicHexPrefix(localPath, 16);
+            const fc = await bumpMagicFail(url);
+            console.warn(`[MAGIC-GATE] 🗑️ 缓存无效删除: ${filename} | url=${url} | size=${stat.size}B | head16=[${headHex}] | magicFail=${fc}`);
+            if (fc >= 2) { console.warn(`[MAGIC-GUARD] ⛔ 连续${fc}次魔数失败 → 标记终态，本轮不再重下: ${filename}`); continue; }
             await RNFS.unlink(localPath);
           }
         }
@@ -151,13 +180,18 @@ async function autoDownloadSceneBackgrounds() {
           if (stat.size > 1024 && (await hasValidImageMagicBytes(tempPath))) {
             await RNFS.moveFile(tempPath, localPath);
             console.log(`[App] 🖼️ [autoDownload] ✅ 完成: ${filename} (${stat.size} bytes)`);
+            await resetMagicFail(url);
             downloadedCount++;
           } else {
-            console.warn(`[App] 🖼️ [autoDownload] ⚠️ 文件无效(太小/魔数错)，丢弃: ${filename} (${stat.size} bytes)`);
+            // 【取证 + item5】新下坏字节：打印 url + 前16字节，计一次 magic 失败。
+            const headHex = await readMagicHexPrefix(tempPath, 16);
+            const fc = await bumpMagicFail(url);
+            console.warn(`[MAGIC-GATE] 🚫 拒绝落盘(太小/魔数错): ${filename} | url=${url} | HTTP=${result.statusCode} | size=${stat.size}B | head16=[${headHex}] | magicFail=${fc}`);
+            if (fc >= 2) console.warn(`[MAGIC-GUARD] ⛔ 连续${fc}次魔数失败 → 标记终态: ${filename}`);
             try { await RNFS.unlink(tempPath); } catch {}
           }
         } else {
-          console.warn(`[App] 🖼️ [autoDownload]  HTTP ${result.statusCode}: ${filename}`);
+          console.warn(`[App] 🖼️ [autoDownload] ⚠️ HTTP ${result.statusCode}: ${filename} | url=${url}`);
           try { await RNFS.unlink(tempPath); } catch {}
         }
       } catch (err: any) {

@@ -48,6 +48,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { subscribeSceneDownloadChanged, getSceneDownloadState, tickScene } from '../utils/SceneDownloadStore';
 import { sceneRoamManager } from '../services/SceneRoamManager';
 import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } from '../services/ResourceStatusManager';
+// 【item2 限流横幅】订阅下载引擎的熔断暂停事件（"网络较慢，稍后会自动继续"）
+import { NETWORK_THROTTLE_EVENT, isAutoBatchPaused } from '../services/DownloaderService';
 import OfflineService from '../services/OfflineService';
 import NetworkGateService from '../services/NetworkGateService';
 import { AUDIO_MANIFEST } from '../constants/audioAssets';
@@ -356,9 +358,13 @@ const SceneItem = React.memo(({
                   <Text style={[styles.cardStatusText, { color: '#FFA500' }]} numberOfLines={1}>
                     Loading Images...
                   </Text>
-                ) : downloadStatus === 'error' || NetworkGateService.isOffline() ? (
+                ) : NetworkGateService.isOffline() ? (
                   <Text style={[styles.cardSubtitle, { color: '#FF8A65' }]} numberOfLines={1}>
                     {t('home_card_need_network')}
+                  </Text>
+                ) : downloadStatus === 'error' ? (
+                  <Text style={styles.cardSubtitle} numberOfLines={1}>
+                    {t('home_card_transient_error')}
                   </Text>
                 ) : (
                   <Text style={styles.cardSubtitle} numberOfLines={1}>
@@ -662,6 +668,16 @@ export const HomeScreen: React.FC = () => {
     lockedIdsRef.current = lockedIds;
   }, [lockedIds]);
   
+  // 【item2 限流横幅】下载引擎连续失败熔断时置 true → 顶部一条安静全局提示，避免每卡红字刷屏。
+  const [netSlowPaused, setNetSlowPaused] = useState<boolean>(() => isAutoBatchPaused());
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(NETWORK_THROTTLE_EVENT, (paused: boolean) => {
+      console.log(`[HomeScreen] 🌐 [限流横幅] paused=${paused}`);
+      setNetSlowPaused(paused);
+    });
+    return () => sub.remove();
+  }, []);
+
   // 【🔥 热启动自动下载】组件挂载后1秒自动触发所有基础场景的下载
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1272,6 +1288,24 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
               </Text>
             </Animated.View>
           </View>
+
+          {/* 【item2 限流横幅】连续失败熔断时一条安静的全局提示；不每卡红字刷屏，措辞归因于网络而非用户。 */}
+          {netSlowPaused && (
+            <View
+              style={{
+                marginHorizontal: 16,
+                marginBottom: 8,
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                borderRadius: 10,
+                backgroundColor: 'rgba(255,255,255,0.06)',
+              }}
+            >
+              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, textAlign: 'center' }}>
+                {t('home_net_slow_banner')}
+              </Text>
+            </View>
+          )}
 
           {groupedScenes.map((group) => {
             const isShuffling = shufflingCategory === group.title;

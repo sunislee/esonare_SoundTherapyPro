@@ -76,3 +76,19 @@ export const hasValidImageMagicBytes = async (filePath: string): Promise<boolean
     return false;
   }
 };
+
+/**
+ * 【取证日志】读取文件头 N 字节并返回 hex 字符串（默认 16 字节），用于 magic 门删除时
+ * 打印"实际收到的前 16 字节"，区分 404 HTML(`3c 21 44 4f 43 ...` = "<!DOC") / gzip / 空文件等。
+ * 静默失败：读取异常返回 `<read-error>`，绝不抛出。
+ */
+export const readMagicHexPrefix = async (filePath: string, n = 16): Promise<string> => {
+  try {
+    const b64 = await RNFS.read(filePath, n, 0, 'base64');
+    const bytes = base64ToBytes(b64);
+    if (bytes.length === 0) return '<empty>';
+    return bytes.map((x) => x.toString(16).padStart(2, '0')).join(' ');
+  } catch {
+    return '<read-error>';
+  }
+};

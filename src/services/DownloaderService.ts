@@ -56,6 +56,17 @@ const DOWNLOAD_CONN_TIMEOUT_MS = 10_000;     // 连接阶段：10s 未收到响�
 const STREAM_STALL_TIMEOUT_MS = 5_000;       // 流式路径：5s 无新 chunk 即 abort
 const BODY_READ_DEFAULT_BUDGET_MS = 120_000; // arrayBuffer 回退：缺 Content-Length 时的默认读预算
 
+// ════════════════════════════════════════════════════════════
+// 【限流与熔断 · item2】ghproxy 为共享代理，并发/紧挨着请求会触发限流 → 0%停滞 + 终态失败。
+//   策略：严格串行(引擎本就单队列) + 项间 ≥300ms 间隔 + 指数退避重试；连续 N 个文件终态失败
+//   即熔断本轮自动批量，广播安静全局提示「网络较慢，稍后会自动继续」，冷却后再续跑剩余队列。
+// ════════════════════════════════════════════════════════════
+export const NETWORK_THROTTLE_EVENT = 'network-throttle-paused'; // payload: boolean（true=已暂停/熔断）
+const INTER_ITEM_DELAY_MS = 300;             // 串行下载项间最小间隔，避免打爆共享代理
+const RETRY_BACKOFF_MS = [2_000, 8_000, 32_000]; // 第1/2/3次重试前的指数退避等待
+const CIRCUIT_BREAKER_THRESHOLD = 3;         // 本轮连续 N 个文件终态失败 → 熔断自动批量
+const CIRCUIT_RESUME_COOLDOWN_MS = 60_000;   // 熔断冷却后自动续跑剩余队列
+
 /** arrayBuffer 回退读预算：按最低可行速率 ~16KB/s 由 Content-Length 估算，钳制在 [30s, 5min] */
 const bodyReadBudget = (bytes: number): number =>
     Math.min(300_000, Math.max(30_000, Math.round((bytes / 16_384) * 1000)));
@@ -101,6 +112,12 @@ class DownloaderService {
   private listeners: Set<(status: DownloadStatus) => void> = new Set();
   private retryCount: Map<string, number> = new Map();
   private maxRetries = 3;
+  /** 【item2 限流】本轮连续终态失败计数（任一成功即清零）；达阈值触发熔断。 */
+  private consecutiveTerminalFailures = 0;
+  /** 【item2 熔断】true = 本轮自动批量已暂停，processQueue 立即停止取任务。 */
+  private circuitOpen = false;
+  /** 【item2 熔断】冷却续跑定时器（单例生命周期）。 */
+  private resumeTimer: ReturnType<typeof setTimeout> | null = null;
   /** [PR-2] WiFi 提示恢复事件订阅（单例生命周期，无需释放） */
   private wifiGateSub: { remove(): void } | null = null;
 
@@ -267,6 +284,14 @@ class DownloaderService {
       return;
     }
 
+    // 【item2】开启新一轮：解除上一轮熔断并清零连续失败计数（用户点按或冷却续跑均触发）。
+    if (this.circuitOpen) {
+      console.log('[Downloader] ♻️ [startDownload] 新一轮启动 → 解除熔断，隐藏"网络较慢"提示');
+      this.circuitOpen = false;
+      this.consecutiveTerminalFailures = 0;
+      DeviceEventEmitter.emit(NETWORK_THROTTLE_EVENT, false);
+    }
+
     // 【PR-2 WiFi 提示】移动数据且用户未允许 → 挂起（任务保留在队列，闸门放行后自动恢复）
     const gate = await NetworkGateService.requestDownloadAccess();
     if (gate === 'waiting') {
@@ -284,12 +309,19 @@ class DownloaderService {
   }
 
   /**
-   * 【🔧 修复】处理下载队列 - 顺序执行，每个任务完成后才处理下一个
+   * 【🔧 修复】处理下载队列 - 顺序执行，每个任务完成后才处理下一个。
+   * 【item2 限流】串行项间 ≥300ms 间隔；单文件失败按 2s/8s/32s 指数退避重试（排到队尾）；
+   * 连续 CIRCUIT_BREAKER_THRESHOLD 个文件终态失败 → 熔断本轮，广播"网络较慢"并安排冷却续跑。
    */
   private async processQueue() {
     console.log(`[Downloader] 🔥 [processQueue] 开始处理队列，任务数: ${this.downloadQueue.length}`);
 
     while (this.downloadQueue.length > 0) {
+      if (this.circuitOpen) {
+        console.warn(`[Downloader] ⛔ [CIRCUIT] 本轮已熔断 → 停止取任务；剩余 ${this.downloadQueue.length} 个待冷却续跑`);
+        break;
+      }
+
       const resource = this.downloadQueue.shift();
       if (!resource) continue;
 
@@ -297,12 +329,73 @@ class DownloaderService {
 
       try {
         await this.downloadResource(resource);
-      } catch (error) {
-        console.error(`[Downloader] ${resource.filename} 下载失败:`, error);
+        // ✅ 成功 → 清零连续失败计数与该项重试计数（打破"偶发失败累积误熔断"）。
+        this.consecutiveTerminalFailures = 0;
+        this.retryCount.delete(resource.id);
+      } catch (error: any) {
+        const attempt = (this.retryCount.get(resource.id) ?? 0) + 1; // 含首次在内的第几次尝试
+        if (attempt <= RETRY_BACKOFF_MS.length) {
+          this.retryCount.set(resource.id, attempt);
+          const waitMs = RETRY_BACKOFF_MS[attempt - 1];
+          console.warn(`[Downloader] 🔄 ${resource.filename} 第${attempt}次失败 → ${waitMs / 1000}s 退避后重试 (error=${error?.message || error})`);
+          await this.sleep(waitMs);
+          if (!this.circuitOpen) this.downloadQueue.push(resource); // 冷却后重新排到队尾，让其它文件先试
+        } else {
+          // ❌ 终态失败：所有 CDN 源 + 全部退避重试均耗尽 → 标 failed（UI 显示中性"暂时下载不了"）。
+          console.error(`[Downloader] ❌ ${resource.filename} 终态失败(已重试${RETRY_BACKOFF_MS.length}次): ${error?.message || error}`);
+          this.retryCount.delete(resource.id);
+          this.notify({
+            resourceId: resource.id,
+            filename: resource.filename,
+            progress: 0,
+            status: 'failed',
+            error: error?.message || 'Unknown error',
+          });
+          this.consecutiveTerminalFailures += 1;
+          if (this.consecutiveTerminalFailures >= CIRCUIT_BREAKER_THRESHOLD) {
+            this.circuitOpen = true;
+            console.warn(`[Downloader] ⛔ [CIRCUIT] 连续 ${this.consecutiveTerminalFailures} 个文件终态失败 → 熔断本轮自动批量，提示"网络较慢"`);
+            DeviceEventEmitter.emit(NETWORK_THROTTLE_EVENT, true);
+          }
+        }
+      }
+
+      // 串行项间节流：非熔断且仍有后续任务时，间隔 ≥300ms 再放下一个，避免打爆共享代理。
+      if (!this.circuitOpen && this.downloadQueue.length > 0) {
+        await this.sleep(INTER_ITEM_DELAY_MS);
       }
     }
 
-    console.log('[Downloader] ✅ [processQueue] 所有资源队列处理完成');
+    // 熔断后安排一次冷却续跑（诚实兑现"稍后会自动继续"）。
+    if (this.circuitOpen && this.downloadQueue.length > 0) {
+      this.scheduleResume();
+    }
+
+    console.log('[Downloader] ✅ [processQueue] 本轮队列处理结束');
+  }
+
+  /** 【item2】sleep 辅助。 */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  /** 【item2 熔断】冷却到期后自动续跑剩余队列（仍离线则跳过，等下次网络恢复事件）。 */
+  private scheduleResume() {
+    if (this.resumeTimer) clearTimeout(this.resumeTimer);
+    this.resumeTimer = setTimeout(() => {
+      this.resumeTimer = null;
+      if (NetworkGateService.isOffline()) {
+        console.log('[Downloader] ⏸️ [resume] 熔断冷却结束但仍离线 → 暂不续跑');
+        return;
+      }
+      console.log('[Downloader] ♻️ [resume] 熔断冷却结束 → 自动续跑剩余队列');
+      this.startDownload(); // startDownload 内部会解除熔断并广播恢复
+    }, CIRCUIT_RESUME_COOLDOWN_MS);
+  }
+
+  /** 【item2】当前是否处于熔断暂停（HomeScreen 初始化横幅用）。 */
+  isAutoBatchPaused(): boolean {
+    return this.circuitOpen;
   }
 
   /**
@@ -416,22 +509,9 @@ class DownloaderService {
       // 🔄 轮询直到 stat.size == totalWritten（确保 fsync 落盘完成后再标记可用）
       await this.pollUntilReady(localPath, totalWritten);
     } catch (error: any) {
-      console.error(`[Downloader] ❌ ${resource.filename} 下载失败:`, error?.message);
-      
-      // 重试逻辑
-      if (this.retryCount.get(resource.id)! < this.maxRetries) {
-        this.retryCount.set(resource.id, this.retryCount.get(resource.id)! + 1);
-        this.downloadQueue.push(resource); // 重新加入队列
-        console.log(`[Downloader] 🔄 ${resource.filename} 加入重试队列 (第 ${this.retryCount.get(resource.id)!} 次)`);
-      } else {
-        this.notify({
-          resourceId: resource.id,
-          filename: resource.filename,
-          progress: 0,
-          status: 'failed',
-          error: error?.message || 'Unknown error',
-        });
-      }
+      // 【item2】重试/退避/熔断统一由 processQueue 负责，这里只把失败向上抛出（保留 currentDownload 清理）。
+      console.error(`[Downloader] ❌ [downloadResource] ${resource.filename} 本次尝试失败:`, error?.message);
+      throw error;
     } finally {
       this.currentDownload = null;
     }
@@ -504,7 +584,15 @@ class DownloaderService {
     const notifyRealProgress = () => {
       RNFS.stat(partPath).then(
         (stat: any) => {
-          const real = expectedSize > 0 ? Math.min(95, Math.floor((stat.size / expectedSize) * 100)) : simProgress;
+          const bytes = Number(stat.size) || 0;
+          // 【item4 进度真实性】每 1s 打印 .part 实际落盘字节/期望总量：
+          //   · 流式路径应逐秒递增 → 真在收流量；
+          //   · arrayBuffer 回退路径(RN whatwg-fetch 主路径)会长时间停在 0、完成瞬间跳满 →
+          //     证明"有流量但进度事件没上 UI"这一病（RN fetch 不暴露中间字节，只能等整包）。
+          const totalTag = expectedSize > 0 ? String(expectedSize) : '?';
+          const pctTag = expectedSize > 0 ? ` (${Math.min(95, Math.floor((bytes / expectedSize) * 100))}%)` : '';
+          console.log(`[DL-PROGRESS] ${resource.filename} bytes=${bytes}/${totalTag}${pctTag}`);
+          const real = expectedSize > 0 ? Math.min(95, Math.floor((bytes / expectedSize) * 100)) : simProgress;
           if (real > lastNotified) {
             lastNotified = real;
             this.notify({ resourceId: resource.id, filename: resource.filename, progress: real, status: 'downloading' });
@@ -513,7 +601,7 @@ class DownloaderService {
         () => {} // 文件尚未创建或 stat 失败，忽略
       );
     };
-    const progressInterval = setInterval(notifyRealProgress, 1500);
+    const progressInterval = setInterval(notifyRealProgress, 1000);
 
     let connTimer: ReturnType<typeof setTimeout> | null = null;
     let stallTimer: ReturnType<typeof setTimeout> | null = null;
@@ -541,6 +629,9 @@ class DownloaderService {
       const response = await fetch(url, { signal: controller.signal, headers });
       if (connTimer) clearTimeout(connTimer);
       connTimer = null;
+
+      // 【item1 取证】打印本次请求的 HTTP 状态码与响应声明的字节数，便于判读限流(429/503)/404/截断。
+      console.log(`[DL-TRACE] ${resource.filename} HTTP=${response.status} contentLength=${response.headers?.get('content-length') || '?'} expectedSize=${expectedSize} startOffset=${startOffset} url=${url}`);
 
       // ══【P1-5】服务端 Range 响应处理══
       if (startOffset > 0 && response.status === 200) {
@@ -810,8 +901,11 @@ export const getLocalPath = (resourceId: string) =>
 export const isDownloaded = (resourceId: string) => 
   DownloaderServiceInstance.isDownloaded(resourceId);
 
-export const subscribeDownload = (callback: (status: DownloadStatus) => void) => 
+export const subscribeDownload = (callback: (status: DownloadStatus) => void) =>
   DownloaderServiceInstance.subscribe(callback);
+
+/** 【item2】当前自动批量是否因限流熔断而暂停（HomeScreen 初始化横幅用）。 */
+export const isAutoBatchPaused = () => DownloaderServiceInstance.isAutoBatchPaused();
 
 export const startDownload = () => 
   DownloaderServiceInstance.startDownload();

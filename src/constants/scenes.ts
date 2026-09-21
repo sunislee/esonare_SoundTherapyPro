@@ -2,7 +2,7 @@
 import { Platform, ImageSourcePropType, Image } from 'react-native';
 import * as RNFS from '@dr.pogodin/react-native-fs';
 import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, getLocalPath as getLocalPathHelper } from './audioAssets';
-import { hasValidImageMagicBytes } from '../utils/imageMagic';
+import { hasValidImageMagicBytes, readMagicHexPrefix } from '../utils/imageMagic';
 
 // 【背景图状态缓存】在应用启动时预加载所有文件存在性状态
 let backgroundAvailabilityCache: Record<string, boolean> = {};
@@ -24,6 +24,9 @@ const isBackgroundFileValid = async (localPath: string): Promise<boolean> => {
     // magic bytes 判定：杜绝 HTML/文本冒充图片；不合法则删除坏文件，允许重下
     const magicOk = await hasValidImageMagicBytes(localPath);
     if (!magicOk) {
+      // 【取证】删除坏文件前打印实际收到的前 16 字节，定位是 404 HTML / gzip / 空文件哪种污染。
+      const headHex = await readMagicHexPrefix(localPath, 16);
+      console.warn(`[MAGIC-GATE] 🗑️ 魔数非法删除: ${localPath} | size=${stat.size}B | head16=[${headHex}]`);
       try { await RNFS.unlink(localPath); } catch {}
       return false;
     }
