@@ -151,6 +151,13 @@ class AudioService {
   private _isReady = false;
   private _setupPromise: Promise<void> | null = null;
 
+  // 【阶段二 c】流播停摆看门狗（stream-stall watchdog）：
+  //   播放中若 position 连续 STALL_DEAD_MS(6s) 不前进(speed==0)，或收到 PlaybackError，
+  //   判定"流播已死"→ 诚实停止 + 通知 UI 回退，避免界面假装在播放。
+  private _stallTimer: ReturnType<typeof setInterval> | null = null;
+  private _watchLastPos = -1;
+  private _watchLastChangeTs = 0;
+
   // 【🔑 修复 #2】自动识别禁用标志
   // 当进入 life_record_shop 时设置为 true，通知 NoiseCancellationExperiment 跳过自动识别
   private skipAutoEnvironmentDetection: boolean = false;
@@ -406,6 +413,8 @@ class AudioService {
 
     TrackPlayer.addEventListener(Event.PlaybackError, (error) => {
       console.error('[AudioService] 🚨 播放器底层错误:', error);
+      // 【阶段二 c】底层播放错误 → 立即判死，诚实回退（不等 6s 停摆阈值）。
+      this.handleStallDeath(`PlaybackError: ${JSON.stringify(error)}`);
     });
 
     TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async (event) => {
@@ -740,6 +749,8 @@ class AudioService {
       console.log('[AudioService-DIAGNOSE] [4/5] ✅ TrackPlayer 初始化成功');
       console.log('[AudioService-DIAGNOSE] [5/5] 设置 _isReady = true');
       console.log('[AudioService-DIAGNOSE] ====== AudioService 初始化完成 ======');
+      // 【阶段二 c】初始化完成后启动常驻流播停摆看门狗（自门控，未播放时空转）。
+      this.startStallWatchdog();
     } catch (e) {
       console.error('[AudioService-DIAGNOSE] ❌ setupPlayer Failed:', e);
       console.error('[AudioService-DIAGNOSE] ❌ Error stack:', e?.stack);
@@ -749,6 +760,74 @@ class AudioService {
     }
   }
   
+  // ════════════════════════════════════════════════════════
+  // 【阶段二 c】流播停摆看门狗：常驻 interval，自门控于 isActuallyPlaying。
+  //   - speed==0 持续 ≥6s → 判死；PlaybackError → 立即判死（见事件处理器）。
+  //   - 判死后诚实回退：pause + isActuallyPlaying=false + notifyListeners + emit 'playbackStalled'。
+  // ════════════════════════════════════════════════════════
+  private static readonly STALL_CHECK_MS = 2000;
+  private static readonly STALL_DEAD_MS = 6000;
+
+  /** 幂等启动常驻停摆看门狗（初始化完成后调用一次即可）。 */
+  startStallWatchdog(): void {
+    if (this._stallTimer) return;
+    this._watchLastPos = -1;
+    this._watchLastChangeTs = Date.now();
+    this._stallTimer = setInterval(async () => {
+      try {
+        // 未播放 / 无当前场景 → 复位计时基准，直接返回（看门狗空转）。
+        if (!this.isActuallyPlaying || !this.currentBaseScene) {
+          this._watchLastPos = -1;
+          this._watchLastChangeTs = Date.now();
+          return;
+        }
+        const position = await TrackPlayer.getPosition();
+        const duration = await TrackPlayer.getDuration();
+        if (!duration || duration <= 0 || position == null || position < 0) {
+          return; // 数据未就绪，暂不判定
+        }
+        // 接近结尾（<1.5s）多为循环/切换边界，跳过避免误判。
+        if (duration - position < 1.5) {
+          this._watchLastChangeTs = Date.now();
+          return;
+        }
+        // 位置有推进 → speed>0，刷新基准。
+        if (this._watchLastPos < 0 || position > this._watchLastPos + 0.3) {
+          this._watchLastPos = position;
+          this._watchLastChangeTs = Date.now();
+          return;
+        }
+        // 位置停滞：累计停摆时长。
+        const stalledMs = Date.now() - this._watchLastChangeTs;
+        if (stalledMs >= AudioService.STALL_DEAD_MS) {
+          await this.handleStallDeath(`position 停滞 ${Math.round(stalledMs)}ms (speed==0)`);
+        }
+      } catch (e) {
+        // 读取失败（如刚切换）不武断判死，仅复位基准。
+        this._watchLastPos = -1;
+        this._watchLastChangeTs = Date.now();
+      }
+    }, AudioService.STALL_CHECK_MS);
+  }
+
+  /** 停止看门狗（销毁/退出时调用）。 */
+  stopStallWatchdog(): void {
+    if (this._stallTimer) { clearInterval(this._stallTimer); this._stallTimer = null; }
+  }
+
+  /** 流播判死 → 诚实回退：停止播放、复位状态、通知 UI、发事件。 */
+  private async handleStallDeath(reason: string): Promise<void> {
+    const sceneId = this.currentBaseScene?.id ?? 'unknown';
+    console.warn(`[Watchdog] 🛑 流播判死(${sceneId}): ${reason} → 诚实回退`);
+    // 复位基准，避免同一停摆重复触发（暂停后看门狗会空转）。
+    this._watchLastPos = -1;
+    this._watchLastChangeTs = Date.now();
+    try { await TrackPlayer.pause(); } catch (_e) {}
+    this.isActuallyPlaying = false;
+    this.notifyListeners();
+    try { DeviceEventEmitter.emit('playbackStalled', { sceneId, reason }); } catch (_e) {}
+  }
+
   private async performSetup() {
     try {
       console.log('[AudioService-DIAGNOSE] [performSetup] 开始执行原生层初始化');

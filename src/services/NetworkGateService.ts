@@ -26,6 +26,9 @@ class NetworkGateService {
   private promptDismissed = false;
   /** 当前是否有被闸门挂起的下载任务 */
   private hasPending = false;
+  /** 【阶段二 b】最近一次已知连接状态缓存：供 isOffline() 同步查询，避免每次 await NetInfo.fetch()。
+   *  null = 尚未取得任何有效状态（保守视为"未知"，isOffline() 返回 false 以免误伤正常链路）。 */
+  private lastConnected: boolean | null = null;
 
   /** App 初始化时调用一次：取初始网络状态 + 监听变化 */
   init() {
@@ -34,17 +37,29 @@ class NetworkGateService {
 
     NetInfo.fetch()
       .then((state) => {
+        this.lastConnected = state.isConnected === true;
         console.log(`[NetworkGate] 初始网络: type=${state.type} connected=${state.isConnected}`);
       })
       .catch((e) => console.warn('[NetworkGate] NetInfo.fetch 失败:', e));
 
     NetInfo.addEventListener((state) => {
+      this.lastConnected = state.isConnected === true;
       console.log(`[NetworkGate] 网络变化: type=${state.type} connected=${state.isConnected}`);
       // 切到 WiFi/以太网且有挂起任务 → 自动恢复下载
       if (this.isWlan(state) && this.hasPending) {
         this.resumeAll('wifi');
       }
     });
+  }
+
+  /**
+   * 【阶段二 b】同步判定当前是否离线。
+   * - 已知 isConnected=false → true（离线）
+   * - 已知 isConnected=true  → false（在线）
+   * - 尚未取得状态(null)     → false（保守：不武断判离线，避免首帧误伤；调用方若需强判定可自行 await NetInfo.fetch）
+   */
+  isOffline(): boolean {
+    return this.lastConnected === false;
   }
 
   /** wifi / ethernet 视为不消耗移动数据的"安全网络" */

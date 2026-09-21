@@ -48,6 +48,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { subscribeSceneDownloadChanged, getSceneDownloadState, tickScene } from '../utils/SceneDownloadStore';
 import { sceneRoamManager } from '../services/SceneRoamManager';
 import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } from '../services/ResourceStatusManager';
+import OfflineService from '../services/OfflineService';
+import NetworkGateService from '../services/NetworkGateService';
+import { AUDIO_MANIFEST } from '../constants/audioAssets';
 import ToastUtil from '../utils/ToastUtil';
 import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/NoiseResourceChecker';
 import { downloadTargetFilesAsync } from './ResourceDownloadScreen';
@@ -353,6 +356,10 @@ const SceneItem = React.memo(({
                   <Text style={[styles.cardStatusText, { color: '#FFA500' }]} numberOfLines={1}>
                     Loading Images...
                   </Text>
+                ) : downloadStatus === 'error' ? (
+                  <Text style={[styles.cardSubtitle, { color: '#FF8A65' }]} numberOfLines={1}>
+                    需要网络 · 点按重试
+                  </Text>
                 ) : (
                   <Text style={styles.cardSubtitle} numberOfLines={1}>
                     Waiting to Download
@@ -563,26 +570,81 @@ export const HomeScreen: React.FC = () => {
   const [isDataReady, setIsDataReady] = useState(false); // 【数据就绪标志】
   
   // ════════════════════════════════════════════════════════
-  // 【🔥🔥🔨 v10】按场景独立 tick — subscribeExternalStore 风格
-  // HomeScreen 不再持有全局 downloadProgress Map，改为每个 SceneItem mount 时订阅自己的 tick。
-  // prioritizeScene：用户点击 → tickScene(ready) 标记就绪 + 启动静默下载（DownloaderService.startDownload）
+  // 【阶段二 a/c】按场景独立 tick — subscribeExternalStore 风格 + 真实下载就绪计时器
+  // prioritizeScene：用户点击 → 真相优先。已落盘即就绪；离线诚实回退；在线启动真实下载，
+  //   并用 size 折算的封顶 180s「就绪计时器」轮询磁盘：到点仍未落盘 → 诚实 error（不再假 ready）。
+  // ════════════════════════════════════════════════════════
+  const DOWNLOAD_READY_CAP_MS = 180_000;   // 下载就绪计时器硬封顶
+  const DOWNLOAD_MIN_BUDGET_MS = 6_000;    // 最小预算（小文件也至少给 6s）
+  const DOWNLOAD_POLL_INTERVAL_MS = 2_000; // 磁盘复核轮询间隔
+  // 保守估算吞吐：约 40 KB/s（弱网），据此由 size 折算 ETA，再夹在 [min, cap]。
+  const ESTIMATED_THROUGHPUT_BPS = 40 * 1024;
+  const downloadTimersRef = useRef<Map<string, { poll: ReturnType<typeof setInterval>; deadline: number }>>(new Map());
+
+  // size → 就绪预算(ms)：ETA 折算 + 上下限夹取，封顶 180s。
+  const readinessBudgetMs = useCallback((sizeBytes: number): number => {
+    const eta = (sizeBytes > 0 ? sizeBytes / ESTIMATED_THROUGHPUT_BPS : 0) * 1000;
+    return Math.min(DOWNLOAD_READY_CAP_MS, Math.max(DOWNLOAD_MIN_BUDGET_MS, eta));
+  }, []);
+
+  // 清理某场景的就绪计时器。
+  const clearDownloadTimer = useCallback((sceneId: string) => {
+    const t = downloadTimersRef.current.get(sceneId);
+    if (t) { clearInterval(t.poll); downloadTimersRef.current.delete(sceneId); }
+  }, []);
+
   const prioritizeScene = useCallback((sceneId: string) => {
     console.log(`[HomeScreen] ⚡ [prioritizeScene] ${sceneId}`);
-    // 【⚡ 即时反馈】先 tick 为 ready，让用户看到 UI 响应（缩略图加载 + 播放按钮）
-    tickScene(sceneId, { progress: 100, status: 'ready' });
-    
-    // 如果该场景的订阅者还没 mount（不在 scroll view），稍后重试
-    if (!getSceneDownloadState(sceneId)) {
-      setTimeout(() => tickScene(sceneId, { progress: 100, status: 'ready' }), 800);
+
+    // 【真相优先】已真实落盘 → 直接就绪，无需下载。
+    if (OfflineService.isReady(sceneId)) {
+      tickScene(sceneId, { progress: 100, status: 'ready' });
+      return;
     }
-    
-    // 启动静默下载（DownloaderService.startDownload 内部保证幂等）
+
+    // 【离线诚实回退】无网络且未落盘 → 不启动假下载，立即标 error（UI 显示需网络）。
+    if (NetworkGateService.isOffline()) {
+      console.log(`[HomeScreen] 📴 [prioritizeScene] 离线且未落盘: ${sceneId} → 诚实回退(需网络)`);
+      clearDownloadTimer(sceneId);
+      tickScene(sceneId, { progress: 0, status: 'error' });
+      return;
+    }
+
+    // 【在线】已在下载中则不重复启动。
+    if (downloadTimersRef.current.has(sceneId)) return;
+
+    const asset = AUDIO_MANIFEST.find((a) => a.id === sceneId);
+    const budgetMs = readinessBudgetMs(asset?.size ?? 0);
+    const deadline = Date.now() + budgetMs;
+    console.log(`[HomeScreen] 🚀 [prioritizeScene] 启动真实下载: ${sceneId} (就绪预算=${Math.round(budgetMs / 1000)}s, 封顶=${DOWNLOAD_READY_CAP_MS / 1000}s)`);
+
+    // 立即进入 downloading 态（进行中反馈），真实进度由 DownloaderService→store 更新。
+    tickScene(sceneId, { progress: 0, status: 'downloading' });
+
     import('../services/DownloaderService').then(({ DownloaderServiceInstance }) => {
-      console.log(`[HomeScreen] 🚀 [prioritizeScene] 启动静默下载: ${sceneId}`);
       DownloaderServiceInstance.addTaskToQueue(sceneId);
       DownloaderServiceInstance.startDownload();
-    });
-  }, []);
+    }).catch((e) => console.warn('[HomeScreen] prioritizeScene 下载启动失败', e));
+
+    // 就绪计时器：轮询磁盘复核；落盘即 ready，超预算(≤180s)则诚实 error。
+    const poll = setInterval(async () => {
+      const ready = await OfflineService.recheckScene(sceneId);
+      if (ready) {
+        clearDownloadTimer(sceneId);
+        tickScene(sceneId, { progress: 100, status: 'ready' });
+        console.log(`[HomeScreen] ✅ [就绪计时器] ${sceneId} 已落盘 → ready`);
+        return;
+      }
+      if (Date.now() >= deadline) {
+        clearDownloadTimer(sceneId);
+        tickScene(sceneId, { progress: 0, status: 'error' });
+        console.warn(`[HomeScreen] ⏱️ [就绪计时器] ${sceneId} 超预算(${Math.round(budgetMs / 1000)}s, 封顶${DOWNLOAD_READY_CAP_MS / 1000}s)仍未落盘 → error`);
+      }
+    }, DOWNLOAD_POLL_INTERVAL_MS);
+
+    downloadTimersRef.current.set(sceneId, { poll, deadline });
+  }, [clearDownloadTimer, readinessBudgetMs]);
+
   
   // ════════════════════════════════════════════════════════
   // 【🔥🔥🔨 v10】按场景独立 tick — subscribeExternalStore 风格
@@ -823,17 +885,26 @@ export const HomeScreen: React.FC = () => {
     setSlogan(slogans[Math.floor(Math.random() * slogans.length)]);
     Animated.timing(greetingFadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
     
-    // 【核心】强制将所有 isBaseScene 场景标记为资源就绪
-    const baseIds = SCENES.filter(s => s.isBaseScene).map(s => s.id);
-    const readyMap: Record<string, boolean> = {};
-    baseIds.forEach(id => { readyMap[id] = true; });
-    setDownloadedSceneIds(new Set(baseIds));
+    // 【阶段二 a】不再无条件置就绪：以磁盘真相为准，触发一次全量扫描刷新。
+    // downloadedSceneIds 改由下方 OfflineService 订阅同步（只含真实落盘场景）。
+    OfflineService.refresh().catch((e) => console.warn('[HomeScreen] OfflineService.refresh 失败', e));
     
     // 【关键改进】不使用 setTimeout！改为监听 isDataReady 变化
     // 原因：冷启动时 downloadedSceneIds 加载时间不确定（可能 100ms-2000ms）
     // 使用 isDataReady 标志确保数据真正就绪后才恢复
     console.log('[HomeScreen] ⏳ [持久化] 等待 isDataReady=true 后触发恢复逻辑...');
   }, [t]); // 只在 t 变化时执行（语言切换）
+
+  // 【阶段二 a】就绪真相订阅：downloadedSceneIds 只反映 OfflineService(磁盘落盘)结果。
+  // 冷启动/下载完成/删除后都会经此同步 → "两次冷启动就绪态与落盘一致"、"Ready 落盘前不出现"。
+  useEffect(() => {
+    const sync = () => {
+      setDownloadedSceneIds(new Set(OfflineService.getReadyIds()));
+      setStateVersion((v) => v + 1); // 让已 mount 的 SceneItem 重新读取 isResourceReady
+    };
+    sync(); // 立即同步一次（含首帧）
+    return OfflineService.subscribe(sync);
+  }, []);
 
   // 【核心】当数据就绪后立即触发 Shuffle 状态恢复
   useEffect(() => {
