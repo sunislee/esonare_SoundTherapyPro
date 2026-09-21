@@ -11,7 +11,8 @@
     "postinstall": "patch-package",
     "gen:build-info": "node scripts/gen-build-info.js",
     "release:android": "node scripts/gen-build-info.js && cd android && ./gradlew assembleRelease",
-    "release:android:install": "node scripts/gen-build-info.js && cd android && ./gradlew installRelease"
+    "release:android:install": "node scripts/gen-build-info.js && cd android && ./gradlew installRelease",
+    "release:ios": "node scripts/gen-build-info.js && open ios/SoundTherapy081.xcworkspace"
   },
   "dependencies": {
     "@dr.pogodin/react-native-fs": "^2.38.2",
