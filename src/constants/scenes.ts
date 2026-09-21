@@ -2,6 +2,7 @@
 import { Platform, ImageSourcePropType, Image } from 'react-native';
 import * as RNFS from '@dr.pogodin/react-native-fs';
 import { AUDIO_MANIFEST, PRIMARY_REMOTE_RESOURCE_BASE_URL, getLocalPath as getLocalPathHelper } from './audioAssets';
+import { hasValidImageMagicBytes } from '../utils/imageMagic';
 
 // 【背景图状态缓存】在应用启动时预加载所有文件存在性状态
 let backgroundAvailabilityCache: Record<string, boolean> = {};
@@ -9,13 +10,24 @@ let backgroundAvailabilityCache: Record<string, boolean> = {};
 // 【辅助函数】异步检查并缓存背景图文件是否存在（应用启动 + 下载完成后调用）
 // 📝 RNFS.exists() 会返回 true，但文件大小可能为 0（下载中断的临时文件），
 //    因此必须同时验证 stat.size > 1KB 来确保图片可用。
+// 【v1.4.8 坏文件固化防护】size>1KB 不足以判定有效性：ghproxy 缓存 miss 回源的
+//    404 HTML 错误页同样 >1KB，会被旧逻辑当作有效 webp 永久落盘并跳过重下。
+//    故追加 magic bytes 判定；不合法 → 删除坏文件 + 返回 false（静默），
+//    使 UI 回退到打包兜底图，并允许下一轮下载重新拉取真图。
 const isBackgroundFileValid = async (localPath: string): Promise<boolean> => {
   try {
     const exists = await RNFS.exists(localPath);
     if (!exists) return false;
     const stat = await RNFS.stat(localPath);
     // 1KB 阈值：排除下载中断产生的空文件或损坏文件
-    return (stat.size ?? 0) > 1024;
+    if ((stat.size ?? 0) <= 1024) return false;
+    // magic bytes 判定：杜绝 HTML/文本冒充图片；不合法则删除坏文件，允许重下
+    const magicOk = await hasValidImageMagicBytes(localPath);
+    if (!magicOk) {
+      try { await RNFS.unlink(localPath); } catch {}
+      return false;
+    }
+    return true;
   } catch {
     return false;
   }

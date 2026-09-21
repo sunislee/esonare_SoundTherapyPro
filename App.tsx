@@ -78,6 +78,7 @@ import { preloadBackgroundAvailability } from './src/constants/scenes';
 import Toast from 'react-native-toast-message';
 import toastConfig from './src/config/toastConfig';
 import ToastUtil from './src/utils/ToastUtil';
+import { hasValidImageMagicBytes } from './src/utils/imageMagic';
 // 【PR-2 WiFi 提示】移动数据下载闸门 + 全局提示 Modal
 import NetworkGateService from './src/services/NetworkGateService';
 import WifiDownloadPrompt from './src/components/WifiDownloadPrompt';
@@ -123,13 +124,14 @@ async function autoDownloadSceneBackgrounds() {
         const exists = await RNFS.exists(localPath);
         if (exists) {
           const stat = await RNFS.stat(localPath);
-          if ((stat.size ?? 0) > 1024) {
+          // 【v1.4.8】size>1KB 且 magic bytes 合法才算有效；否则删除并落入下方重下分支
+          if ((stat.size ?? 0) > 1024 && (await hasValidImageMagicBytes(localPath))) {
             console.log(`[App] 🖼️ [autoDownload] ✅ 已存在: ${filename} (${stat.size} bytes)`);
             downloadedCount++;
             continue;
           } else {
-            // 文件太小，可能是损坏的，删除后重新下载
-            console.log(`[App] ️ [autoDownload] ⚠️ 文件太小，删除: ${filename} (${stat.size} bytes)`);
+            // 文件太小或魔数非法（如 404 HTML 冒充 webp），删除后重新下载
+            console.log(`[App] 🖼️ [autoDownload] ⚠️ 文件无效(太小/魔数错)，删除: ${filename} (${stat.size} bytes)`);
             await RNFS.unlink(localPath);
           }
         }
@@ -145,12 +147,13 @@ async function autoDownloadSceneBackgrounds() {
 
         if (result.statusCode === 200 || result.statusCode === 201) {
           const stat = await RNFS.stat(tempPath);
-          if (stat.size > 1024) {
+          // 【v1.4.8】size>1KB 且 magic bytes 合法才落盘；否则拒绝移动，坏字节绝不落地
+          if (stat.size > 1024 && (await hasValidImageMagicBytes(tempPath))) {
             await RNFS.moveFile(tempPath, localPath);
             console.log(`[App] 🖼️ [autoDownload] ✅ 完成: ${filename} (${stat.size} bytes)`);
             downloadedCount++;
           } else {
-            console.warn(`[App] 🖼️ [autoDownload] ⚠️ 文件太小: ${filename} (${stat.size} bytes)`);
+            console.warn(`[App] 🖼️ [autoDownload] ⚠️ 文件无效(太小/魔数错)，丢弃: ${filename} (${stat.size} bytes)`);
             try { await RNFS.unlink(tempPath); } catch {}
           }
         } else {
