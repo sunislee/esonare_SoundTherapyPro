@@ -175,11 +175,14 @@ export const AUDIO_MANIFEST = [
  *   - expectedSize 与 AUDIO_MANIFEST.size 逐字节对齐（入库时已 md5+size 校验）。
  */
 export const BUILTIN_SCENES: Readonly<Record<string, { filename: string; assetPath: string; expectedSize: number }>> = {
-  life_rain_urban:           { filename: 'roofusj.m4a',              assetPath: 'file:///android_asset/sounds/builtin/roofusj.m4a',              expectedSize: 6041646 },
-  nature_deep_sea:           { filename: 'deep_ocean_abyss.m4a',     assetPath: 'file:///android_asset/sounds/builtin/deep_ocean_abyss.m4a',     expectedSize: 1429191 },
-  nature_misty_forest:       { filename: 'misty_woods_dripping.m4a', assetPath: 'file:///android_asset/sounds/builtin/misty_woods_dripping.m4a', expectedSize: 680336 },
-  healing_zen_bowl:          { filename: 'zen_bowl.m4a',             assetPath: 'file:///android_asset/sounds/builtin/zen_bowl.m4a',             expectedSize: 391549 },
-  interactive_white_noise:   { filename: 'white_noise.m4a',          assetPath: 'file:///android_asset/sounds/builtin/white_noise.m4a',          expectedSize: 69881 },
+  // ⚠️ filename 必须与 AUDIO_MANIFEST[].filename 逐字节一致（含 base/ fx/ interactive/ city_rain/ 子目录前缀），
+  //    否则 BuiltinAssetBootstrap 的落盘目标 ≠ OfflineService.getLocalPath(category, manifest.filename) 判定路径，
+  //    内置短路会静默失效、场景回落下载。assetPath 相对路径镜像 filename。见 BuiltinSceneIntegrity.test.ts。
+  city_rain_urban:           { filename: 'city_rain/roofusj.m4a',              assetPath: 'file:///android_asset/sounds/builtin/city_rain/roofusj.m4a',              expectedSize: 6041646 },
+  nature_deep_sea:           { filename: 'base/deep_sea_breathing_rhythm.m4a', assetPath: 'file:///android_asset/sounds/builtin/base/deep_sea_breathing_rhythm.m4a', expectedSize: 456030 },
+  nature_misty_forest:       { filename: 'base/foggy_forest_ritual.m4a',       assetPath: 'file:///android_asset/sounds/builtin/base/foggy_forest_ritual.m4a',       expectedSize: 1732906 },
+  healing_zen_bowl:          { filename: 'fx/zen_bowl.m4a',                    assetPath: 'file:///android_asset/sounds/builtin/fx/zen_bowl.m4a',                    expectedSize: 391549 },
+  interactive_white_noise:   { filename: 'interactive/white_noise.m4a',        assetPath: 'file:///android_asset/sounds/builtin/interactive/white_noise.m4a',        expectedSize: 69881 },
 };
 
 /** 内置场景 id 列表（唯一定义源）。 */
