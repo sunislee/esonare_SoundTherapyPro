@@ -454,7 +454,7 @@ const SettingsScreen: React.FC = () => {
         >
           <View style={styles.languageModalContent}>
             <Text style={styles.languageModalTitle}>{t('settings.language')}</Text>
-            {(['system', 'zh', 'en', 'ja'] as const).map((lang) => (
+            {(['system', 'zh', 'en'] as const).map((lang) => (
               <TouchableOpacity
                 key={lang}
                 style={styles.languageOption}

@@ -37,6 +37,9 @@
     "peace": "心が平和になるように",
     "silence": "世界を少し静かにしよう"
   },
+  "recommend": {
+    "title": "あなたへのおすすめ"
+  },
   "greetings": {
     "hello": "こんにちは",
     "midnight": "こんばんは",

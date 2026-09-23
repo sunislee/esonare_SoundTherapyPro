@@ -43,6 +43,21 @@
     "peace": "愿你内心平静",
     "silence": "让世界安静一会儿"
   },
+  "recommend": {
+    "title": "为你推荐",
+    "reason": {
+      "night": "夜深了，适合安静助眠",
+      "morning": "清晨时分，唤醒身心",
+      "midday": "午间小憩，屏蔽杂音",
+      "mood_anxious": "感到焦虑时，让声音帮你平复心绪",
+      "mood_fatigued": "有些疲惫？让它带你舒缓放松",
+      "mood_calm": "心境平和，沉浸在自然之声里",
+      "mood_happy": "心情正好，与自然相伴更惬意",
+      "avoid_recent": "已尽量避开你最近听过的场景",
+      "rest": "今天听了挺久，记得让耳朵歇会儿",
+      "default": "为你精选的疗愈声景"
+    }
+  },
   "greetings": {
     "hello": "你好",
     "midnight": "凌晨好",
@@ -469,9 +484,6 @@
     "healing_crystal": { "title": "水晶钵", "desc": "高频能量共振" },
     "brainwave_alpha": { "title": "Alpha专注", "desc": "专注与放松" },
     "brainwave_delta": { "title": "Delta入眠", "desc": "左右脑同步" },
-    "interactive_white_noise": { "title": "白噪音", "desc": "深层专注" },
-    "interactive_wind_chime": { "title": "风铃", "desc": "空灵之声" },
-    "interactive_breath": { "title": "呼吸", "desc": "正念引导" },
     "interactive_apple": { "title": "嚼苹果", "desc": "解压音效" },
     "interactive_match": { "title": "划火柴", "desc": "触发音" },
     "interactive_wind_chime": { "title": "风铃", "desc": "清脆悦耳" },

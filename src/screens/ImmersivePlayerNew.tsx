@@ -32,6 +32,7 @@ import { Event, useTrackPlayerEvents, State } from 'react-native-track-player';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useBackHandler } from '../hooks/useBackHandler';
 import { sceneRoamManager } from '../services/SceneRoamManager';
+import { RECENT_SCENES_KEY, pushRecentScenes } from '../services/RecommendationEngine';
 
 const { width, height } = Dimensions.get('window');
 
@@ -506,6 +507,13 @@ const ImmersivePlayerNew: React.FC = () => {
         return;
       }
       AsyncStorage.setItem('LAST_VIEWED_SCENE_ID', targetScene.id).catch(() => {});
+      // 维护最近收听环形窗口（供首页 mood='unknown' graded recency 去重）。fire-and-forget，不影响播放主流程。
+      AsyncStorage.getItem(RECENT_SCENES_KEY)
+        .then((raw) => {
+          const prev: string[] = raw ? (JSON.parse(raw) as unknown[]).filter((x): x is string => typeof x === 'string') : [];
+          return AsyncStorage.setItem(RECENT_SCENES_KEY, JSON.stringify(pushRecentScenes(prev, targetScene.id)));
+        })
+        .catch(() => {});
 
       if (currentPlayingId === targetScene.id) {
         console.log(`[ImmersivePlayer] Scene ${targetScene.id} is already playing.`);

@@ -43,6 +43,21 @@
     "peace": "May your heart be at peace",
     "silence": "Let the world be quiet for a while"
   },
+  "recommend": {
+    "title": "For You",
+    "reason": {
+      "night": "It's late — a calm soundscape to help you wind down",
+      "morning": "Good morning — ease gently into the day",
+      "midday": "Midday reset — tune out the noise",
+      "mood_anxious": "Feeling anxious? Let these sounds settle your mind",
+      "mood_fatigued": "A little tired? Unwind and let it ease you",
+      "mood_calm": "In a calm mood — sink into the sounds of nature",
+      "mood_happy": "Feeling good — nature makes it even better",
+      "avoid_recent": "Picked to differ from what you've heard lately",
+      "rest": "You've listened a lot today — give your ears a break",
+      "default": "A healing soundscape, picked for you"
+    }
+  },
   "greetings": {
     "hello": "Hello",
     "midnight": "Good midnight",

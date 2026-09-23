@@ -6,10 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 强制保留 i18n 模块 (防止被 Hermes 优化掉)
 (global as any).__SOUND_THERAPY_I18N__ = i18n;
 
-// 导入语言包
+// 导入语言包（App 仅维护中英双语；ja.json 保留在仓库但不再注册，日语设备回退英文）
 const zh = require('./locales/zh.json');
 const en = require('./locales/en.json');
-const ja = require('./locales/ja.json');
 
 // 导入类型定义
 import { TranslationResources, TranslationKeys } from './types';
@@ -59,8 +58,8 @@ const getSystemLanguage = (): string => {
     // 提取语言代码（处理 en-US, zh-CN, ja-JP 等）
     const languageCode = lowerLocale.split('-')[0];
     
-    // 只支持我们有的语言包
-    if (['zh', 'en', 'ja'].includes(languageCode)) {
+    // 只支持我们维护的语言包（日语停止维护 → 回退英文，避免半翻译状态）
+    if (['zh', 'en'].includes(languageCode)) {
       console.log(`[i18n] Detected language: ${languageCode} from ${locale}`);
       return languageCode;
     }
@@ -85,9 +84,6 @@ try {
         },
         en: {
           translation: en,
-        },
-        ja: {
-          translation: ja,
         },
       },
       lng: getSystemLanguage(),

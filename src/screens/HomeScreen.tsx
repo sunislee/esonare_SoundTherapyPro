@@ -39,6 +39,8 @@ import { useAudio } from '../context/AudioContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import NoiseLabIcon from '../components/NoiseLabIcon';
 import NoiseLabModal from '../screens/NoiseCancellationExperiment';
+// 规则推荐引擎（纯离线打分，无网络、无后端）
+import RecommendationEngine, { getSceneVisual, RECENT_SCENES_KEY } from '../services/RecommendationEngine';
 // ✅ 使用 React Native 原生 ScrollView（移除 gesture-handler 依赖）
 import { Typography } from '../theme/Typography';
 import { useTranslation } from 'react-i18next';
@@ -461,6 +463,33 @@ export const HomeScreen: React.FC = () => {
 
   // 【Noise Lab Modal 状态】
   const [showNoiseLabModal, setShowNoiseLabModal] = useState(false);
+
+  // 今日推荐（纯本地规则引擎，无网络、无后端）：读最近收听做多样性去重后打分给出当日推荐。
+  // App 无情绪输入源 → mood 传 'unknown'（不注入任何 mood 加分），见 experiments/laya/README.md。
+  const [activeRec, setActiveRec] = useState(() =>
+    RecommendationEngine.recommend({ hour: new Date().getHours(), mood: 'unknown', listeningDuration: 0 }),
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      // 读取最近收听环形窗口（真实 key: RECENT_VIEWED_SCENE_IDS，写入方 ImmersivePlayerNew）用于
+      // mood='unknown' 下的 graded recency 多样性去重，随后给出规则推荐。
+      let recentScenes: string[] = [];
+      try {
+        const raw = await AsyncStorage.getItem(RECENT_SCENES_KEY);
+        if (raw) recentScenes = (JSON.parse(raw) as unknown[]).filter((x): x is string => typeof x === 'string');
+      } catch { /* ignore */ }
+      if (!mounted) return;
+      setActiveRec(RecommendationEngine.recommend({
+        hour: new Date().getHours(),
+        mood: 'unknown',
+        recentScenes,
+        listeningDuration: 0,
+      }));
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   // 【关键】状态版本计数器 - 强制 SceneItem 重渲染
   const [stateVersion, setStateVersion] = useState(0);
@@ -1292,6 +1321,53 @@ console.log(`[HomeScreen] ✅ [切换锁v8] 🚀 状态更新完成！`);
               </Text>
             </Animated.View>
           </View>
+
+          {/* 今日推荐卡片（纯本地规则引擎，无网络）：点击播放对应场景。 */}
+          {(() => {
+            const visual = getSceneVisual(activeRec.sceneId);
+            // activeRec.sceneName / visual.title 实为 i18n key（SCENES 的 title 字段存的是 'scenes.<id>.title'，非中文），
+            // 直接渲染会显示原始 key。取法与分组列表 SceneItem 完全一致：过 t() 由 id→中文；缺失时回退到本地化标题。
+            const title = t(`scenes.${activeRec.sceneId}.title`, { defaultValue: t('recommend.title') });
+            const color = visual.color;
+            const thumb = visual.thumb;
+            return (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => navigation.navigate('ImmersivePlayer', { sceneId: activeRec.sceneId })}
+                style={{
+                  alignSelf: 'stretch', // scrollContent 有 alignItems:'center' 会让本卡 shrink-wrap；显式拉伸回全宽（保留 marginHorizontal），否则内部 flex:1 文字列宽度塌成 0
+                  marginHorizontal: 16,
+                  marginBottom: 14,
+                  borderRadius: 18,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: 'rgba(150,150,160,0.30)',
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}>
+                  {thumb ? (
+                    <ImageBackground
+                      source={thumb}
+                      borderRadius={12}
+                      style={{ width: 56, height: 56, backgroundColor: color }}
+                    />
+                  ) : (
+                    <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: color }} />
+                  )}
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '700' }}>
+                      {t('recommend.title')}
+                    </Text>
+                    <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', marginTop: 2 }}>{title}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4 }} numberOfLines={2}>
+                      {t(activeRec.reasonKey, { ...(activeRec.reasonParams || {}), defaultValue: t('recommend.title') })}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })()}
 
           {/* 【item2 限流横幅】连续失败熔断时一条安静的全局提示；不每卡红字刷屏，措辞归因于网络而非用户。 */}
           {netSlowPaused && (
