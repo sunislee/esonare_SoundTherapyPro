@@ -15,6 +15,10 @@ import { DeviceEventEmitter } from 'react-native';
 export const WIFI_PROMPT_REQUESTED = 'wifiPromptRequested';
 /** 恢复事件：闸门放行（切到 WiFi / 用户允许）→ UI 关闭 + DownloaderService 恢复队列 */
 export const WIFI_PROMPT_RESOLVED = 'wifiPromptResolved';
+/** 【网络自愈】连接 false→true（去抖后）恢复 → DownloaderService 把终态 failed 场景重置重排。 */
+export const NETWORK_RECOVERED = 'networkRecovered';
+/** 【网络自愈】去抖窗口(ms)：抖动(数秒内反复 up/down)只认"稳定联网"，风暴式切换仅触发一次重排。 */
+const RECOVERY_DEBOUNCE_MS = 3000;
 
 type GateResult = 'granted' | 'waiting';
 
@@ -31,6 +35,10 @@ class NetworkGateService {
   /** 【回归修复】最近一次已知网络类型：isOffline() 的唯一依据（type==='none' 才是真离线）。
    *  null = 尚未取得任何状态（保守视为未知 → isOffline() 返回 false，避免首帧误伤静默下载）。 */
   private lastType: NetInfoState['type'] | null = null;
+  /** 【网络自愈】是否曾经掉线：仅当"先见过离线、后恢复联网"才判为恢复(避免首启/从未离线时误触发)。 */
+  private everDisconnected = false;
+  /** 【网络自愈】去抖定时器：拖尾式——只有稳定联网满窗口才发 NETWORK_RECOVERED，抖动期间被反复取消。 */
+  private recoveryTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** App 初始化时调用一次：取初始网络状态 + 监听变化 */
   init() {
@@ -58,11 +66,48 @@ class NetworkGateService {
       this.lastConnected = state.isConnected === true;
       this.lastType = state.type;
       console.log(`[NetworkGate] 网络变化: type=${state.type} connected=${state.isConnected}`);
+      // 【网络自愈】统一处理连接态迁移(去抖发 NETWORK_RECOVERED)。
+      this.handleConnectivityChange(state);
       // 切到 WiFi/以太网且有挂起任务 → 自动恢复下载
       if (this.isWlan(state) && this.hasPending) {
         this.resumeAll('wifi');
       }
     });
+  }
+
+  /**
+   * 【网络自愈】连接态迁移处理（NetInfo 回调与单测共用入口）。
+   * - 掉线(isConnected=false) → 记 everDisconnected，取消未决恢复(抖动期间 up→down 直接作废)。
+   * - 联网(isConnected=true) 且此前见过离线 → 拖尾去抖：稳定联网满 RECOVERY_DEBOUNCE_MS 才发一次
+   *   NETWORK_RECOVERED；期间任何再次掉线都会 clearTimeout 作废，故数秒内反复 up/down 仅触发一次。
+   */
+  handleConnectivityChange(state: NetInfoState): void {
+    const connected = state.isConnected === true;
+    if (!connected) {
+      this.everDisconnected = true;
+      if (this.recoveryTimer) {
+        clearTimeout(this.recoveryTimer);
+        this.recoveryTimer = null;
+      }
+      return;
+    }
+    // 已联网：仅在"曾经掉线"且无未决定时器时安排一次去抖恢复。
+    if (this.everDisconnected && !this.recoveryTimer) {
+      this.recoveryTimer = setTimeout(() => {
+        this.recoveryTimer = null;
+        console.log('[NetworkGate] 📡 网络恢复(去抖通过) → 发出 NETWORK_RECOVERED');
+        DeviceEventEmitter.emit(NETWORK_RECOVERED);
+      }, RECOVERY_DEBOUNCE_MS);
+    }
+  }
+
+  /** 【仅测试】重置自愈状态机(everDisconnected + 未决去抖定时器)，隔离用例间串味。生产勿调用。 */
+  _resetRecoveryForTest(): void {
+    this.everDisconnected = false;
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer);
+      this.recoveryTimer = null;
+    }
   }
 
   /**

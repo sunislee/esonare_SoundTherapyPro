@@ -4,7 +4,7 @@
   "home_card_preparing": "Preparing · {{pct}}%",
   "home_card_preparing_quiet": "Preparing",
   "home_card_need_network": "Network needed · tap to retry",
-  "home_card_transient_error": "Can't download right now · will retry automatically",
+  "home_card_transient_error": "Network needed · tap to retry",
   "home_net_slow_banner": "Slow network — downloads will resume automatically",
   "tabs": {
     "scenes": "Scenes",

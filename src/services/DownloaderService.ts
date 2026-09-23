@@ -45,7 +45,7 @@ import {
   BUILTIN_SCENE_IDS,
 } from '../constants/audioAssets';
 import { DeviceEventEmitter } from 'react-native';
-import NetworkGateService, { WIFI_PROMPT_RESOLVED } from './NetworkGateService';
+import NetworkGateService, { WIFI_PROMPT_RESOLVED, NETWORK_RECOVERED } from './NetworkGateService';
 
 // 本地缓存目录
 const CACHE_DIR = `${RNFS.DocumentDirectoryPath}/noise_reduction_cache`;
@@ -138,6 +138,8 @@ class DownloaderService {
   private retryFlushTimer: ReturnType<typeof setTimeout> | null = null;
   /** [PR-2] WiFi 提示恢复事件订阅（单例生命周期，无需释放） */
   private wifiGateSub: { remove(): void } | null = null;
+  /** 【网络自愈】连接恢复事件订阅（单例生命周期，无需释放） */
+  private networkRecoveredSub: { remove(): void } | null = null;
 
   constructor() {
     this.initCacheDir();
@@ -145,6 +147,11 @@ class DownloaderService {
     this.wifiGateSub = DeviceEventEmitter.addListener(WIFI_PROMPT_RESOLVED, () => {
       console.log('[Downloader] 📶 [wifiPromptResolved] 闸门放行，恢复下载队列');
       this.startDownload();
+    });
+    // 【网络自愈】离线→联网(去抖后) → 把终态 failed 场景重置回队列自动重下。
+    this.networkRecoveredSub = DeviceEventEmitter.addListener(NETWORK_RECOVERED, () => {
+      console.log('[Downloader] 📡 [networkRecovered] 网络恢复 → 自愈重排终态失败场景');
+      this.recoverFailedOnNetworkRestore();
     });
   }
 
@@ -1024,6 +1031,68 @@ class DownloaderService {
     // 【🔧 修复】通过 startDownload 启动，带防重入锁，不会重复处理队列
     console.log(`[Downloader] 🔥 [addTaskToQueue] 触发下载...`);
     this.startDownload();
+  }
+
+  /**
+   * 【网络自愈】网络恢复(去抖后)时，把全部终态 failed 场景重置回队列自动重下。
+   * - 扫描 statusMap 中 status==='failed' 的资源；内置场景从不进下载队列、不会被标 failed，天然跳过。
+   * - 清掉退避/重试计数(retrySchedule/retryCount)，解除熔断，重建 AudioResource 入队(去重)。
+   * - notify 'pending'(UI: mapDownloaderStatusToSceneState→null → 回落到等待态，非 error)。
+   * - 复用熔断重放链路 startDownload()(内部防重入锁 + 闸门检查 + 解除熔断广播)。
+   * @returns 被重新入队的场景数。
+   */
+  recoverFailedOnNetworkRestore(): number {
+    if (NetworkGateService.isOffline()) {
+      console.log('[Downloader] ⏸️ [recover] 当前仍离线 → 跳过自愈(等真正联网的恢复事件)');
+      return 0;
+    }
+
+    const failedIds: string[] = [];
+    for (const [id, st] of this.statusMap) {
+      if (st.status === 'failed') failedIds.push(id);
+    }
+    if (failedIds.length === 0) {
+      console.log('[Downloader] ℹ️ [recover] 无终态失败场景 → 无需自愈');
+      return 0;
+    }
+
+    let requeued = 0;
+    for (const id of failedIds) {
+      const filename = this.statusMap.get(id)?.filename ?? '';
+      // 清退避/重试计数，回到干净起点。
+      this.retrySchedule.delete(id);
+      this.retryCount.delete(id);
+
+      // 重建可下载资源：优先 RESOURCE_MAP(含降噪/背景图原始定义)，回退 AUDIO_MANIFEST(场景音频)。
+      let resource: AudioResource | undefined = RESOURCE_MAP[id];
+      if (!resource) {
+        const asset = AUDIO_MANIFEST.find((a) => a.id === id);
+        if (asset) {
+          const GITHUB_BASE = 'https://ghproxy.net/https://raw.githubusercontent.com/sunislee/sound-therapy-assets/main';
+          resource = {
+            id: asset.id,
+            filename: asset.filename,
+            category: asset.category,
+            priority: 1,
+            remoteUrl: `${GITHUB_BASE}/${asset.filename}`,
+          };
+        }
+      }
+
+      // 去重：已在队列中则不重复 push。
+      if (resource && !this.downloadQueue.find((r) => r.id === id)) {
+        this.downloadQueue.push(resource);
+      }
+
+      // UI: failed → pending(等待)。映射到 null，卡片脱离 error「稍后重试」态回落到排队/准备中显示。
+      this.notify({ resourceId: id, filename, progress: 0, status: 'pending' });
+      requeued += 1;
+    }
+
+    console.log(`[Downloader] ♻️ [recover] 网络恢复 → 重新入队 ${requeued} 个终态失败场景，触发下载`);
+    // 复用熔断重放链路：startDownload 会解除熔断、清零连续失败计数、广播 NETWORK_THROTTLE(false) 并跑队列。
+    this.startDownload();
+    return requeued;
   }
 }
 
