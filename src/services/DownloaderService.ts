@@ -42,6 +42,7 @@ import {
   getAssetUrls,
   getLocalPath as getAudioLocalPath,
   IS_GOOGLE_PLAY_VERSION,
+  BUILTIN_SCENE_IDS,
 } from '../constants/audioAssets';
 import { DeviceEventEmitter } from 'react-native';
 import NetworkGateService, { WIFI_PROMPT_RESOLVED } from './NetworkGateService';
@@ -285,8 +286,11 @@ class DownloaderService {
    * 初始化下载队列（按优先级排序）
    */
   initQueue() {
-    this.downloadQueue = [...SORTED_RESOURCES];
-    console.log('[Downloader] 初始化下载队列，共', this.downloadQueue.length, '个资源');
+    // 【内置场景】随包拷贝落盘的核心场景不进下载队列，避免冷启/离线抢跑联网下载。
+    // 唯一判定源 BUILTIN_SCENE_IDS；拷贝失败时由 BuiltinAssetBootstrap 显式 addTaskToQueue 回落。
+    const builtin = new Set<string>(BUILTIN_SCENE_IDS ?? []);
+    this.downloadQueue = SORTED_RESOURCES.filter((r) => !builtin.has(r.id));
+    console.log('[Downloader] 初始化下载队列，共', this.downloadQueue.length, '个资源（已排除内置场景）');
   }
 
   /**

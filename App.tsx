@@ -73,6 +73,7 @@ import TrackPlayer from 'react-native-track-player';
 import { NativeModules } from 'react-native';
 import { DownloadService } from './src/services/DownloadService';
 import { DownloaderServiceInstance } from './src/services/DownloaderService';
+import BuiltinAssetBootstrap from './src/services/BuiltinAssetBootstrap';
 import { preloadBackgroundAvailability } from './src/constants/scenes';
 // 【🔥 Toast 修复】引入 react-native-toast-message 容器组件和配置
 import Toast from 'react-native-toast-message';
@@ -336,6 +337,14 @@ function App() {
       }
     });
     return () => sub.remove();
+  }, []);
+
+  // 【内置场景】首启把随包核心场景从 android_asset 拷入 DocumentDir（后台异步、幂等、失败回落下载）。
+  // 独立 useEffect 挂载即触发，不阻塞首屏；落盘完成后经 OfflineService.recheckScene 通知 UI 转 Ready。
+  useEffect(() => {
+    BuiltinAssetBootstrap.bootstrap().catch((e: any) =>
+      console.warn('[App] 内置场景落盘异常:', e?.message || e)
+    );
   }, []);
 
   if (!isAudioReady) {

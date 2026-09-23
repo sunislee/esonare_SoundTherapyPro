@@ -162,6 +162,33 @@ export const AUDIO_MANIFEST = [
   { id: 'bg_western_church_sunlight_monastery', filename: 'western_church_sunlight_monastery.webp', category: 'scene_backgrounds', title: '西方教会阳光修道院', description: '场景背景图', size: 223932 },
 ]; 
 
+/**
+ * 【内置场景 · single source of truth】
+ * @architecture-constraint
+ *   随 APK 打包、首启从 android_asset 拷入 DocumentDir 的核心场景，安装即离线可播、零网络。
+ *   文件源位于 android/app/src/main/assets/sounds/builtin/（RNFS 以 file:///android_asset/... 读取）。
+ *   ⚠️ 不要放 res/raw —— res/raw 是 react-native-sound MAIN_BUNDLE 专用，RNFS 读不了；两套别混。
+ *   - isBuiltinScene()/BUILTIN_SCENE_IDS 是全局唯一判定源：DownloaderService.initQueue / bootstrap /
+ *     OfflineService 就绪判定均以此为准，禁止在 UI 层散落场景 id 特判。
+ *   - filename 必须与对应 AUDIO_MANIFEST[].filename 完全一致（basename），确保拷贝目标路径 ==
+ *     getLocalPath() 的落盘路径，从而复用 OfflineService 既有的 exists+size 就绪真相判定。
+ *   - expectedSize 与 AUDIO_MANIFEST.size 逐字节对齐（入库时已 md5+size 校验）。
+ */
+export const BUILTIN_SCENES: Readonly<Record<string, { filename: string; assetPath: string; expectedSize: number }>> = {
+  life_rain_urban:           { filename: 'roofusj.m4a',              assetPath: 'file:///android_asset/sounds/builtin/roofusj.m4a',              expectedSize: 6041646 },
+  nature_deep_sea:           { filename: 'deep_ocean_abyss.m4a',     assetPath: 'file:///android_asset/sounds/builtin/deep_ocean_abyss.m4a',     expectedSize: 1429191 },
+  nature_misty_forest:       { filename: 'misty_woods_dripping.m4a', assetPath: 'file:///android_asset/sounds/builtin/misty_woods_dripping.m4a', expectedSize: 680336 },
+  healing_zen_bowl:          { filename: 'zen_bowl.m4a',             assetPath: 'file:///android_asset/sounds/builtin/zen_bowl.m4a',             expectedSize: 391549 },
+  interactive_white_noise:   { filename: 'white_noise.m4a',          assetPath: 'file:///android_asset/sounds/builtin/white_noise.m4a',          expectedSize: 69881 },
+};
+
+/** 内置场景 id 列表（唯一定义源）。 */
+export const BUILTIN_SCENE_IDS: readonly string[] = Object.keys(BUILTIN_SCENES);
+
+/** 该场景是否随包内置（唯一判定入口）。 */
+export const isBuiltinScene = (sceneId: string): boolean => sceneId in BUILTIN_SCENES;
+
+
 // 【核心】初始化 AUDIO_MAP，将 filename 映射到本地路径
 export const AUDIO_MAP: Record<string, string> = {};
 
