@@ -51,7 +51,8 @@ import { subscribeSceneDownloadChanged, getSceneDownloadState, tickScene } from 
 import { sceneRoamManager } from '../services/SceneRoamManager';
 import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } from '../services/ResourceStatusManager';
 // 【item2 限流横幅】订阅下载引擎的熔断暂停事件（"网络较慢，稍后会自动继续"）
-import { NETWORK_THROTTLE_EVENT, isAutoBatchPaused } from '../services/DownloaderService';
+import { NETWORK_THROTTLE_EVENT, isAutoBatchPaused, DownloaderServiceInstance } from '../services/DownloaderService';
+import { mapDownloaderStatusToSceneState } from '../utils/downloadStatusMapping';
 import OfflineService from '../services/OfflineService';
 import NetworkGateService from '../services/NetworkGateService';
 import { AUDIO_MANIFEST } from '../constants/audioAssets';
@@ -954,6 +955,22 @@ export const HomeScreen: React.FC = () => {
     sync(); // 立即同步一次（含首帧）
     return OfflineService.subscribe(sync);
   }, []);
+
+  // 【bugfix · 2026-09 永久「准备中 0%」】下载器终态权威回写首页 store。
+  //   根因：HomeScreen 此前不消费 DownloaderService 事件，下载失败(404/超时/重试耗尽/熔断)时
+  //   store 停在 prioritizeScene 写入的 'downloading' → SceneItem 永久 spinner；唯一兜底 watchdog
+  //   会被反复选中重置而永不超时。这里把 failed→error / completed→ready / downloading→进度 直接落地，
+  //   失败即清 watchdog 并标 error（UI「暂时下载不了 · 稍后自动重试」），彻底离开 preparing-0%。
+  useEffect(() => {
+    const sceneAudioIds = new Set(SCENES.map((s) => s.id));
+    return DownloaderServiceInstance.subscribe((status) => {
+      if (!sceneAudioIds.has(status.resourceId)) return; // 仅处理场景音频，忽略背景图等
+      const mapped = mapDownloaderStatusToSceneState(status);
+      if (!mapped) return;
+      if (status.status === 'failed') clearDownloadTimer(status.resourceId); // 停 watchdog，避免与 error 态打架
+      tickScene(status.resourceId, mapped);
+    });
+  }, [clearDownloadTimer]);
 
   // 【核心】当数据就绪后立即触发 Shuffle 状态恢复
   useEffect(() => {

@@ -162,6 +162,9 @@ export async function checkSceneResourceStatus(sceneId: string): Promise<{
       const globalStatus = allStatus?.find(s => s.resourceId === sceneId);
       if (globalStatus && globalStatus.status === 'downloading') {
         status = 'downloading';
+      } else if (globalStatus && globalStatus.status === 'failed') {
+        // 【bugfix · 2026-09】终态失败必须落到 error，不得回退 waiting（否则 UI 停在准备中/空闲不报错）。
+        status = 'error';
       } else {
         status = 'waiting';
       }
