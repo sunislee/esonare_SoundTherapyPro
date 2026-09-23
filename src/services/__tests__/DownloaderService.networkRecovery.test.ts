@@ -90,10 +90,11 @@ describe('DownloaderService 网络自愈重排 (req#1/#3)', () => {
     expect(startSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('无终态失败场景 → 自愈空转，不触发下载', () => {
+  it('无终态失败场景 → 仍兜底唤醒退避/闸门挂起任务(触发一次 startDownload)', () => {
+    // 纯离线时任务停在闸门挂起/退避唤醒被 isOffline 挡回，网络恢复须无条件续跑。
     svc.notify({ resourceId: 'wind_1', filename: 'wind_1.mp3', progress: 100, status: 'completed' });
     const startSpy = jest.spyOn(svc, 'startDownload').mockImplementation(() => {});
-    expect(svc.recoverFailedOnNetworkRestore()).toBe(0);
-    expect(startSpy).not.toHaveBeenCalled();
+    expect(svc.recoverFailedOnNetworkRestore()).toBe(0); // 无 failed → 返回 0
+    expect(startSpy).toHaveBeenCalledTimes(1);            // 但仍兜底唤醒一次续跑
   });
 });

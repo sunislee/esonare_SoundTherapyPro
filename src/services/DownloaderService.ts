@@ -1051,10 +1051,6 @@ class DownloaderService {
     for (const [id, st] of this.statusMap) {
       if (st.status === 'failed') failedIds.push(id);
     }
-    if (failedIds.length === 0) {
-      console.log('[Downloader] ℹ️ [recover] 无终态失败场景 → 无需自愈');
-      return 0;
-    }
 
     let requeued = 0;
     for (const id of failedIds) {
@@ -1089,8 +1085,16 @@ class DownloaderService {
       requeued += 1;
     }
 
-    console.log(`[Downloader] ♻️ [recover] 网络恢复 → 重新入队 ${requeued} 个终态失败场景，触发下载`);
-    // 复用熔断重放链路：startDownload 会解除熔断、清零连续失败计数、广播 NETWORK_THROTTLE(false) 并跑队列。
+    if (requeued > 0) {
+      console.log(`[Downloader] ♻️ [recover] 网络恢复 → 重置并重新入队 ${requeued} 个终态失败场景`);
+    } else {
+      // 无终态 failed：纯离线时任务多停在「闸门挂起」或「退避唤醒被 isOffline 挡回(retryFlushTimer 已 fire 未重排)」，
+      // 这些卡住的任务同样需要联网后续跑 —— 故仍无条件触发一次 startDownload 兜底唤醒。
+      console.log('[Downloader] ℹ️ [recover] 无终态失败场景 → 兜底唤醒退避/闸门挂起任务');
+    }
+
+    // 【关键】无论是否有 failed，网络恢复都无条件复用熔断重放链路续跑：
+    // startDownload 内部防重入锁(空闲时才真正启动) + 解除熔断 + 清零连续失败 + 广播 NETWORK_THROTTLE(false)。
     this.startDownload();
     return requeued;
   }
