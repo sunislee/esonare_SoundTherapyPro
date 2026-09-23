@@ -960,7 +960,7 @@ export const HomeScreen: React.FC = () => {
   //   根因：HomeScreen 此前不消费 DownloaderService 事件，下载失败(404/超时/重试耗尽/熔断)时
   //   store 停在 prioritizeScene 写入的 'downloading' → SceneItem 永久 spinner；唯一兜底 watchdog
   //   会被反复选中重置而永不超时。这里把 failed→error / completed→ready / downloading→进度 直接落地，
-  //   失败即清 watchdog 并标 error（UI「暂时下载不了 · 稍后自动重试」），彻底离开 preparing-0%。
+  //   失败即清 watchdog 并标 error（UI「需要网络 · 点按重试」），彻底离开 preparing-0%。
   useEffect(() => {
     const sceneAudioIds = new Set(SCENES.map((s) => s.id));
     return DownloaderServiceInstance.subscribe((status) => {

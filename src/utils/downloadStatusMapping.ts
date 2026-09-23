@@ -6,7 +6,7 @@
 //   唯一兜底是 prioritizeScene 的就绪 watchdog，但场景被反复选中会重置它而永不超时。
 //
 // 本模块把「下载器状态机」到「首页 UI 三态」的映射规则抽成纯函数，作为该失败路径的
-//   单一真相：任何终态失败都必须落到 'error'（UI 显示「暂时下载不了 · 稍后自动重试」），
+//   单一真相：任何终态失败都必须落到 'error'（UI 显示「需要网络 · 点按重试」），
 //   绝不留在 'downloading'/preparing-0%。便于脱离 RN 直接 Jest 覆盖状态转移。
 
 /** 与 DownloaderService.DownloadStatus.status 对齐的最小结构（避免测试引入 RN）。 */
