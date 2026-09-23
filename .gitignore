@@ -134,3 +134,10 @@ server_assets/
 /assets/
 record-shop-showcase.html
 navigation_video.mp4
+__pycache__/
+*.pyc
+input_audio/
+server_assets/
+/assets/
+record-shop-showcase.html
+navigation_video.mp4
