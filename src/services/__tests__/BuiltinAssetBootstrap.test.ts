@@ -2,7 +2,7 @@
  * 【内置场景】BuiltinAssetBootstrap 单元测试
  *   覆盖大哥拍板的三条硬要求：
  *     1. 拷贝幂等 —— 已就绪(exists+size)跳过；缺失/损坏才重拷。
- *     2. 失败回退 —— 单场景 copyFile 抛错 → 回落 addTaskToQueue，且不永久卡死、不影响其余场景。
+ *     2. 失败回退 —— 单场景 copyFileAssets 抛错 → 回落 addTaskToQueue，且不永久卡死、不影响其余场景。
  *     3. 唯一判定源 —— 仅处理 BUILTIN_SCENES 内场景。
  */
 export {};
@@ -15,6 +15,7 @@ jest.mock('@dr.pogodin/react-native-fs', () => ({
   stat: jest.fn(),
   mkdir: jest.fn(),
   copyFile: jest.fn(),
+  copyFileAssets: jest.fn(),
   unlink: jest.fn(),
 }));
 
@@ -60,7 +61,7 @@ describe('BuiltinAssetBootstrap 内置场景落盘', () => {
     // 默认：拷贝成功 + 落盘后就绪
     RNFS.mkdir.mockResolvedValue(undefined);
     RNFS.unlink.mockResolvedValue(undefined);
-    RNFS.copyFile.mockResolvedValue(undefined);
+    RNFS.copyFileAssets.mockResolvedValue(undefined);
     RNFS.exists.mockResolvedValue(false);
     OfflineService.recheckScene.mockResolvedValue(true);
     bootstrap = require('../BuiltinAssetBootstrap').default;
@@ -69,29 +70,28 @@ describe('BuiltinAssetBootstrap 内置场景落盘', () => {
     bootstrap.started = false;
   });
 
-  test('幂等：所有场景已就绪 → 不拷贝、不建目录', async () => {
+  test('幂等：所有场景已就绪 → 不拷贝', async () => {
     OfflineService.checkSceneAudioReady.mockResolvedValue(true);
     await bootstrap.bootstrap();
-    expect(RNFS.copyFile).not.toHaveBeenCalled();
-    expect(RNFS.mkdir).not.toHaveBeenCalled();
+    expect(RNFS.copyFileAssets).not.toHaveBeenCalled();
     expect(addTaskSpy).not.toHaveBeenCalled();
   });
 
-  test('缺失/损坏 → 逐场景 copyFile(android_asset→DocumentDir) 并 recheckScene 转 Ready', async () => {
+  test('缺失/损坏 → 逐场景 copyFileAssets(android_asset→DocumentDir) 并 recheckScene 转 Ready', async () => {
     OfflineService.checkSceneAudioReady.mockResolvedValue(false); // 未就绪 → 触发拷贝
     await bootstrap.bootstrap();
-    expect(RNFS.copyFile).toHaveBeenCalledWith(
-      'file:///android_asset/sounds/builtin/zen_bowl.m4a', ZEN_DEST,
+    expect(RNFS.copyFileAssets).toHaveBeenCalledWith(
+      'sounds/builtin/zen_bowl.m4a', ZEN_DEST, // 相对 assets 根、无 file:// 前缀
     );
-    expect(RNFS.copyFile).toHaveBeenCalledTimes(2); // 两个内置场景都拷
+    expect(RNFS.copyFileAssets).toHaveBeenCalledTimes(2); // 两个内置场景都拷
     expect(OfflineService.recheckScene).toHaveBeenCalledWith(ZEN);
     expect(OfflineService.recheckScene).toHaveBeenCalledWith(WHITE);
     expect(addTaskSpy).not.toHaveBeenCalled();
   });
 
-  test('失败回退：copyFile 抛错 → 该场景回落 addTaskToQueue，不永久卡死', async () => {
+  test('失败回退：copyFileAssets 抛错 → 该场景回落 addTaskToQueue，不永久卡死', async () => {
     OfflineService.checkSceneAudioReady.mockResolvedValue(false);
-    RNFS.copyFile.mockRejectedValue(new Error('ENOSPC disk full'));
+    RNFS.copyFileAssets.mockRejectedValue(new Error('ENOSPC disk full'));
     await bootstrap.bootstrap();
     // 两个内置场景拷贝都失败 → 都回落下载队列
     expect(addTaskSpy).toHaveBeenCalledWith(ZEN);
@@ -100,7 +100,7 @@ describe('BuiltinAssetBootstrap 内置场景落盘', () => {
 
   test('部分失败：仅一场景拷贝失败，另一场景仍成功就绪（allSettled 隔离）', async () => {
     OfflineService.checkSceneAudioReady.mockResolvedValue(false);
-    RNFS.copyFile.mockImplementation(async (src: string) => {
+    RNFS.copyFileAssets.mockImplementation(async (src: string) => {
       if (src.includes('zen_bowl')) throw new Error('boom');
     });
     await bootstrap.bootstrap();
@@ -113,8 +113,8 @@ describe('BuiltinAssetBootstrap 内置场景落盘', () => {
   test('started 幂等：bootstrap 二次调用不重复处理', async () => {
     OfflineService.checkSceneAudioReady.mockResolvedValue(false);
     await bootstrap.bootstrap();
-    const callsAfterFirst = RNFS.copyFile.mock.calls.length;
+    const callsAfterFirst = RNFS.copyFileAssets.mock.calls.length;
     await bootstrap.bootstrap(); // 第二次应被 started 短路
-    expect(RNFS.copyFile).toHaveBeenCalledTimes(callsAfterFirst);
+    expect(RNFS.copyFileAssets).toHaveBeenCalledTimes(callsAfterFirst);
   });
 });

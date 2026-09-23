@@ -16,13 +16,22 @@
  *   3. 唯一判定源：是否内置只认 audioAssets.isBuiltinScene()/BUILTIN_SCENE_IDS。
  *
  * @architecture-constraint
- *   - 文件源用 file:///android_asset/...（RNFS 可读）；⚠️ 绝不能用 res/raw（那是 react-native-sound
+ *   - 文件源在 android_asset，必须用 RNFS.copyFileAssets(assetRelativePath, dest) 读取——本包
+ *     (dr.pogodin/react-native-fs)的 copyFile('file:///android_asset/...') 走普通文件系统路径，
+ *     读不了 android_asset（实测全量 ENOENT）。assetPath 仅作文档用途，实际传参需剥掉
+ *     file:///android_asset/ 前缀得到相对 assets 根的路径。⚠️ 绝不能用 res/raw（那是 react-native-sound
  *     MAIN_BUNDLE 专用，RNFS 读不了）。两套内置音频机制互不混用。
  *   - 拷贝目标路径必须 == getLocalPath(category, filename)，才能被 OfflineService/播放链路直接识别。
  */
 import * as RNFS from '@dr.pogodin/react-native-fs';
 import { BUILTIN_SCENES, AUDIO_MANIFEST, getLocalPath } from '../constants/audioAssets';
 import OfflineService from './OfflineService';
+
+/** assetPath 前缀 → copyFileAssets 需要相对 assets 根的路径（无前缀、无 file://）。 */
+const ASSET_URI_PREFIX = 'file:///android_asset/';
+function toAssetRelative(assetPath: string): string {
+  return assetPath.startsWith(ASSET_URI_PREFIX) ? assetPath.slice(ASSET_URI_PREFIX.length) : assetPath;
+}
 
 /** 从 AUDIO_MANIFEST 反查场景落盘 category（拷贝目标目录需与下载路径一致）。 */
 function resolveCategory(sceneId: string): string {
@@ -54,8 +63,13 @@ async function ensureOneBuiltin(sceneId: string): Promise<boolean> {
       await RNFS.unlink(destPath).catch(() => {});
     }
     await RNFS.mkdir(RNFS.DocumentDirectoryPath + '/audio_resources');
-    // 【硬要求1 · 后台异步】copyFile 为原生异步拷贝，不阻塞 JS 首屏。
-    await RNFS.copyFile(cfg.assetPath, destPath);
+    // 目标可能落在 base/ fx/ interactive/ city_rain/ 等子目录 → 先建父目录，避免 ENOENT。
+    const destDir = destPath.slice(0, destPath.lastIndexOf('/'));
+    if (destDir && destDir.endsWith('audio_resources') === false) {
+      await RNFS.mkdir(destDir).catch(() => {});
+    }
+    // 【硬要求1 · 后台异步】copyFileAssets 走 AssetManager，能读 android_asset 子目录并自动建目标目录。
+    await RNFS.copyFileAssets(toAssetRelative(cfg.assetPath), destPath);
 
     // 落盘后立刻重判单场景 → 转 Ready 并通知 OfflineService 订阅方（HomeScreen）。
     const ready = await OfflineService.recheckScene(sceneId);
