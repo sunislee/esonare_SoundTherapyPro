@@ -282,18 +282,19 @@ export const GLOBAL_TOTAL_SIZE = ASSET_LIST.reduce((sum, asset) => sum + asset.e
 export const GLOBAL_TOTAL_SIZE_MB = GLOBAL_TOTAL_SIZE / 1024 / 1024;
 
 export const getDownloadUrlByChannel = (isGooglePlay: boolean, filename: string) => {
-  // 海外渠道：jsDelivr 主源 → Statically 备源 → GitHub 官方
+  // 海外渠道：ghproxy.net 主源 → Statically 备源 → GitHub 官方直连（mirror.ghproxy 已死，摘除）
   if (isGooglePlay) {
     return [
       `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${filename}`,
-      `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${filename}`,
       `${STATICALLY_URL}${filename}`,             // Statically 全球 CDN（备源）
+      `${GITHUB_URL}${filename}`,                 // GitHub 官方直连（末级兜底）
     ];
   }
-  // 国内渠道：ghproxy.net + mirror.ghproxy.com
+  // 【req#1】国内渠道：摘除已死的 mirror.ghproxy，补 statically + raw 兜底，避免只剩单点。
   return [
     `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${filename}`,
-    `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${filename}`,
+    `${STATICALLY_URL}${filename}`,
+    `${GITHUB_URL}${filename}`,
   ];
 };
 
@@ -308,7 +309,9 @@ export const getDownloadUrl = (id: string) => {
 
 // ════════════════════════════════════════════════════════════
 // 【P1-1】统一 CDN 源生成 — 全 App 下载 URL 列表的唯一事实源 (Single Source of Truth)
-// 4 级故障转移优先级：ghproxy.net → mirror.ghproxy.com → cdn.statically.io → raw.githubusercontent.com
+// 【req#1 · 2026-09 curl 实证后重排】故障转移优先级：
+//   ghproxy.net(可用但慢,主源) → cdn.statically.io(活但极慢,备源) → raw.githubusercontent.com(大陆污染性404,海外直连兜底)
+//   → mirror.ghproxy.com(已死,降为末位；运行时由 DownloaderService 健康度冷却进一步跳过)。
 // 各下载路径必须通过 getAssetUrls() 获取 URL 列表，消除历史上多处各自硬编码 base、互不一致的漂移问题。
 // ════════════════════════════════════════════════════════════
 
@@ -326,9 +329,9 @@ export const getAssetUrls = (assetKey: string): string[] => {
     const manifestItem = AUDIO_MANIFEST.find(item => item.id === assetKey);
     const repoPath = encodeAssetPath(manifestItem ? manifestItem.filename : assetKey);
     return [
-        `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${repoPath}`,
-        `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${repoPath}`,
-        `${STATICALLY_URL}${repoPath}`,   // Statically 全球 CDN（备源）
-        `${GITHUB_URL}${repoPath}`,       // GitHub 官方直连（末级兜底）
+        `${GHPROXY_NET_URL}sunislee/sound-therapy-assets/main/${repoPath}`,  // 主源：可用但慢(13~20s/文件)
+        `${STATICALLY_URL}${repoPath}`,      // Statically 全球 CDN（活但极慢，备源）
+        `${GITHUB_URL}${repoPath}`,          // GitHub 官方直连（大陆污染性404；海外/末级兜底）
+        `${MIRROR_GHPROXY_URL}sunislee/sound-therapy-assets/main/${repoPath}`, // 【req#1】mirror.ghproxy 已死 → 降为末位，运行时健康度冷却会跳过
     ];
 };

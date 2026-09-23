@@ -52,9 +52,12 @@ const CACHE_DIR = `${RNFS.DocumentDirectoryPath}/noise_reduction_cache`;
 // ════════════════════════════════════════════════════════════
 // 【P1-1】下载超时与看门狗配置（详见 streamDownloadTo）
 // ════════════════════════════════════════════════════════════
-const DOWNLOAD_CONN_TIMEOUT_MS = 10_000;     // 连接阶段：10s 未收到响应即 abort
-const STREAM_STALL_TIMEOUT_MS = 5_000;       // 流式路径：5s 无新 chunk 即 abort
+const DOWNLOAD_CONN_TIMEOUT_MS = 20_000;     // 【req#2】连接阶段：20s 未收到响应头即 abort（慢源容忍，原 10s）
+const STREAM_STALL_TIMEOUT_MS = 8_000;       // 【req#2】流式路径：8s 无新 chunk 即 abort（原 5s，避免慢源短暂停顿误杀）
 const BODY_READ_DEFAULT_BUDGET_MS = 120_000; // arrayBuffer 回退：缺 Content-Length 时的默认读预算
+// 【req#2】arrayBuffer 读预算下限 ≥45s：6~15MB 音频在慢源(ghproxy.net 单文件 13~20s、statically 更慢)下，
+//   绝不在 45s 内把"仍在收流"的下载判死——历史上 statically 20s 没下完被掐断即此坑。
+const BODY_READ_MIN_BUDGET_MS = 45_000;
 
 // ════════════════════════════════════════════════════════════
 // 【限流与熔断 · item2】ghproxy 为共享代理，并发/紧挨着请求会触发限流 → 0%停滞 + 终态失败。
@@ -63,13 +66,21 @@ const BODY_READ_DEFAULT_BUDGET_MS = 120_000; // arrayBuffer 回退：缺 Content
 // ════════════════════════════════════════════════════════════
 export const NETWORK_THROTTLE_EVENT = 'network-throttle-paused'; // payload: boolean（true=已暂停/熔断）
 const INTER_ITEM_DELAY_MS = 300;             // 串行下载项间最小间隔，避免打爆共享代理
-const RETRY_BACKOFF_MS = [2_000, 8_000, 32_000]; // 第1/2/3次重试前的指数退避等待
+// 【req#3 指数退避】失败重试间隔递增：30s → 2min → 10min，最多 3 轮后停（终态 failed）。
+//   旧值 [2s,8s,32s] 是"快速自我 DDOS"，会把 ghproxy 打到限流。退避改为时间戳非阻塞重排（见 processQueue），
+//   不再用 inline sleep——否则一个慢/坏文件会冻结整条串行队列最长 10min。
+const RETRY_BACKOFF_MS = [30_000, 120_000, 600_000];
+const MAX_RETRY_ROUNDS = RETRY_BACKOFF_MS.length; // 3 轮后终态 failed
+// 【req#1 源健康度/快速切换】单 host 连续失败达阈值 → 进入冷却，排序时降到末位并优先跳过，
+//   不在死源(mirror.ghproxy)上逐轮烧重试次数才轮到下一家。
+const HOST_FAIL_THRESHOLD = 2;
+const HOST_COOLDOWN_MS = 5 * 60_000;
 const CIRCUIT_BREAKER_THRESHOLD = 3;         // 本轮连续 N 个文件终态失败 → 熔断自动批量
-const CIRCUIT_RESUME_COOLDOWN_MS = 60_000;   // 熔断冷却后自动续跑剩余队列
+const CIRCUIT_RESUME_COOLDOWN_MS = 60_000;   // 【req#4】熔断后确定性的冷却时长，到期真正重放队列
 
-/** arrayBuffer 回退读预算：按最低可行速率 ~16KB/s 由 Content-Length 估算，钳制在 [30s, 5min] */
+/** arrayBuffer 回退读预算：按最低可行速率 ~16KB/s 由 Content-Length 估算。【req#2】下限 ≥45s(原30s)，慢源大文件不被过早掐断；上限 5min 兜底防死锁 */
 const bodyReadBudget = (bytes: number): number =>
-    Math.min(300_000, Math.max(30_000, Math.round((bytes / 16_384) * 1000)));
+    Math.min(300_000, Math.max(BODY_READ_MIN_BUDGET_MS, Math.round((bytes / 16_384) * 1000)));
 
 /**
  * 纯 JS 二进制 → base64（标准表驱动，逐 3 字节分组）。
@@ -118,6 +129,12 @@ class DownloaderService {
   private circuitOpen = false;
   /** 【item2 熔断】冷却续跑定时器（单例生命周期）。 */
   private resumeTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 【req#1 源健康度】host → 连续失败次数 + 冷却到期时间戳。死源(连续失败≥阈值)排序降末位并优先跳过，快速切下一家；成功即清零自愈。 */
+  private hostHealth: Map<string, { fails: number; cooldownUntil: number }> = new Map();
+  /** 【req#3 非阻塞退避】resourceId → 已尝试轮次 + 下次可重试时间戳。失败重排队记录 nextRetryAt，processQueue 遇未到点任务移到队尾并安排定时器到点续跑，绝不 inline sleep 冻结整条队列。 */
+  private retrySchedule: Map<string, { attempts: number; nextRetryAt: number }> = new Map();
+  /** 【req#3】全部任务都在退避等待时，安排"最近到期即唤醒"的定时器（避免空转/阻塞）。 */
+  private retryFlushTimer: ReturnType<typeof setTimeout> | null = null;
   /** [PR-2] WiFi 提示恢复事件订阅（单例生命周期，无需释放） */
   private wifiGateSub: { remove(): void } | null = null;
 
@@ -310,8 +327,10 @@ class DownloaderService {
 
   /**
    * 【🔧 修复】处理下载队列 - 顺序执行，每个任务完成后才处理下一个。
-   * 【item2 限流】串行项间 ≥300ms 间隔；单文件失败按 2s/8s/32s 指数退避重试（排到队尾）；
-   * 连续 CIRCUIT_BREAKER_THRESHOLD 个文件终态失败 → 熔断本轮，广播"网络较慢"并安排冷却续跑。
+   * 【item2 限流】串行项间 ≥300ms 间隔；连续 CIRCUIT_BREAKER_THRESHOLD 个文件终态失败 → 熔断本轮，
+   *   广播"网络较慢"并安排冷却续跑。
+   * 【req#3 非阻塞退避】单文件失败按 30s/2min/10min 指数退避重排队尾；退避用时间戳记录而非 inline sleep——
+   *   否则一个慢/坏文件会把整条串行队列冻结最长 10min。全部任务都在退避时安排"最近到期即唤醒"定时器后退出本轮。
    */
   private async processQueue() {
     console.log(`[Downloader] 🔥 [processQueue] 开始处理队列，任务数: ${this.downloadQueue.length}`);
@@ -325,24 +344,45 @@ class DownloaderService {
       const resource = this.downloadQueue.shift();
       if (!resource) continue;
 
+      // 【req#3】未到重试时间点的任务 → 移到队尾让其它可执行任务先跑；若整条队列都在退避，安排唤醒定时器后退出本轮。
+      const sched = this.retrySchedule.get(resource.id);
+      const now = Date.now();
+      if (sched && sched.nextRetryAt > now) {
+        this.downloadQueue.push(resource);
+        if (!this.hasRunnableTask()) {
+          let soonest = Infinity;
+          for (const r of this.downloadQueue) {
+            const s = this.retrySchedule.get(r.id);
+            const due = s ? s.nextRetryAt : 0;
+            if (due < soonest) soonest = due;
+          }
+          const wakeMs = Math.max(50, soonest - Date.now());
+          console.log(`[Downloader] ⏳ [retry] 全部任务退避中 → ${Math.round(wakeMs / 1000)}s 后唤醒续跑`);
+          this.scheduleRetryFlush(wakeMs);
+          break;
+        }
+        continue; // 还有别的可立即执行的任务，先处理它们
+      }
+
       console.log(`[Downloader] 🔥 [processQueue] 处理任务: ${resource.filename} | URL: ${resource.remoteUrl}`);
 
       try {
         await this.downloadResource(resource);
-        // ✅ 成功 → 清零连续失败计数与该项重试计数（打破"偶发失败累积误熔断"）。
+        // ✅ 成功 → 清零连续失败计数 + 该项退避计划（打破"偶发失败累积误熔断"，并解除源冷却由 recordHostResult 负责）。
         this.consecutiveTerminalFailures = 0;
         this.retryCount.delete(resource.id);
+        this.retrySchedule.delete(resource.id);
       } catch (error: any) {
-        const attempt = (this.retryCount.get(resource.id) ?? 0) + 1; // 含首次在内的第几次尝试
-        if (attempt <= RETRY_BACKOFF_MS.length) {
-          this.retryCount.set(resource.id, attempt);
-          const waitMs = RETRY_BACKOFF_MS[attempt - 1];
-          console.warn(`[Downloader] 🔄 ${resource.filename} 第${attempt}次失败 → ${waitMs / 1000}s 退避后重试 (error=${error?.message || error})`);
-          await this.sleep(waitMs);
-          if (!this.circuitOpen) this.downloadQueue.push(resource); // 冷却后重新排到队尾，让其它文件先试
+        const attempts = (sched?.attempts ?? 0) + 1; // 含首次在内的第几次尝试
+        if (attempts <= MAX_RETRY_ROUNDS) {
+          const waitMs = RETRY_BACKOFF_MS[attempts - 1];
+          this.retrySchedule.set(resource.id, { attempts, nextRetryAt: Date.now() + waitMs });
+          console.warn(`[Downloader] 🔄 ${resource.filename} 第${attempts}次失败 → ${waitMs / 1000}s 退避后重试 (error=${error?.message || error})`);
+          this.downloadQueue.push(resource); // 【req#3】非阻塞重排队尾，到点由唤醒/后续轮次续跑
         } else {
           // ❌ 终态失败：所有 CDN 源 + 全部退避重试均耗尽 → 标 failed（UI 显示中性"暂时下载不了"）。
-          console.error(`[Downloader] ❌ ${resource.filename} 终态失败(已重试${RETRY_BACKOFF_MS.length}次): ${error?.message || error}`);
+          console.error(`[Downloader] ❌ ${resource.filename} 终态失败(已重试${MAX_RETRY_ROUNDS}轮): ${error?.message || error}`);
+          this.retrySchedule.delete(resource.id);
           this.retryCount.delete(resource.id);
           this.notify({
             resourceId: resource.id,
@@ -360,8 +400,8 @@ class DownloaderService {
         }
       }
 
-      // 串行项间节流：非熔断且仍有后续任务时，间隔 ≥300ms 再放下一个，避免打爆共享代理。
-      if (!this.circuitOpen && this.downloadQueue.length > 0) {
+      // 串行项间节流：非熔断且仍有【可立即执行】任务时，间隔 ≥300ms 再放下一个，避免打爆共享代理。
+      if (!this.circuitOpen && this.hasRunnableTask()) {
         await this.sleep(INTER_ITEM_DELAY_MS);
       }
     }
@@ -372,6 +412,30 @@ class DownloaderService {
     }
 
     console.log('[Downloader] ✅ [processQueue] 本轮队列处理结束');
+  }
+
+  /** 【req#3】队列中是否存在"现在就能跑"(无退避计划或已到点)的任务。 */
+  private hasRunnableTask(): boolean {
+    const now = Date.now();
+    for (const r of this.downloadQueue) {
+      const s = this.retrySchedule.get(r.id);
+      if (!s || s.nextRetryAt <= now) return true;
+    }
+    return false;
+  }
+
+  /** 【req#3】全部任务退避中时，安排最近到期唤醒（复用 startDownload 防重入锁；离线则跳过等网络恢复事件）。 */
+  private scheduleRetryFlush(ms: number) {
+    if (this.retryFlushTimer) clearTimeout(this.retryFlushTimer);
+    this.retryFlushTimer = setTimeout(() => {
+      this.retryFlushTimer = null;
+      if (NetworkGateService.isOffline()) {
+        console.log('[Downloader] ⏸️ [retry-wake] 退避到期但仍离线 → 暂不续跑，等网络恢复事件');
+        return;
+      }
+      console.log('[Downloader] ♻️ [retry-wake] 退避到期 → 唤醒队列续跑');
+      this.startDownload();
+    }, ms);
   }
 
   /** 【item2】sleep 辅助。 */
@@ -474,9 +538,23 @@ class DownloaderService {
       let totalWritten = 0;
 
       // 【P1-1】CDN 故障转移循环：当前源失败（网络错误/超时/HTTP 4xx/5xx）则切换下一源，
-      // 全部源耗尽后才抛出进入外层重试队列逻辑
-      for (let urlIdx = 0; urlIdx < urls.length; urlIdx++) {
-        const url = urls[urlIdx];
+      // 全部源耗尽后才抛出进入外层重试队列逻辑。
+      // 【req#1 快速切换】urls 已按健康度排序(冷却死源在末位)；若存在未冷却源，本轮直接跳过冷却中的死源，
+      //   连一次连接超时都不浪费（mirror.ghproxy 已死 → 不再逐次烧 20s 才轮到下一家）。全冷却时仍保留兜底尝试。
+      const nowTs = Date.now();
+      const isCooled = (u: string) => {
+        const h = this.hostHealth.get(this.hostOf(u));
+        return !!(h && h.cooldownUntil > nowTs);
+      };
+      const cooled = urls.filter(isCooled);
+      const healthy = urls.filter((u) => !isCooled(u));
+      const attemptUrls = healthy.length > 0 ? healthy : urls;
+      if (cooled.length > 0 && healthy.length > 0) {
+        console.log(`[Downloader] 🚧 [FAILOVER] ${resource.filename} 跳过冷却中的源: ${cooled.map((u) => this.hostOf(u)).join(', ')}`);
+      }
+
+      for (let urlIdx = 0; urlIdx < attemptUrls.length; urlIdx++) {
+        const url = attemptUrls[urlIdx];
 
         // 【P1-5】断点续传：.part 跨源保留。所有镜像提供同一文件内容（同仓库不同代理），
         // 已写入的 .part 是合法前缀（每次 appendFile/writeFile 都是完整块原子写入），
@@ -484,15 +562,17 @@ class DownloaderService {
         // 不再无条件 unlink(localPath) —— 那会毁掉续传状态。
 
         if (urlIdx > 0) {
-          console.log(`[Downloader] 🔀 [FAILOVER] ${resource.filename} 切换源 ${urlIdx + 1}/${urls.length}: ${url}`);
+          console.log(`[Downloader] 🔀 [FAILOVER] ${resource.filename} 切换源 ${urlIdx + 1}/${attemptUrls.length}: ${url}`);
         }
 
         try {
           totalWritten = await this.streamDownloadTo(resource, url, localPath);
+          this.recordHostResult(url, true); // 【req#1】该源成功 → 清零失败/解除冷却（自愈）
           break; // ✅ 当前源成功
         } catch (error: any) {
-          console.error(`[Downloader] ❌ [URL_FAIL] 源 ${urlIdx + 1}/${urls.length} 失败 (${url}):`, error?.message || error);
-          if (urlIdx === urls.length - 1) throw error; // 所有源耗尽 → 交给外层 catch 重试逻辑
+          this.recordHostResult(url, false); // 【req#1】该源失败 → 累计健康度，达阈值进冷却并降位
+          console.error(`[Downloader] ❌ [URL_FAIL] 源 ${urlIdx + 1}/${attemptUrls.length} 失败 (${url}):`, error?.message || error);
+          if (urlIdx === attemptUrls.length - 1) throw error; // 所有源耗尽 → 交给外层 catch 重试逻辑
         }
       }
 
@@ -525,8 +605,60 @@ class DownloaderService {
     return manifestItem ? manifestItem.size : 0;
   }
 
-  /** 【P1-1】解析资源的 CDN URL 列表（统一走 getAssetUrls，消除单点故障） */
+  /** 【req#1】从 URL 提取 host 作为健康度键（ghproxy.net / mirror.ghproxy.com / cdn.statically.io / raw.githubusercontent.com）。 */
+  private hostOf(url: string): string {
+    const m = /^https?:\/\/([^/]+)/i.exec(url);
+    return m ? m[1].toLowerCase() : url;
+  }
+
+  /** 【req#1】记录某源本次成败，维护健康度：成功清零并解除冷却（自愈）；连续失败达阈值进入冷却。 */
+  private recordHostResult(url: string, ok: boolean) {
+    const host = this.hostOf(url);
+    const cur = this.hostHealth.get(host) ?? { fails: 0, cooldownUntil: 0 };
+    if (ok) {
+      if (cur.fails !== 0 || cur.cooldownUntil !== 0) {
+        console.log(`[Downloader] ✅ [HEALTH] ${host} 成功 → 解除冷却/清零失败计数`);
+      }
+      this.hostHealth.set(host, { fails: 0, cooldownUntil: 0 });
+      return;
+    }
+    cur.fails += 1;
+    if (cur.fails >= HOST_FAIL_THRESHOLD) {
+      cur.cooldownUntil = Date.now() + HOST_COOLDOWN_MS;
+      console.warn(`[Downloader] 🚧 [HEALTH] ${host} 连续失败 ${cur.fails} 次 → 冷却 ${HOST_COOLDOWN_MS / 60000}min，排序降末位并优先跳过`);
+    }
+    this.hostHealth.set(host, cur);
+  }
+
+  /**
+   * 【P1-1 + req#1】解析资源的 CDN URL 列表（统一走 getAssetUrls），并按源健康度动态排序：
+   * - 静态序已把死源 mirror.ghproxy 降到末位、慢但活的 ghproxy.net/statically 前置；
+   * - 运行时再把"冷却中的 host"(连续失败≥阈值)整体压到列表末尾，未冷却的按原相对顺序优先——
+   *   确保不会在已知死源上逐轮烧重试次数才轮到下一家（快速切换）。冷却到期自动回到正常位。
+   */
   private getUrlsForResource(resource: AudioResource): string[] {
+    const base = this.resolveBaseUrls(resource);
+    return this.rankUrlsByHealth(base);
+  }
+
+  /** 【req#1】按 host 健康度稳定排序：未冷却在前(保持原相对序)，冷却中在后。 */
+  private rankUrlsByHealth(urls: string[]): string[] {
+    const now = Date.now();
+    const cooled = (u: string) => {
+      const h = this.hostHealth.get(this.hostOf(u));
+      return !!(h && h.cooldownUntil > now);
+    };
+    // 稳定分区：未冷却保持原序在前，冷却中的保持原序在后。
+    const healthy = urls.filter((u) => !cooled(u));
+    const degraded = urls.filter((u) => cooled(u));
+    if (degraded.length > 0) {
+      console.log(`[Downloader] 🚧 [HEALTH] 本轮降位冷却源: ${degraded.map((u) => this.hostOf(u)).join(', ')}`);
+    }
+    return [...healthy, ...degraded];
+  }
+
+  /** 【P1-1】把资源解析为静态 CDN URL 列表（manifest / 仓库路径 / 原单源回退）。 */
+  private resolveBaseUrls(resource: AudioResource): string[] {
     const manifestItem = AUDIO_MANIFEST.find(a => a.id === resource.id);
     if (manifestItem) return getAssetUrls(manifestItem.filename);
 
