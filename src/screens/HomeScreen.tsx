@@ -31,8 +31,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import AudioService from '../services/AudioService';
 import { RainDrop } from '../components/RainDrop';
 import { SCENES, Scene, SceneCategory, getSceneBackground } from '../constants/scenes';
-// 【精选自动 + 其余按需】冷启动自动下载白名单（单一真相源）：仅这批非内置场景进启动队列。
-import { CURATED_DOWNLOAD_SCENE_ID_SET } from '../constants/downloadWhitelist';
 import { assetMap } from '../constants/assetMap';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -714,13 +712,11 @@ export const HomeScreen: React.FC = () => {
     return () => sub.remove();
   }, []);
 
-  // 【精选自动 + 其余按需 · 冷启动】组件挂载后1秒，仅对「自动下载白名单」(CURATED_DOWNLOAD_SCENE_IDS)
-  //   内的场景自动入队下载。其余非内置场景默认不排队 → 卡片显示安静的 ↓ 图标，点图标 / 进播放页时
-  //   才由 handlePress→onBoostPriority→prioritizeScene 按需入队。杜绝旧「全量静默」满屏转圈。
+  // 【🔥 热启动自动下载】组件挂载后1秒自动触发所有基础场景的下载
   useEffect(() => {
     const timer = setTimeout(() => {
-      SCENES.filter(s => s.isBaseScene && CURATED_DOWNLOAD_SCENE_ID_SET.has(s.id)).forEach(scene => {
-        console.log(`[HomeScreen] ⚡ [冷启动自动下载·白名单] 自动触发: ${scene.id}`);
+      SCENES.filter(s => s.isBaseScene).forEach(scene => {
+        console.log(`[HomeScreen] ⚡ [热启动下载] 自动触发: ${scene.id}`);
         prioritizeScene(scene.id);
       });
     }, 1000);
