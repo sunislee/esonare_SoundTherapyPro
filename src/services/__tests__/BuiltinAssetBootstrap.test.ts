@@ -2,7 +2,7 @@
  * 【内置场景】BuiltinAssetBootstrap 单元测试
  *   覆盖大哥拍板的三条硬要求：
  *     1. 拷贝幂等 —— 已就绪(exists+size)跳过；缺失/损坏才重拷。
- *     2. 失败回退 —— 单场景 copyFileAssets 抛错 → 回落 addTaskToQueue，且不永久卡死、不影响其余场景。
+ *     2. 失败不回落 —— 单场景 copyFileAssets 抛错 → 绝不进下载队列(CDN)，仅保持『正在准备』，下次冷启重试；不影响其余场景。
  *     3. 唯一判定源 —— 仅处理 BUILTIN_SCENES 内场景。
  */
 export {};
@@ -89,24 +89,24 @@ describe('BuiltinAssetBootstrap 内置场景落盘', () => {
     expect(addTaskSpy).not.toHaveBeenCalled();
   });
 
-  test('失败回退：copyFileAssets 抛错 → 该场景回落 addTaskToQueue，不永久卡死', async () => {
+  test('【不变式①】copyFileAssets 持续抛错 → 绝不回落 CDN(addTaskToQueue)、内置不进下载队列、不卡死', async () => {
     OfflineService.checkSceneAudioReady.mockResolvedValue(false);
     RNFS.copyFileAssets.mockRejectedValue(new Error('ENOSPC disk full'));
     await bootstrap.bootstrap();
-    // 两个内置场景拷贝都失败 → 都回落下载队列
-    expect(addTaskSpy).toHaveBeenCalledWith(ZEN);
-    expect(addTaskSpy).toHaveBeenCalledWith(WHITE);
+    // 内置音频绝不进下载队列：失败只保持『正在准备』，下次冷启再拷。回落 CDN 会把内置卡误标 error —— 严禁。
+    expect(addTaskSpy).not.toHaveBeenCalled();
+    // 但每个场景仍被尝试(含原地重试)，且单例正常返回不抛、不永久卡死。
+    expect(RNFS.copyFileAssets).toHaveBeenCalled();
   });
 
-  test('部分失败：仅一场景拷贝失败，另一场景仍成功就绪（allSettled 隔离）', async () => {
+  test('【串行隔离】仅一场景拷贝失败，另一场景仍成功就绪；失败者绝不回落 CDN', async () => {
     OfflineService.checkSceneAudioReady.mockResolvedValue(false);
     RNFS.copyFileAssets.mockImplementation(async (src: string) => {
       if (src.includes('zen_bowl')) throw new Error('boom');
     });
     await bootstrap.bootstrap();
-    // zen 失败回落，white 成功不回落
-    expect(addTaskSpy).toHaveBeenCalledWith(ZEN);
-    expect(addTaskSpy).not.toHaveBeenCalledWith(WHITE);
+    // white 成功就绪；zen 失败但绝不回落下载队列(内置铁律)。
+    expect(addTaskSpy).not.toHaveBeenCalled();
     expect(OfflineService.recheckScene).toHaveBeenCalledWith(WHITE);
   });
 

@@ -3,7 +3,7 @@
   "appTitle": "サウンドセラピー",
   "home_card_downloading": "リソースをダウンロード中",
   "home_card_need_network": "ネットワークが必要 · タップで再試行",
-  "home_card_transient_error": "ネットワークが必要 · タップで再試行",
+  "home_card_transient_error": "ダウンロード失敗 · タップで再試行",
   "home_net_slow_banner": "通信が遅いため、しばらくすると自動的に続行します",
   "tabs": {
     "scenes": "シーン",

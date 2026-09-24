@@ -3,7 +3,7 @@
   "appTitle": "Sound Meditation",
   "home_card_downloading": "Downloading resources",
   "home_card_need_network": "Network needed · tap to retry",
-  "home_card_transient_error": "Network needed · tap to retry",
+  "home_card_transient_error": "Download failed · tap to retry",
   "home_net_slow_banner": "Slow network — downloads will resume automatically",
   "tabs": {
     "scenes": "Scenes",

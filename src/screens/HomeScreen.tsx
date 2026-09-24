@@ -614,7 +614,32 @@ export const HomeScreen: React.FC = () => {
       return;
     }
 
-    // 【离线诚实回退】无网络且未落盘 → 不启动假下载，立即标 error（UI 显示需网络）。
+    // 【内置场景 · 永不 error / 绝不进 CDN】内置音频随 APK 打包，缺失只是本地 bootstrap 拷贝待重试，
+    //   与网络无关。点击 → 触发安全重拷(reensure) + 轮询磁盘真相；落盘即 ready，超时仅停止轮询、卡片仍停
+    //   『正在准备』(downloading)，绝不谎报「需要网络/下载失败」。杜绝大哥截图里内置卡被误标 error 的回归。
+    if (isBuiltinScene(sceneId)) {
+      console.log(`[HomeScreen] 🧊 [prioritizeScene] 内置未就绪 → 本地重拷(不下载/不error): ${sceneId}`);
+      clearDownloadTimer(sceneId);
+      tickScene(sceneId, { progress: 0, status: 'downloading' }); // 正在准备（非 error）
+      import('../services/BuiltinAssetBootstrap')
+        .then(({ default: boot }) => boot.reensure(sceneId))
+        .catch((e) => console.warn('[HomeScreen] 内置 reensure 失败', sceneId, e));
+      const capDeadline = Date.now() + DOWNLOAD_READY_CAP_MS; // 宽松上限仅用于省电停止轮询，绝不写 error
+      const poll = setInterval(async () => {
+        const ready = await OfflineService.recheckScene(sceneId);
+        if (ready) {
+          clearDownloadTimer(sceneId);
+          tickScene(sceneId, { progress: 100, status: 'ready' });
+          console.log(`[HomeScreen] ✅ [内置轮询] ${sceneId} 已落盘 → ready`);
+          return;
+        }
+        if (Date.now() >= capDeadline) clearDownloadTimer(sceneId); // 停止轮询，卡片仍保持『正在准备』
+      }, DOWNLOAD_POLL_INTERVAL_MS);
+      downloadTimersRef.current.set(sceneId, { poll, deadline: capDeadline });
+      return;
+    }
+
+    // 【离线诚实回退 · 仅非内置】无网络且未落盘 → 不启动假下载，立即标 error（UI 显示需网络）。
     if (NetworkGateService.isOffline()) {
       console.log(`[HomeScreen] 📴 [prioritizeScene] 离线且未落盘: ${sceneId} → 诚实回退(需网络)`);
       clearDownloadTimer(sceneId);
@@ -696,6 +721,22 @@ export const HomeScreen: React.FC = () => {
     }, 1000);
     return () => clearTimeout(timer);
   }, [prioritizeScene]);
+
+  // 【联网定时自愈 · 与 connectivity 跳变解耦】开机即在线时 NETWORK_RECOVERED 永不触发(无 false→true 跳变)，
+  //   导致 CDN 重试烧完的终态 failed 永久卡在「下载失败/需要网络」。这里在【联网状态】下周期性主动复活终态
+  //   失败场景 + 复核磁盘真相，使自愈不再依赖网络恢复事件；离线时跳过(交给真正的 NETWORK_RECOVERED)。
+  useEffect(() => {
+    const SELF_HEAL_MS = 25_000;
+    const timer = setInterval(() => {
+      if (NetworkGateService.isOffline()) return; // 离线：等真正的恢复事件，避免空转
+      try {
+        const n = DownloaderServiceInstance.recoverFailedOnNetworkRestore();
+        if (n > 0) console.log(`[HomeScreen] ♻️ [定时自愈] 联网复活 ${n} 个终态失败场景`);
+      } catch (_e) { /* 下载服务未就绪时忽略，下个周期再试 */ }
+      OfflineService.refresh().catch(() => {}); // 顺带按磁盘真相复核，落盘即翻绿(自动 Ready)
+    }, SELF_HEAL_MS);
+    return () => clearInterval(timer);
+  }, []);
 
   // 【🔥 v10】每个 SceneItem mount 时订阅自己的 tick，只有自身场景变化才重渲染。
   // ref 存储所有 subscription dispose 函数，卸载时一次性清理（避免闭包陷阱）。

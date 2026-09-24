@@ -107,4 +107,32 @@ describe('resolveSceneCardStatus', () => {
               }
     });
   });
+
+  // ════════════════════════════════════════════════════════════════════
+  // 【不变式① · 内置场景永不 error / need_network】
+  //   内置音频随 APK 打包，落盘只靠本地 bootstrap 拷贝、与网络无关。任何 offline / downloadStatus
+  //   （哪怕被误写成 'error'）都不得把未就绪的内置卡翻成「需要网络」或「下载失败」——只能『正在准备』。
+  //   这是大哥截图(深海/迷雾森林联网态显示「需要网络·点按重试」)回归的锁死用例：一旦出现立即变红。
+  // ════════════════════════════════════════════════════════════════════
+  describe('【不变式① · 内置场景永不 error / need_network】', () => {
+    const bools2 = [true, false];
+    for (const offline of bools2) {
+      for (const downloadStatus of ['idle', 'downloading', 'waiting', 'error'] as const) {
+        it(`内置 + 未就绪 + offline=${offline} dl=${downloadStatus} → downloading(正在准备)，绝不 error/need_network`, () => {
+          const status = resolveSceneCardStatus({ audioReady: false, isBuiltin: true, offline, downloadStatus });
+          expect(status).toBe('downloading');
+          expect(status === 'error' || status === 'need_network').toBe(false);
+        });
+      }
+    }
+
+    it('内置 + 已就绪 → ready（短路优先级最高）', () => {
+      expect(resolveSceneCardStatus({ audioReady: true, isBuiltin: true })).toBe('ready');
+    });
+
+    it('非内置才允许 error / need_network（确认未把非内置也误短路）', () => {
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: false, downloadStatus: 'error' })).toBe('error');
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: false, offline: true })).toBe('need_network');
+    });
+  });
 });

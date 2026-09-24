@@ -71,11 +71,27 @@ async function ensureOneBuiltin(sceneId: string): Promise<boolean> {
     await RNFS.mkdir(RNFS.DocumentDirectoryPath + '/audio_resources');
     // 目标可能落在 base/ fx/ interactive/ city_rain/ 等子目录 → 先建父目录，避免 ENOENT。
     const destDir = destPath.slice(0, destPath.lastIndexOf('/'));
-    if (destDir && destDir.endsWith('audio_resources') === false) {
-      await RNFS.mkdir(destDir).catch(() => {});
+
+    // 【回归修复 · 深海/迷雾森林首拷失败】copyFileAssets 对子目录目标的建目录并非总是可靠，且并发拷贝
+    //   同一目录(base/)时 mkdir/copy 存在竞态 → ENOENT。改为「显式建父目录 + 原地重试」：每次失败都重建
+    //   目标目录再试，最多 3 次。内置文件在 APK 内、重拷必成，无需网络。
+    let lastErr: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        if (destDir && !destDir.endsWith('audio_resources')) {
+          await RNFS.mkdir(destDir).catch(() => {});
+        }
+        await RNFS.copyFileAssets(toAssetRelative(cfg.assetPath), destPath);
+        lastErr = null;
+        break;
+      } catch (e) {
+        lastErr = e;
+        console.warn(`[Builtin] ⚠️ ${sceneId} 第 ${attempt} 次拷贝失败(${(e as any)?.message})，重建目录后重试`);
+        await RNFS.unlink(destPath).catch(() => {});
+        if (destDir) await RNFS.mkdir(destDir).catch(() => {});
+      }
     }
-    // 【硬要求1 · 后台异步】copyFileAssets 走 AssetManager，能读 android_asset 子目录并自动建目标目录。
-    await RNFS.copyFileAssets(toAssetRelative(cfg.assetPath), destPath);
+    if (lastErr) throw lastErr;
 
     // 落盘后立刻重判单场景 → 转 Ready 并通知 OfflineService 订阅方（HomeScreen）。
     const ready = await OfflineService.recheckScene(sceneId);
@@ -83,15 +99,13 @@ async function ensureOneBuiltin(sceneId: string): Promise<boolean> {
       console.log(`[Builtin] ✅ ${sceneId} 拷贝完成并已就绪`);
       return true;
     }
-    // 拷完仍判定未就绪（极罕见：源损坏/大小不符）→ 按失败处理，回落下载。
+    // 拷完仍判定未就绪（极罕见：源损坏/大小不符）→ 按失败处理。
     throw new Error('copied-but-not-ready');
   } catch (err: any) {
-    // 【硬要求2 · 失败回退】拷贝失败 → 回落普通下载队列，绝不永久卡死。
-    console.warn(`[Builtin] ⚠️ ${sceneId} 内置拷贝失败(${err?.message})，回落下载队列`);
-    try {
-      const { DownloaderServiceInstance } = require('./DownloaderService');
-      DownloaderServiceInstance.addTaskToQueue(sceneId);
-    } catch (_e) { /* 下载服务未就绪时忽略；下次冷启/前台恢复会再触发 */ }
+    // 【不变式 · 内置绝不进下载队列 / 绝不 error】内置音频随包而来，缺失只是本地拷贝待重试，
+    //   与网络无关 —— 绝不能回落 CDN（联网慢源失败会把内置卡误标「需要网络/下载失败」并因不跳变而永不自愈）。
+    //   UI 层由 resolveSceneCardStatus 的 isBuiltin 短路显示『正在准备』；下次冷启 / 前台恢复会再触发 bootstrap。
+    console.error(`[Builtin] ❌ ${sceneId} 内置拷贝失败(${err?.message})，保持「正在准备」等待下次重试(不回落CDN)`);
     return false;
   }
 }
@@ -108,10 +122,29 @@ class BuiltinAssetBootstrap {
 
     const ids = Object.keys(BUILTIN_SCENES);
     console.log(`[Builtin] 🚀 内置场景落盘开始，共 ${ids.length} 个`);
-    // allSettled：单场景失败不影响其余（硬要求2「不许永久卡死」）。
-    const results = await Promise.allSettled(ids.map((id) => ensureOneBuiltin(id)));
-    const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
+    // 【回归修复 · 串行】逐个 await，而非 Promise.allSettled 并发 —— 深海/迷雾森林同处 base/ 目录，
+    //   并发 mkdir + copyFileAssets 存在竞态导致其一 ENOENT 首拷失败、回落 CDN 后被误标 error。
+    //   单场景内部已自带重试且不抛（catch 内消化），串行保证目录建立与拷贝互不抢占。
+    let ok = 0;
+    for (const id of ids) {
+      try {
+        if (await ensureOneBuiltin(id)) ok += 1;
+      } catch (_e) { /* ensureOneBuiltin 已消化异常，这里再兜一层，绝不影响其余场景 */ }
+    }
     console.log(`[Builtin] 🏁 内置场景落盘完成：就绪 ${ok}/${ids.length}`);
+  }
+
+  /**
+   * 【供 UI 点击未就绪内置卡时安全重拷】幂等重判 + 缺失才拷；绝不进下载队列、绝不写 error。
+   * @returns true=已就绪；false=仍未就绪（保持『正在准备』，下次冷启再试）。
+   */
+  async reensure(sceneId: string): Promise<boolean> {
+    if (!(sceneId in BUILTIN_SCENES)) return false;
+    try {
+      return await ensureOneBuiltin(sceneId);
+    } catch (_e) {
+      return false;
+    }
   }
 }
 

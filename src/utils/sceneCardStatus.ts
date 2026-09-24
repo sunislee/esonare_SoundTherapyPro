@@ -44,6 +44,11 @@ export interface SceneCardStatusInput {
  */
 export function resolveSceneCardStatus(input: SceneCardStatusInput): SceneCardStatus {
   if (input.audioReady) return 'ready';
+  // 【不变式① · 内置永不 error / need_network】内置场景音频随 APK 打包，落盘只靠本地 bootstrap 拷贝、
+  //   与网络无关；文件缺失只是「bootstrap 还没拷完/竞态失败待重试」，绝不是「需要网络」或「下载失败」。
+  //   故内置未就绪一律落到安静的『正在准备』(downloading)，任何 offline/downloadStatus 都不得把它翻成
+  //   error/need_network —— 这正是大哥截图里深海/迷雾森林在联网态被误标「需要网络·点按重试」的回归根因。
+  if (input.isBuiltin) return 'downloading';
   if (input.offline) return 'need_network';
   if (input.downloadStatus === 'error') return 'error';
   return 'downloading';
