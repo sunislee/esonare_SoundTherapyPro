@@ -58,7 +58,19 @@ const CACHE_DIR = `${RNFS.DocumentDirectoryPath}/noise_reduction_cache`;
 // ════════════════════════════════════════════════════════════
 // 【P1-1】下载超时与看门狗配置（详见 streamDownloadTo）
 // ════════════════════════════════════════════════════════════
-const DOWNLOAD_CONN_TIMEOUT_MS = 20_000;     // 【req#2】连接阶段：20s 未收到响应头即 abort（慢源容忍，原 10s）
+// 【R2 致命修复 · 2026-09-24】RN 的 whatwg-fetch 未实现流式 body：fetch() 的 Promise 只在
+//   【整个响应体收完】后才 resolve。因此旧版固定 DOWNLOAD_CONN_TIMEOUT_MS=20s 名义上是"连接超时"，
+//   实际等价于「强制要求吞吐 ≥ size/20s」。实测 ghproxy.net ≈80–130KB/s → ≥1.4MB 的文件必然被
+//   自己 abort()（设备日志成片的 `CONN_TIMEOUT … Aborted`），再逐级切到当时的死源 → 满屏终态失败。
+//   现改为按 manifest 期望字节数折算【传输预算】：以最低可行速率 24KB/s 估算，下限 45s、上限 180s。
+//   既不再误杀"仍在收流"的慢源大文件，也保证真死源最多占用单源 180s 即让位下一家（串行队列不被拖死）。
+const DOWNLOAD_MIN_THROUGHPUT_BPS = 24 * 1024; // 预算折算用的保守下限速率（实测主源的 ~1/4）
+const TRANSFER_BUDGET_MIN_MS = 45_000;         // 小文件也至少给 45s，避免抖动误杀
+const TRANSFER_BUDGET_MAX_MS = 180_000;        // 单源最坏耗时上限：到期让位下一家，不无限等
+/** 期望字节数 → 单源传输预算(ms)。未知大小由调用方回退 BODY_READ_DEFAULT_BUDGET_MS。 */
+const transferBudgetMs = (bytes: number): number =>
+    Math.min(TRANSFER_BUDGET_MAX_MS, Math.max(TRANSFER_BUDGET_MIN_MS, Math.round((bytes / DOWNLOAD_MIN_THROUGHPUT_BPS) * 1000)));
+
 const STREAM_STALL_TIMEOUT_MS = 8_000;       // 【req#2】流式路径：8s 无新 chunk 即 abort（原 5s，避免慢源短暂停顿误杀）
 const BODY_READ_DEFAULT_BUDGET_MS = 120_000; // arrayBuffer 回退：缺 Content-Length 时的默认读预算
 // 【req#2】arrayBuffer 读预算下限 ≥45s：6~15MB 音频在慢源(ghproxy.net 单文件 13~20s、statically 更慢)下，
@@ -325,20 +337,30 @@ class DownloaderService {
       DeviceEventEmitter.emit(NETWORK_THROTTLE_EVENT, false);
     }
 
-    // 【PR-2 WiFi 提示】移动数据且用户未允许 → 挂起（任务保留在队列，闸门放行后自动恢复）
-    const gate = await NetworkGateService.requestDownloadAccess();
-    if (gate === 'waiting') {
-      console.log('[Downloader] ⏸️ [startDownload] 移动数据未允许，挂起下载任务');
-      return;
-    }
-
-    this.isDownloading = true;
-
-    // 启动队列处理并保存 Promise 引用
-    this.queueProcessingPromise = this.processQueue().finally(() => {
+    // 【并发致命修复 · 2026-09-24】守卫必须在任何 await 之前"同步占位"。
+    //   旧实现先 await NetworkGateService.requestDownloadAccess()(内部 await NetInfo.fetch())，
+    //   之后才给 queueProcessingPromise 赋值——于是冷启动同一帧涌入的 N 个 startDownload()
+    //   (静默全量下载逐场景 prioritizeScene + 自愈 sweep 各调一次)全部在 await 窗口里穿过守卫，
+    //   并发拉起 N 条 processQueue：设备实测同一毫秒 43 次 downloadResource。共享 GitHub 代理
+    //   被自我 DDoS → 全线限流/超时 → 满屏「下载失败」+ 熔断。串行是本引擎的立命之本，此处必须硬保证。
+    const run = (async () => {
+      // 【PR-2 WiFi 提示】移动数据且用户未允许 → 挂起（任务保留在队列，闸门放行后自动恢复）
+      const gate = await NetworkGateService.requestDownloadAccess();
+      if (gate === 'waiting') {
+        console.log('[Downloader] ⏸️ [startDownload] 移动数据未允许，挂起下载任务');
+        return;
+      }
+      this.isDownloading = true;
+      await this.processQueue();
+    })().finally(() => {
       this.queueProcessingPromise = null;
       this.isDownloading = false;
     });
+
+    // 同步占位：本轮之后的任何 startDownload() 都会在上面被短路，绝不并发起第二条队列。
+    this.queueProcessingPromise = run;
+    // 失败已在 processQueue / 退避 / 熔断内部消化；此处仅防 unhandled rejection。
+    run.catch(() => undefined);
   }
 
   /**
@@ -694,7 +716,7 @@ class DownloaderService {
    * - 断点续传：数据写入 `${localPath}.part`；重试时探测 .part 大小，带 `Range: bytes=N-` 请求，
    *   用 appendFile 追加。服务端忽略 Range（返回 200）→ 丢弃 .part 从 0 重下；
    *   返回 416 → .part 实际已完整，直接改名。.part 是合法前缀（每次写入都是完整块），续传安全。
-   * - 连接阶段：DOWNLOAD_CONN_TIMEOUT_MS 内未收到响应即 abort；
+   * - 传输阶段：按期望字节折算的预算 transferBudgetMs（45s~180s）内未收到完整响应即 abort；
    * - 流式路径：每个新 chunk 重置停滞计时，STREAM_STALL_TIMEOUT_MS 无数据即 abort；
    * - arrayBuffer 回退（RN whatwg-fetch 实际主路径）：按 Content-Length × 最低可行速率估算读预算，
    *   race 定时器双保险确保 await 必然 settle。
@@ -765,11 +787,13 @@ class DownloaderService {
     let finalSize = 0; // 最终文件字节数（优先取实际 stat，stat 不可用时回退为断点+新增）
 
     try {
-      // 连接阶段超时：10s 未收到响应头即 abort
+      // 【R2】传输预算看门狗（见常量区说明）：按期望字节折算，绝不再用固定 20s 误杀"仍在收流"的慢源大文件。
+      const remainingBytes = expectedSize > 0 ? Math.max(expectedSize - startOffset, 1) : 0;
+      const connBudgetMs = remainingBytes > 0 ? transferBudgetMs(remainingBytes) : BODY_READ_DEFAULT_BUDGET_MS;
       connTimer = setTimeout(() => {
-        console.warn(`[Downloader] ⏱️ [CONN_TIMEOUT] ${resource.filename} ${DOWNLOAD_CONN_TIMEOUT_MS}ms 无响应，中止`);
+        console.warn(`[Downloader] ⏱️ [CONN_TIMEOUT] ${resource.filename} ${Math.round(connBudgetMs / 1000)}s 内未收到完整响应（预算=${Math.round(remainingBytes / 1024)}KB @${DOWNLOAD_MIN_THROUGHPUT_BPS / 1024}KB/s）→ 中止本源`);
         controller.abort();
-      }, DOWNLOAD_CONN_TIMEOUT_MS);
+      }, connBudgetMs);
 
       const headers: Record<string, string> = {};
       if (startOffset > 0) headers['Range'] = `bytes=${startOffset}-`;
@@ -1113,9 +1137,10 @@ class DownloaderService {
    * 【不变式 · 写进代码】isConnected=true 时，store error 态存活不得超过一个自愈周期(25s)；
    *   UI 在任何时刻不得联网显示「需要网络」。断网绝不清算（交给真正的 NETWORK_RECOVERED）。
    *
-   * 三分支收敛委托纯函数 planOrphanErrorSweep（已单测锁死），此处仅执行副作用：
-   *   - 'ready'   → tickScene ready
-   *   - 'requeue' → addTaskToQueue + tickScene downloading(资源正在下载)
+   * 四分支收敛委托纯函数 planOrphanErrorSweep（已单测锁死），此处仅执行副作用：
+   *   - 'ready'     → tickScene ready
+   *   - 'reconcile' → tickScene downloading（引擎在途，仅对齐 store，不重复入队）
+   *   - 'requeue'   → addTaskToQueue + tickScene downloading(资源正在下载)
    * @param isResourceReady 磁盘就绪判定（由调用方注入 OfflineService.isResourceReady，避免循环依赖）
    * @returns 被清算的场景数。
    */
@@ -1133,10 +1158,15 @@ class DownloaderService {
     const actions = planOrphanErrorSweep(errorIds, { isConnected, isResourceReady, isInQueue });
     let readyCount = 0;
     let requeueCount = 0;
+    let reconcileCount = 0;
     for (const { sceneId, action } of actions) {
       if (action === 'ready') {
         storeTickScene(sceneId, { progress: 100, status: 'ready' });
         readyCount += 1;
+      } else if (action === 'reconcile') {
+        // 引擎在途/排队中：绝不重复入队，只把 store 的陈旧 error 对齐为「资源正在下载」。
+        storeTickScene(sceneId, { progress: 0, status: 'downloading' });
+        reconcileCount += 1;
       } else {
         this.addTaskToQueue(sceneId);
         storeTickScene(sceneId, { progress: 0, status: 'downloading' });
@@ -1144,7 +1174,7 @@ class DownloaderService {
       }
     }
     if (actions.length > 0) {
-      console.log(`[Downloader] 🧹 [孤儿清算] 联网清算 ${actions.length} 个 store 孤儿 error（ready=${readyCount}, requeue=${requeueCount}）`);
+      console.log(`[Downloader] 🧹 [孤儿清算] 联网清算 ${actions.length} 个 store 孤儿 error（ready=${readyCount}, requeue=${requeueCount}, reconcile=${reconcileCount}）`);
     }
     return actions.length;
   }

@@ -339,6 +339,9 @@ const SceneItem = React.memo(({
                     audioReady: ready,
                     offline: NetworkGateService.isOffline(),
                     downloadStatus,
+                    // 【护栏接线】纯函数里的「内置永不 error / 需网络」分支此前因这里漏传 isBuiltin 而
+                    //   形同死代码——内置卡一旦离线或被上游打成 error，就会伪装成「需要网络·点按重试」。
+                    isBuiltin: isBuiltinScene(item.id),
                   });
                   if (cardStatus === 'ready') {
                     return (

@@ -127,16 +127,18 @@ export interface OrphanSweepContext {
   isInQueue: (sceneId: string) => boolean;
 }
 
-export type OrphanSweepAction = 'ready' | 'requeue';
+export type OrphanSweepAction = 'ready' | 'requeue' | 'reconcile';
 
 /**
  * 【不变式 · 写进代码】isConnected=true 时，store error 态存活不得超过一个自愈周期(25s)。
- * UI 在任何时刻不得联网显示「需要网络」。
+ * UI 在任何时刻不得联网显示「需要网络」，也不得在引擎明明还在下载时显示「下载失败」。
  *
- * 三分支收敛（仅联网执行；断网绝不清算，交给真正的 NETWORK_RECOVERED）：
+ * 四分支收敛（仅联网执行；断网绝不清算，交给真正的 NETWORK_RECOVERED）：
  *   - 磁盘已就绪            → 'ready'
- *   - 不在下载队列且未就绪  → 'requeue'（重新入队 + tick pending/正在下载）
- *   - 已在队列             → 不动（不返回该场景，避免打断进行中的下载）
+ *   - 不在下载队列且未就绪  → 'requeue'（重新入队 + tick downloading）
+ *   - 已在队列（在途/排队）→ 'reconcile'（仅把 store 对齐引擎真相为 downloading，不重复入队）
+ *       ↑ 关键：prioritizeScene 的就绪计时器(≤180s)可能先于真实下载超时而写 error，此时引擎仍在
+ *         收流；若此处 no-op，卡片会挂着「下载失败」而后台其实在下载——双账本再次背离。
  */
 export function planOrphanErrorSweep(
   errorSceneIds: string[],
@@ -147,10 +149,11 @@ export function planOrphanErrorSweep(
   for (const sceneId of errorSceneIds) {
     if (ctx.isResourceReady(sceneId)) {
       actions.push({ sceneId, action: 'ready' });
-    } else if (!ctx.isInQueue(sceneId)) {
+    } else if (ctx.isInQueue(sceneId)) {
+      actions.push({ sceneId, action: 'reconcile' }); // 引擎在途 → store 对齐为 downloading，绝不再入队
+    } else {
       actions.push({ sceneId, action: 'requeue' });
     }
-    // 已在队列且未就绪 → 不动（下载正在进行，等其结果）
   }
   return actions;
 }
