@@ -63,4 +63,48 @@ describe('resolveSceneCardStatus', () => {
       ).toBe('need_network');
     });
   });
+
+  // ════════════════════════════════════════════════════════════════════
+  // 【一致性不变式】任何状态组合下，「卡片显示 Ready」严格等价于「磁盘可播(audioReady)」。
+  //   imageReady / isBuiltin 是装饰与来源维度，绝不允许翻转该结论 —— 一旦出现"显示下载中却能播"
+  //   或"显示 Ready 却不能播"的双轨背离，本组用例立即变红。
+  // ════════════════════════════════════════════════════════════════════
+  describe('【一致性不变式 · 可播判定 === 卡片Ready判定】', () => {
+    const bools = [true, false];
+
+    // 维度一：音频就绪 × 图片就绪 × 内置/非内置（离线/失败均默认未触发）
+    for (const audioReady of bools) {
+      for (const imageReady of bools) {
+        for (const isBuiltin of bools) {
+          it(`audio=${audioReady} image=${imageReady} builtin=${isBuiltin} → (status==='ready') ⟺ 可播`, () => {
+            const status = resolveSceneCardStatus({ audioReady, imageReady, isBuiltin });
+            expect(status === 'ready').toBe(audioReady);
+          });
+        }
+      }
+    }
+
+    // 维度二：叠加离线 / 终态失败，仍不得越过可播真相；未就绪时也不得误判 ready。
+    for (const audioReady of bools) {
+      for (const offline of bools) {
+        for (const downloadStatus of ['idle', 'downloading', 'waiting', 'error'] as const) {
+          it(`audio=${audioReady} offline=${offline} dl=${downloadStatus} → (status==='ready') ⟺ 可播`, () => {
+            const status = resolveSceneCardStatus({ audioReady, offline, downloadStatus });
+            expect(status === 'ready').toBe(audioReady);
+          });
+        }
+      }
+    }
+
+    it('全维度笛卡尔积：就绪判定恒等于 audioReady（图片/内置/离线/失败皆不得翻转）', () => {
+      for (const audioReady of bools)
+        for (const imageReady of bools)
+          for (const isBuiltin of bools)
+            for (const offline of bools)
+              for (const downloadStatus of ['idle', 'downloading', 'waiting', 'error'] as const) {
+                const status = resolveSceneCardStatus({ audioReady, imageReady, isBuiltin, offline, downloadStatus });
+                expect(status === 'ready').toBe(audioReady);
+              }
+    });
+  });
 });

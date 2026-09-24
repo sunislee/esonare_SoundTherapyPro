@@ -18,6 +18,11 @@
 
 jest.mock('@react-native-community/netinfo');
 
+// AsyncStorage —— 无原生模块时须用包内自带的内存实现顶替（裸 jest.mock 因无 __mocks__ 不生效）。
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 const netInfoMock = require('@react-native-community/netinfo');
 
 // 默认 WiFi + 已连接 = 移动数据闸门放行；每个用例前重置，
@@ -25,5 +30,10 @@ const netInfoMock = require('@react-native-community/netinfo');
 beforeEach(() => {
   netInfoMock.__resetNetworkState();
 });
+
+// reanimated —— App.test.tsx 渲染整棵 App 树会 import react-native-reanimated，其原生 worklet
+// 运行时在单测环境不存在。用官方 mock 顶替（提供 useSharedValue/useAnimatedStyle 等空实现）。
+jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+
 
 

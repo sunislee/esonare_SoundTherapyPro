@@ -15,6 +15,7 @@ import {
   ImageBackground,
   DeviceEventEmitter,
   ScrollView,
+  ToastAndroid,
 } from 'react-native';
 
 // 【🔥 v3】useSyncExternalStore — 订阅 DeviceEventEmitter，只在真实事件发生时触发重渲染
@@ -117,14 +118,13 @@ const SceneItem = React.memo(({
   // 2. Downloading: 0 < progress < 100 -> 显示进度条 + 灰色占位图 + 禁用点击
   // 3. Ready: progress = 100 -> 显示真实缩略图 + 解锁点击
   // ════════════════════════════════════════════════════════
+  // 【统一真相源 · 消灭双轨】卡片就绪的唯一判据是磁盘真相 isResourceReady(=OfflineService.readyIds.has)。
+  //   globalProgress(SceneDownloadStore) 仅供 resolveSceneCardStatus 细分「未就绪副文案」(error/idle)，
+  //   绝不再派生任何独立的 ready 布尔——否则又会出现「store 说 ready、磁盘说没有」的双轨背离。
   const downloadProgress = globalProgress?.progress || 0;
   const downloadStatus = globalProgress?.status || 'idle';
-  const isPriority = globalProgress?.isPriority || false;
-  
-  // 【三态判定】
-  const isDownloading = downloadStatus === 'downloading' && downloadProgress < 100;
-  const isReady = downloadStatus === 'ready' || downloadProgress >= 100;
-  const isIdle = !isDownloading && !isReady;
+  /** 【单一就绪判定】卡片状态 / 点击门控 / 播放入口三处只读这一个值。 */
+  const ready = isResourceReady === true;
   
   const highlightAnim = useRef(new Animated.Value(0)).current;
   const [isPressed, setIsPressed] = useState(false);
@@ -169,33 +169,26 @@ const SceneItem = React.memo(({
     ReactNativeHapticFeedback.trigger(type === 'heavy' ? 'impactHeavy' : 'impactLight', { enableVibrateFallback: true });
   }, []);
 
-  // 【核心】处理点击事件 - 根据三态决定行为
+  // 【核心】处理点击事件 - 单一真相门控：可播(磁盘真相)才进播放器，否则只加速下载。
   const handlePress = useCallback(() => {
-    console.log(`[SceneItem] 👆 [handlePress] 点击事件触发: ${item.id}`);
-    console.log(`[SceneItem] 📊 当前状态: isReady=${isReady}, isDownloading=${isDownloading}, isIdle=${isIdle}`);
-    console.log(`[SceneItem] 📊 downloadProgress: ${downloadProgress}%, status: ${downloadStatus}`);
-    console.log(`[SceneItem] 🔧 onBoostPriority 存在: ${!!onBoostPriority}`);
-    
+    console.log(`[SceneItem] 👆 [handlePress] ${item.id} ready=${ready} downloadStatus=${downloadStatus}`);
+
     triggerHaptic();
-    
-    if (isResourceReady || isReady) {
-      // 【Ready】音频落盘即视为可播 → 直接导航（内置场景图未下完亦可播）
-      console.log(`[SceneItem] ✅ [handlePress] 资源就绪，导航到播放器: ${item.id}`);
+
+    if (ready) {
+      // 【唯一门控】磁盘真相判定可播 → 导航。内置场景图未下完亦可播（ready 只看音频落盘）。
+      console.log(`[SceneItem] ✅ [handlePress] 资源就绪(磁盘真相)，导航到播放器: ${item.id}`);
       if (item.id.includes("breath")) navigation.navigate("BreathDetail", { sceneId: item.id });
       else navigation.navigate("ImmersivePlayer", { sceneId: item.id });
     } else {
-      // 【Downloading / Idle】触发优先下载
-      console.log(`[SceneItem] ⬇️ [handlePress] 触发下载: ${item.id}`);
-      if (onBoostPriority) {
-        console.log(`[SceneItem] 🚀 [handlePress] 调用 onBoostPriority(${item.id})`);
-        onBoostPriority(item.id);
-        console.log(`[SceneItem] ✅ [handlePress] onBoostPriority 已调用`);
-      } else {
-        console.error(`[SceneItem] ❌ [handlePress] onBoostPriority 不存在！`);
-      }
+      // 【未就绪 · 绝不进播放器】统一真相下 ready=false 即「磁盘无可播文件」。点击只加速下载
+      //   (prioritizeScene) + 诚实 toast，杜绝任何远程流播/假入口（与卡片「资源正在下载」严格一致）。
+      console.log(`[SceneItem] ⬇️ [handlePress] 未就绪 → 优先下载(不进播放器): ${item.id}`);
+      if (onBoostPriority) onBoostPriority(item.id);
+      ToastAndroid.show('资源正在下载，请稍候', ToastAndroid.SHORT);
       triggerHaptic("heavy");
     }
-  }, [item.id, isResourceReady, isReady, isDownloading, isIdle, downloadProgress, downloadStatus, onBoostPriority, triggerHaptic, navigation]);
+  }, [item.id, ready, downloadStatus, onBoostPriority, triggerHaptic, navigation]);
 
   useEffect(() => {
     return () => {
@@ -303,7 +296,7 @@ const SceneItem = React.memo(({
               {(() => {
                 // 【统一态】无论下载中/空闲，图片未就绪时一律用语义化渐变色占位块（引擎现成 category 色）。
                 //   装饰性背景图不再阻塞状态、也不再显示转圈——能否播放才是唯一标准。
-                const thumbSource = getThumbnailSource(item, isResourceReady || isReady);
+                const thumbSource = getThumbnailSource(item, ready);
                 const hasSource = thumbSource !== null;
 
                 if (hasSource) {
@@ -315,7 +308,7 @@ const SceneItem = React.memo(({
                       imageStyle={styles.thumbnailRadius}
                       // 【🔥 v3】key 改用 bgReadyTick（useSyncExternalStore 事件计数），
                // 背景图下载完成时 ImageBackground 重建 → RN 重新统计图片尺寸
-               key={`thumb-${item.id}-${isReady ? 'ready' : 'pending'}-${bgReadyTick}`}
+               key={`thumb-${item.id}-${ready ? 'ready' : 'pending'}-${bgReadyTick}`}
                     />
                   );
                 }
@@ -328,7 +321,7 @@ const SceneItem = React.memo(({
               })()}
               
               {/* 【中间信息区 - 三态驱动】 */}
-              <View style={[styles.cardText, isResourceReady && styles.cardTextCentered]}>
+              <View style={[styles.cardText, ready && styles.cardTextCentered]}>
                 <Text
                   style={[
                     styles.cardTitle,
@@ -343,7 +336,7 @@ const SceneItem = React.memo(({
                 {/* 【状态提示 - 以「可播」为唯一就绪标准】音频落盘即 Ready；图片/装饰资源不配挡状态。 */}
                 {(() => {
                   const cardStatus = resolveSceneCardStatus({
-                    audioReady: isResourceReady,
+                    audioReady: ready,
                     offline: NetworkGateService.isOffline(),
                     downloadStatus,
                   });
@@ -380,7 +373,7 @@ const SceneItem = React.memo(({
               {/* 【右侧操作区 - 三态驱动】 */}
               <View style={styles.cardRightArea}>
                 {/* 【Ready】播放按钮；其余统一安静 ↓ 图标（无转圈、无 IMG、无百分比） */}
-                {isResourceReady ? (
+                {ready ? (
                   <TouchableOpacity 
                     style={[styles.cardPlayButton, isActive && styles.cardPauseButton]} 
                     onPress={() => { triggerHaptic(); togglePlayback(item); }}
@@ -422,6 +415,12 @@ const SceneItem = React.memo(({
     return false;
   }
   
+  // 【统一真相源 · 刷新闭环】磁盘就绪真相(isResourceReady=OfflineService.readyIds.has)变化必须重渲染，
+  //   不依赖 stateVersion 的隐式 bump —— 杜绝「recheckScene 已置 ready 但卡片不刷新」同类 bug。
+  if (prevProps.isResourceReady !== nextProps.isResourceReady) {
+    return false;
+  }
+
   if (prevProps.stateVersion !== nextProps.stateVersion) {
     return false;
   }
@@ -944,6 +943,16 @@ export const HomeScreen: React.FC = () => {
       if (!mapped) return;
       if (status.status === 'failed') clearDownloadTimer(status.resourceId); // 停 watchdog，避免与 error 态打架
       tickScene(status.resourceId, mapped);
+      // 【bugfix · 2026-09「显示下载中却能播放」】静默全量下载完成时，store 仅更新了 isReady/图片，
+      //   但卡片 Ready 唯一开关 downloadedSceneIds(=OfflineService.readyIds) 只在 prioritizeScene 轮询 /
+      //   bootstrap 时被刷新，后台批量下载完成【没有】任何 recheckScene 触发点 → 音频已落盘可播、背景图已显示，
+      //   卡片却永远停「资源正在下载」。这里在 completed 时按磁盘真相复核单场景：recheckScene 内部走
+      //   exists+size≥95% 严格校验（绝不乐观置位），落盘即 notify→sync→downloadedSceneIds 更新→卡片转 Ready。
+      if (status.status === 'completed') {
+        OfflineService.recheckScene(status.resourceId).catch((e) =>
+          console.warn('[HomeScreen] completed 后 recheckScene 失败', status.resourceId, e),
+        );
+      }
     });
   }, [clearDownloadTimer]);
 

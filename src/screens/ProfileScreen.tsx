@@ -32,6 +32,10 @@ import ToastUtil from '../utils/ToastUtil';
 import { subscribeDownload, DownloaderServiceInstance } from '../services/DownloaderService';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 import { useBackHandler } from '../hooks/useBackHandler';
+import * as RNFS from '@dr.pogodin/react-native-fs';
+import OfflineService from '../services/OfflineService';
+import { clearAllScenes as clearSceneStoreAll } from '../utils/SceneDownloadStore';
+import { LOCAL_RESOURCE_PATH } from '../constants/audioAssets';
 
 // @ts-ignore
 type ProfileScreenNavigationProp = StackNavigationProp<any, 'Profile'>;
@@ -313,7 +317,21 @@ export const ProfileScreen = () => {
           text: t('profile.modals.confirmClear'), 
           onPress: async () => {
             const RESOURCE_READY_KEY = 'RESOURCE_READY';
-            
+
+            // 【清缓存反向失效 · 统一真相源】先真正删除已落盘音频，再清空就绪真相与下载 store，
+            //   使所有卡片立即由 Ready 回落「资源正在下载」——绝不残留假绿(显示可播却无文件)。
+            //   之后下方重下流程经 completed→OfflineService.recheckScene 按磁盘真相逐个回 Ready。
+            try {
+              if (await RNFS.exists(LOCAL_RESOURCE_PATH)) {
+                await RNFS.unlink(LOCAL_RESOURCE_PATH);
+                console.log('[ProfileScreen] 🧹 [清除缓存] 已删除本地音频目录:', LOCAL_RESOURCE_PATH);
+              }
+            } catch (e) {
+              console.warn('[ProfileScreen] ⚠️ [清除缓存] 删除音频目录失败(继续失效):', e);
+            }
+            OfflineService.invalidateAll();
+            clearSceneStoreAll();
+
             try {
               // 【🔧 关键修复 v2】使用 DownloadService.silentBackgroundDownload（按清单逐文件下载，而非 DownloaderService 批量串行）
               // 原因：DownloaderService.processQueue() 顺序执行 RNFS.downloadFile，当队列中有大量已完成/失败资源时，

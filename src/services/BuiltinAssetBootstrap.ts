@@ -22,6 +22,12 @@
  *     file:///android_asset/ 前缀得到相对 assets 根的路径。⚠️ 绝不能用 res/raw（那是 react-native-sound
  *     MAIN_BUNDLE 专用，RNFS 读不了）。两套内置音频机制互不混用。
  *   - 拷贝目标路径必须 == getLocalPath(category, filename)，才能被 OfflineService/播放链路直接识别。
+ *
+ * @note 模拟器「假飞行模式」留痕（2026-09）：Android 模拟器在扩展面板点 Airplane mode 时，NetInfo 常不刷新
+ *   isConnected（仍报 wifi/cellular connected），使 NetworkGateService.isOffline() 误判为在线 → 离线冷启动取证失真、
+ *   非内置下载被当"可补下"静默排队。验证「离线冷启动 · 内置仍可播」务必：(1) 用 `adb shell svc wifi disable;
+ *   adb shell svc data disable`（或 emulator console `airplane mode on`）真实断网，别只点飞行图标；(2) 配合
+ *   `pm clear` 清数据后冷启动。内置场景走本服务 bootstrap 拷贝、不依赖网络，离线仍应 Ready —— 这正是该回归的判据。
  */
 import * as RNFS from '@dr.pogodin/react-native-fs';
 import { BUILTIN_SCENES, AUDIO_MANIFEST, getLocalPath } from '../constants/audioAssets';

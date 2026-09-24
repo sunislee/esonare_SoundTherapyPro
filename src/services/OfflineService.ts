@@ -133,6 +133,18 @@ class OfflineService {
     if (this.readyIds.delete(sceneId)) this.notify();
     this.scanned.delete(sceneId);
   }
+
+  /**
+   * 【清缓存反向失效】清空全部就绪集合并通知订阅方，使 UI 立即从 Ready 回落「资源正在下载」。
+   * 调用时机：用户清除缓存/删除资源、文件已被 unlink 之后。绝不乐观——只清不置位；
+   * 之后由磁盘复核(refresh/recheckScene)按真实落盘重新决定哪些场景回到 Ready。
+   */
+  invalidateAll(): void {
+    if (this.readyIds.size === 0 && this.scanned.size === 0) return;
+    this.readyIds = new Set();
+    this.scanned.clear();
+    this.notify();
+  }
 }
 
 export default new OfflineService();

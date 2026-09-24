@@ -12,18 +12,35 @@
 export type SceneCardStatus = 'ready' | 'need_network' | 'error' | 'downloading';
 
 export interface SceneCardStatusInput {
-  /** 音频是否已落盘可播（= HomeScreen 的 isResourceReady，磁盘真相）。 */
+  /**
+   * 【唯一可播真相】= OfflineService.readyIds.has(id)（磁盘 exists + size≥期望95%）。
+   * 卡片状态、点击门控、播放入口三处一律以此为准；任何其它信号都不得越过它独立判 ready。
+   */
   audioReady: boolean;
+  /**
+   * 背景图/缩略图等装饰资源是否就绪。仅为「不变式可被测试遍历」而显式建模，
+   * 【绝不参与 ready 判定】——装饰资源永远不配挡状态（内置场景图缺失也应 Ready）。
+   */
+  imageReady?: boolean;
+  /**
+   * 是否内置场景。同样仅为不变式表达而建模，【绝不参与 ready 判定】：
+   * 内置与否只决定「离线能否补回」，不改变「此刻磁盘有没有可播文件」这一事实。
+   */
+  isBuiltin?: boolean;
   /** 当前是否离线（NetworkGateService.isOffline()）。 */
   offline?: boolean;
-  /** 下载器映射后的场景状态（'error' 表示终态失败）。 */
+  /** 下载器映射后的场景状态（'error' 表示终态失败），仅用于未就绪时的副文案细分。 */
   downloadStatus?: string;
 }
 
 /**
  * 决定卡片显示状态。优先级：音频就绪 > 离线 > 失败 > 统一未就绪。
- * - audioReady=true → 'ready'：无视图片/装饰资源是否下完（req3）。
+ * - audioReady=true → 'ready'：无视图片/装饰资源、内置与否（req3 + 不变式）。
  * - 否则离线 → 'need_network'；终态失败 → 'error'；其余一律 'downloading'（req2 统一文案）。
+ *
+ * 【一致性不变式】卡片是否显示 Ready 严格等价于 audioReady(可播真相)：
+ *   resolveSceneCardStatus(x).status === 'ready'  ⟺  x.audioReady === true
+ * imageReady / isBuiltin 任何取值都不得翻转该结论（由 sceneCardStatus.test.ts 全组合锁死）。
  */
 export function resolveSceneCardStatus(input: SceneCardStatusInput): SceneCardStatus {
   if (input.audioReady) return 'ready';
