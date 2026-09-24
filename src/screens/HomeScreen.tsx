@@ -732,6 +732,10 @@ export const HomeScreen: React.FC = () => {
       try {
         const n = DownloaderServiceInstance.recoverFailedOnNetworkRestore();
         if (n > 0) console.log(`[HomeScreen] ♻️ [定时自愈] 联网复活 ${n} 个终态失败场景`);
+        // 【双账本背离修复】清算 store 孤儿 error：上一轮离线 prioritizeScene tickScene('error') 写入、
+        //   但从未进 downloader statusMap 的场景，recoverFailedOnNetworkRestore 够不到 → 必须独立清算。
+        const m = DownloaderServiceInstance.sweepOrphanStoreErrors((id) => OfflineService.isReady(id));
+        if (m > 0) console.log(`[HomeScreen] 🧹 [定时自愈] 清算 ${m} 个 store 孤儿 error（联网不留「需要网络」）`);
       } catch (_e) { /* 下载服务未就绪时忽略，下个周期再试 */ }
       OfflineService.refresh().catch(() => {}); // 顺带按磁盘真相复核，落盘即翻绿(自动 Ready)
     }, SELF_HEAL_MS);

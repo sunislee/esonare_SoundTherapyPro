@@ -37,6 +37,11 @@ import {
   type AudioResource,
 } from '../config/ResourceConfig';
 import {
+  tickScene as storeTickScene,
+  getErrorSceneIds,
+  planOrphanErrorSweep,
+} from '../utils/SceneDownloadStore';
+import {
   AUDIO_MANIFEST,
   ASSET_LIST,
   getAssetUrls,
@@ -1097,6 +1102,51 @@ class DownloaderService {
     // startDownload 内部防重入锁(空闲时才真正启动) + 解除熔断 + 清零连续失败 + 广播 NETWORK_THROTTLE(false)。
     this.startDownload();
     return requeued;
+  }
+  /**
+   * 【孤儿错误清算 · 双账本背离修复】
+   *
+   * 根因：离线时 prioritizeScene 直接 tickScene({status:'error'}) 写进【store 账本】，但这些场景
+   *   从未进入【downloader statusMap/队列】。联网后 recoverFailedOnNetworkRestore 只扫自己的
+   *   statusMap.failed → 永远够不到这批 store 孤儿 error → UI 联网仍显示「需要网络」。
+   *
+   * 【不变式 · 写进代码】isConnected=true 时，store error 态存活不得超过一个自愈周期(25s)；
+   *   UI 在任何时刻不得联网显示「需要网络」。断网绝不清算（交给真正的 NETWORK_RECOVERED）。
+   *
+   * 三分支收敛委托纯函数 planOrphanErrorSweep（已单测锁死），此处仅执行副作用：
+   *   - 'ready'   → tickScene ready
+   *   - 'requeue' → addTaskToQueue + tickScene downloading(资源正在下载)
+   * @param isResourceReady 磁盘就绪判定（由调用方注入 OfflineService.isResourceReady，避免循环依赖）
+   * @returns 被清算的场景数。
+   */
+  sweepOrphanStoreErrors(isResourceReady: (sceneId: string) => boolean): number {
+    const isConnected = !NetworkGateService.isOffline();
+    const errorIds = getErrorSceneIds();
+    if (errorIds.length === 0) return 0;
+
+    const isInQueue = (id: string): boolean => {
+      if (this.downloadQueue.some((r) => r.id === id)) return true;
+      const st = this.statusMap.get(id)?.status;
+      return st === 'pending' || st === 'downloading';
+    };
+
+    const actions = planOrphanErrorSweep(errorIds, { isConnected, isResourceReady, isInQueue });
+    let readyCount = 0;
+    let requeueCount = 0;
+    for (const { sceneId, action } of actions) {
+      if (action === 'ready') {
+        storeTickScene(sceneId, { progress: 100, status: 'ready' });
+        readyCount += 1;
+      } else {
+        this.addTaskToQueue(sceneId);
+        storeTickScene(sceneId, { progress: 0, status: 'downloading' });
+        requeueCount += 1;
+      }
+    }
+    if (actions.length > 0) {
+      console.log(`[Downloader] 🧹 [孤儿清算] 联网清算 ${actions.length} 个 store 孤儿 error（ready=${readyCount}, requeue=${requeueCount}）`);
+    }
+    return actions.length;
   }
 }
 
