@@ -53,9 +53,10 @@ import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } fr
 // 【item2 限流横幅】订阅下载引擎的熔断暂停事件（"网络较慢，稍后会自动继续"）
 import { NETWORK_THROTTLE_EVENT, isAutoBatchPaused, DownloaderServiceInstance } from '../services/DownloaderService';
 import { mapDownloaderStatusToSceneState } from '../utils/downloadStatusMapping';
+import { resolveSceneCardStatus } from '../utils/sceneCardStatus';
 import OfflineService from '../services/OfflineService';
 import NetworkGateService from '../services/NetworkGateService';
-import { AUDIO_MANIFEST } from '../constants/audioAssets';
+import { AUDIO_MANIFEST, isBuiltinScene } from '../constants/audioAssets';
 import ToastUtil from '../utils/ToastUtil';
 import { checkNoiseResourcesReady, getNoiseResourceFiles } from '../services/NoiseResourceChecker';
 import { downloadTargetFilesAsync } from './ResourceDownloadScreen';
@@ -177,8 +178,8 @@ const SceneItem = React.memo(({
     
     triggerHaptic();
     
-    if (isReady) {
-      // 【Ready】资源就绪 → 直接导航
+    if (isResourceReady || isReady) {
+      // 【Ready】音频落盘即视为可播 → 直接导航（内置场景图未下完亦可播）
       console.log(`[SceneItem] ✅ [handlePress] 资源就绪，导航到播放器: ${item.id}`);
       if (item.id.includes("breath")) navigation.navigate("BreathDetail", { sceneId: item.id });
       else navigation.navigate("ImmersivePlayer", { sceneId: item.id });
@@ -194,7 +195,7 @@ const SceneItem = React.memo(({
       }
       triggerHaptic("heavy");
     }
-  }, [item.id, isReady, isDownloading, isIdle, downloadProgress, downloadStatus, onBoostPriority, triggerHaptic, navigation]);
+  }, [item.id, isResourceReady, isReady, isDownloading, isIdle, downloadProgress, downloadStatus, onBoostPriority, triggerHaptic, navigation]);
 
   useEffect(() => {
     return () => {
@@ -300,18 +301,9 @@ const SceneItem = React.memo(({
               
               {/* 【左侧缩略图 - 三态驱动】 */}
               {(() => {
-                // 【Downloading 态】显示灰色占位图
-                if (isDownloading) {
-                  return (
-                    <View style={[styles.thumbnailPlaceholder, { backgroundColor: 'rgba(100,100,100,0.3)' }]}>
-                      <ActivityIndicator size="small" color="#6C5DD3" />
-                      <Text style={styles.downloadingPercent}>{Math.round(downloadProgress)}%</Text>
-                    </View>
-                  );
-                }
-                
-                // 【Idle / Ready 态】显示真实缩略图或语义化占位块
-                const thumbSource = getThumbnailSource(item, isReady);
+                // 【统一态】无论下载中/空闲，图片未就绪时一律用语义化渐变色占位块（引擎现成 category 色）。
+                //   装饰性背景图不再阻塞状态、也不再显示转圈——能否播放才是唯一标准。
+                const thumbSource = getThumbnailSource(item, isResourceReady || isReady);
                 const hasSource = thumbSource !== null;
 
                 if (hasSource) {
@@ -348,41 +340,46 @@ const SceneItem = React.memo(({
                   {t(`scenes.${item.id}.title`, { defaultValue: item.title })}
                 </Text>
 
-                {/* 【状态提示 - 必须音频+背景图+缩略图全部就绪】 */}
-                {isDownloading ? (
-                  <Text style={styles.cardStatusText} numberOfLines={1}>
-                    {Math.round(downloadProgress) > 0
-                      ? t('home_card_preparing', { pct: Math.round(downloadProgress) })
-                      : t('home_card_preparing_quiet')}
-                  </Text>
-                ) : isResourceReady ? (
-                  <Text style={styles.cardReadyText} numberOfLines={1}>
-                    Ready to Play ✨
-                  </Text>
-                ) : isReady ? (
-                  <Text style={[styles.cardStatusText, { color: '#FFA500' }]} numberOfLines={1}>
-                    Loading Images...
-                  </Text>
-                ) : NetworkGateService.isOffline() ? (
-                  <Text style={[styles.cardSubtitle, { color: '#FF8A65' }]} numberOfLines={1}>
-                    {t('home_card_need_network')}
-                  </Text>
-                ) : downloadStatus === 'error' ? (
-                  <Text style={styles.cardSubtitle} numberOfLines={1}>
-                    {t('home_card_transient_error')}
-                  </Text>
-                ) : (
-                  <Text style={styles.cardSubtitle} numberOfLines={1}>
-                    {Math.round(downloadProgress) > 0
-                      ? t('home_card_preparing', { pct: Math.round(downloadProgress) })
-                      : t('home_card_preparing_quiet')}
-                  </Text>
-                )}
+                {/* 【状态提示 - 以「可播」为唯一就绪标准】音频落盘即 Ready；图片/装饰资源不配挡状态。 */}
+                {(() => {
+                  const cardStatus = resolveSceneCardStatus({
+                    audioReady: isResourceReady,
+                    offline: NetworkGateService.isOffline(),
+                    downloadStatus,
+                  });
+                  if (cardStatus === 'ready') {
+                    return (
+                      <Text style={styles.cardReadyText} numberOfLines={1}>
+                        Ready to Play ✨
+                      </Text>
+                    );
+                  }
+                  if (cardStatus === 'need_network') {
+                    return (
+                      <Text style={[styles.cardSubtitle, { color: '#FF8A65' }]} numberOfLines={1}>
+                        {t('home_card_need_network')}
+                      </Text>
+                    );
+                  }
+                  if (cardStatus === 'error') {
+                    return (
+                      <Text style={styles.cardSubtitle} numberOfLines={1}>
+                        {t('home_card_transient_error')}
+                      </Text>
+                    );
+                  }
+                  // 统一未就绪态：资源正在下载（含音频/图片未下完、空闲排队）
+                  return (
+                    <Text style={styles.cardSubtitle} numberOfLines={1}>
+                      {t('home_card_downloading')}
+                    </Text>
+                  );
+                })()}
               </View>
               
               {/* 【右侧操作区 - 三态驱动】 */}
               <View style={styles.cardRightArea}>
-                {/* 【All Ready】播放按钮 */}
+                {/* 【Ready】播放按钮；其余统一安静 ↓ 图标（无转圈、无 IMG、无百分比） */}
                 {isResourceReady ? (
                   <TouchableOpacity 
                     style={[styles.cardPlayButton, isActive && styles.cardPauseButton]} 
@@ -390,36 +387,12 @@ const SceneItem = React.memo(({
                   >
                     <Text style={[styles.cardPlayIcon, isActive && styles.cardPauseIcon]}>{isActive ? '||' : '▶'}</Text>
                   </TouchableOpacity>
-                ) : isDownloading ? (
-                  /* Downloading: 进度条 + 下载图标 */
-                  <View style={styles.downloadingIconContainer}>
-                    <ActivityIndicator size="small" color="#6C5DD3" />
-                    <Text style={styles.downloadingPercent}>{Math.round(downloadProgress)}%</Text>
-                  </View>
-                ) : isReady ? (
-                  /* Audio Ready but Images Loading: 加载图标 */
-                  <View style={[styles.downloadingIconContainer]}>
-                    <ActivityIndicator size="small" color="#FFA500" />
-                    <Text style={[styles.downloadingPercent, { color: '#FFA500' }]}>IMG</Text>
-                  </View>
                 ) : (
-                  /* Idle: 下载图标 */
                   <View style={styles.queuedIconContainer}>
                     <Text style={styles.queuedIcon}>⬇</Text>
                   </View>
                 )}
               </View>
-              
-              {/* 【进度条（仅下载中显示）】 */}
-              {isDownloading && (
-                <View style={styles.cardProgressBar}>
-                  <View style={styles.progressBarBg}>
-                    <Animated.View 
-                      style={[styles.progressBarFill, { width: `${Math.min(downloadProgress, 100)}%` }]} 
-                    />
-                  </View>
-                </View>
-              )}
             </View>
           </TouchableOpacity>
         </View>
@@ -712,11 +685,13 @@ export const HomeScreen: React.FC = () => {
     return () => sub.remove();
   }, []);
 
-  // 【🔥 热启动自动下载】组件挂载后1秒自动触发所有基础场景的下载
+  // 【静默全量自动下载 · 冷启动】组件挂载后1秒，将所有【非内置】基础场景全部入队后台静默下载。
+  //   内置 5 场景由 BuiltinAssetBootstrap 离线落盘，绝不进队列。产品语义：安静、无差别地补齐资源，
+  //   用户无需感知"精选/优先级"——卡片只呈现「Ready to Play / 资源正在下载」两种诚实状态。
   useEffect(() => {
     const timer = setTimeout(() => {
-      SCENES.filter(s => s.isBaseScene).forEach(scene => {
-        console.log(`[HomeScreen] ⚡ [热启动下载] 自动触发: ${scene.id}`);
+      SCENES.filter(s => s.isBaseScene && !isBuiltinScene(s.id)).forEach(scene => {
+        console.log(`[HomeScreen] ⚡ [冷启动静默下载] 自动入队: ${scene.id}`);
         prioritizeScene(scene.id);
       });
     }, 1000);
