@@ -99,7 +99,7 @@ const ImmersivePlayerNew: React.FC = () => {
   const [isSoundscapeVisible, setIsSoundscapeVisible] = useState(false);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
   const [isRoaming, setIsRoaming] = useState(false);
-  const [isLooping, setIsLooping] = useState(false);
+  const [isLooping, setIsLooping] = useState(true); // 【🔁 根因修复】环境音默认循环，避免播完即停
   const [bgLoadTimeout, setBgLoadTimeout] = useState(false);
   
   // 【⚡️ 乐观更新】本地播放状态，优先于 Context 状态，实现瞬时 UI 响应
@@ -629,7 +629,7 @@ const ImmersivePlayerNew: React.FC = () => {
       
       if (isLooping) {
         console.log('[ImmersivePlayer] 🔁 自动恢复循环模式');
-        AudioService.getInstance().applyLoopMode(false);
+        AudioService.getInstance().setAmbientLoop(true);
       }
     } else {
       if (!targetScene) return;
@@ -659,7 +659,7 @@ const ImmersivePlayerNew: React.FC = () => {
     setIsLooping(newLoopState);
     
     const audioService = AudioService.getInstance();
-    await audioService.applyLoopMode(!newLoopState);
+    await audioService.setAmbientLoop(newLoopState);
     
     console.log(`[ImmersivePlayer] 🔁 循环模式: ${newLoopState ? '开启(Track)' : '关闭(Off)'}`);
   }, [isLooping, isRoaming]);

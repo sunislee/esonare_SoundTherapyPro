@@ -906,6 +906,40 @@ class AudioService {
   }
     
     /**
+     * 【🔁 环境音循环】默认开启：单场景（非漫游）播放必须无限循环。
+     *   根因修复：此前 play() 每次强制 RepeatMode.Off，素材播到末尾即停 ——
+     *   短素材（白噪音 4s / 颂钵 12s / 深海节拍 14s）表现为“进入几秒后声音暂停”，
+     *   长素材播完后位置卡在末尾，再按播放又“立刻结束”。
+     */
+    private _ambientLoopEnabled: boolean = true;
+
+    /** 环境音循环开关（UI 🔁 按钮调用）。非漫游时立即生效。 */
+    async setAmbientLoop(enabled: boolean): Promise<void> {
+      this._ambientLoopEnabled = enabled;
+      try {
+        if (sceneRoamManager.getIsRoaming()) return; // 漫游由队列推进，不干预
+        await TrackPlayer.setRepeatMode(enabled ? RepeatMode.Track : RepeatMode.Off);
+        console.log(`[AudioService] 🔁 [ambientLoop] ${enabled ? 'Track(循环)' : 'Off(播完即停)'}`);
+      } catch (e) {
+        console.warn('[AudioService] ⚠️ [ambientLoop] 设置失败:', e);
+      }
+    }
+
+    /**
+     * 【播放前置收口】按当前漫游/循环意图设定 RepeatMode。
+     *   - 漫游：不干预（Queue/Off 由漫游逻辑负责，避免打断队列推进）。
+     *   - 非漫游：按 _ambientLoopEnabled → Track / Off。
+     */
+    async ensureSceneRepeatMode(): Promise<void> {
+      try {
+        if (sceneRoamManager.getIsRoaming()) return;
+        await TrackPlayer.setRepeatMode(this._ambientLoopEnabled ? RepeatMode.Track : RepeatMode.Off);
+      } catch (e) {
+        console.warn('[AudioService] ⚠️ [ensureSceneRepeatMode] 设置失败:', e);
+      }
+    }
+
+    /**
      * 【🔁 Loop 实验】公共方法：根据漫游状态设置 RepeatMode
      * @param isRoaming true=漫游模式(Off), false=单场景循环(Track)
      */
@@ -1624,15 +1658,15 @@ class AudioService {
         this.notifyListeners();
         
         // ══════════════════════════════════════════
-        // 【🚨 关键修复】RepeatMode 智能设置
+        // 【🔁 根因修复】RepeatMode 收口：
         // 漫游模式 → 保持默认（支持队列自动推进）✅
-        // 非漫游模式 → Off（防止循环）
+        // 非漫游模式 → 按循环意图（默认 Track，保证环境音不停）
         // ══════════════════════════════════════════
         if (sceneRoamManager.getIsRoaming()) {
           console.log('[AudioService] [seamlessSwitch] 漫游模式，保持默认RepeatMode');
         } else {
-          await TrackPlayer.setRepeatMode(RepeatMode.Off);
-          console.log('[AudioService] [seamlessSwitch] 非漫游模式，RepeatMode=Off');
+          await this.ensureSceneRepeatMode();
+          console.log('[AudioService] [seamlessSwitch] 非漫游模式，按循环意图收口 RepeatMode');
         }
         
         // 使用预构建好的Track直接添加（比playScene快，因为省去了构建时间）
@@ -1763,15 +1797,15 @@ class AudioService {
     try {
       // ══════════════════════════════════════════
       // 【🔁 Loop 实验】根据漫游状态智能设置 RepeatMode：
-      //   - 非漫游（单场景）→ RepeatMode.Off（默认不循环，用户手动激活）
+      //   - 非漫游（单场景）→ 默认 Track 循环（环境音必须持续；此前强制 Off 导致“进入几秒/播完一轮后暂停”）
       //   - 漫游模式 → 保持默认（允许原生队列自动推进）✅
       //   - 用户点击循环按钮 → applyLoopMode() 设为 Track
       // ══════════════════════════════════════════
       try {
         const isRoaming = sceneRoamManager.getIsRoaming();
         if (!isRoaming) {
-          await TrackPlayer.setRepeatMode(RepeatMode.Off);
-          console.log(`[AudioService] [playScene] RepeatMode=Off (非漫游模式)`);
+          await this.ensureSceneRepeatMode();
+          console.log(`[AudioService] [playScene] 非漫游 → RepeatMode=${this._ambientLoopEnabled ? 'Track(循环)' : 'Off'}`);
         } else {
           console.log(`[AudioService] [playScene] 漫游模式，保持默认RepeatMode（支持队列自动推进）`);
         }
@@ -2073,6 +2107,8 @@ class AudioService {
             
             // 【3】开始播放（保持静音状态）
             console.log('[AudioService] [3/5] --- [静音播放] --- 调用 TrackPlayer.play()');
+            // 【🔁 根因修复】场景起播前收口 RepeatMode：非漫游默认循环，避免播到末尾即停
+            await this.ensureSceneRepeatMode();
             await TrackPlayer.play();
             console.log('[AudioService] ✅ TrackPlayer.play() 成功');
             
@@ -2211,6 +2247,8 @@ class AudioService {
         // 【关键修复】在 play() 之前先设置 isActuallyPlaying
         this.isActuallyPlaying = true;
         console.log('[AudioService] ▶️ 调用 TrackPlayer.play()');
+        // 【🔁 根因修复】起播前收口 RepeatMode，保证单场景环境音循环播放
+        await this.ensureSceneRepeatMode();
         await TrackPlayer.play();
         
         // 【大招】播放后立即强刷元数据，解决通知栏滞后
@@ -2296,8 +2334,8 @@ class AudioService {
         console.warn('[AudioService] [play] 检查播放状态失败:', e);
       }
 
-      await TrackPlayer.setRepeatMode(RepeatMode.Off);
-      console.log('[AudioService] [play] RepeatMode=Off (用户需手动激活循环)');
+      // 【🔁 根因修复】不再强制 Off：按漫游/循环意图收口，保证环境音默认循环
+      await this.ensureSceneRepeatMode();
       
       await TrackPlayer.play();
     } catch (e) {
