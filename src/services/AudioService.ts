@@ -152,11 +152,19 @@ class AudioService {
   private _setupPromise: Promise<void> | null = null;
 
   // 【阶段二 c】流播停摆看门狗（stream-stall watchdog）：
-  //   播放中若 position 连续 STALL_DEAD_MS(6s) 不前进(speed==0)，或收到 PlaybackError，
+  //   播放中若 position 与 buffered 同时长时间不前进，或收到 PlaybackError，
   //   判定"流播已死"→ 诚实停止 + 通知 UI 回退，避免界面假装在播放。
+  // 【2026-09-25 修正】旧实现只看 TrackPlayer.getPosition() 单信号、阈值仅 6s，且从
+  //   isActuallyPlaying=true 的那一刻（早于真正出声）就开始计时，导致大文件起播/缓冲期
+  //   被误判为停摆并 pause —— 用户表现为"播放不到一秒就停止"。现改为：
+  //   起播宽限期 + position/buffered 双信号同时冻结 + 连续轮次确认，才允许判死。
   private _stallTimer: ReturnType<typeof setInterval> | null = null;
   private _watchLastPos = -1;
   private _watchLastChangeTs = 0;
+  private _watchLastBuffered = -1;   // 上一次 buffered（秒）：数据仍在进账则不算停摆
+  private _watchStallPolls = 0;      // 连续判定为停滞的轮次
+  private _watchGraceUntil = 0;      // 起播/状态抖动后的宽限截止时间戳
+  private _watchWasPlaying = false;  // 用于捕捉"未播放 → 播放"上升沿
 
   // 【🔑 修复 #2】自动识别禁用标志
   // 当进入 life_record_shop 时设置为 true，通知 NoiseCancellationExperiment 跳过自动识别
@@ -762,50 +770,99 @@ class AudioService {
   
   // ════════════════════════════════════════════════════════
   // 【阶段二 c】流播停摆看门狗：常驻 interval，自门控于 isActuallyPlaying。
-  //   - speed==0 持续 ≥6s → 判死；PlaybackError → 立即判死（见事件处理器）。
+  //   - 起播后先给 STALL_GRACE_MS(12s) 宽限期（覆盖 loading/buffering/淡入开闸）。
+  //   - 判死需 position 与 buffered 同时冻结 ≥STALL_DEAD_MS(15s) 且连续 STALL_MIN_DEAD_POLLS 轮。
+  //   - PlaybackError → 立即判死（见事件处理器），不受上述门槛影响。
   //   - 判死后诚实回退：pause + isActuallyPlaying=false + notifyListeners + emit 'playbackStalled'。
   // ════════════════════════════════════════════════════════
   private static readonly STALL_CHECK_MS = 2000;
-  private static readonly STALL_DEAD_MS = 6000;
+  private static readonly STALL_DEAD_MS = 15000;
+  private static readonly STALL_GRACE_MS = 12000;
+  private static readonly STALL_MIN_DEAD_POLLS = 4;
 
   /** 幂等启动常驻停摆看门狗（初始化完成后调用一次即可）。 */
   startStallWatchdog(): void {
     if (this._stallTimer) return;
     this._watchLastPos = -1;
+    this._watchLastBuffered = -1;
     this._watchLastChangeTs = Date.now();
+    this._watchStallPolls = 0;
+    this._watchGraceUntil = 0;
+    this._watchWasPlaying = false;
     this._stallTimer = setInterval(async () => {
+      const now = Date.now();
       try {
+        const playing = !!this.isActuallyPlaying && !!this.currentBaseScene;
+
         // 未播放 / 无当前场景 → 复位计时基准，直接返回（看门狗空转）。
-        if (!this.isActuallyPlaying || !this.currentBaseScene) {
+        if (!playing) {
           this._watchLastPos = -1;
-          this._watchLastChangeTs = Date.now();
+          this._watchLastBuffered = -1;
+          this._watchStallPolls = 0;
+          this._watchWasPlaying = false;
+          this._watchLastChangeTs = now;
           return;
         }
-        const position = await TrackPlayer.getPosition();
-        const duration = await TrackPlayer.getDuration();
+
+        // 【宽限期】捕捉"未播放 → 播放"上升沿：起播后 STALL_GRACE_MS 内一律不判死。
+        //   playScene 会先锁定 isActuallyPlaying=true 再 add/play/淡入，若从那一刻起计时，
+        //   大文件(如 7.2MB 舟上雨)的 loading/buffering 期会被当成停摆而误杀。
+        if (!this._watchWasPlaying) {
+          this._watchWasPlaying = true;
+          this._watchGraceUntil = now + AudioService.STALL_GRACE_MS;
+          this._watchLastPos = -1;
+          this._watchLastBuffered = -1;
+          this._watchStallPolls = 0;
+          this._watchLastChangeTs = now;
+          return;
+        }
+        if (now < this._watchGraceUntil) {
+          return;
+        }
+
+        // 一次取齐三个量，避免多次异步调用之间状态漂移。
+        const progress = await TrackPlayer.getProgress();
+        const position = progress?.position;
+        const duration = progress?.duration;
+        const buffered = progress?.buffered;
+
         if (!duration || duration <= 0 || position == null || position < 0) {
           return; // 数据未就绪，暂不判定
         }
         // 接近结尾（<1.5s）多为循环/切换边界，跳过避免误判。
         if (duration - position < 1.5) {
-          this._watchLastChangeTs = Date.now();
+          this._watchLastChangeTs = now;
+          this._watchStallPolls = 0;
           return;
         }
-        // 位置有推进 → speed>0，刷新基准。
-        if (this._watchLastPos < 0 || position > this._watchLastPos + 0.3) {
-          this._watchLastPos = position;
-          this._watchLastChangeTs = Date.now();
+
+        // 双信号：position 前进 = 在播；buffered 增长 = 取数仍在进账（流播预热/追帧期）。
+        //   任一仍在变化都不算停摆 —— 单一 position 读数在起播阶段可能长时间不变。
+        const posAdvanced = this._watchLastPos < 0 || position > this._watchLastPos + 0.3;
+        const bufAdvanced = this._watchLastBuffered < 0 || (buffered != null && buffered > this._watchLastBuffered + 0.5);
+        if (posAdvanced || bufAdvanced) {
+          if (posAdvanced) this._watchLastPos = position;
+          if (buffered != null) this._watchLastBuffered = buffered;
+          this._watchLastChangeTs = now;
+          this._watchStallPolls = 0;
           return;
         }
-        // 位置停滞：累计停摆时长。
-        const stalledMs = Date.now() - this._watchLastChangeTs;
-        if (stalledMs >= AudioService.STALL_DEAD_MS) {
-          await this.handleStallDeath(`position 停滞 ${Math.round(stalledMs)}ms (speed==0)`);
+
+        // position 与 buffered 同时停滞：累计停摆时长，需同时满足时长与连续轮次才判死。
+        this._watchStallPolls += 1;
+        const stalledMs = now - this._watchLastChangeTs;
+        if (stalledMs >= AudioService.STALL_DEAD_MS && this._watchStallPolls >= AudioService.STALL_MIN_DEAD_POLLS) {
+          await this.handleStallDeath(
+            `position/buffered 同时冻结 ${Math.round(stalledMs)}ms ` +
+            `(pos=${position.toFixed(2)}s buffered=${(buffered ?? -1).toFixed(2)}s dur=${duration.toFixed(1)}s polls=${this._watchStallPolls})`
+          );
         }
       } catch (e) {
         // 读取失败（如刚切换）不武断判死，仅复位基准。
         this._watchLastPos = -1;
-        this._watchLastChangeTs = Date.now();
+        this._watchLastBuffered = -1;
+        this._watchStallPolls = 0;
+        this._watchLastChangeTs = now;
       }
     }, AudioService.STALL_CHECK_MS);
   }
