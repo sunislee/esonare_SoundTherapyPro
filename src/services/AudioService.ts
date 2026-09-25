@@ -151,20 +151,28 @@ class AudioService {
   private _isReady = false;
   private _setupPromise: Promise<void> | null = null;
 
-  // 【阶段二 c】流播停摆看门狗（stream-stall watchdog）：
-  //   播放中若 position 与 buffered 同时长时间不前进，或收到 PlaybackError，
-  //   判定"流播已死"→ 诚实停止 + 通知 UI 回退，避免界面假装在播放。
-  // 【2026-09-25 修正】旧实现只看 TrackPlayer.getPosition() 单信号、阈值仅 6s，且从
-  //   isActuallyPlaying=true 的那一刻（早于真正出声）就开始计时，导致大文件起播/缓冲期
-  //   被误判为停摆并 pause —— 用户表现为"播放不到一秒就停止"。现改为：
-  //   起播宽限期 + position/buffered 双信号同时冻结 + 连续轮次确认，才允许判死。
+  // 【阶段二 c】流播停摆看门狗（stream-stall watchdog）——自持信号源，独立注册监听。
+  //   三态映射（详见 startStallWatchdog 上方表格）：position 前进=playing；
+  //   position 冻结但读数不可信(后台/Buffering/刚有状态事件)=buffering 且绝不 pause；
+  //   position 冻结 + native=Playing + 无状态事件 + 无 error = dead → 诚实回退。
+  // 【2026-09-25 返工】两处机制错误已纠正：
+  //   ① 计时起点不再挂在 isActuallyPlaying 上升沿（那是 playScene 的人为锁，等于原 bug
+  //      的同源错误），改为首个 native Event.PlaybackState===State.Playing 才 arm；
+  //   ② 取消「buffered 增长=活着」这条 OR —— buffered 是下载进度，与播放进度可完全脱钩，
+  //      且本地素材/挂机场景下必然冻结，会让双信号退化为单信号。判死前必须先证明
+  //      「读数可信」（前台 + native=Playing + 期间无状态事件更新）。
+  //   依据：react-native-track-player #1121（后台 position 不更新但仍在播）、#922。
   private _stallTimer: ReturnType<typeof setInterval> | null = null;
+  private _watchSubs: Array<{ remove?: () => void } | null> = [];
   private _watchLastPos = -1;
   private _watchLastChangeTs = 0;
-  private _watchLastBuffered = -1;   // 上一次 buffered（秒）：数据仍在进账则不算停摆
-  private _watchStallPolls = 0;      // 连续判定为停滞的轮次
-  private _watchGraceUntil = 0;      // 起播/状态抖动后的宽限截止时间戳
-  private _watchWasPlaying = false;  // 用于捕捉"未播放 → 播放"上升沿
+  private _watchStallPolls = 0;      // 连续判定为"冻结"的轮次（防抖）
+  private _watchArmedTs = 0;         // arm 时刻：首个 native Playing 事件（0=未 arm，不判死）
+  private _lastNativeState: any = null; // 最近一次 native PlaybackState（RNTP State 为不透明类型，故用 any）
+  private _watchLastStateEventTs = 0;             // 最近一次收到 PlaybackState 事件的时刻
+  private _watchLastBuffered = -1;   // 仅用于日志/诊断，不参与判死判定
+  private _watchDeathHandled = false; // 同一轮停摆只允许判死一次（幂等护栏）
+  private _stallState: 'playing' | 'buffering' | 'dead' = 'playing';
 
   // 【🔑 修复 #2】自动识别禁用标志
   // 当进入 life_record_shop 时设置为 true，通知 NoiseCancellationExperiment 跳过自动识别
@@ -653,6 +661,25 @@ class AudioService {
       this.releaseEqualizerResources();
     }
     
+    // 【R3·跨后台边界不可信】RNTP #1121：后台期间 JS 侧 position 不再更新，而 native 仍在播。
+    //   ① 进入后台 → 立即复位看门狗基准并停止计数（此后只接受 error/state 事件）；
+    //   ② 回到前台 → 跨越后台的那段"冻结时长"是假象，必须清零基准 + 重新给一次完整宽限期，
+    //      否则 resume 瞬间会用后台累计值秒判死（2026-09-25 真机复现：background→active 后
+    //      6s 即被判死 pos=55.62s，而 native 其实已从 21s 播到 55s）。
+    if (nextAppState !== 'active') {
+      this._watchLastPos = -1;
+      this._watchStallPolls = 0;
+      this._watchLastChangeTs = Date.now();
+    } else if (this.appState && this.appState !== 'active') {
+      const now2 = Date.now();
+      this._watchArmedTs = this._watchArmedTs ? now2 : 0; // 重新计时（保留未 arm 语义）
+      this._watchLastPos = -1;
+      this._watchStallPolls = 0;
+      this._watchLastChangeTs = now2;
+      if (this._stallState === 'buffering') this._stallState = 'playing';
+      console.log(`[Watchdog] ☀️ 回到前台：position 读数重新可信，清零冻结基准并重给 ${AudioService.STALL_GRACE_MS}ms 宽限`);
+    }
+
     this.appState = nextAppState;
     
     if (nextAppState === 'active' && this.pendingSetup) {
@@ -769,115 +796,218 @@ class AudioService {
   }
   
   // ════════════════════════════════════════════════════════
-  // 【阶段二 c】流播停摆看门狗：常驻 interval，自门控于 isActuallyPlaying。
-  //   - 起播后先给 STALL_GRACE_MS(12s) 宽限期（覆盖 loading/buffering/淡入开闸）。
-  //   - 判死需 position 与 buffered 同时冻结 ≥STALL_DEAD_MS(15s) 且连续 STALL_MIN_DEAD_POLLS 轮。
-  //   - PlaybackError → 立即判死（见事件处理器），不受上述门槛影响。
-  //   - 判死后诚实回退：pause + isActuallyPlaying=false + notifyListeners + emit 'playbackStalled'。
+  // 【阶段二 c】流播停摆看门狗：常驻 interval + 自注册 PlaybackState/PlaybackError 监听。
+  //
+  //   三态映射（本文件唯一裁决表，日志与单测均以此为准）：
+  //     ① position 前进                                    → playing  ：刷新基准
+  //     ② position 冻结 + native=Buffering/Connecting       → buffering：只报缓冲，不 pause
+  //     ③ position 冻结 + AppState 非 active（后台/息屏）    → buffering：同 ②（RNTP #1121）
+  //     ④ position 冻结 + 刚有 PlaybackState 事件（读数抖动）→ buffering：同 ②
+  //     ⑤ position 冻结 + native=Playing + 无事件更新 + 无 error → dead：诚实回退(pause)
+  //
+  //   arm（计时起点）：首个 native Event.PlaybackState===State.Playing；兜底=首次观测到
+  //   position>0。未 arm 一律不判死 —— playScene 里人为的 isActuallyPlaying=true 不作数。
+  //   PlaybackError 走独立通道，立即判死，不受宽限期/可信度门槛影响。
   // ════════════════════════════════════════════════════════
   private static readonly STALL_CHECK_MS = 2000;
   private static readonly STALL_DEAD_MS = 15000;
   private static readonly STALL_GRACE_MS = 12000;
   private static readonly STALL_MIN_DEAD_POLLS = 4;
 
-  /** 幂等启动常驻停摆看门狗（初始化完成后调用一次即可）。 */
+  /** R3：是否处于"position 读数可信"的前台环境（任一来源非 active 即按后台处理）。 */
+  private isWatchForeground(): boolean {
+    const live = (AppState as any)?.currentState as AppStateStatus | undefined;
+    if (this.appState && this.appState !== 'active') return false;
+    if (live && live !== 'active') return false;
+    return true;
+  }
+
+  /** 看门狗诊断口（调试弹窗 / 单测复用）。 */
+  getWatchdogDiagnostics(): {
+    state: 'playing' | 'buffering' | 'dead'; armedAt: number; armedAgeMs: number;
+    stalledMs: number; polls: number; nativeState: any; foreground: boolean;
+  } {
+    const now = Date.now();
+    return {
+      state: this._stallState,
+      armedAt: this._watchArmedTs,
+      armedAgeMs: this._watchArmedTs ? now - this._watchArmedTs : 0,
+      stalledMs: this._watchLastChangeTs ? now - this._watchLastChangeTs : 0,
+      polls: this._watchStallPolls,
+      nativeState: this._lastNativeState,
+      foreground: this.isWatchForeground(),
+    };
+  }
+
+  /** R1：arm —— 只有真正听到 native Playing（或首次 position>0）才开始计时。 */
+  private armStallWatch(reason: string): void {
+    if (this._watchArmedTs !== 0) return;
+    const now = Date.now();
+    this._watchArmedTs = now;
+    this._watchLastChangeTs = now;
+    this._watchLastPos = -1;
+    this._watchStallPolls = 0;
+    this._watchDeathHandled = false;
+    this._stallState = 'playing';
+    console.log(`[Watchdog] ⏱️ arm(${reason})：停摆计时从此刻起算，宽限 ${AudioService.STALL_GRACE_MS}ms`);
+  }
+
+  /** 幂等启动常驻停摆看门狗：自注册 native 事件 + 轮询 position（初始化后调用一次即可）。 */
   startStallWatchdog(): void {
     if (this._stallTimer) return;
     this._watchLastPos = -1;
     this._watchLastBuffered = -1;
     this._watchLastChangeTs = Date.now();
     this._watchStallPolls = 0;
-    this._watchGraceUntil = 0;
-    this._watchWasPlaying = false;
-    this._stallTimer = setInterval(async () => {
-      const now = Date.now();
-      try {
-        const playing = !!this.isActuallyPlaying && !!this.currentBaseScene;
+    this._watchArmedTs = 0;
+    this._lastNativeState = null;
+    this._watchLastStateEventTs = 0;
+    this._watchDeathHandled = false;
+    this._stallState = 'playing';
 
-        // 未播放 / 无当前场景 → 复位计时基准，直接返回（看门狗空转）。
-        if (!playing) {
+    // 【自持信号源】不再依赖 setupListeners 的注册时机：看门狗自己订阅 PlaybackState/PlaybackError，
+    //   真机与单测走同一条路径（此前测试无法触发 arm，正是因为监听只在 performSetup 里注册）。
+    try {
+      const stateSub: any = TrackPlayer.addEventListener(Event.PlaybackState, (event: any) => {
+        const st = event?.state; // RNTP State 为不透明枚举类型，保持原样比较
+        this._lastNativeState = st ?? null;
+        this._watchLastStateEventTs = Date.now();
+        if (st === State.Playing) {
+          this.armStallWatch('native PlaybackState=Playing');
+        } else if (st === State.None || st === State.Stopped || st === State.Ended || st === State.Paused) {
+          // 终态 → 解除 arm：下一次起播必须重新计时（不复用上一轮的 armedAt）。
+          this._watchArmedTs = 0;
+          this._watchStallPolls = 0;
           this._watchLastPos = -1;
-          this._watchLastBuffered = -1;
-          this._watchStallPolls = 0;
-          this._watchWasPlaying = false;
-          this._watchLastChangeTs = now;
-          return;
+          if (this._stallState !== 'dead') this._stallState = 'playing';
         }
+      });
+      if (stateSub) this._watchSubs.push(stateSub);
 
-        // 【宽限期】捕捉"未播放 → 播放"上升沿：起播后 STALL_GRACE_MS 内一律不判死。
-        //   playScene 会先锁定 isActuallyPlaying=true 再 add/play/淡入，若从那一刻起计时，
-        //   大文件(如 7.2MB 舟上雨)的 loading/buffering 期会被当成停摆而误杀。
-        if (!this._watchWasPlaying) {
-          this._watchWasPlaying = true;
-          this._watchGraceUntil = now + AudioService.STALL_GRACE_MS;
-          this._watchLastPos = -1;
-          this._watchLastBuffered = -1;
-          this._watchStallPolls = 0;
-          this._watchLastChangeTs = now;
-          return;
-        }
-        if (now < this._watchGraceUntil) {
-          return;
-        }
+      const errSub: any = TrackPlayer.addEventListener(Event.PlaybackError, (err: any) => {
+        void this.handleStallDeath(`PlaybackError: ${JSON.stringify(err ?? null)}`);
+      });
+      if (errSub) this._watchSubs.push(errSub);
+    } catch (e) {
+      console.warn('[Watchdog] ⚠️ native 事件注册失败（降级为仅 position 观测）:', e);
+    }
 
-        // 一次取齐三个量，避免多次异步调用之间状态漂移。
-        const progress = await TrackPlayer.getProgress();
-        const position = progress?.position;
-        const duration = progress?.duration;
-        const buffered = progress?.buffered;
+    this._stallTimer = setInterval(() => { void this.watchTick(); }, AudioService.STALL_CHECK_MS);
+  }
 
-        if (!duration || duration <= 0 || position == null || position < 0) {
-          return; // 数据未就绪，暂不判定
-        }
-        // 接近结尾（<1.5s）多为循环/切换边界，跳过避免误判。
-        if (duration - position < 1.5) {
-          this._watchLastChangeTs = now;
-          this._watchStallPolls = 0;
-          return;
-        }
-
-        // 双信号：position 前进 = 在播；buffered 增长 = 取数仍在进账（流播预热/追帧期）。
-        //   任一仍在变化都不算停摆 —— 单一 position 读数在起播阶段可能长时间不变。
-        const posAdvanced = this._watchLastPos < 0 || position > this._watchLastPos + 0.3;
-        const bufAdvanced = this._watchLastBuffered < 0 || (buffered != null && buffered > this._watchLastBuffered + 0.5);
-        if (posAdvanced || bufAdvanced) {
-          if (posAdvanced) this._watchLastPos = position;
-          if (buffered != null) this._watchLastBuffered = buffered;
-          this._watchLastChangeTs = now;
-          this._watchStallPolls = 0;
-          return;
-        }
-
-        // position 与 buffered 同时停滞：累计停摆时长，需同时满足时长与连续轮次才判死。
-        this._watchStallPolls += 1;
-        const stalledMs = now - this._watchLastChangeTs;
-        if (stalledMs >= AudioService.STALL_DEAD_MS && this._watchStallPolls >= AudioService.STALL_MIN_DEAD_POLLS) {
-          await this.handleStallDeath(
-            `position/buffered 同时冻结 ${Math.round(stalledMs)}ms ` +
-            `(pos=${position.toFixed(2)}s buffered=${(buffered ?? -1).toFixed(2)}s dur=${duration.toFixed(1)}s polls=${this._watchStallPolls})`
-          );
-        }
-      } catch (e) {
-        // 读取失败（如刚切换）不武断判死，仅复位基准。
+  /** 单轮巡检：三态裁决（见上方映射表）。 */
+  private async watchTick(): Promise<void> {
+    const now = Date.now();
+    try {
+      // 未播放 / 无当前场景 → 复位基准后空转。
+      if (!this.isActuallyPlaying || !this.currentBaseScene) {
         this._watchLastPos = -1;
-        this._watchLastBuffered = -1;
         this._watchStallPolls = 0;
         this._watchLastChangeTs = now;
+        return;
       }
-    }, AudioService.STALL_CHECK_MS);
+
+      const progress = await TrackPlayer.getProgress();
+      const position = progress?.position;
+      const duration = progress?.duration;
+      const buffered = progress?.buffered;
+      if (buffered != null) this._watchLastBuffered = buffered; // 仅诊断用，不参与判死
+
+      // 【R1 未 arm 不判死】唯一兜底：确实观测到 position>0（native 事件丢失时仍可自保）。
+      if (this._watchArmedTs === 0) {
+        if (typeof position === 'number' && position > 0) this.armStallWatch('首次观测 position>0');
+        return;
+      }
+
+      // 【宽限期】覆盖 loading/buffering/淡入开闸；期间持续刷新基准，
+      //   使"判死时钟"实际从宽限期结束才开始走（避免 grace+dead 叠加成事实上的短阈值）。
+      if (now - this._watchArmedTs < AudioService.STALL_GRACE_MS) {
+        this._watchLastChangeTs = now;
+        this._watchStallPolls = 0;
+        return;
+      }
+
+      if (!duration || duration <= 0 || position == null || position < 0) {
+        return; // 读数无效 → 不可信，不判定
+      }
+      // 接近结尾（<1.5s）多为循环/切换边界，跳过避免误判。
+      if (duration - position < 1.5) {
+        this._watchLastChangeTs = now;
+        this._watchStallPolls = 0;
+        return;
+      }
+
+      // ① position 前进 → playing（buffered 是否增长一律不看：那是下载进度，不是播放进度）
+      if (this._watchLastPos < 0 || position > this._watchLastPos + 0.3) {
+        this._watchLastPos = position;
+        this._watchLastChangeTs = now;
+        this._watchStallPolls = 0;
+        if (this._stallState === 'buffering') {
+          this._stallState = 'playing';
+          try { DeviceEventEmitter.emit('playbackBuffering', { sceneId: this.currentBaseScene?.id ?? 'unknown', active: false }); } catch (_e) {}
+        }
+        return;
+      }
+
+      // —— position 冻结：判死前必须先证明"读数本身可信"（R2/R3）——
+      const stalledMs = now - this._watchLastChangeTs;
+      const foreground = this.isWatchForeground();
+      const nativePlaying = this._lastNativeState === State.Playing;
+      const eventFresh = this._watchLastStateEventTs > 0 && (now - this._watchLastStateEventTs) < AudioService.STALL_DEAD_MS;
+      const credible = foreground && nativePlaying && !eventFresh;
+
+      if (!credible) {
+        // ②③④ 读数不可信 → 降级为 buffering，只报缓冲，绝不 pause。
+        if (this._stallState !== 'buffering') {
+          this._stallState = 'buffering';
+          const why = !foreground
+            ? 'background/inactive(RNTP#1121 position 会说谎)'
+            : (!nativePlaying ? `native=${this._lastNativeState}` : 'state-event-fresh');
+          console.log(`[Watchdog] ⏳ 缓冲中(${why})：position 冻结 ${Math.round(stalledMs)}ms 但读数不可信 → 不 pause`);
+          try { DeviceEventEmitter.emit('playbackBuffering', { sceneId: this.currentBaseScene?.id ?? 'unknown', active: true, reason: why }); } catch (_e) {}
+        }
+        return;
+      }
+
+      // ⑤ 读数可信 + 冻结超阈值 + 连续轮次确认 → 判死，诚实回退。
+      //    polls 只统计"可信且冻结"的轮次：不可信轮次（后台/缓冲）不计入，避免 resume 后凑数。
+      this._watchStallPolls += 1;
+      if (stalledMs >= AudioService.STALL_DEAD_MS && this._watchStallPolls >= AudioService.STALL_MIN_DEAD_POLLS) {
+        await this.handleStallDeath(
+          `position 冻结 ${Math.round(stalledMs)}ms 且读数可信(native=Playing/前台/无状态事件) ` +
+          `(pos=${position.toFixed(2)}s buffered=${(buffered ?? -1).toFixed(2)}s dur=${duration.toFixed(1)}s polls=${this._watchStallPolls})`
+        );
+      }
+    } catch (e) {
+      // 读取失败（如刚切换）不武断判死，仅复位基准。
+      this._watchLastPos = -1;
+      this._watchStallPolls = 0;
+      this._watchLastChangeTs = now;
+    }
   }
 
-  /** 停止看门狗（销毁/退出时调用）。 */
+  /** 停止看门狗（销毁/退出时调用），并摘掉自注册的 native 监听。 */
   stopStallWatchdog(): void {
     if (this._stallTimer) { clearInterval(this._stallTimer); this._stallTimer = null; }
+    for (const sub of this._watchSubs) {
+      try { (sub as any)?.remove?.(); } catch (_e) {}
+    }
+    this._watchSubs = [];
+    this._watchArmedTs = 0;
+    this._stallState = 'playing';
   }
 
-  /** 流播判死 → 诚实回退：停止播放、复位状态、通知 UI、发事件。 */
+  /** 流播判死 → 诚实回退：停止播放、复位状态、通知 UI、发事件。幂等：同一轮只执行一次。 */
   private async handleStallDeath(reason: string): Promise<void> {
+    if (this._watchDeathHandled) return;
+    this._watchDeathHandled = true;
     const sceneId = this.currentBaseScene?.id ?? 'unknown';
     console.warn(`[Watchdog] 🛑 流播判死(${sceneId}): ${reason} → 诚实回退`);
-    // 复位基准，避免同一停摆重复触发（暂停后看门狗会空转）。
+    // 复位基准并解除 arm，避免同一停摆重复触发；下一次起播由 native Playing 重新计时。
     this._watchLastPos = -1;
+    this._watchStallPolls = 0;
+    this._watchArmedTs = 0;
+    this._stallState = 'dead';
     this._watchLastChangeTs = Date.now();
     try { await TrackPlayer.pause(); } catch (_e) {}
     this.isActuallyPlaying = false;
