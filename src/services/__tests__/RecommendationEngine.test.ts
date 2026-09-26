@@ -14,7 +14,11 @@
  */
 
 // 隔离引擎对 scenes.ts 的依赖（scenes.ts 顶层 import react-native + @dr.pogodin/react-native-fs）。
-jest.mock('../../constants/scenes', () => ({ SCENES: [] }));
+jest.mock('../../constants/scenes', () => ({
+  SCENES: [],
+  // findScene 与 SCENES=[] 同义：mock 环境下任何 id 都查不到场景，引擎照旧走兜底分支。
+  findScene: () => null,
+}));
 
 import { RecommendationEngine, getSceneVisual, Mood, UserState, pushRecentScenes } from '../RecommendationEngine';
 

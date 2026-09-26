@@ -17,7 +17,7 @@ import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Scene, SCENES, SMALL_SCENE_IDS, getSceneBackground } from '../constants/scenes';
+import { Scene, SCENES, SMALL_SCENE_IDS, getSceneBackground, findScene } from '../constants/scenes';
 import { useAudio } from '../context/AudioContext';
 import InteractiveButtons from '../components/InteractiveButtons';
 import { SoundscapeBottomSheet } from '../components/SoundscapeBottomSheet';
@@ -210,7 +210,10 @@ const ImmersivePlayerNew: React.FC = () => {
   const effectiveSceneId = displaySceneId || currentBaseSceneId || routeSceneId || prevValidSceneRef.current;
   const targetScene = useMemo(() => {
     if (!effectiveSceneId) return null;
-    return SCENES.find(s => s.id === effectiveSceneId) || null;
+    // 【无效 scene ID】effectiveSceneId 混合了持久化(displaySceneId/currentBaseSceneId)与
+    //   route.params 三类外部来源，必须经全局索引裁决；查不到返回 null 交由下游空态处理，
+    //   绝不用未知 id 渲染背景图/标题（旧行为是显示上一个场景的残留画面）。
+    return findScene(effectiveSceneId);
   }, [effectiveSceneId]);
   
   // 【双层背景】获取前一个场景
@@ -359,7 +362,7 @@ const ImmersivePlayerNew: React.FC = () => {
           clearInterval(retryTimer);
           
           if (audioService.isReady()) {
-            const targetScene = SCENES.find(s => s.id === sceneIdFromRoute);
+            const targetScene = findScene(sceneIdFromRoute);
             if (targetScene) {
               console.log('[ImmersivePlayer] ✅ AudioService 已就绪，执行场景切换');
               audioService.switchSoundscape(targetScene).catch(e => 
@@ -374,7 +377,7 @@ const ImmersivePlayerNew: React.FC = () => {
         return () => clearInterval(retryTimer);
       }
       
-      const targetScene = SCENES.find(s => s.id === sceneIdFromRoute);
+      const targetScene = findScene(sceneIdFromRoute);
       if (!targetScene) {
         console.error('[ImmersivePlayer] ❌ 找不到场景:', sceneIdFromRoute);
         return;

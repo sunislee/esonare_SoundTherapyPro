@@ -26,6 +26,7 @@ import { AUDIO_MAP, DEFAULT_FALLBACK_SOURCE, getDownloadUrl, getLocalPath } from
 import * as RNFS from '@dr.pogodin/react-native-fs';
 import { NotificationService } from './NotificationService';
 import { Scene, SCENES } from '../constants/scenes';
+import { resolveBaseScene } from './BaseSceneResolver';
 import { EQManager } from './EQManager';
 // 【v1.4.2 Release 修复】静态 import NativeEQ，替代 releaseEqualizerResources 中的动态 require()
 // 动态 require('../modules/NativeEQ') 在 Hermes 混淆后可能导致方法名丢失或模块 undefined
@@ -126,6 +127,11 @@ class AudioService {
   private static instance: AudioService;
   private activeSmallScenes: Set<string> = new Set();
   private currentBaseScene: Scene | null = null;
+  /**
+   * 【无效 scene ID · 仅内存】TrackChanged 收到无法解析的 id 时在此记账，供取证日志/排查使用。
+   * ⚠️ 严禁持久化：一旦落盘，被误记的场景在重新上架后将永久无法播放（重启即清是刻意设计）。
+   */
+  private invalidSceneIds: Set<string> = new Set();
   private listeners: Set<() => void> = new Set();
   private audioStateListeners: Set<(state: { id: string | null; state: State }) => void> = new Set();
   private loadingListeners: Set<(state: { id: string | null; loading: boolean }) => void> = new Set();
@@ -553,17 +559,31 @@ class AudioService {
             console.log('[AudioService] ✅ [TrackChanged] 从 RoamManager 找到场景');
           }
         }
-        
+
+        // 方法3：全局场景索引裁决（resolveBaseScene）
+        //   修正旧逻辑「只认当前漫游分类」的误判：跨分类漫游/手动切歌时，SCENES 里明明存在该
+        //   场景却因不在当前分类而落入下面的伪造分支。合法 id 一律以全局索引为准。
         if (!nextScene) {
-          console.warn(`[AudioService] ⚠️ [TrackChanged] 未找到场景: ${nextTrackId}，使用基本信息`);
-          // 即使找不到完整场景对象，也要更新基本状态
-          this.currentBaseScene = { 
-            id: nextTrackId, 
-            title: nextTrack?.title || nextTrackId,
-            filename: '',
-            category: sceneRoamManager.roamCategory || 'nature',
-            duration: 0
-          } as Scene;
+          const resolved = resolveBaseScene(nextTrackId);
+          if (resolved.ok) {
+            nextScene = resolved.scene;
+            console.log(`[AudioService] ✅ [TrackChanged] 从全局场景索引找到场景: ${nextTrackId}`);
+          }
+        }
+
+        if (!nextScene) {
+          // 【无效 scene ID · 绝不伪造】旧实现在此处用
+          //   `{ id, title, filename: '', category, duration: 0 } as Scene` 硬造残缺对象赋给
+          //   currentBaseScene（tsc TS2352 @本行旧位置）：filename:'' 会让 buildTrackForScene 的
+          //   getLocalPath(category,'') 拼出无效路径，且该脏对象经下方 notifyListeners() 广播给
+          //   AudioContext → 播放页/首页显示错误场景。现改为「保持上一有效场景 + 仅内存记账」，
+          //   invalidSceneIds 不持久化（重启即清），避免场景重新上架后被永久屏蔽。
+          this.invalidSceneIds.add(nextTrackId);
+          console.warn(
+            `[AudioService] ⚠️ [TrackChanged] 无效场景 id: ${nextTrackId} → 保留上一有效场景 ` +
+              `${this.currentBaseScene?.id ?? '(none)'}（不伪造 currentBaseScene，已记账 ` +
+              `${this.invalidSceneIds.size} 个无效 id，仅内存）`,
+          );
         } else {
           // ══════════════════════════════════════════
           // 【核心】更新全局播放状态！
@@ -595,7 +615,14 @@ class AudioService {
         this.notifyListeners();
         
         console.log('[AudioService] ✅✅✅ [TrackChanged] 全局状态已同步！');
-        console.log(`[AudioService] ✅ [TrackChanged] 当前播放: ${this.currentBaseScene.title}`);
+        // currentBaseScene 可能为 null：无效 id 分支刻意不覆盖它（若启动至今从未解析成功则为空），
+        // 旧代码靠伪造对象"保证"非 null，掩盖了这一点。此处如实可选访问。
+        // 【绝不哑巴】为 null 时必须把非法 id 本身打出来 —— 否则只是把崩溃换成了静默，无法事后取证。
+        console.log(
+          `[AudioService] ✅ [TrackChanged] 当前播放: ` +
+            (this.currentBaseScene?.title ??
+              `(无有效场景 · 保持上一场景 · 非法 id=${nextTrackId ?? 'null'} · 已记账不伪造)`),
+        );
         
         // ══════════════════════════════════════════
         // 【🆕 关键优化】检查并补充队列！

@@ -81,6 +81,10 @@ export function subscribeSceneDownloadChanged(
 }
 
 /** 【🔥 v4】按 assetId → sceneId 映射提 tick（DownloaderService progress 事件用）。 */
+// DEAD: sceneMap 恒空，见 check-scene-ids 闸门 —— manifest 全量无 sceneKey（当前 0/80），
+//   故函数体内 `if (!item.sceneKey) continue;` 会跳过所有条目 → sceneMap 永远为空 → 取不到 sceneId 必然 return。
+//   全仓零调用点（grep -rn "ByAsset" src 仅命中本定义行），下载进度实际走 DownloaderService→tickScene(sceneId)。
+//   保留待大哥关标签后删除，见 docs/reports/2026-09-25-ghost-tabs-and-zero-percent.md §⑧ 待删清单。
 export function tickSceneByAsset(assetId: string, state: SceneDownloadState): void {
   const sceneMap = new Map<string, string>(); // sceneId -> first assetId for that scene
   for (const item of AUDIO_MANIFEST) {

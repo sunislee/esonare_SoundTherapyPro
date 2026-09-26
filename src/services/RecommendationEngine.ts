@@ -20,7 +20,7 @@
  *      'unknown' 分支引入 graded recency 去重后，首页现已覆盖全部 5 个场景（见测试可达性断言）。
  * 详见回归测试 src/services/__tests__/RecommendationEngine.test.ts。
  */
-import { SCENES } from '../constants/scenes';
+import { findScene } from '../constants/scenes';
 
 export type Mood = 'calm' | 'anxious' | 'fatigued' | 'happy';
 /** 引擎输入的情绪维度：四个真实情绪 + 'unknown'（无情绪信号 → 不产生任何 mood 加分）。 */
@@ -91,7 +91,7 @@ const CONFIDENCE_REF = 1.4; // 归一化基准：约等于「时间+情绪双命
 export const getSceneVisual = (
   sceneId: string,
 ): { title: string; thumb: any; color: string } => {
-  const found = SCENES.find((s) => s.id === sceneId);
+  const found = findScene(sceneId);
   return {
     title: found?.title || '',
     thumb: found?.backgroundSource ?? null,

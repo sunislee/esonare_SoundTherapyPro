@@ -10,6 +10,7 @@
     "test": "jest",
     "postinstall": "patch-package",
     "gen:build-info": "node scripts/gen-build-info.js",
+    "check:scene-ids": "node scripts/check-scene-ids.js",
     "release:android": "node scripts/gen-build-info.js && cd android && ./gradlew assembleRelease",
     "release:android:install": "node scripts/gen-build-info.js && cd android && ./gradlew installRelease",
     "release:ios": "node scripts/gen-build-info.js && open ios/SoundTherapy081.xcworkspace"

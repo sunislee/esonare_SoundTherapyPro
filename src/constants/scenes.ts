@@ -460,3 +460,34 @@ export const SCENES: Scene[] = AUDIO_MANIFEST
 
 console.log('[scenes] 场景已按 order 强制排序，共', SCENES.length, '个场景');
 console.log('[scenes] 场景顺序:', SCENES.map(s => s.id).join(', '));
+
+// ════════════════════════════════════════════════════════════
+// 【无效 scene ID 防线 · 唯一判定源】
+// @architecture-constraint
+//   1) SCENES 由 AUDIO_MANIFEST 一次性 filter+map+sort 生成（见上），运行期不再增删：
+//      全仓仅存在只读访问（SCENES[0]），无任何 push/splice/下标写入。故下方索引在模块
+//      加载时构建一次即永久有效，不存在 stale 问题。⚠️ 若将来改为动态增删场景，必须把
+//      SCENE_INDEX/SCENE_ID_SET 改成惰性 getter 或补失效钩子，否则本防线会静默漏判。
+//   2) 任何「用外部来源 id（AsyncStorage / route.params / 下载器事件 / 持久化历史）
+//      查场景」的地方必须走 findScene()/isValidSceneId()，禁止再写
+//      `SCENES.find(...) || null` 之后继续消费可能为 undefined 的对象。
+//   3) 严禁用 `as Scene` 伪造残缺对象兜底：历史上 TrackChanged 兜底曾用
+//      `{id,title,filename:'',category,duration:0} as Scene`（tsc TS2352 @AudioService:560），
+//      filename:'' 会污染 getLocalPath/buildTrack 全链路，并把脏 currentBaseScene
+//      经 notifyListeners 广播给所有订阅 UI。查不到就返回 null，由调用方决定不覆盖状态。
+// ════════════════════════════════════════════════════════════
+
+const SCENE_INDEX: Map<string, Scene> = new Map(SCENES.map(s => [s.id, s] as const));
+
+/** 全部合法场景 id（O(1) 判定；与 SCENES 同生命周期，见上方约束 1）。 */
+export const SCENE_ID_SET: ReadonlySet<string> = new Set(SCENE_INDEX.keys());
+
+/** 按 id 取场景；不存在/非字符串一律 null，绝不伪造对象。 */
+export const findScene = (sceneId: string | null | undefined): Scene | null => {
+  if (typeof sceneId !== 'string') return null;
+  return SCENE_INDEX.get(sceneId) ?? null;
+};
+
+/** id 是否为现存场景（用于持久化/路由等外部输入的 ingress 校验）。 */
+export const isValidSceneId = (sceneId: string | null | undefined): boolean =>
+  typeof sceneId === 'string' && SCENE_ID_SET.has(sceneId);

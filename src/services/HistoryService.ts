@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SCENES, Scene } from '../constants/scenes';
+import { Scene, findScene } from '../constants/scenes';
 
 const HISTORY_KEY = '@playback_history';
 const MAX_HISTORY_ITEMS = 50;
@@ -49,7 +49,7 @@ export const HistoryService = {
       // Map back to Soundscape objects
       const fullHistory = historyItems
         .map(item => {
-          const soundscape = SCENES.find(s => s.id === item.soundscapeId);
+          const soundscape = findScene(item.soundscapeId);
           if (!soundscape) return null;
           return {
             ...soundscape,

@@ -21,7 +21,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { usePlayerState } from '../hooks/usePlayerState';
 import { useAudio } from '../context/AudioContext';
 import AudioService from '../services/AudioService';
-import { Scene, SCENES, SMALL_SCENE_IDS } from '../constants/scenes';
+import { Scene, SCENES, SMALL_SCENE_IDS, findScene } from '../constants/scenes';
 import { Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { RootStackParamList } from '../navigation/MainNavigator';
 import AnimatedFloatingButton from '../components/AnimatedFloatingButton';
@@ -64,7 +64,8 @@ const BreathDetailScreen: React.FC = () => {
   const currentSceneId = routeSceneId;
   const audioServiceActiveId = routeSceneId;
   
-  const scene = SCENES.find(s => s.id === currentSceneId) || SCENES[0];
+  // route.params 属外部输入：经全局索引裁决，查不到仍回落 SCENES[0] 保证页面可用。
+  const scene = findScene(currentSceneId) || SCENES[0];
   
   // ==================== 配置化 LFO 回调生成器 ====================
   // 根据场景配置自动生成对应的 LFO 回调函数

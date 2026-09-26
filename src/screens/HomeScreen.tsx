@@ -31,7 +31,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import AudioService from '../services/AudioService';
 import { RainDrop } from '../components/RainDrop';
-import { SCENES, Scene, SceneCategory, getSceneBackground } from '../constants/scenes';
+import { SCENES, Scene, SceneCategory, getSceneBackground, isValidSceneId, SCENE_ID_SET } from '../constants/scenes';
 import { assetMap } from '../constants/assetMap';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -55,6 +55,7 @@ import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } fr
 import { NETWORK_THROTTLE_EVENT, isAutoBatchPaused, DownloaderServiceInstance } from '../services/DownloaderService';
 import { mapDownloaderStatusToSceneState } from '../utils/downloadStatusMapping';
 import { resolveSceneCardStatus } from '../utils/sceneCardStatus';
+import { ensureBuiltinReady } from '../utils/builtinReadiness';
 import OfflineService from '../services/OfflineService';
 import NetworkGateService from '../services/NetworkGateService';
 import { AUDIO_MANIFEST, isBuiltinScene } from '../constants/audioAssets';
@@ -592,6 +593,10 @@ export const HomeScreen: React.FC = () => {
   const DOWNLOAD_READY_CAP_MS = 180_000;   // 下载就绪计时器硬封顶
   const DOWNLOAD_MIN_BUDGET_MS = 6_000;    // 最小预算（小文件也至少给 6s）
   const DOWNLOAD_POLL_INTERVAL_MS = 2_000; // 磁盘复核轮询间隔
+  // 【永久0%修复】内置重拷闭环：单轮内退避重拷 3 次；本轮未落盘则隔 30s 再来一轮，最多 3 轮。
+  const BUILTIN_MAX_COPY_ATTEMPTS = 3;
+  const BUILTIN_RETRY_DELAY_MS = 30_000;
+  const BUILTIN_MAX_ROUNDS = 3;
   // 保守估算吞吐：约 40 KB/s（弱网），据此由 size 折算 ETA，再夹在 [min, cap]。
   const ESTIMATED_THROUGHPUT_BPS = 40 * 1024;
   const downloadTimersRef = useRef<Map<string, { poll: ReturnType<typeof setInterval>; deadline: number }>>(new Map());
@@ -608,6 +613,59 @@ export const HomeScreen: React.FC = () => {
     if (t) { clearInterval(t.poll); downloadTimersRef.current.delete(sceneId); }
   }, []);
 
+  // ════════════════════════════════════════════════════════════════════
+  // 【永久 0% 修复 · 内置就绪闭环】（2026-09-25 根因取证，详见 builtinReadiness.ts 头注释）
+  //   旧实现三处合谋致死局：① `boot.reensure(sceneId)` 的 Promise<boolean> 被整个丢弃(fire-and-forget)，
+  //   拷贝成功/失败 UI 全不知情；② 失败后不再重拷，只等磁盘奇迹；③ 轮询到点仅 clearDownloadTimer。
+  //   而 UI 层 sceneCardStatus.ts:51 对「内置 + 未就绪」【无条件】返回 'downloading' —— 所以给超时补
+  //   error 出口根本无效（error 会被那行吃掉，用户连失败都看不见）。唯一治法：让 audioReady 必然可达。
+  //   现由 ensureBuiltinReady 闭环（消费拷贝结果 + 退避重拷 + 磁盘复核），本轮未落盘则隔 30s 再来一轮。
+  // ════════════════════════════════════════════════════════════════════
+  const builtinEnsureRef = useRef<(sceneId: string, round: number) => void>(() => {});
+  const runBuiltinEnsure = useCallback((sceneId: string, round: number) => {
+    import('../services/BuiltinAssetBootstrap')
+      .then(({ default: boot }) =>
+        ensureBuiltinReady(
+          sceneId,
+          {
+            isDiskReady: (id) => OfflineService.recheckScene(id), // 磁盘唯一真相（内部 setReady 通知 UI）
+            copyOnce: (id) => boot.reensure(id),                   // 【修①】返回值交由编排器消费，不再丢弃
+            tick: (id, st) => tickScene(id, st),
+          },
+          {
+            pollMs: DOWNLOAD_POLL_INTERVAL_MS,
+            capMs: DOWNLOAD_READY_CAP_MS,
+            maxCopyAttempts: BUILTIN_MAX_COPY_ATTEMPTS,
+          },
+        ),
+      )
+      .then((outcome) => {
+        clearDownloadTimer(sceneId);
+        if (outcome === 'ready') {
+          console.log(`[HomeScreen] ✅ [内置闭环] ${sceneId} 已落盘 → ready/100`);
+          return;
+        }
+        // 【修②】pending-retry 不再是死局：隔 30s 自动再来一轮（磁盘满/拷贝竞态等临时故障可自愈）。
+        if (round < BUILTIN_MAX_ROUNDS) {
+          console.warn(
+            `[HomeScreen] ⚠️ [内置闭环] ${sceneId} 第 ${round}/${BUILTIN_MAX_ROUNDS} 轮未落盘 → ` +
+              `${Math.round(BUILTIN_RETRY_DELAY_MS / 1000)}s 后自动重试（仍不谎报「需要网络」）`,
+          );
+          setTimeout(() => builtinEnsureRef.current(sceneId, round + 1), BUILTIN_RETRY_DELAY_MS);
+        } else {
+          console.error(
+            `[HomeScreen] ❌ [内置闭环] ${sceneId} 连续 ${BUILTIN_MAX_ROUNDS} 轮仍未落盘 → ` +
+              `保持『正在准备』，下次冷启/前台恢复再试（内置绝不进 CDN）`,
+          );
+        }
+      })
+      .catch((e) => {
+        clearDownloadTimer(sceneId);
+        console.warn('[HomeScreen] 内置就绪闭环异常', sceneId, e);
+      });
+  }, [clearDownloadTimer]);
+  useEffect(() => { builtinEnsureRef.current = runBuiltinEnsure; }, [runBuiltinEnsure]);
+
   const prioritizeScene = useCallback((sceneId: string) => {
     console.log(`[HomeScreen] ⚡ [prioritizeScene] ${sceneId}`);
 
@@ -621,24 +679,16 @@ export const HomeScreen: React.FC = () => {
     //   与网络无关。点击 → 触发安全重拷(reensure) + 轮询磁盘真相；落盘即 ready，超时仅停止轮询、卡片仍停
     //   『正在准备』(downloading)，绝不谎报「需要网络/下载失败」。杜绝大哥截图里内置卡被误标 error 的回归。
     if (isBuiltinScene(sceneId)) {
-      console.log(`[HomeScreen] 🧊 [prioritizeScene] 内置未就绪 → 本地重拷(不下载/不error): ${sceneId}`);
+      console.log(`[HomeScreen] 🧊 [prioritizeScene] 内置未就绪 → 本地重拷闭环(不下载/不error): ${sceneId}`);
       clearDownloadTimer(sceneId);
       tickScene(sceneId, { progress: 0, status: 'downloading' }); // 正在准备（非 error）
-      import('../services/BuiltinAssetBootstrap')
-        .then(({ default: boot }) => boot.reensure(sceneId))
-        .catch((e) => console.warn('[HomeScreen] 内置 reensure 失败', sceneId, e));
-      const capDeadline = Date.now() + DOWNLOAD_READY_CAP_MS; // 宽松上限仅用于省电停止轮询，绝不写 error
-      const poll = setInterval(async () => {
-        const ready = await OfflineService.recheckScene(sceneId);
-        if (ready) {
-          clearDownloadTimer(sceneId);
-          tickScene(sceneId, { progress: 100, status: 'ready' });
-          console.log(`[HomeScreen] ✅ [内置轮询] ${sceneId} 已落盘 → ready`);
-          return;
-        }
-        if (Date.now() >= capDeadline) clearDownloadTimer(sceneId); // 停止轮询，卡片仍保持『正在准备』
+      // 占位计时器：仅维持「同场景勿重复启动」门控与超时清理语义；就绪判定改由闭环内部复核磁盘真相。
+      const capDeadline = Date.now() + DOWNLOAD_READY_CAP_MS;
+      const poll = setInterval(() => {
+        if (Date.now() >= capDeadline) clearDownloadTimer(sceneId);
       }, DOWNLOAD_POLL_INTERVAL_MS);
       downloadTimersRef.current.set(sceneId, { poll, deadline: capDeadline });
+      runBuiltinEnsure(sceneId, 1); // 【永久0%修复】消费拷贝结果 + 退避重拷 + 落盘才写 ready/100
       return;
     }
 
@@ -683,7 +733,7 @@ export const HomeScreen: React.FC = () => {
     }, DOWNLOAD_POLL_INTERVAL_MS);
 
     downloadTimersRef.current.set(sceneId, { poll, deadline });
-  }, [clearDownloadTimer, readinessBudgetMs]);
+  }, [clearDownloadTimer, readinessBudgetMs, runBuiltinEnsure]);
 
   
   // ════════════════════════════════════════════════════════
@@ -825,7 +875,18 @@ export const HomeScreen: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      AsyncStorage.getItem('LAST_VIEWED_SCENE_ID').then(id => id && setFocusedSceneId(id));
+      // 【无效 scene ID · ingress 校验】LAST_VIEWED_SCENE_ID 是跨版本持久化值：老版本残留 id、
+      //   已下架场景 id 会在此被直接灌进 focusedSceneId，驱动卡片焦点/背景图指向不存在的场景
+      //   （不崩但显示错误）。查不到即丢弃并清掉脏 key，一次性自愈，绝不用无效 id 驱动 UI。
+      AsyncStorage.getItem('LAST_VIEWED_SCENE_ID').then((id) => {
+        if (!id) return;
+        if (!isValidSceneId(id)) {
+          console.warn(`[HomeScreen] ⚠️ [状态恢复] 持久化场景 id 已失效: ${id} → 丢弃并清除脏 key`);
+          AsyncStorage.removeItem('LAST_VIEWED_SCENE_ID').catch(() => {});
+          return;
+        }
+        setFocusedSceneId(id);
+      });
       return () => setFocusedSceneId(null);
     }, [])
   );
@@ -984,9 +1045,9 @@ export const HomeScreen: React.FC = () => {
   //   会被反复选中重置而永不超时。这里把 failed→error / completed→ready / downloading→进度 直接落地，
   //   失败即清 watchdog 并标 error（UI「需要网络 · 点按重试」），彻底离开 preparing-0%。
   useEffect(() => {
-    const sceneAudioIds = new Set(SCENES.map((s) => s.id));
+    // 【无效 scene ID】复用全局唯一 id 集合（scenes.ts 与 SCENES 同一过滤口径），不再本地重建 Set。
     return DownloaderServiceInstance.subscribe((status) => {
-      if (!sceneAudioIds.has(status.resourceId)) return; // 仅处理场景音频，忽略背景图等
+      if (!SCENE_ID_SET.has(status.resourceId)) return; // 仅处理场景音频，忽略背景图/多轨素材等
       const mapped = mapDownloaderStatusToSceneState(status);
       if (!mapped) return;
       if (status.status === 'failed') clearDownloadTimer(status.resourceId); // 停 watchdog，避免与 error 态打架
