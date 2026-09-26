@@ -331,3 +331,120 @@ Tests:       149 passed, 149 total
 
 
 
+
+---
+
+## ⑨ C2 · 真机自愈验证与「永久失败终态」审计（2026-09-26 追加）
+
+设备 `emulator-5554` / Pixel_9_Pro，release `v1.4.4`（未重编/未重装/未改源码）。
+断网三态全程 `airplane=1 / wifi=0 / data=0`，`ping 8.8.8.8` → `Network is unreachable`。
+
+### 9.0 手段偏差（结论解读前提）
+
+| 计划手段 | 可行性 | 替代 |
+|---|---|---|
+| `run-as` 删沙箱内置副本 | ❌ `run-as: package not debuggable`（release） | 「我的 → 清除缓存」→ `ProfileScreen.handleClearCache` 的 `RNFS.unlink(LOCAL_RESOURCE_PATH)` |
+| `adb root` + `chmod` 不可写目录 | ❌ `adbd cannot run as root in production builds`（Play 镜像，无 rootable AVD） | **同分区 ENOSPC**（`/data/user/0` 与 `/storage/emulated` 同为 `dm-5`），使 `copyFileAssets` 恒抛 `ENOSPC`；测后已清理复原 |
+
+清除缓存副作用：整个 `audio_resources/`（含 CDN 音频）被删 + `invalidateAll()` + `clearSceneStoreAll()` +
+清 `RESOURCE_READY`；APK assets 未动，用户资料不受影响。
+
+### 9.1 C2a 自愈 —— **通过**
+
+运行时闭环（点击未就绪内置卡）：
+
+```
+09:37:15.876 [HomeScreen] 🧊 [prioritizeScene] 内置未就绪 → 本地重拷闭环(不下载/不error): city_rain_urban
+09:37:16.047 [Builtin] ✅ city_rain_urban 拷贝完成并已就绪
+09:37:16.069 [HomeScreen] ✅ [内置闭环] city_rain_urban 已落盘 → ready/100      ← 194 ms
+```
+
+冷启动 bootstrap：`🚀 09:09:19.100 → 🏁 就绪 5/5 @09:09:19.284` = **184 ms**，且五条全部是
+「拷贝完成并已就绪」（无一例「已就绪，跳过拷贝」）→ 真实重拷。否定性检查全 0：
+`[Builtin] ❌`=0、`第 N 次拷贝失败`=0、内置 id 被拉去 CDN=0；首页四张内置卡 `Ready to Play ✨`。
+C2b 之后复跑再次 `🏁 就绪 5/5`（含 zen_bowl 从卡死态恢复）。
+
+### 9.2 C2b 永久失败终态 —— **未根治（换了形态）**
+
+ENOSPC 维持 170 s，目标 `healing_zen_bowl`：
+
+| 时刻 | 事件 |
+|---|---|
+| 10:16:04.124 | `🧊 内置未就绪 → 本地重拷闭环` |
+| 每轮内 ×3 | `[Builtin] ⚠️ 第 1/2/3 次拷贝失败(... ENOSPC ...)` + `[Builtin] ❌ ... 保持「正在准备」等待下次重试(不回落CDN)` |
+| 10:16:18.441 / 10:17:02.673 | `⚠️ [内置闭环] 第 1/3、2/3 轮未落盘 → 30s 后自动重试（仍不谎报「需要网络」）` |
+| **10:17:46.925** | **`❌ [内置闭环] 连续 3 轮仍未落盘 → 保持『正在准备』，下次冷启/前台恢复再试`** |
+
+耗尽耗时 **102.8 s**、拷贝尝试 **27 次**（3 轮 × 编排 3 × `ensureOneBuiltin` 内 3）全失败。
+
+| 问题 | 实测答案 |
+|---|---|
+| `SceneDownloadStore` 终态 | **`status='downloading'`, `progress=90`**（`builtinReadiness.ts:113` 最后一次 tick，之后仅 `clearDownloadTimer`） |
+| 卡片 UI 文案 | **「资源正在下载」** + `⬇`；**不显示百分比**（HomeScreen.tsx:368-373、:379「无转圈、无 IMG、无百分比」） |
+| error / 需要网络？ | **结构上不可能**：`sceneCardStatus.ts:51 if (input.isBuiltin) return 'downloading'` 吞掉一切失败信号（设备实证） |
+| store ↔ UI 一致性 | **不一致**：store 写 90，UI 不显示进度 |
+| 故障解除后会话内自愈？ | **无**。ENOSPC 10:18:38 解除后再观察 ≥3 min：新增日志 **0 条**，卡片仍「资源正在下载」 |
+
+⇒ **「永久 0%」变成「永久静默的『资源正在下载』」**：旧形态有 0%+spinner，新形态无进展、无失败提示、
+无重试入口、会话内不再自愈。A″ 治好的是**可恢复故障**（C2a 已证 194 ms 闭环），**永久失败路径仍无终态出口**。
+
+
+### 9.3 终态设计提案（**等批，本轮一律未改代码**）
+
+- **方案 A（推荐 · 最小面）**：新增只读终态 `builtin_stalled`（或 store 增 `attemptsExhausted: true`）；
+  `resolveSceneCardStatus` 在 `isBuiltin && !audioReady && attemptsExhausted` 返回该态，文案「本地准备受阻 ·
+  点按重试」，点击复用现有 `runBuiltinEnsure`。不引入 CDN，不触碰「内置永不 error / 绝不谎报需要网络」不变式。
+- **方案 B（风险高）**：复用 `error` + 在 `sceneCardStatus.ts:51` 对 isBuiltin 放行 —— ⚠️ 会重新引入
+  `f877c429` 修过的「内置被误标需要网络/下载失败」回归；若走此路必须配套内置专用文案，禁止复用
+  `need_network`/`error` 文案。
+- **方案 C（与 A 正交）**：`30s × 3 轮` 改为低频长周期（指数退避封顶）+ 前台恢复/磁盘可写信号触发，
+  让"迟到恢复的临时故障"也能在会话内自愈。
+- **一致性修正**：卡片要么显示真实 `progress`（现在写 90 却不显示），要么统一不写 progress。
+
+### 9.4 NoiseLab 离线死锁（ticket）+ ResourceStatusManager failed 记录取证
+
+**Ticket**：内置白噪音已在盘却进不去 —— NoiseLab 入口以 32 个 CDN 文件为门禁，离线永久不可达。
+
+```
+[HomeScreen] 🎯 [悬浮球点击] 开始检查降噪实验室资源...
+[HomeScreen] ⚠️ [悬浮球点击] 资源未全部就绪，触发后台静默预下载   （Toast: 资源准备中，稍后再试）
+[ResourceDownloadScreen] 🎯 targetFiles 模式 START：并发=3，开始下载 32 个指定文件
+[ResourceDownloadScreen] ❌ [1/32] 下载异常: Unable to resolve host "ghproxy.net": No address ...  （×32）
+[HomeScreen] ✅ [silentPreDownload] 完成：成功=0, 失败=32
+```
+
+根因：门禁 `checkAllNoiseResourcesReady()`（HomeScreen.tsx:831）只查 4 组 ×8 = **32 个 CDN 轨道**，与内置
+`interactive_white_noise` 无关；离线恒 false → 每次点击重跑整轮，无退避、无失败态、无进度。
+
+**是否向 ResourceStatusManager 写 failed？——否，零持久化**：
+
+1. 该模块缓存只有 `audioStatusCache`/`imageStatusCache`（存在性布尔），`clearCache()`(:260-268) 仅清这两个
+   Map，**无 failed 记录结构**。
+2. `checkSceneResourceStatus()`(:144-181) 的 `'error'` 是**实时派生**自 `DownloaderService.getAllStatus()`
+   的 `'failed'`（:161-167）→ 失败账本在 DownloaderService 内存态，不在本模块。
+3. NoiseLab 走 `downloadTargetFilesAsync`（`ResourceDownloadScreen.tsx:33`），失败仅 `errors.push()` 进**局部
+   数组**（:41/:66/:112），`silentPreDownloadAll`(:860-862) 打印计数后丢弃 → 三方都不落。
+   设备佐证：noise 相关 `ResourceStatus`/`tickScene` error 写入 **0 条**。
+
+**B 批输入**：CDN 失败目前无任何落点；若要"离线诚实告知 + 有界重试 + 失败可视化"，需先建带原因分类
+（offline/enospc/http_xxx/manifest_missing）的失败账本，且必须与内置「绝不 error」不变式分区。
+
+### 9.5 顺带发现的存量缺陷（记账不修）
+
+1. 清除缓存后必报 `❌ [清除缓存] 下载触发失败: [TypeError: undefined is not a function]`，3/3 复现；
+   附近有"临时注释 progress 回调以规避同类报错"的痕迹（`ResourceDownloadScreen.tsx:92-95`）。
+2. 「为你推荐」hero 卡未接 `onBoostPriority`：未就绪时点击无反应、无日志。
+3. `RecommendationEngine.test.ts:159` 用 `hour: new Date().getHours()` → **挂钟依赖 flake**（今日 08:56 红、
+   10:2x 绿）。已在 HEAD 干净 worktree 同钟点复现同样失败，证明是存量问题、非 A″ 引入。
+
+### 9.6 C2 门禁口径
+
+| 项 | 结果 |
+|---|---|
+| 检查点提交 | `e6bfe56a`（18 files, +1300/−41；`buildInfo.ts` 属 `.gitignore:129` 生成物未提交；`CHECKLIST.md` → `docs/`） |
+| tsc | before=174 / after=174，规范化 diff **新增行(>)=0、删除行(<)=0** |
+| jest | **20 suites / 149 tests 全通过** |
+| `check:scene-ids` | exit 0 |
+
+完整取证细节见 `/tmp/c2/C2-result.md`（日志：`c2a_coldstart.log`、`c2b_after.log`、`noise_forensics.log`）。
+
