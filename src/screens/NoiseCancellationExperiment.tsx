@@ -719,10 +719,9 @@ const NoiseLabModal: React.FC<NoiseLabModalProps> = (props) => {
       console.log('[NoiseLab] 🛑 停止当前场景:', currentAudioGroupRef.current, 'activeScene=', activeScene);
       if (currentAudioGroupRef.current === 'balanced_noise') {
         await stop8TrackAudio();
-      } else {
-        await TrackPlayer.stop();
-        await TrackPlayer.reset();
       }
+      // 【性能优化】非 balanced 场景不再预先 TrackPlayer.stop/reset，
+      // 因为 playNoiseAudio 内部已处理切换时的停止逻辑，避免重复 bridge 调用（节省 ~30-50ms）
       isPlayingRef.current = false;
     }
 

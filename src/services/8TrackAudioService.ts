@@ -463,15 +463,24 @@ export const play8TrackAudio = async (audioGroupId: string) => {
         loadPromises.push(loadPromise);
       }
       
-      // 【关键修复】抢跑机制：等待 6 个轨道成功或全局超时
-      console.log(`[8Track] 🔍 等待轨道加载完成（最多 ${MAX_LOADING_TIME_MS}ms，最少 ${MIN_SUCCESS_COUNT} 个）...`);
+      // 【性能优化】抢跑机制：等待 6 个轨道成功即启动，或全局超时兜底（不再等全部 8 个完成）
+      console.log(`[8Track] 🔍 等待轨道加载（抢跑 ≥${MIN_SUCCESS_COUNT} 个即启动，最多 ${MAX_LOADING_TIME_MS}ms）...`);
       
-      // 【Bug修复】放弃 Promise.race + catch 吞错，改用 allSettled 确保结果完整收集
-      const settledResults = await Promise.allSettled(loadPromises);
+      // 先让出当前帧给 UI 更新 loading 态
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+
+      // 【核心优化】用共享可变数组收集结果 + race 抢跑：6个就绪即立即播放，不等剩余轨道
+      const settledSlots: (Sound | null)[] = new Array(8).fill(null);
+      const trackedPromises = loadPromises.map((p, idx) =>
+        p.then(sound => { settledSlots[idx] = sound; })
+      );
+
+      // race：earlyResolve（≥6成功时 resolve）vs 全部完成兜底
+      await Promise.race([earlyResolvePromise, Promise.allSettled(trackedPromises)]);
+      
+      // 立即使用已就绪的轨道，不等剩余的
       for (let i = 0; i < 8; i++) {
-        if (settledResults[i].status === 'fulfilled' && settledResults[i].value !== null) {
-          loadedPlayers[i] = settledResults[i].value;
-        }
+        loadedPlayers[i] = settledSlots[i];
       }
       
       // 检查加载成功数量

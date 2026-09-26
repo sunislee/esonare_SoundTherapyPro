@@ -51,26 +51,21 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
  */
 const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> => {
   try {
-    console.warn('[NC] checkNoiseResourcesReady START', audioGroupId);
-    // audioGroupId 格式如：balanced_noise, wind_noise, crowd_noise, traffic_noise
-    const folderName = audioGroupId; // 直接使用 audioGroupId 作为文件夹名
-
-    for (let trackNum = 1; trackNum <= 8; trackNum++) {
-      const filename = `${folderName}_track_${trackNum}.mp3`;
-      // 根据 8TrackAudioService.ts 中的路径构造逻辑（第397-400行）：
-      // getLocalPath('noise_reduction', `noise reduction/${filename}`)
+    // 并行检查所有 8 个轨道文件是否存在（原串行 await 逐个检查 → Promise.all 并行，节省 ~200ms）
+    const checks = Array.from({ length: 8 }, (_, i) => {
+      const filename = `${audioGroupId}_track_${i + 1}.mp3`;
       const localPath = getLocalPath('noise_reduction', `noise reduction/${filename}`);
+      return RNFS.exists(localPath);
+    });
 
-      console.warn('[NC] RNFS.exists check:', { trackNum, filename, localPath });
-      const exists = await RNFS.exists(localPath);
-      if (!exists) {
-        console.warn('[NC] ❌ 资源未就绪：缺少', filename, 'localPath:', localPath);
-        return false;
-      }
+    const results = await Promise.all(checks);
+    const allReady = results.every(Boolean);
+
+    if (!allReady) {
+      const missingIdx = results.findIndex(r => !r);
+      console.warn('[NC] ❌ 资源未就绪：缺少 track', missingIdx + 1, `(${audioGroupId})`);
     }
-
-    console.log(`[NoiseCancellationRoom] ✅ 8-track 资源全部就绪: ${audioGroupId}`);
-    return true;
+    return allReady;
   } catch (error) {
     console.warn('[NC] ❌ checkNoiseResourcesReady catch block, error:', error instanceof Error ? error.message : String(error));
     return false;

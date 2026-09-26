@@ -8,7 +8,7 @@
  *
  * 【运行期实际生效维度（截至 mood='unknown' 修复后）】
  * 引擎本身支持 4 个输入：hour / mood / lastScene(+recent 去重) / listeningDuration。HomeScreen 真实接线：
- *   - hour        : LIVE —— new Date().getHours()，来自设备时钟；驱动时段加分（夜间禅钵/雨声、午间白噪音…）。
+ *   - hour        : LIVE —— new Date().getHours()，来自设备时钟；驱动时段加分（夜间禅钵/雨声、午间Alpha专注…）。
  *   - recentScenes: LIVE —— AsyncStorage 'RECENT_VIEWED_SCENE_IDS'（环形最近4个；写入方 ImmersivePlayerNew
  *                   进入播放页时 recordViewedScene/pushRecentScenes），驱动 mood='unknown' 下的 graded recency
  *                   去重惩罚 [0.5,0.4,0.3,0.2]。lastScene 仍为真实 mood 路径的单点 -0.25 去重（未改动）。
@@ -61,7 +61,7 @@ interface ReasonResult {
 /** 逻辑 key -> 真实 scene_id + 兜底中文名（SCENES 查不到时使用）。 */
 const LOGICAL_SCENES: Record<SceneKey, { sceneId: string; label: string }> = {
   rain: { sceneId: 'city_rain_urban', label: '城市夜雨' },
-  white_noise: { sceneId: 'interactive_white_noise', label: '纯净白噪声' },
+  white_noise: { sceneId: 'brainwave_alpha', label: 'Alpha专注' },
   forest: { sceneId: 'nature_forest', label: '迷雾森林' },
   ocean: { sceneId: 'nature_ocean', label: '深海之境' },
   meditation: { sceneId: 'healing_zen_bowl', label: '禅意颂钵' },

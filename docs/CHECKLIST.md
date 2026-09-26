@@ -126,3 +126,30 @@ adb shell svc wifi enable && adb shell svc data enable
 - 内置闭环的状态机正确性（落盘才 ready / 进度单调 / 绝不写 error）→ `builtinReadiness.test.ts` 7 例。
 - 类型面零污染 → tsc 规范化 diff 新增行 = 0（报告 §⑤）。
 
+
+### 本轮已由静态闸门覆盖、**无需真机重复验证**的部分
+- `resolveBaseScene` 不伪造场景、空 filename 不放行 → jest + 双向变异检验（报告 §②b）。
+- 常量层 id 交叉一致（含"历史错拼 id"这类事故）→ `npm run check:scene-ids` + 变异检验（报告 §②a）。
+- 内置闭环的状态机正确性（落盘才 ready / 进度单调 / 绝不写 error）→ `builtinReadiness.test.ts` 7 例。
+- 类型面零污染 → tsc 规范化 diff 新增行 = 0（报告 §⑤）。
+
+## C7 · A/C 终态 stalled + 低频自愈 · 真机验收清单（2026-09-26，需 release 包）
+
+> ⛔ **BLOCKED（2026-09-26 执行结果）**：release 包 ENOSPC 实测发现缺陷 **D-C7-1 `builtin-bootstrap-no-orchestration`**
+> （冷启动 bootstrap 单轮拷贝、未接 A/C 编排器 → stalled/自愈仅点按可达）。
+> 证据表与缺陷定义见报告 §⑪；修复批准后复跑全套。a/b/清理三步已 PASS（df 85%→100%→84%，filler 残留 0）。
+
+
+> ⚠️ **生产镜像限制**：测试机为 user/release-keys 镜像，`adb remount` 等写系统路径操作不可用；
+> ENOSPC 无法用 root 直造，只能走下方"等效磁盘占满"路径。**按项目规范构建 release 包验证**（非 debug）。
+
+- [ ] **造 ENOSPC 等效条件**：`adb push` 大 filler 文件至 /data 直至 `df /data` ≥99%
+      （参考 `/tmp/c2/fill_loop.sh`，留出系统余量避免设备假死；完成后必须清理）。
+- [ ] **清除应用数据 → 冷启动**：内置拷贝失败（ENOSPC），快阶段 3 轮（约 1.5 分钟）后内置卡显示
+      **「本地准备受阻 · 点按重试」**，且**绝不出现「需要网络」/红色 error**。
+- [ ] **点按重试**：点 stalled 卡 → 文案立即清回「正在准备」态、慢阶段被打断、重跑快阶段
+      （logcat `[内置闭环]` 应有 abort/重启行）。
+- [ ] **ENOSPC 解除自动收敛**：删 filler 释放空间后，等下一低频轮（≤5 分钟）或**切后台再回前台**
+      （触发 `wakeBuiltinRetries` 立即探测）→ 卡片自动转 Ready，无需再点。
+- [ ] **回归确认**：全程内置卡任何状态不出现 CDN/网络文案；CDN 场景卡不受影响（绝不显示「本地准备受阻」）。
+- [ ] 收尾：删除全部 filler、`df /data` 回到 ~84%，与 `/tmp/c2/C2-result.md` 复原口径一致。

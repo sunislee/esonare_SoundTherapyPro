@@ -29,7 +29,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import ToastUtil from '../utils/ToastUtil';
-import { subscribeDownload, DownloaderServiceInstance } from '../services/DownloaderService';
+import { subscribeDownload } from '../services/DownloaderService';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 import { useBackHandler } from '../hooks/useBackHandler';
 import * as RNFS from '@dr.pogodin/react-native-fs';
@@ -206,12 +206,12 @@ export const ProfileScreen = () => {
     }
   };
 
-  // 【🔥🔧 关键修复 v3】实际启动下载 + subscribe() / notifyCacheCleared() + DeviceEventEmitter → HomeScreen remount
+  // 【🔥🔧 关键修复 v3】订阅实时进度 + DeviceEventEmitter → HomeScreen remount
+  // 注意：本函数只负责「监听与刷新」，不负责启动下载。实际下载由调用方
+  // handleClearCache 里的 DownloadService.silentBackgroundDownload() 启动；
+  // 此处若再启动 DownloaderService 会与旧引擎并发写同一批 .part 文件（P1-5 续传语义会被破坏）。
   const startRealBackgroundDownload = useCallback(() => {
-    console.log('[ProfileScreen] 🔥 [startRealBackgroundDownload] 启动后台静默下载...');
-
-    // DownloaderServiceInstance.startBackgroundDownload() 内部会 notifyCacheCleared() + subscribe()
-    DownloaderServiceInstance.startBackgroundDownload();
+    console.log('[ProfileScreen] 🔥 [startRealBackgroundDownload] 注册后台下载进度监听...');
 
     DeviceEventEmitter.emit('resourceLoadingChanged', { loading: true, message: t('profile.cache.clearing') });
 

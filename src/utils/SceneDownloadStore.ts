@@ -9,6 +9,15 @@ import { AUDIO_MANIFEST } from '../constants/audioAssets';
 export interface SceneDownloadState {
   progress: number; // 0-100
   status: 'waiting' | 'downloading' | 'ready' | 'error';
+  /**
+   * 【A · builtin_stalled 显示层终态】内置就绪闭环快阶段(默认 3 轮)耗尽仍未落盘 → true。
+   * - UI 的【唯一权威信号】：sceneCardStatus 据此翻 'stalled'，文案「本地准备受阻 · 点按重试」。
+   * - stalled 时 progress=90 只是【冻结历史值】（快阶段最后一次 tick 的收尾），UI 不消费它——
+   *   保留而非清零：tick 契约 progress∈[0,100] 不变，getGlobalDownloadProgress 等既有消费者零影响。
+   * - 【仅内存、重启即清】：本 store 整体不落盘；prioritizeScene「点按重试」以全新状态对象
+   *   tick(downloading/0) 整体替换即自动清除本字段 → 回到 downloading→ready 闭环。
+   */
+  attemptsExhausted?: boolean;
 }
 
 type Listener = () => void;

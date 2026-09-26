@@ -16,6 +16,7 @@ import {
   DeviceEventEmitter,
   ScrollView,
   ToastAndroid,
+  AppState,
 } from 'react-native';
 
 // 【🔥 v3】useSyncExternalStore — 订阅 DeviceEventEmitter，只在真实事件发生时触发重渲染
@@ -55,7 +56,7 @@ import { checkSceneResourceStatus, getAllSceneStatuses, initializeResources } fr
 import { NETWORK_THROTTLE_EVENT, isAutoBatchPaused, DownloaderServiceInstance } from '../services/DownloaderService';
 import { mapDownloaderStatusToSceneState } from '../utils/downloadStatusMapping';
 import { resolveSceneCardStatus } from '../utils/sceneCardStatus';
-import { ensureBuiltinReady } from '../utils/builtinReadiness';
+import { ensureBuiltinReadyWithRetry, abortBuiltinRetry, wakeBuiltinRetries, DEFAULT_BUILTIN_RETRY_SCHEDULE } from '../utils/builtinReadiness';
 import OfflineService from '../services/OfflineService';
 import NetworkGateService from '../services/NetworkGateService';
 import { AUDIO_MANIFEST, isBuiltinScene } from '../constants/audioAssets';
@@ -182,14 +183,19 @@ const SceneItem = React.memo(({
       if (item.id.includes("breath")) navigation.navigate("BreathDetail", { sceneId: item.id });
       else navigation.navigate("ImmersivePlayer", { sceneId: item.id });
     } else {
-      // 【未就绪 · 绝不进播放器】统一真相下 ready=false 即「磁盘无可播文件」。点击只加速下载
-      //   (prioritizeScene) + 诚实 toast，杜绝任何远程流播/假入口（与卡片「资源正在下载」严格一致）。
+      // 【未就绪 · 绝不进播放器】统一真相下 ready=false 即「磁盘无可播文件」。点击只加速准备
+      //   (prioritizeScene：内置=abort 慢阶段+快阶段重入 / CDN=优先下载) + 诚实 toast。
       console.log(`[SceneItem] ⬇️ [handlePress] 未就绪 → 优先下载(不进播放器): ${item.id}`);
       if (onBoostPriority) onBoostPriority(item.id);
-      ToastAndroid.show('资源正在下载，请稍候', ToastAndroid.SHORT);
+      // 【A · stalled 点按重试】attemptsExhausted 时诚实告知「本地准备受阻」而非误导"正在下载"——
+      //   点击本身已触发快阶段重入，故文案是「正在重试」而非死局。
+      ToastAndroid.show(
+        globalProgress?.attemptsExhausted ? '本地准备受阻，正在重试' : '资源正在下载，请稍候',
+        ToastAndroid.SHORT,
+      );
       triggerHaptic("heavy");
     }
-  }, [item.id, ready, downloadStatus, onBoostPriority, triggerHaptic, navigation]);
+  }, [item.id, ready, downloadStatus, globalProgress, onBoostPriority, triggerHaptic, navigation]);
 
   useEffect(() => {
     return () => {
@@ -343,6 +349,8 @@ const SceneItem = React.memo(({
                     // 【护栏接线】纯函数里的「内置永不 error / 需网络」分支此前因这里漏传 isBuiltin 而
                     //   形同死代码——内置卡一旦离线或被上游打成 error，就会伪装成「需要网络·点按重试」。
                     isBuiltin: isBuiltinScene(item.id),
+                    // 【A · stalled 接线】内置闭环快阶段耗尽的显式终态信号（仅内存字段）。
+                    attemptsExhausted: globalProgress?.attemptsExhausted === true,
                   });
                   if (cardStatus === 'ready') {
                     return (
@@ -362,6 +370,16 @@ const SceneItem = React.memo(({
                     return (
                       <Text style={styles.cardSubtitle} numberOfLines={1}>
                         {t('home_card_transient_error')}
+                      </Text>
+                    );
+                  }
+                  // 【A · builtin_stalled】本地准备受阻 · 点按重试——内置闭环耗尽的独立文案，
+                  //   绝不与「资源正在下载/需要网络」混同（C2b 永久静默 90% 的显式出口）。点击卡片
+                  //   即 prioritizeScene → abort + 快阶段重入（handlePress 已无条件放行点击）。
+                  if (cardStatus === 'stalled') {
+                    return (
+                      <Text style={[styles.cardSubtitle, { color: '#FFB74D' }]} numberOfLines={1}>
+                        {t('home_card_stalled')}
                       </Text>
                     );
                   }
@@ -593,10 +611,9 @@ export const HomeScreen: React.FC = () => {
   const DOWNLOAD_READY_CAP_MS = 180_000;   // 下载就绪计时器硬封顶
   const DOWNLOAD_MIN_BUDGET_MS = 6_000;    // 最小预算（小文件也至少给 6s）
   const DOWNLOAD_POLL_INTERVAL_MS = 2_000; // 磁盘复核轮询间隔
-  // 【永久0%修复】内置重拷闭环：单轮内退避重拷 3 次；本轮未落盘则隔 30s 再来一轮，最多 3 轮。
+  // 【永久0%修复】内置闭环单轮内退避重拷次数；跨轮调度(快/慢阶段、退避、冷却)由
+  //   builtinReadiness.DEFAULT_BUILTIN_RETRY_SCHEDULE 统一承载（A+C，2026-09-26）。
   const BUILTIN_MAX_COPY_ATTEMPTS = 3;
-  const BUILTIN_RETRY_DELAY_MS = 30_000;
-  const BUILTIN_MAX_ROUNDS = 3;
   // 保守估算吞吐：约 40 KB/s（弱网），据此由 size 折算 ETA，再夹在 [min, cap]。
   const ESTIMATED_THROUGHPUT_BPS = 40 * 1024;
   const downloadTimersRef = useRef<Map<string, { poll: ReturnType<typeof setInterval>; deadline: number }>>(new Map());
@@ -621,15 +638,24 @@ export const HomeScreen: React.FC = () => {
   //   error 出口根本无效（error 会被那行吃掉，用户连失败都看不见）。唯一治法：让 audioReady 必然可达。
   //   现由 ensureBuiltinReady 闭环（消费拷贝结果 + 退避重拷 + 磁盘复核），本轮未落盘则隔 30s 再来一轮。
   // ════════════════════════════════════════════════════════════════════
-  const builtinEnsureRef = useRef<(sceneId: string, round: number) => void>(() => {});
-  const runBuiltinEnsure = useCallback((sceneId: string, round: number) => {
+  // ════════════════════════════════════════════════════════════════════
+  // 【永久 0% 修复 · 内置就绪闭环】（2026-09-25 根因取证；2026-09-26 A+C 升级）
+  //   旧实现三处合谋致死局：① `boot.reensure` 的 Promise<boolean> 被丢弃(fire-and-forget)；
+  //   ② 失败后不再重拷，只等磁盘奇迹；③ sceneCardStatus 对「内置+未就绪」无条件 downloading，
+  //   给超时补 error 出口会被那行吃掉。唯一治法：让 audioReady 必然可达 + 耗尽有显式出口。
+  //   A+C（详见 builtinReadiness.ts【A+C】节）：ensureBuiltinReadyWithRetry 统一编排——
+  //   快阶段 3 轮(30s) → 第 3 轮未落盘写 attemptsExhausted=「本地准备受阻 · 点按重试」(A)；
+  //   调度【不停】，转指数退避 60s→封顶 300s 无限轮（每轮拷贝即磁盘空间恢复探测，C）；
+  //   AppState 回前台 wakeBuiltinRetries() 提前探测。全程绝不谎报「需要网络」、绝不写 error。
+  // ════════════════════════════════════════════════════════════════════
+  const runBuiltinEnsure = useCallback((sceneId: string) => {
     import('../services/BuiltinAssetBootstrap')
       .then(({ default: boot }) =>
-        ensureBuiltinReady(
+        ensureBuiltinReadyWithRetry(
           sceneId,
           {
             isDiskReady: (id) => OfflineService.recheckScene(id), // 磁盘唯一真相（内部 setReady 通知 UI）
-            copyOnce: (id) => boot.reensure(id),                   // 【修①】返回值交由编排器消费，不再丢弃
+            copyOnce: (id) => boot.reensure(id),                   // 返回值交由编排器消费，不再丢弃
             tick: (id, st) => tickScene(id, st),
           },
           {
@@ -637,34 +663,35 @@ export const HomeScreen: React.FC = () => {
             capMs: DOWNLOAD_READY_CAP_MS,
             maxCopyAttempts: BUILTIN_MAX_COPY_ATTEMPTS,
           },
+          DEFAULT_BUILTIN_RETRY_SCHEDULE,
+          (level, msg) => console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](`[HomeScreen] ${msg}`),
         ),
       )
       .then((outcome) => {
-        clearDownloadTimer(sceneId);
         if (outcome === 'ready') {
+          clearDownloadTimer(sceneId); // 落盘真相已写 ready/100（闭环内 tick），撤占位门控
           console.log(`[HomeScreen] ✅ [内置闭环] ${sceneId} 已落盘 → ready/100`);
-          return;
         }
-        // 【修②】pending-retry 不再是死局：隔 30s 自动再来一轮（磁盘满/拷贝竞态等临时故障可自愈）。
-        if (round < BUILTIN_MAX_ROUNDS) {
-          console.warn(
-            `[HomeScreen] ⚠️ [内置闭环] ${sceneId} 第 ${round}/${BUILTIN_MAX_ROUNDS} 轮未落盘 → ` +
-              `${Math.round(BUILTIN_RETRY_DELAY_MS / 1000)}s 后自动重试（仍不谎报「需要网络」）`,
-          );
-          setTimeout(() => builtinEnsureRef.current(sceneId, round + 1), BUILTIN_RETRY_DELAY_MS);
-        } else {
-          console.error(
-            `[HomeScreen] ❌ [内置闭环] ${sceneId} 连续 ${BUILTIN_MAX_ROUNDS} 轮仍未落盘 → ` +
-              `保持『正在准备』，下次冷启/前台恢复再试（内置绝不进 CDN）`,
-          );
-        }
+        // 'aborted'：被「点按重试」的新编排器顶替——计时器/状态均由新实例接管，此处【不得】清理。
       })
       .catch((e) => {
+        // 极端异常（如动态 import 失败）：清占位计时器让下次点击可重试；不谎报 error/需要网络。
         clearDownloadTimer(sceneId);
         console.warn('[HomeScreen] 内置就绪闭环异常', sceneId, e);
       });
   }, [clearDownloadTimer]);
-  useEffect(() => { builtinEnsureRef.current = runBuiltinEnsure; }, [runBuiltinEnsure]);
+
+  // 【C · 信号触发】App 回前台 → 唤醒所有在途内置慢阶段重试，提前跑一轮磁盘恢复探测
+  //   （ENOSPC 期间用户清出空间 → 切回前台立刻自愈，不必等最长 300s 退避尾段）。
+  // 节流：wakeBuiltinRetries 内部 per-scene 冷却 60s；registry 仅内存、重启即清——无「永久屏蔽」风险。
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      const n = wakeBuiltinRetries();
+      if (n > 0) console.log(`[HomeScreen] 📡 [前台恢复] 唤醒 ${n} 个内置重试场景提前探测（磁盘空间可能已恢复）`);
+    });
+    return () => sub.remove();
+  }, []);
 
   const prioritizeScene = useCallback((sceneId: string) => {
     console.log(`[HomeScreen] ⚡ [prioritizeScene] ${sceneId}`);
@@ -681,14 +708,17 @@ export const HomeScreen: React.FC = () => {
     if (isBuiltinScene(sceneId)) {
       console.log(`[HomeScreen] 🧊 [prioritizeScene] 内置未就绪 → 本地重拷闭环(不下载/不error): ${sceneId}`);
       clearDownloadTimer(sceneId);
-      tickScene(sceneId, { progress: 0, status: 'downloading' }); // 正在准备（非 error）
+      // 【A · 点按重试】stalled(慢阶段在途)时再点：abort 旧编排器 → 本次从快阶段 round 1 重入，
+      //   用户立刻看到重新尝试（而非干等最长 300s 退避尾段）。abort 不写终态，状态由新实例接管。
+      abortBuiltinRetry(sceneId);
+      tickScene(sceneId, { progress: 0, status: 'downloading' }); // 全新状态对象整体替换 = 自动清除 attemptsExhausted（stalled→正在准备）
       // 占位计时器：仅维持「同场景勿重复启动」门控与超时清理语义；就绪判定改由闭环内部复核磁盘真相。
       const capDeadline = Date.now() + DOWNLOAD_READY_CAP_MS;
       const poll = setInterval(() => {
         if (Date.now() >= capDeadline) clearDownloadTimer(sceneId);
       }, DOWNLOAD_POLL_INTERVAL_MS);
       downloadTimersRef.current.set(sceneId, { poll, deadline: capDeadline });
-      runBuiltinEnsure(sceneId, 1); // 【永久0%修复】消费拷贝结果 + 退避重拷 + 落盘才写 ready/100
+      runBuiltinEnsure(sceneId); // 【A+C】快阶段退避重拷 + 耗尽标 stalled + 慢阶段无限轮/前台唤醒，落盘才写 ready/100
       return;
     }
 

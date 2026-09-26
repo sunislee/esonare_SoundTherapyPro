@@ -32,6 +32,13 @@
 import * as RNFS from '@dr.pogodin/react-native-fs';
 import { BUILTIN_SCENES, AUDIO_MANIFEST, getLocalPath } from '../constants/audioAssets';
 import OfflineService from './OfflineService';
+// 【D-C7-1 接线 · 2026-09-26】冷启动 bootstrap 单轮失败后必须自动进入 A/C 编排调度。
+//   缺陷实证（报告 §⑪ D-C7-1）：ENOSPC 冷启动后旧实现只打「等待下次重试」日志，快阶段/
+//   stalled/慢阶段自愈全部不可达——编排器仅接在 HomeScreen.prioritizeScene 点按路径。
+//   deps 全为服务层单例（OfflineService 磁盘真相 / reensure 幂等重拷 / tickScene 全局 store），
+//   无 React 依赖；与点按路径共享 builtinReadiness registry，点击重试的 abort+重入语义不变。
+import { ensureBuiltinReadyWithRetry, DEFAULT_BUILTIN_RETRY_SCHEDULE } from '../utils/builtinReadiness';
+import { tickScene } from '../utils/SceneDownloadStore';
 
 /** assetPath 前缀 → copyFileAssets 需要相对 assets 根的路径（无前缀、无 file://）。 */
 const ASSET_URI_PREFIX = 'file:///android_asset/';
@@ -126,12 +133,44 @@ class BuiltinAssetBootstrap {
     //   并发 mkdir + copyFileAssets 存在竞态导致其一 ENOENT 首拷失败、回落 CDN 后被误标 error。
     //   单场景内部已自带重试且不抛（catch 内消化），串行保证目录建立与拷贝互不抢占。
     let ok = 0;
+    const failedIds: string[] = [];
     for (const id of ids) {
       try {
         if (await ensureOneBuiltin(id)) ok += 1;
-      } catch (_e) { /* ensureOneBuiltin 已消化异常，这里再兜一层，绝不影响其余场景 */ }
+        else failedIds.push(id);
+      } catch (_e) { /* ensureOneBuiltin 已消化异常，这里再兜一层，绝不影响其余场景 */ failedIds.push(id); }
     }
     console.log(`[Builtin] 🏁 内置场景落盘完成：就绪 ${ok}/${ids.length}`);
+
+    // 【D-C7-1 · 编排式收尾】未就绪场景逐个接入 A/C 编排器（快阶段 3 轮 → attemptsExhausted=stalled
+    //   → 指数退避慢阶段无限自愈；每轮 copyOnce 即磁盘空间恢复探测）。fire-and-forget：
+    //   不阻塞 bootstrap 返回；orchestrator 内部消化全部失败，catch 仅兜极端异常（如动态依赖故障）。
+    if (failedIds.length > 0) {
+      console.log(`[Builtin] 🔁 ${failedIds.length} 个未就绪 → 自动进入编排式重试(快阶段→stalled→慢阶段自愈)`);
+      for (const id of failedIds) this.startOrchestratedRetry(id);
+    }
+  }
+
+  /**
+   * 【D-C7-1】对单个未就绪内置场景启动 A/C 编排调度（冷启动 bootstrap 收尾专用）。
+   * 与 HomeScreen.runBuiltinEnsure 同一编排器/同一 registry：用户点按「点按重试」时
+   * prioritizeScene 会 abortBuiltinRetry + 快阶段重入，二者语义天然兼容、无重复调度。
+   */
+  startOrchestratedRetry(sceneId: string): void {
+    ensureBuiltinReadyWithRetry(
+      sceneId,
+      {
+        isDiskReady: (id) => OfflineService.recheckScene(id), // 磁盘唯一真相（内部 setReady 通知 UI）
+        copyOnce: (id) => this.reensure(id),                  // 幂等重拷，返回值由编排器消费
+        tick: (id, st) => tickScene(id, st),                  // 全局 store → SceneItem 卡片实时刷新
+      },
+      { pollMs: 2_000, capMs: 180_000, maxCopyAttempts: 3 },   // 与 HomeScreen 点按路径同参
+      DEFAULT_BUILTIN_RETRY_SCHEDULE,
+      (level, msg) => console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](`[Builtin] ${msg}`),
+    ).catch((e) => {
+      // 编排器设计上不抛（失败=慢阶段继续）；走到这里属极端异常，静默兜底、下轮冷启兜底。
+      console.warn(`[Builtin] 编排式重试异常 ${sceneId}`, e);
+    });
   }
 
   /**

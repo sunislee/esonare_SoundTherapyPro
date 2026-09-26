@@ -13,21 +13,23 @@ import { getLocalPath } from '../constants/audioAssets';
  */
 export const checkNoiseResourcesReady = async (audioGroupId: string): Promise<boolean> => {
   try {
-    console.log('[NoiseResourceChecker] checkNoiseResourcesReady START', audioGroupId);
-    
-    for (let trackNum = 1; trackNum <= 8; trackNum++) {
-      const filename = `${audioGroupId}_track_${trackNum}.mp3`;
+    // 【性能优化】并行检查 8 个轨道文件，替代原来的串行 for-await（节省 ~160ms/组）
+    const checks = Array.from({ length: 8 }, (_, i) => {
+      const filename = `${audioGroupId}_track_${i + 1}.mp3`;
       const localPath = getLocalPath('noise_reduction', `noise reduction/${filename}`);
-      
-      const exists = await RNFS.exists(localPath);
-      if (!exists) {
-        console.warn('[NoiseResourceChecker] ❌ 资源未就绪：缺少', filename);
-        return false;
-      }
+      return RNFS.exists(localPath);
+    });
+
+    const results = await Promise.all(checks);
+    const allReady = results.every(Boolean);
+
+    if (!allReady) {
+      const missingIdx = results.findIndex(r => !r);
+      console.warn('[NoiseResourceChecker] ❌ 资源未就绪：缺少 track', missingIdx + 1, `(${audioGroupId})`);
+    } else {
+      console.log('[NoiseResourceChecker] ✅ 8-track 资源全部就绪:', audioGroupId);
     }
-    
-    console.log('[NoiseResourceChecker] ✅ 8-track 资源全部就绪:', audioGroupId);
-    return true;
+    return allReady;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.warn('[NoiseResourceChecker] ❌ checkNoiseResourcesReady error:', errorMsg);

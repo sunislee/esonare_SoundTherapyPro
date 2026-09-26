@@ -88,21 +88,27 @@ interface PlayResult {
   isFromCache: boolean;
 }
 
+// 旧缓存清理标记（仅在首次调用时执行一次，避免每次播放都走文件系统操作）
+let hasCleanedOldCache = false;
+
 // 播放降噪音频
 export const playNoiseAudio = async (modeId: string): Promise<PlayResult> => {
   try {
     console.log('[NoiseAudio] 播放模式:', modeId);
     
-    // 清理旧的 .m4a 缓存文件
-    await cleanOldM4aCache();
+    // 【性能优化】旧缓存清理仅首次执行，不再每次播放都走 RNFS.exists/unlink
+    if (!hasCleanedOldCache) {
+      hasCleanedOldCache = true;
+      cleanOldM4aCache().catch(() => {}); // fire-and-forget，不阻塞播放
+    }
     
     // 先停止当前音频
     if (currentModeId) {
       console.log('[NoiseAudio] 切换到新模式，停止当前播放');
       await TrackPlayer.stop();
       await TrackPlayer.reset();
-      // 等待重置完成
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // 【性能优化】200ms → 50ms：TrackPlayer reset 后仅需极短帧同步，无需等 200ms
+      await new Promise<void>(resolve => setTimeout(resolve, 50));
     }
     
     // 获取音频配置

@@ -8,6 +8,46 @@
 import { resolveSceneCardStatus } from '../sceneCardStatus';
 
 describe('resolveSceneCardStatus', () => {
+  describe('【A · 不变式② stalled 专属域】内置耗尽 → 本地准备受阻（绝不网络文案）', () => {
+    it('内置 + 未就绪 + attemptsExhausted → stalled（C2b 永久静默『资源正在下载』的显式出口）', () => {
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: true, attemptsExhausted: true })).toBe('stalled');
+    });
+
+    it('内置 + exhausted + 离线 → 仍 stalled，绝不 need_network（f877c429 回归防线）', () => {
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: true, attemptsExhausted: true, offline: true })).toBe('stalled');
+    });
+
+    it('内置 + exhausted + downloadStatus=error → 仍 stalled，绝不 error（内置与网络下载无关）', () => {
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: true, attemptsExhausted: true, downloadStatus: 'error' })).toBe('stalled');
+    });
+
+    it('【防线】非内置误传 exhausted → 绝不 stalled（CDN 卡不会被标『本地准备受阻』）', () => {
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: false, attemptsExhausted: true })).toBe('downloading');
+      expect(resolveSceneCardStatus({ audioReady: false, attemptsExhausted: true, offline: true })).toBe('need_network');
+      expect(resolveSceneCardStatus({ audioReady: false, attemptsExhausted: true, downloadStatus: 'error' })).toBe('error');
+    });
+
+    it('未耗尽(缺省/false)的内置 → 维持静默 downloading（不变式①不受 A 影响）', () => {
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: true })).toBe('downloading');
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: true, attemptsExhausted: false })).toBe('downloading');
+    });
+
+    it('ready 优先级高于 exhausted：磁盘已可播则直接 ready（全组合不变式含新维度）', () => {
+      expect(resolveSceneCardStatus({ audioReady: true, isBuiltin: true, attemptsExhausted: true })).toBe('ready');
+    });
+
+    it('【两账不一致防线】卡态层对 progress 彻底盲区：stalled 判定只认 attemptsExhausted', () => {
+      // store 在 stalled 时保留冻结历史值 progress=90（builtinReadiness :178-183 注释定性），
+      // UI 判据必须与它无关——即使调用方把 progress 塞进 input（JS 不拦额外字段），卡态也不许被影响。
+      const base = resolveSceneCardStatus({ audioReady: false, isBuiltin: true, attemptsExhausted: true });
+      for (const progress of [0, 45, 90, 100]) {
+        expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: true, attemptsExhausted: true, progress } as any)).toBe(base);
+      }
+      // 反向锁：冻结的 90 也绝不能把「未耗尽」的内置卡骗成 ready/stalled（唯一判据仍是 audioReady/attemptsExhausted）。
+      expect(resolveSceneCardStatus({ audioReady: false, isBuiltin: true, progress: 90 } as any)).toBe('downloading');
+    });
+  });
+
   describe('【音频 ready 即 Ready · 图片缺失不影响】', () => {
     it('音频就绪 + 无任何下载进度 → ready', () => {
       expect(resolveSceneCardStatus({ audioReady: true })).toBe('ready');

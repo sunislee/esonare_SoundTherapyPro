@@ -448,3 +448,78 @@ ENOSPC 维持 170 s，目标 `healing_zen_bowl`：
 
 完整取证细节见 `/tmp/c2/C2-result.md`（日志：`c2a_coldstart.log`、`c2b_after.log`、`noise_forensics.log`）。
 
+---
+
+## ⑩ C2b 收尾 · A/C 方案落地（2026-09-26）
+
+### 10.1 已实施：内置就绪「终态 stalled + 低频自愈」
+
+三套终态提案中的 **A（显示层终态）+ C（信号触发低频长周期重试）** 组合已实现并全量验证：
+
+| 层 | 改动 |
+|---|---|
+| 状态模型 | `SceneDownloadState.attemptsExhausted?: boolean`（内存态，无持久化字段，进程重启即清空） |
+| 调度器 | `builtinReadiness.ts` 新增 `ensureBuiltinReadyWithRetry`：快阶段 3 轮（30s 间隔）→ 第 3 轮失败 tick `stalled(90,downloading,exhausted)` → **调度不停**，转指数退避（60s→120s→240s→封顶 300s）无限轮；每轮 `copyOnce` 即 ENOSPC/磁盘恢复探测 |
+| 信号触发 | `wakeBuiltinRetries()`：App 回前台（AppState）唤醒全部活跃重试，per-scene 冷却节流；`abortBuiltinRetry`/同场景重入 = 「点按重试」语义（旧实例 aborted、不写终态、新实例从快阶段重启） |
+| 显示层 | `sceneCardStatus.ts` 新增 `stalled` 卡态，优先级 `audioReady > stalled > downloading > offline/error`；en/zh 独立文案「本地准备受阻 · 点按重试」；**内置任何状态绝不落 `need_network`/`error`**（f877c429 不变式回归防线已锁进测试） |
+| 防闪断 | 慢阶段轮内 `tick(0/45/90)` 归一为 stalled 快照（stalled 卡不显示进度条），避免 UI 在「受阻/正在下载」间闪烁——此缺陷由新测试的时间线诊断抓到，属真实缺陷而非测试噪音 |
+
+### 10.2 TypeError 取证结论（§9.5-1 定性修正 + **严重性校准 + 本批已修复**）
+
+「清除缓存后必报 `undefined is not a function`」**与 ResourceStatusManager / 内置闭环无关**，是独立存量缺陷：
+- 崩溃点 = `ProfileScreen.tsx:214` 调用 `DownloaderServiceInstance.startBackgroundDownload()`，该方法在 `DownloaderService` 上**不存在**（tsc 基线 TS2339 同源可见）。
+- 分支考古：历史修复存在于 `f83758ab`，但该提交**不在 HEAD 祖先链**中——修复从未合入当前线。
+- **严重性校准（大哥指正，替代原「P0 候选」判断）**：幽灵调用掐断的是「订阅+刷新」链，不是下载本身——
+  `handleClearCache` 里的 `DownloadService.silentBackgroundDownload()` 在 caller 侧照常启动，且**每张卡点按仍有
+  按需下载兜底**。用户视角 = **「清完缓存后资源不自动批量补回、需逐卡点开触发」，不是永久空库**。
+  定级 **P1**（体验断层 + UI 冻结在旧缩略图/进度），非 P0。
+- **处置（本批 2026-09-26）**：`git cherry-pick --no-commit f83758ab` 干净落地——按其原语义**删除幽灵调用而非实现它**
+  （此处启动 DownloaderService 会与旧引擎并发写同一批 `.part`、破坏 P1-5 续传语义）；:214 移除后 emit/subscribeDownload
+  全链恢复。tsc 174→**173**（TS2339 合法消失）。回归锁 = `DownloaderService.ghostCall.test.ts`：实例方法恒 undefined +
+  ProfileScreen 源码正则不得再现该调用。真机复验见 §⑪/§⑬。
+
+### 10.3 flake 修复与其暴露的真实盲区
+
+`RecommendationEngine.test.ts:159` 的挂钟依赖已修（fake timers 锁定 h=10，经全 24h 扫描验证该时刻「base 赢家=nature_forest 且惩罚可翻转」）。
+**根因不是测试本身脆弱，而是引擎盲区**：全 24h 扫描显示 `hour ∈ {6,7,8}` 时 nature_forest 的时段权重压过 lastScene 惩罚，去重实际失效（08:56 跑测必红即此）。已移交 B 批评估是否调权。
+真机验收（ENOSPC 模拟 → stalled 文案 → 点按重试 → 空间恢复自动 ready）步骤见 `docs/CHECKLIST.md` C7。
+
+## ⑪ C7 · ENOSPC 真机自动化验收（2026-09-26，release 包含 A/C 代码）
+
+设备 emulator-5554；构建 `npm run release:android:install` BUILD SUCCESSFUL(39s) + installRelease。
+
+### 11.1 证据表
+
+| 步骤 | 预期 | 实测 | 判定 |
+|---|---|---|---|
+| a 重装 release | 含 A/C 新代码安装成功 | BUILD SUCCESSFUL 39s，installRelease 完成 | PASS |
+| b df 前 | 记录基线 | `/data` 85%，avail=949,048K | PASS(记录) |
+| b filler→ENOSPC | copyFile mkdir 报 ENOSPC | fill_loop 灌满：df 中 **100% avail=0**；pm clear 冷启动 `[Builtin] ❌×5 (Directory could not be created)`，`🏁 就绪 0/5`（13:16:51） | PASS |
+| c1 快阶段耗尽→「本地准备受阻 · 点按重试」 | ~2min 内 attemptsExhausted + stalled 文案 | **首轮失败后观察 8 分钟：无任何 round2/3、无 attemptsExhausted、卡片恒显「资源正在下载」** | **FAIL → 缺陷 D-C7-1** |
+| c2 连续 dump 60s 无闪断 | 归一化修复生效 | 未达 stalled，无法取证 | BLOCKED |
+| d 点按重试→aborted+快阶段重入 | logcat aborted + round1 | stalled 前置态不可达（同 D-C7-1）；点按路径代码在位（HomeScreen:711-721）但属人工触发语义，不替代冷启动自动化验收 | BLOCKED |
+| e HOME→monkey AppState 唤醒 | `📡 [前台恢复] 唤醒 N 个` 日志 | HOME 后进程被系统杀死（PID 5778→18184，/data 满载副作用），monkey 重进=冷启动而非 active 事件；且 registry 空、无在途编排器可唤醒 | BLOCKED（环境+同根因） |
+| f 删 filler→慢轮→🏁5/5 Ready | 自动回 ready + Ready to Play ✨ | filler 删除后 df 回 84%；但编排器从未启动、无慢轮存在——重启仅再跑单轮 bootstrap（13:20:50 再次 `就绪 0/5`） | FAIL（同 D-C7-1） |
+| 清理 filler 残留=0 | df 后记录 | 残留 `ls | grep -c`=**0**，df 后 84% avail=958,104K，fill_loop trap 自清干净 | PASS |
+
+副作用留痕：/data 100% 期间出现系统弹窗「Google Play 服务屡次停止运行」及 app 后台进程被杀——设备侧效应，非本 app 缺陷。
+
+### 11.2 缺陷 D-C7-1 `builtin-bootstrap-no-orchestration`（按纪律：只报名字，未修）
+
+- **位置**：`src/services/BuiltinAssetBootstrap.ts:119-135`（bootstrap 单轮串行拷贝，失败仅打日志「等待下次重试」）；A/C 编排器 `ensureBuiltinReadyWithRetry` 唯一调用点在 `HomeScreen.prioritizeScene`(:721)，即**用户点按路径**。
+- **后果**：ENOSPC 冷启动后，内置卡**不会自动**进快阶段/写 attemptsExhausted/转 stalled/自愈——必须用户逐张点卡才进入 A/C 调度。直接击穿 C7(c)(f) 的自动化预期与 :107 注释「下次冷启/前台恢复会再触发」的承诺（再触发的仍是单轮）。
+- **为何测试没拦住**：builtinReadiness.test.ts 直测编排器纯逻辑全绿；缺口在「冷启动 bootstrap → 编排器」的接线层，jest 无 RN 渲染/集成层覆盖。
+- **修复方向（待批，未动工）**：bootstrap() 收尾对每个未就绪内置场景调用 `runBuiltinEnsure`/`ensureBuiltinReadyWithRetry`（registry 已天然防重），使冷启动自动进入 A/C 调度；补一条接线级回归断言。
+- **C7 状态**：c/d/e/f 步骤 BLOCKED，待修复批准后复跑全套。
+
+
+### 10.4 验证口径（2026-09-26 收尾时点）
+
+| 项 | 结果 |
+|---|---|
+| jest | **20 suites / 160 tests 连续两轮全绿**（新增 A+C 调度 5 例、stalled 不变式 6 例、flake 修复后稳定） |
+| tsc | 174 = 基线，本批文件零新增错误 |
+| `check:scene-ids` | exit 0 |
+
+真机验收（ENOSPC 模拟 → stalled 文案 → 点按重试 → 空间恢复自动 ready）步骤见 `docs/CHECKLIST.md` C7。
+

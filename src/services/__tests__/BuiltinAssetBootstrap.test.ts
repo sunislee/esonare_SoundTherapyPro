@@ -45,6 +45,14 @@ jest.mock('../DownloaderService', () => {
   return { __esModule: true, get DownloaderServiceInstance() { return inst; } };
 });
 
+// 【D-C7-1 接线断言用】A/C 编排器 spy：bootstrap 收尾对未就绪场景必须自动移交编排调度；
+// mock 掉真实现以免单测被真实定时器（快/慢阶段退避）污染。
+jest.mock('../../utils/builtinReadiness', () => {
+  const fn = jest.fn().mockResolvedValue('pending-retry');
+  return { __esModule: true, ensureBuiltinReadyWithRetry: fn, DEFAULT_BUILTIN_RETRY_SCHEDULE: {}, __orchSpy: fn };
+});
+jest.mock('../../utils/SceneDownloadStore', () => ({ tickScene: jest.fn() }));
+
 const ZEN = 'healing_zen_bowl';
 const WHITE = 'interactive_white_noise';
 const ZEN_DEST = '/data/test/files/audio_resources/zen_bowl.m4a';
@@ -52,6 +60,7 @@ const ZEN_DEST = '/data/test/files/audio_resources/zen_bowl.m4a';
 describe('BuiltinAssetBootstrap 内置场景落盘', () => {
   let bootstrap: any;
   let addTaskSpy: jest.Mock;
+  let orchSpy: jest.Mock;
 
   beforeEach(() => {
     jest.resetModules();
@@ -66,6 +75,7 @@ describe('BuiltinAssetBootstrap 内置场景落盘', () => {
     OfflineService.recheckScene.mockResolvedValue(true);
     bootstrap = require('../BuiltinAssetBootstrap').default;
     addTaskSpy = require('../DownloaderService').DownloaderServiceInstance.__addTaskSpy;
+    orchSpy = require('../../utils/builtinReadiness').__orchSpy;
     // 重置内部 started 标志（单例跨用例复用）
     bootstrap.started = false;
   });
@@ -116,5 +126,44 @@ describe('BuiltinAssetBootstrap 内置场景落盘', () => {
     const callsAfterFirst = RNFS.copyFileAssets.mock.calls.length;
     await bootstrap.bootstrap(); // 第二次应被 started 短路
     expect(RNFS.copyFileAssets).toHaveBeenCalledTimes(callsAfterFirst);
+  });
+
+  // ═══════════════ 【D-C7-1 接线 · 冷启动失败必进编排器】（报告 §⑪ 缺陷锁死）═══════════════
+
+  test('【D-C7-1】copyFileAssets 持续 reject(ENOSPC) → bootstrap 收尾对每个未就绪场景自动移交 A/C 编排器', async () => {
+    OfflineService.checkSceneAudioReady.mockResolvedValue(false);
+    RNFS.copyFileAssets.mockRejectedValue(new Error('ENOSPC: no space left on device'));
+    await bootstrap.bootstrap();
+    // 接线生效 = 编排器按场景逐个被调用（mock 的 2 个内置场景全部失败 → 2 次）。
+    expect(orchSpy).toHaveBeenCalledTimes(2);
+    expect(orchSpy.mock.calls.map((c: any[]) => c[0]).sort()).toEqual([ZEN, WHITE]);
+    // deps/opts/schedule/log 五参齐全（编排器契约不缩水：磁盘真相+幂等重拷+store tick）。
+    const call = orchSpy.mock.calls[0];
+    const deps = call[1];
+    const opts = call[2];
+    expect(typeof deps.isDiskReady).toBe('function');
+    expect(typeof deps.copyOnce).toBe('function');
+    expect(typeof deps.tick).toBe('function');
+    expect(opts.maxCopyAttempts).toBe(3);
+    expect(call[3]).toBeDefined();
+    expect(typeof call[4]).toBe('function');
+    // 接线不得破坏既有不变式：失败仍绝不回落 CDN。
+    expect(addTaskSpy).not.toHaveBeenCalled();
+  });
+
+  test('【D-C7-1 反向锁】全部就绪 → 编排器零启动（成功路径无多余调度）', async () => {
+    OfflineService.checkSceneAudioReady.mockResolvedValue(true);
+    await bootstrap.bootstrap();
+    expect(orchSpy).not.toHaveBeenCalled();
+  });
+
+  test('【D-C7-1 部分失败】仅 zen 拷贝失败 → 只有 zen 进编排器，white 就绪不重复调度', async () => {
+    OfflineService.checkSceneAudioReady.mockResolvedValue(false);
+    RNFS.copyFileAssets.mockImplementation(async (src: string) => {
+      if (src.includes('zen_bowl')) throw new Error('ENOSPC');
+    });
+    await bootstrap.bootstrap();
+    expect(orchSpy).toHaveBeenCalledTimes(1);
+    expect(orchSpy.mock.calls[0][0]).toBe(ZEN);
   });
 });
